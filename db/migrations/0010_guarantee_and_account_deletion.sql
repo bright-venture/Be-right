@@ -1,0 +1,3 @@
+ALTER TABLE "service_requests" ADD COLUMN "guarantee_for" integer;--> statement-breakpoint
+ALTER TABLE "users" ADD COLUMN "deleted_at" timestamp with time zone;--> statement-breakpoint
+ALTER TABLE "service_requests" ADD CONSTRAINT "service_requests_guarantee_for_service_requests_id_fk" FOREIGN KEY ("guarantee_for") REFERENCES "public"."service_requests"("id") ON DELETE no action ON UPDATE no action;

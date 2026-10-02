@@ -21,5 +21,8 @@ function hasAuthInUrl() {
   return /access_token=|error_description=/.test(hash) || /[?&]code=/.test(search);
 }
 
+/** Set just before leaving a deleted account; the home page shows a one-time notice. */
+export const ACCOUNT_DELETED_FLAG = "br-account-deleted";
+
 /** Fired by src/lib/supabase.ts whenever the signed-in identity changes. */
 export const AUTH_CHANGED_EVENT = "br-auth-changed";

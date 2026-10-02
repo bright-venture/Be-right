@@ -11,6 +11,7 @@ import {
   index,
   boolean,
   doublePrecision,
+  type AnyPgColumn,
 } from "drizzle-orm/pg-core";
 
 // Every table enables Row Level Security with no policies. The app server talks to
@@ -62,6 +63,8 @@ export const users = pgTable("users", {
   termsVersion: varchar("terms_version", { length: 32 }),
   avatar: text("avatar"),
   role: userRole("role").default("customer").notNull(),
+  /** The customer deleted their account: personal details were erased (see auth.deleteAccount). */
+  deletedAt: timestamp("deleted_at", { withTimezone: true }),
   ...timestamps,
   lastSignInAt: timestamp("last_sign_in_at", { withTimezone: true })
     .defaultNow()
@@ -104,6 +107,8 @@ export const serviceRequests = pgTable(
     /** The customer asked to cancel a scheduled visit; a specialist confirms it. */
     cancelRequestedAt: timestamp("cancel_requested_at", { withTimezone: true }),
     cancelReason: text("cancel_reason"),
+    /** A return visit under the workmanship guarantee: the completed request it's about. */
+    guaranteeFor: integer("guarantee_for").references((): AnyPgColumn => serviceRequests.id),
     ...timestamps,
   },
   (t) => [

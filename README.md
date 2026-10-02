@@ -73,9 +73,9 @@ Sent through Resend's API (`RESEND_API_KEY`), in English and Arabic, from `serve
 
 | When | Who |
 | --- | --- |
-| A customer books, approves a price, cancels or asks to cancel | Specialists |
+| A customer books, approves a price, cancels, asks to cancel or reports a problem (guarantee) | Specialists |
 | Someone applies as a technician | Specialists |
-| A price is sent or changed, the visit is scheduled, the job is done, or our team cancels | Customer |
+| A price is sent or changed, a guarantee visit is confirmed free, the visit is scheduled, the job is done, or our team cancels | Customer |
 | A job is assigned, reassigned away, scheduled or cancelled | Technician |
 
 Specialists are every account with the specialist role plus `SPECIALIST_EMAILS`. A failed email is logged

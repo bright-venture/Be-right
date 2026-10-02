@@ -354,6 +354,50 @@ export const notify = {
       if (job.technician) await send([job.technician.email], jobCancelled(d.id));
     }),
 
+  /** Customer reported a problem with a completed job (workmanship guarantee). */
+  guaranteeReported: (id: number) =>
+    safely("guaranteeReported", async () => {
+      const job = await loadJob(id);
+      const d = describe(job);
+      const originalId = job.request.guaranteeFor;
+      await send(await specialistEmails(), {
+        subject: both(`Guarantee claim #${d.id} on job #${originalId}`, `مطالبة ضمان #${d.id} عالمهمة #${originalId}`),
+        title: both("A customer reported a problem after a job", "عميل بلّغ عن مشكلة بعد مهمة"),
+        lines: [
+          both(
+            `${job.customer?.name ?? "A customer"} says job #${originalId} (${d.category.en}, ${d.area}) isn't right.`,
+            `${job.customer?.name ?? "عميل"} بيقول إنو المهمة #${originalId} (${d.category.ar}، ${d.area}) مش مزبوطة.`,
+          ),
+          ...(job.request.notes ? [both(`"${job.request.notes}"`, `«${job.request.notes}»`)] : []),
+          both(
+            `Review it, then confirm a free return visit or send a price if it isn't covered. Preferred day: ${d.when.en}.`,
+            `راجعها، وبعدين أكّد زيارة مجانية أو ابعت سعر إذا مش مشمولة. اليوم المفضّل: ${d.when.ar}.`,
+          ),
+        ],
+        path: "/dashboard",
+        button: both("Open the dashboard", "افتح لوحة التحكم"),
+      });
+    }),
+
+  /** The guarantee claim is covered: the customer is told the return visit is free. */
+  guaranteeAccepted: (id: number) =>
+    safely("guaranteeAccepted", async () => {
+      const job = await loadJob(id);
+      const d = describe(job);
+      await send([job.customer?.email], {
+        subject: both(`We'll come back for free: request #${d.id}`, `منرجع ببلاش: الطلب #${d.id}`),
+        title: both("Your return visit is free", "زيارتك الجاية ببلاش"),
+        lines: [
+          both(
+            `This is covered by our ${WORKMANSHIP_GUARANTEE_DAYS}-day guarantee, so there's nothing to pay. We'll confirm the date and technician shortly.`,
+            `هالشي مشمول بضمان الـ${WORKMANSHIP_GUARANTEE_DAYS} يوم، فما في شي تدفعه. منأكّدلك الموعد والفني قريباً.`,
+          ),
+        ],
+        path: "/requests",
+        button: both("See my request", "شوف طلبي"),
+      });
+    }),
+
   /** Someone applied to work as a technician. */
   applicationSubmitted: (applicationId: number) =>
     safely("applicationSubmitted", async () => {

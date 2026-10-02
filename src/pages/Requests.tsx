@@ -7,6 +7,7 @@ import { ServiceIcon } from "@/components/ServiceIcon";
 import { MediaGrid } from "@/components/MediaGrid";
 import JobMap from "@/components/map/JobMap";
 import { AnswerList } from "@/components/AnswerList";
+import { ReportProblem } from "@/components/ReportProblem";
 import { useI18n } from "@/i18n";
 import { isRecent } from "@/lib/time";
 import { useRoleGate } from "@/hooks/useRoleGate";
@@ -207,6 +208,11 @@ export default function Requests() {
                     <span className="block truncate font-display text-base font-extrabold text-navy">
                       {cat ? p(cat.name) : r.category}{" "}
                       <span className="text-xs font-bold text-navy/70">#{r.id}</span>
+                      {r.guaranteeFor && (
+                        <span className="ms-2 rounded-full bg-bird px-2 py-0.5 align-middle text-[10px] font-bold text-white">
+                          {p(t.requests.guaranteeBadge)}
+                        </span>
+                      )}
                     </span>
                     <span className="mt-0.5 block text-xs text-navy/70">
                       {p(t.requests.preferred)}: {r.preferredDate} · {r.area}
@@ -220,6 +226,11 @@ export default function Requests() {
 
                 {open && detail.data && detail.data.request.id === r.id && (
                   <div className="border-t-2 border-navy/10 p-5 animate-rise-in">
+                    {detail.data.request.guaranteeFor && (
+                      <p className="mb-4 text-sm font-semibold text-navy">
+                        {p(t.requests.guaranteeFor).replace("{id}", String(detail.data.request.guaranteeFor))}
+                      </p>
+                    )}
                     {/* timeline */}
                     <p className="font-display text-xs font-bold uppercase tracking-[0.2em] text-navy/70">
                       {p(t.requests.timeline)}
@@ -273,7 +284,9 @@ export default function Requests() {
                         {detail.data.request.quoteAmount ? (
                           <>
                             <p className="mt-2 font-display text-lg font-extrabold text-navy">
-                              ${detail.data.request.quoteAmount}
+                              {detail.data.request.guaranteeFor && detail.data.request.quoteAmount === "0"
+                                ? p(t.requests.free)
+                                : `$${detail.data.request.quoteAmount}`}
                             </p>
                             {detail.data.request.quoteNote && (
                               <p className="mt-1 text-xs text-navy/70">
@@ -356,6 +369,18 @@ export default function Requests() {
                         {p(t.requests.cancel)}
                       </button>
                     )}
+                    {detail.data.guarantee && (
+                      <ReportProblem
+                        key={r.id}
+                        requestId={r.id}
+                        guarantee={detail.data.guarantee}
+                        onReported={() => {
+                          void utils.requests.mine.invalidate();
+                          void utils.requests.get.invalidate();
+                        }}
+                      />
+                    )}
+
                     {/* after scheduling: ask a specialist to cancel */}
                     {CANCEL_REQUESTABLE_STATUSES.includes(detail.data.request.status as RequestStatus) &&
                       (detail.data.request.cancelRequestedAt ? (

@@ -1,6 +1,7 @@
 // Single source of truth for how a repair request moves through its life cycle,
 // and for validating what a customer submits. Shared by the API and the UI.
 import { CATEGORY_MAP, type RequestStatus, type UrgencyLevel } from "./services";
+import { WORKMANSHIP_GUARANTEE_DAYS } from "./legal";
 
 export const URGENCY_LEVELS = ["normal", "priority", "urgent", "critical"] as const satisfies readonly UrgencyLevel[];
 
@@ -15,6 +16,8 @@ export const TRANSITIONS = {
   startReview: { from: ["submitted"], to: "in_review", by: "specialist" },
   // Sending again while the customer hasn't answered replaces the quote.
   sendQuote: { from: ["in_review", "quote_ready"], to: "quote_ready", by: "specialist" },
+  // Guarantee visits skip the price: the specialist confirms the return visit is free.
+  acceptGuarantee: { from: ["in_review"], to: "approved", by: "specialist" },
   approveQuote: { from: ["quote_ready"], to: "approved", by: "customer" },
   schedule: { from: ["approved"], to: "scheduled", by: "specialist" },
   startWork: { from: ["scheduled"], to: "in_progress", by: "specialist|technician" },
@@ -37,6 +40,14 @@ export type TransitionName = keyof typeof TRANSITIONS;
 export function canTransition(name: TransitionName, status: RequestStatus) {
   return (TRANSITIONS[name].from as readonly RequestStatus[]).includes(status);
 }
+
+/** Until when a job completed at `completedAt` can be reported under the workmanship guarantee. */
+export function guaranteeEndsAt(completedAt: Date) {
+  return new Date(completedAt.getTime() + WORKMANSHIP_GUARANTEE_DAYS * 86_400_000);
+}
+
+/** Photos/videos a customer can add when reporting a problem. */
+export const MAX_PROBLEM_FILES = 4;
 
 /** Statuses in which the customer can ask a specialist to cancel (they can't cancel directly). */
 export const CANCEL_REQUESTABLE_STATUSES: readonly RequestStatus[] = ["scheduled"];

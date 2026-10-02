@@ -104,6 +104,11 @@
   to = "/index.html"
   status = 200
 
+[[redirects]]
+  from = "/account"
+  to = "/index.html"
+  status = 200
+
 # Anything else: the app shows its "page went missing" screen, with a real 404 status
 # so search engines don't index made-up URLs.
 [[redirects]]

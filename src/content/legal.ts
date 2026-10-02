@@ -208,8 +208,8 @@ export const PRIVACY: LegalDocument = {
       title: t("6. Your rights", "٦. حقوقك"),
       paragraphs: [
         t(
-          `You can ask to access, correct or delete your personal data, or object to its use, by emailing ${COMPANY.privacyEmail}. Some data must be kept for legal reasons; if so, we'll tell you. You may also turn off location access on your device at any time.`,
-          `يمكنك طلب الاطلاع على بياناتك الشخصية أو تصحيحها أو حذفها أو الاعتراض على استخدامها عبر مراسلتنا على ${COMPANY.privacyEmail}. قد يتعيّن الاحتفاظ ببعض البيانات لأسباب قانونية؛ وفي هذه الحالة سنعلمك بذلك. ويمكنك أيضاً إيقاف الوصول إلى الموقع على جهازك في أي وقت.`,
+          `You can correct your name, phone, email and password, or delete your account, yourself under "My account". Deleting it erases your contact details, addresses, notes and photos; we keep a record of past jobs (service, date and price) without your details, for warranty and accounting. For anything else, such as a copy of your data or objecting to its use, email ${COMPANY.privacyEmail}. Some data must be kept for legal reasons; if so, we'll tell you. You may also turn off location access on your device at any time.`,
+          `يمكنك تصحيح اسمك وهاتفك وبريدك الإلكتروني وكلمة المرور، أو حذف حسابك، بنفسك من صفحة «حسابي». يؤدي حذف الحساب إلى محو بيانات التواصل والعناوين والملاحظات والصور؛ ونحتفظ بسجل المهام السابقة (الخدمة والتاريخ والسعر) دون بياناتك، لأغراض الضمان والمحاسبة. ولأي طلب آخر، مثل الحصول على نسخة من بياناتك أو الاعتراض على استخدامها، راسلنا على ${COMPANY.privacyEmail}. قد يتعيّن الاحتفاظ ببعض البيانات لأسباب قانونية؛ وفي هذه الحالة سنعلمك بذلك. ويمكنك أيضاً إيقاف الوصول إلى الموقع على جهازك في أي وقت.`,
         ),
       ],
     },

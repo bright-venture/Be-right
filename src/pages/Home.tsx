@@ -10,6 +10,7 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { Marquee } from "@/components/Marquee";
 import { ServiceIcon } from "@/components/ServiceIcon";
+import { AccountDeletedNotice } from "@/components/AccountDeletedNotice";
 import { useI18n } from "@/i18n";
 import {
   CATEGORIES,
@@ -31,6 +32,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-paper">
       <Navbar />
+      <AccountDeletedNotice />
 
       <main>
         {/* ============ HERO ============ */}

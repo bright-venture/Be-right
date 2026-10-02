@@ -146,6 +146,11 @@ export default function Tech() {
                       <p className="text-xs text-navy/70">
                         {p(t.tech.appointment)}: {r.preferredDate} · {r.timeSlot}
                       </p>
+                      {r.guaranteeFor && (
+                        <p className="mt-1 text-xs font-bold text-bird">
+                          {p(t.requests.guaranteeFor).replace("{id}", String(r.guaranteeFor))}
+                        </p>
+                      )}
                     </div>
                   </div>
                   <span className="rounded-full border-2 border-navy/25 px-3 py-1 text-xs font-bold text-navy">

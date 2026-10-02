@@ -69,7 +69,21 @@ export const specialistRouter = createRouter({
           stillTechnician: tech.role === "technician",
         }
       : null;
-    return { request: row, customer, media, events, location, technician };
+    // A guarantee visit: which job it's about, and who did it (often the one to send back).
+    const original = row.guaranteeFor
+      ? await db.query.serviceRequests.findFirst({ where: eq(serviceRequests.id, row.guaranteeFor) })
+      : undefined;
+    const originalTech = original?.technicianId
+      ? await db.query.users.findFirst({ where: eq(users.id, original.technicianId) })
+      : undefined;
+    const guarantee = original
+      ? {
+          originalId: original.id,
+          technicianId: originalTech?.id ?? null,
+          technicianName: originalTech?.name ?? originalTech?.email ?? null,
+        }
+      : null;
+    return { request: row, customer, media, events, location, technician, guarantee };
   }),
 
   startReview: specialistQuery
@@ -106,6 +120,21 @@ export const specialistRouter = createRouter({
       await notify.quoteSent(input.id);
       return { ok: true };
     }),
+
+  /** Guarantee claim is covered: a free return visit, no price for the customer to approve. */
+  acceptGuarantee: specialistQuery.input(byId).mutation(async ({ ctx, input }) => {
+    await applyTransition({
+      id: input.id,
+      name: "acceptGuarantee",
+      actorId: ctx.user.id,
+      scope: "any",
+      patch: { quoteAmount: "0", quoteNote: "Covered by the workmanship guarantee" },
+      note: "Free return visit (guarantee)",
+      guard: (row) => (row.guaranteeFor ? null : "Only guarantee visits can be free"),
+    });
+    await notify.guaranteeAccepted(input.id);
+    return { ok: true };
+  }),
 
   /** Close an open request (spam, out of area, the customer asked to cancel). */
   cancel: specialistQuery

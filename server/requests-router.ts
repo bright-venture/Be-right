@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq, notInArray } from "drizzle-orm";
 import { createRouter, customerQuery } from "./middleware";
 import { getDb } from "./queries/connection";
 import {
@@ -14,8 +14,10 @@ import { computeUrgency, CATEGORY_MAP } from "@contracts/services";
 import {
   ACTIVE_JOB_STATUSES,
   CANCEL_REQUESTABLE_STATUSES,
+  guaranteeEndsAt,
   MAX_BOOKING_FILES,
   MAX_BOOKING_VIDEOS,
+  MAX_PROBLEM_FILES,
   isValidVisitDate,
   TIME_SLOTS,
   todayInBeirut,
@@ -26,6 +28,7 @@ import { isInLebanon } from "@contracts/geo";
 import { isValidPhone } from "@contracts/phone";
 import { applyTransition, findRequest, logEvent, type RequestScope } from "./lib/workflow";
 import { notify } from "./notify";
+import { WORKMANSHIP_GUARANTEE_DAYS } from "@contracts/legal";
 
 const mediaItem = z.object({
   key: z.string().max(512),
@@ -35,6 +38,35 @@ const mediaItem = z.object({
 });
 
 const byId = z.object({ id: z.number().int() });
+
+type Db = Parameters<typeof findRequest>[0];
+
+/** For a completed job: until when it's covered, and any guarantee claim still open on it. */
+async function guaranteeStatus(db: Db, requestId: number) {
+  const [done] = await db
+    .select({ at: requestEvents.createdAt })
+    .from(requestEvents)
+    .where(and(eq(requestEvents.requestId, requestId), eq(requestEvents.status, "completed")))
+    .orderBy(desc(requestEvents.createdAt))
+    .limit(1);
+  const [claim] = await db
+    .select({ id: serviceRequests.id })
+    .from(serviceRequests)
+    .where(and(eq(serviceRequests.guaranteeFor, requestId), notInArray(serviceRequests.status, ["completed", "cancelled"])))
+    .limit(1);
+  return { endsAt: done ? guaranteeEndsAt(done.at) : null, openClaimId: claim?.id ?? null };
+}
+
+/** Uploaded files must be the customer's own, with at most a couple of (unshrinkable) videos. */
+function checkMedia(authId: string, media: { key: string; contentType?: string }[]) {
+  const prefix = userUploadPrefix(authId);
+  if (media.some((m) => !m.key.startsWith(prefix))) {
+    throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid media" });
+  }
+  if (media.filter((m) => m.contentType?.startsWith("video/")).length > MAX_BOOKING_VIDEOS) {
+    throw new TRPCError({ code: "BAD_REQUEST", message: `Up to ${MAX_BOOKING_VIDEOS} videos per request` });
+  }
+}
 
 export const requestsRouter = createRouter({
   create: customerQuery
@@ -69,13 +101,7 @@ export const requestsRouter = createRouter({
       if (!isInLebanon(input.lat, input.lng)) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "Place the pin on your address in Lebanon" });
       }
-      const prefix = userUploadPrefix(ctx.user.authId);
-      if (input.media.some((m) => !m.key.startsWith(prefix))) {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid media" });
-      }
-      if (input.media.filter((m) => m.contentType?.startsWith("video/")).length > MAX_BOOKING_VIDEOS) {
-        throw new TRPCError({ code: "BAD_REQUEST", message: `Up to ${MAX_BOOKING_VIDEOS} videos per request` });
-      }
+      checkMedia(ctx.user.authId, input.media);
 
       const urgency = computeUrgency(input.category, input.answers);
       const id = await getDb().transaction(async (tx) => {
@@ -160,8 +186,81 @@ export const requestsRouter = createRouter({
         : null,
       // Live location is only shared while the job is active.
       location: loc ? { lat: loc.lat, lng: loc.lng, updatedAt: loc.updatedAt } : null,
+      guarantee: row.status === "completed" ? await guaranteeStatus(db, row.id) : null,
     };
   }),
+
+  /**
+   * Workmanship guarantee: something isn't right after a completed job. Creates a linked
+   * request at the same address for a specialist to review (usually a free return visit).
+   */
+  reportProblem: customerQuery
+    .input(
+      z.object({
+        id: z.number().int(),
+        description: z.string().trim().min(10).max(2000),
+        preferredDate: z.string().max(10),
+        timeSlot: z.enum(TIME_SLOTS),
+        media: z.array(mediaItem).max(MAX_PROBLEM_FILES).default([]),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      if (!isValidVisitDate(input.preferredDate, todayInBeirut())) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Choose a date from today onwards" });
+      }
+      checkMedia(ctx.user.authId, input.media);
+      const id = await getDb().transaction(async (tx) => {
+        // Locked, so reporting twice at once can't open two claims.
+        const original = await findRequest(tx, input.id, { customerId: ctx.user.id }, true);
+        if (original.status !== "completed") {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Only completed jobs can be reported" });
+        }
+        const { endsAt, openClaimId } = await guaranteeStatus(tx, original.id);
+        if (!endsAt || endsAt < new Date()) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: `The ${WORKMANSHIP_GUARANTEE_DAYS}-day guarantee for this job has ended`,
+          });
+        }
+        if (openClaimId) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: `You already reported this. Follow request #${openClaimId}` });
+        }
+        const [claim] = await tx
+          .insert(serviceRequests)
+          .values({
+            userId: ctx.user.id,
+            guaranteeFor: original.id,
+            category: original.category,
+            answers: original.answers,
+            urgencySuggested: original.urgencyFinal ?? original.urgencySuggested,
+            status: "submitted",
+            preferredDate: input.preferredDate,
+            timeSlot: input.timeSlot,
+            area: original.area,
+            address: original.address,
+            lat: original.lat,
+            lng: original.lng,
+            phone: original.phone,
+            notes: input.description,
+          })
+          .returning({ id: serviceRequests.id });
+        if (input.media.length) {
+          await tx.insert(requestMedia).values(
+            input.media.map((m) => ({
+              requestId: claim.id,
+              key: m.key,
+              fileName: m.fileName,
+              size: m.size,
+              contentType: m.contentType ?? null,
+            })),
+          );
+        }
+        await logEvent(tx, claim.id, "submitted", ctx.user.id, `Guarantee claim for #${original.id}`);
+        return claim.id;
+      });
+      await notify.guaranteeReported(id);
+      return { id };
+    }),
 
   /** `amount` is the price the customer saw: if the specialist changed it meanwhile, refuse. */
   approveQuote: customerQuery

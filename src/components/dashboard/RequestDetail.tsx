@@ -71,6 +71,13 @@ export function RequestDetail({
           <p className="text-xs text-navy/70">
             {p(t.dash4.created)} {dateTime(r.createdAt)}
           </p>
+          {d.guarantee && (
+            <p className="mt-1 text-xs font-bold text-bird">
+              {p(t.requests.guaranteeFor).replace("{id}", String(d.guarantee.originalId))}
+              {d.guarantee.technicianName &&
+                ` · ${p(t.dash4.originalTech).replace("{name}", d.guarantee.technicianName)}`}
+            </p>
+          )}
         </div>
         <span className={`rounded-full border-2 px-3 py-1 text-xs font-bold ${URGENCY_BADGE[level]}`}>
           {p(URGENCY_META[level].label)}
@@ -177,7 +184,10 @@ export function RequestDetail({
             )}
             {r.quoteAmount && (
               <p className="mt-3 text-xs text-navy/70">
-                {p(t.dash4.quote)}: <span className="font-bold text-navy">${r.quoteAmount}</span>
+                {p(t.dash4.quote)}:{" "}
+                <span className="font-bold text-navy">
+                  {r.guaranteeFor && r.quoteAmount === "0" ? p(t.requests.free) : `$${r.quoteAmount}`}
+                </span>
                 {r.quoteNote ? ` — ${r.quoteNote}` : ""}
               </p>
             )}
@@ -266,8 +276,16 @@ function NextStep({
   const setStatus = trpc.specialist.setStatus.useMutation({ onSuccess: onDone });
   const assign = trpc.tech.assign.useMutation({ onSuccess: onDone });
   const cancel = trpc.specialist.cancel.useMutation({ onSuccess: onDone });
-  const error = [startReview, sendQuote, setStatus, assign, cancel].find((m) => m.isError)?.error?.message;
-  const busy = startReview.isPending || sendQuote.isPending || setStatus.isPending || assign.isPending || cancel.isPending;
+  const acceptGuarantee = trpc.specialist.acceptGuarantee.useMutation({ onSuccess: onDone });
+  const error = [startReview, sendQuote, setStatus, assign, cancel, acceptGuarantee].find((m) => m.isError)?.error?.message;
+  const busy =
+    startReview.isPending ||
+    sendQuote.isPending ||
+    setStatus.isPending ||
+    assign.isPending ||
+    cancel.isPending ||
+    acceptGuarantee.isPending;
+  const guaranteeReview = status === "in_review" && !!r.guaranteeFor;
   const spinner = busy && <Loader2 className="h-4 w-4 animate-spin" />;
 
   const message = {
@@ -285,7 +303,9 @@ function NextStep({
   return (
     <section className={`mt-5 rounded-2xl border-2 p-4 ${closed ? "border-navy/15 bg-paper" : "border-flame bg-flame/5"}`}>
       <p className="font-display text-xs font-bold uppercase tracking-[0.2em] text-flame-ink">{p(t.dash4.nextStep)}</p>
-      <p className="mt-1 text-sm font-semibold text-navy">{p(message)}</p>
+      <p className="mt-1 text-sm font-semibold text-navy">
+        {guaranteeReview ? p(t.dash4.stepGuarantee).replace("{id}", String(r.guaranteeFor)) : p(message)}
+      </p>
 
       {askedToCancel && (
         <div role="alert" className="mt-3 rounded-xl border-2 border-red-700 bg-red-700/5 p-3 text-sm text-navy">
@@ -327,6 +347,20 @@ function NextStep({
         >
           {p(t.dash4.changeQuote)}
         </button>
+      )}
+
+      {guaranteeReview && (
+        <>
+          <button
+            onClick={() => acceptGuarantee.mutate({ id: r.id })}
+            disabled={busy}
+            className="btn-pill-primary mt-3 disabled:opacity-40"
+          >
+            {acceptGuarantee.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+            {p(t.dash4.acceptGuarantee)}
+          </button>
+          <p className="mt-4 text-xs font-bold text-navy/70">{p(t.dash4.notCovered)}</p>
+        </>
       )}
 
       {(status === "in_review" || changingQuote) && (

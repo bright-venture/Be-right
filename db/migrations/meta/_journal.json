@@ -71,6 +71,13 @@
       "when": 1790853491499,
       "tag": "0009_cancel_requests",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1790921988245,
+      "tag": "0010_guarantee_and_account_deletion",
+      "breakpoints": true
     }
   ]
 }

@@ -128,6 +128,11 @@ export function Navbar() {
                 {area.label}
               </Link>
             )}
+            {isAuthenticated && (
+              <Link to="/account" onClick={() => setOpen(false)} className={menuItem}>
+                {p(t.nav.account)}
+              </Link>
+            )}
             {links.map((l) => (
               <a key={l.href} href={l.href} onClick={() => setOpen(false)} className={menuItem}>
                 {l.label}

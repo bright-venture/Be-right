@@ -178,6 +178,11 @@ export function QueueTab({ onGoToApplications }: { onGoToApplications: () => voi
                     <span className="rounded-full border border-navy/25 px-2 py-px text-[10px] font-bold text-navy">
                       {p(t.status[status])}
                     </span>
+                    {r.guaranteeFor && (
+                      <span className="rounded-full bg-bird px-2 py-px text-[10px] font-bold text-white">
+                        {p(t.requests.guaranteeBadge)}
+                      </span>
+                    )}
                     {cancelPending(r) && (
                       <span className="rounded-full bg-red-700 px-2 py-px text-[10px] font-bold text-white">
                         {p(t.dash4.cancelAsked)}
