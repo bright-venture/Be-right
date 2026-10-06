@@ -258,7 +258,11 @@ describe("my account", () => {
     const [account] = await db.select().from(users).where(eq(users.id, leaving.id));
     expect(account).toMatchObject({ name: null, email: null, phone: null });
     expect(account.deletedAt).toBeInstanceOf(Date);
-    expect(account.authId).not.toBe(leaving.authId);
+    // Their sign-in can stay valid for up to an hour: it must not bring the account back.
+    const { findOrCreateUser } = await import("./queries/users");
+    expect(await findOrCreateUser({ authId: leaving.authId, email: "leaving@example.com", name: "Leaving Customer" })).toBeNull();
+    expect(await db.select().from(users).where(eq(users.email, "leaving@example.com"))).toHaveLength(0);
+    await rejected((await callerFor(undefined)).requests.mine(), "UNAUTHORIZED");
     expect(state.deletedLogins).toContain(leaving.authId);
 
     const rows = await db.select().from(serviceRequests).where(eq(serviceRequests.userId, leaving.id));

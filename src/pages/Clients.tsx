@@ -33,7 +33,7 @@ export default function Clients() {
               key={c.name}
               className="card-br card-hover flex flex-col items-center justify-center gap-1.5 px-6 py-8 text-center"
             >
-              <img src={c.logo} alt="" className="mb-4 h-20 w-full object-contain" />
+              <img src={c.logo} alt="" loading="lazy" decoding="async" className="mb-4 h-20 w-full object-contain" />
               <span className="font-display text-xl font-black tracking-tight text-navy">
                 {c.name}
               </span>

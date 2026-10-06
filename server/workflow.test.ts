@@ -103,16 +103,16 @@ describe("accounts", () => {
   it("returns the same user on repeat sign-in", async () => {
     const { findOrCreateUser } = await import("./queries/users");
     const again = await findOrCreateUser({ authId: alice.authId, email: alice.email, name: null });
-    expect(again.id).toBe(alice.id);
+    expect(again?.id).toBe(alice.id);
   });
 
   it("keeps the phone given at sign-up, without overwriting a saved one", async () => {
     const { findOrCreateUser } = await import("./queries/users");
     const authId = crypto.randomUUID();
     const created = await findOrCreateUser({ authId, email: "dana@example.com", name: "Dana", phone: "+961 3 123 456" });
-    expect(created.phone).toBe("+961 3 123 456");
+    expect(created?.phone).toBe("+961 3 123 456");
     const again = await findOrCreateUser({ authId, email: "dana@example.com", name: "Dana", phone: "+961 70 999 999" });
-    expect(again.phone).toBe("+961 3 123 456");
+    expect(again?.phone).toBe("+961 3 123 456");
   });
 
   it("auth.me is null for visitors", async () => {

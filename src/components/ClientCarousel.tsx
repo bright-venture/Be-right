@@ -34,7 +34,7 @@ export function ClientCarousel() {
           {[0, 1].map(copy => CLIENTS.map(client => (
             <div key={`${copy}-${client.name}`} className={`client-logo-item ${copy ? "client-logo-copy" : ""}`} aria-hidden={copy ? true : undefined} dir={isAr ? "rtl" : "ltr"}>
               <div className="flex h-20 items-center justify-center bg-white px-5 py-4">
-                <img src={client.logo} alt={copy ? "" : client.name} className="h-10 w-full max-w-28 object-contain" draggable={false} />
+                <img src={client.logo} alt={copy ? "" : client.name} loading="lazy" decoding="async" className="h-10 w-full max-w-28 object-contain" draggable={false} />
               </div>
             </div>
           )))}

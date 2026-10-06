@@ -47,6 +47,7 @@ export function Navbar() {
             src="/assets/wordmark.png"
             width={600}
             height={222}
+            fetchPriority="high"
             alt="Be Right"
             className="h-9 w-auto transition-transform duration-200 hover:-rotate-2"
           />

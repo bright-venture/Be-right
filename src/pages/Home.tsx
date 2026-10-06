@@ -435,6 +435,8 @@ export default function Home() {
                 className="mt-4 inline-flex items-center gap-1.5 text-sm font-black text-flame-ink underline-offset-4 hover:underline"
               >
                 {p(t.trustRow.checksCta)}
+                {/* "Learn more" twice on one page: say what about, for screen readers and search engines. */}
+                <span className="sr-only"> — {p(t.trustRow.checksTitle)}</span>
                 <ArrowRight className="h-4 w-4 rtl:-scale-x-100" />
               </Link>
             </div>
@@ -477,6 +479,7 @@ export default function Home() {
                 className="mt-4 inline-flex items-center gap-1.5 text-sm font-black text-flame-ink underline-offset-4 hover:underline"
               >
                 {p(t.trustRow.guaranteeCta)}
+                <span className="sr-only"> — {p(t.trustRow.guaranteeTitle)}</span>
                 <ArrowRight className="h-4 w-4 rtl:-scale-x-100" />
               </Link>
             </div>

@@ -17,7 +17,14 @@ export async function authenticateRequest(headers: Headers) {
   if (!token) return undefined;
 
   const { data, error } = await getSupabaseAdmin().auth.getClaims(token);
-  if (error || !data?.claims?.sub) return undefined;
+  if (error) {
+    // A forged, malformed or expired token just means "not signed in". Anything else
+    // (Supabase unreachable, a wrong SUPABASE_URL) is a server problem: throwing makes
+    // the sign-in page say so, instead of silently looking signed out.
+    if (error.name === "AuthInvalidJwtError") return undefined;
+    throw error;
+  }
+  if (!data?.claims?.sub) return undefined;
 
   const claims = data.claims;
   const meta = (claims.user_metadata ?? {}) as Record<string, unknown>;
@@ -27,11 +34,13 @@ export async function authenticateRequest(headers: Headers) {
   // Recorded by the sign-up form when the "I agree" box is ticked.
   const termsVersion = text(meta.terms_version)?.slice(0, 32) ?? null;
 
-  return findOrCreateUser({
+  return (
+    (await findOrCreateUser({
     authId: claims.sub,
     email: typeof claims.email === "string" && claims.email ? claims.email : null,
     name,
     phone,
     termsVersion,
-  });
+    })) ?? undefined
+  );
 }

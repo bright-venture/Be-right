@@ -31,7 +31,9 @@
     <!-- Load critical assets early: fonts and the hero bird (drawn from the intro's poster frame) -->
     <link rel="preload" href="/fonts/archivo-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="preload" href="/fonts/rubik-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin />
-    <link rel="preload" as="image" href="/assets/bird-intro-poster.jpg" fetchpriority="high" />
+    <!-- The logo is the largest thing visible while the intro plays: fetch it first. -->
+    <link rel="preload" as="image" href="/assets/wordmark.png" fetchpriority="high" />
+    <link rel="preload" as="image" href="/assets/bird-intro-poster.jpg" />
 
     <!-- For search engines: who we are and what we offer (data only, not executed). -->
     <script type="application/ld+json">

@@ -29,6 +29,7 @@ import { isValidPhone } from "@contracts/phone";
 import { applyTransition, findRequest, logEvent, type RequestScope } from "./lib/workflow";
 import { notify } from "./notify";
 import { ratingFor, reviewOf } from "./queries/ratings";
+import { LIMITS, rateLimit } from "./lib/rateLimit";
 import { WORKMANSHIP_GUARANTEE_DAYS } from "@contracts/legal";
 
 const mediaItem = z.object({
@@ -105,6 +106,7 @@ export const requestsRouter = createRouter({
         throw new TRPCError({ code: "BAD_REQUEST", message: "Place the pin on your address in Lebanon" });
       }
       checkMedia(ctx.user.authId, input.media);
+      await rateLimit(`request:user:${ctx.user.id}`, LIMITS.requestPerUser);
 
       const urgency = computeUrgency(input.category, input.answers);
       if (input.emergency && (urgency.level === "normal" || urgency.level === "priority")) urgency.level = "urgent";

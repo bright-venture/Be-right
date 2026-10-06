@@ -102,6 +102,24 @@ describe("rate limits", () => {
     await expect(c.storage.createUpload(media)).rejects.toMatchObject(tooMany);
   });
 
+  it("caps bookings per customer (each one emails every specialist)", async () => {
+    const c = await callerFor(customer);
+    const booking = {
+      category: "plumbing",
+      answers: { problem: "fixture" },
+      preferredDate: futureDate(),
+      timeSlot: "morning" as const,
+      area: "Hamra",
+      address: "Street 1",
+      phone: "+961 70 000 000",
+      media: [],
+      lat: 33.8886,
+      lng: 35.5195,
+    };
+    for (let i = 0; i < 20; i++) await c.requests.create(booking);
+    await expect(c.requests.create(booking)).rejects.toMatchObject(tooMany);
+  });
+
   it("forgets old counters", async () => {
     const { purgeExpiredRateLimits } = await import("./lib/rateLimit");
     await db.insert(rateLimits).values([

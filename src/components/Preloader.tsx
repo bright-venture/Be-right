@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useI18n } from "@/i18n";
-import { refineBirdMatte } from "@/lib/birdMatte";
+import { removeStudioBackground } from "@/lib/matte";
 import { INTRO_DONE_EVENT } from "@/lib/intro";
 
 /**
@@ -18,11 +18,18 @@ const FADE_MS = 450;
 export function Preloader({ onDone }: { onDone: () => void }) {
   const { p, t } = useI18n();
   const [leaving, setLeaving] = useState(false);
+  // Every frame has its studio background removed pixel by pixel (on a background thread):
+  // phones, which show the intro smaller anyway, get 2.5x fewer pixels to process.
+  const [frameSize] = useState(() => (window.innerWidth < 640 ? { w: 480, h: 270 } : { w: 768, h: 432 }));
   const done = useRef(false);
   const video = useRef<HTMLVideoElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
   const runner = useRef<HTMLDivElement>(null);
   const frame = useRef(0);
+  /** A frame is being cleaned on the background thread: don't queue another. */
+  const busy = useRef(false);
+  /** Where each video frame is grabbed; only cleaned frames reach the visible canvas. */
+  const scratch = useRef<HTMLCanvasElement | null>(null);
   const timers = useRef<number[]>([]);
   const onDoneRef = useRef(onDone);
   useEffect(() => {
@@ -65,17 +72,27 @@ export function Preloader({ onDone }: { onDone: () => void }) {
     const element = video.current;
     const output = canvas.current;
     if (!element || !output) return;
-    if (timestamp - lastDraw >= 33 && element.readyState >= 2) {
-      const context = output.getContext("2d", { willReadFrequently: true });
-      if (!context) { finish(); return; }
+    // The clip runs in place until its final dash. Move that run across the viewport
+    // (every display frame, so the motion stays smooth while a frame is being cleaned).
+    const progress = Math.min(1, Math.max(0, (element.currentTime - 2.5) / 6.5));
+    if (runner.current) runner.current.style.transform = `translateX(${-65 + progress * 130}vw)`;
+    if (!busy.current && timestamp - lastDraw >= 33 && element.readyState >= 2) {
+      if (!scratch.current) {
+        scratch.current = document.createElement("canvas");
+        scratch.current.width = output.width;
+        scratch.current.height = output.height;
+      }
+      const grab = scratch.current.getContext("2d", { willReadFrequently: true });
+      const show = output.getContext("2d");
+      if (!grab || !show) { finish(); return; }
       try {
-        context.drawImage(element, 0, 0, output.width, output.height);
-        const image = context.getImageData(0, 0, output.width, output.height);
-        refineBirdMatte(image);
-        context.putImageData(image, 0, 0);
-        // The clip runs in place until its final dash. Move that run across the viewport.
-        const progress = Math.min(1, Math.max(0, (element.currentTime - 2.5) / 6.5));
-        if (runner.current) runner.current.style.transform = `translateX(${-65 + progress * 130}vw)`;
+        grab.drawImage(element, 0, 0, output.width, output.height);
+        const image = grab.getImageData(0, 0, output.width, output.height);
+        busy.current = true;
+        void removeStudioBackground(image).then((clean) => {
+          busy.current = false;
+          if (clean && !done.current) show.putImageData(clean, 0, 0);
+        });
         lastDraw = timestamp;
       } catch { finish(); return; }
     }
@@ -110,7 +127,7 @@ export function Preloader({ onDone }: { onDone: () => void }) {
         <video ref={video} src="/assets/bird-intro.mp4" poster="/assets/bird-intro-poster.jpg" muted playsInline preload="auto"
           onCanPlay={play} onEnded={finish} onError={finish} aria-hidden="true" className="sr-only" />
         <div ref={runner} className="flex w-[100vw] max-w-5xl flex-col items-center will-change-transform" style={{ transform: "translateX(-65vw)" }}>
-          <canvas ref={canvas} width={768} height={432} className="w-full max-h-[65vh] object-contain" role="img" aria-label={p(t.preloader.slogan)} />
+          <canvas ref={canvas} width={frameSize.w} height={frameSize.h} className="w-full max-h-[65vh] object-contain" role="img" aria-label={p(t.preloader.slogan)} />
         <div className="relative -mt-2 rounded-2xl border-2 border-navy bg-white px-6 py-3 shadow-[0_4px_0_rgb(12_43_92/0.15)] sm:-mt-6">
           <p className="font-display text-2xl font-black text-navy sm:text-4xl">{p(t.preloader.slogan)}</p>
           <span aria-hidden="true" className="absolute -top-[7px] start-1/2 h-3 w-3 -translate-x-1/2 rotate-45 border-s-2 border-t-2 border-navy bg-white" />

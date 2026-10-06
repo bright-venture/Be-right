@@ -1,4 +1,3 @@
-import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { and, eq, inArray } from "drizzle-orm";
@@ -100,8 +99,8 @@ export const authRouter = createRouter({
       }
       await tx
         .update(users)
-        // A fresh random sign-in id: the old login, even if it lingered, can't reach this row.
-        .set({ name: null, email: null, phone: null, avatar: null, authId: randomUUID(), deletedAt: new Date() })
+        // deletedAt also shuts out the old sign-in while it is still valid (see findOrCreateUser).
+        .set({ name: null, email: null, phone: null, avatar: null, deletedAt: new Date() })
         .where(eq(users.id, user.id));
       return { mediaKeys: media.map((m) => m.key), cancelled: open };
     });

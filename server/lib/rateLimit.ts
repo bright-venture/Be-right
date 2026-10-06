@@ -22,6 +22,8 @@ export const LIMITS = {
   applicationPerIp: { limit: 5, windowSeconds: HOUR },
   /** Booking photos/videos by one customer (8 per booking). */
   mediaUploadPerUser: { limit: 40, windowSeconds: HOUR },
+  /** Bookings by one customer: each one emails every specialist. */
+  requestPerUser: { limit: 20, windowSeconds: HOUR },
   /** Crash reports from one browser's IP (a page sends at most 5). */
   clientErrorPerIp: { limit: 20, windowSeconds: HOUR },
 } satisfies Record<string, Limit>;

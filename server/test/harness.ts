@@ -33,12 +33,14 @@ export async function callerFor(user?: User, { ip = randomUUID() as string } = {
 /** A signed-up account; by default it accepted the Terms at sign-up, like the real form. */
 export async function makeUser(email: string, name = email.split("@")[0], { acceptedTerms = true } = {}) {
   const { findOrCreateUser } = await import("../queries/users");
-  return findOrCreateUser({
+  const user = await findOrCreateUser({
     authId: randomUUID(),
     email,
     name,
     termsVersion: acceptedTerms ? "test-version" : null,
   });
+  if (!user) throw new Error("test user was not created");
+  return user;
 }
 
 /** A technician account (in the app they're created by hiring an application). */

@@ -19,7 +19,11 @@ async function findByAuthId(authId: string) {
   return rows.at(0);
 }
 
-/** Returns the app user for a Supabase auth identity, creating it on first sign-in. */
+/**
+ * Returns the app user for a Supabase auth identity, creating it on first sign-in.
+ * A deleted account returns null: its sign-in can stay valid for up to an hour after
+ * deletion, and must not bring the account (or its email) back.
+ */
 export async function findOrCreateUser(identity: {
   authId: string;
   email: string | null;
@@ -27,9 +31,10 @@ export async function findOrCreateUser(identity: {
   phone?: string | null;
   /** Terms version accepted at sign-up, if any. */
   termsVersion?: string | null;
-}): Promise<User> {
+}): Promise<User | null> {
   const db = getDb();
   const existing = await findByAuthId(identity.authId);
+  if (existing?.deletedAt) return null;
 
   if (!existing) {
     await db
