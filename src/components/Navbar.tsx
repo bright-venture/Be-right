@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { Globe, Menu, X } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
@@ -10,6 +10,14 @@ export function Navbar() {
   const { user, isAuthenticated, logout } = useAuth();
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
+
+  // Escape closes the phone menu.
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
 
   const role = user?.role as Role | undefined;
   const staff = !!role && isStaff(role);
@@ -40,6 +48,15 @@ export function Navbar() {
   );
 
   return (
+    <>
+    {/* Dims the page under the open phone menu; tapping it closes the menu. */}
+    {open && (
+      <div
+        aria-hidden
+        onClick={() => setOpen(false)}
+        className={`fixed inset-0 z-40 bg-navy/40 backdrop-blur-[2px] ${isAuthenticated ? "" : "lg:hidden"}`}
+      />
+    )}
     <header className="glass fixed inset-x-0 top-0 z-50">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-3 px-4 sm:px-6">
         <Link to="/" className="flex min-h-11 shrink-0 items-center gap-2 whitespace-nowrap">
@@ -130,7 +147,9 @@ export function Navbar() {
       </div>
 
       {open && (
-        <nav className={`border-t-[1.5px] border-navy/15 bg-paper px-4 py-4 ${isAuthenticated ? "" : "lg:hidden"}`}>
+        <nav
+          className={`max-h-[calc(100dvh-4rem)] overflow-y-auto overscroll-contain border-t-[1.5px] border-navy/15 bg-paper px-4 py-4 shadow-[0_12px_24px_rgb(12_43_92/0.15)] ${isAuthenticated ? "" : "lg:hidden"}`}
+        >
           <div className="flex flex-col gap-1">
             {area && (
               <Link to={area.to} onClick={() => setOpen(false)} className={menuItem}>
@@ -153,11 +172,7 @@ export function Navbar() {
                 </a>
               ),
             )}
-            <Link
-              to="/join"
-              onClick={() => setOpen(false)}
-              className="flex min-h-11 items-center rounded-2xl px-4 font-semibold text-navy/80 hover:bg-white"
-            >
+            <Link to="/join" onClick={() => setOpen(false)} className={menuItem}>
               {p(t.nav.join)}
             </Link>
             {isAuthenticated ? (
@@ -189,5 +204,6 @@ export function Navbar() {
         </nav>
       )}
     </header>
+    </>
   );
 }

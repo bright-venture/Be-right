@@ -27,14 +27,14 @@ export default function Clients() {
           </p>
         </div>
 
-        <ul className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="mt-10 grid grid-cols-2 gap-3 sm:mt-12 sm:gap-4 lg:grid-cols-3">
           {CLIENTS.map((c) => (
             <li
               key={c.name}
-              className="card-br card-hover flex flex-col items-center justify-center gap-1.5 px-6 py-8 text-center"
+              className="card-br card-hover flex flex-col items-center justify-center gap-1 px-3 py-5 text-center sm:gap-1.5 sm:px-6 sm:py-8"
             >
-              <img src={c.logo} alt="" loading="lazy" decoding="async" className="mb-4 h-20 w-full object-contain" />
-              <span className="font-display text-xl font-black tracking-tight text-navy">
+              <img src={c.logo} alt="" loading="lazy" decoding="async" className="mb-3 h-12 w-full object-contain sm:mb-4 sm:h-20" />
+              <span className="font-display text-base font-black tracking-tight text-navy sm:text-xl">
                 {c.name}
               </span>
               <span className="text-xs font-bold text-navy/70">{p(c.note)}</span>

@@ -156,7 +156,7 @@ export default function Join() {
               </h1>
               <p className="mt-4 max-w-lg leading-relaxed text-navy/70">{p(t.join.sub)}</p>
 
-              <div className="card-br mt-8 flex flex-col gap-6 p-6 sm:p-8">
+              <div className="card-br mt-8 flex flex-col gap-6 p-5 sm:p-8">
                 <div>
                   <label htmlFor="join-name" className={LABEL}>
                     {p(t.join.name)}

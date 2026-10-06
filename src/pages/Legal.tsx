@@ -41,7 +41,7 @@ export default function Legal({ doc }: { doc: "terms" | "privacy" }) {
           </Link>
         </nav>
 
-        <div className="card-br mt-8 p-6 sm:p-8">
+        <div className="card-br mt-8 p-5 sm:p-8">
           <p className="leading-relaxed text-navy/80">{p(content.intro)}</p>
           {content.sections.map((s) => (
             <section key={s.title.en} className="mt-8">

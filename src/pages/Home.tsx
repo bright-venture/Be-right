@@ -72,6 +72,18 @@ export default function Home() {
     return () => io.disconnect();
   }, []);
 
+  /* Phones: the sticky booking bar appears once the hero's own buttons scroll away,
+     so it never covers the hero or the category picker. */
+  const ctaRef = useRef<HTMLDivElement>(null);
+  const [showBar, setShowBar] = useState(false);
+  useEffect(() => {
+    const el = ctaRef.current;
+    if (!el || !("IntersectionObserver" in window)) return setShowBar(true);
+    const io = new IntersectionObserver(([entry]) => setShowBar(!entry.isIntersecting && entry.boundingClientRect.top < 0));
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
   const mainCats = MAIN_SERVICES.map((id) => CATEGORY_MAP[id]).filter(Boolean);
   const otherCats = OTHER_SERVICES.map((id) => CATEGORY_MAP[id]).filter(Boolean);
 
@@ -149,12 +161,12 @@ export default function Home() {
               <p className="hero-enter hero-d3 mt-4 max-w-xl text-[15px] leading-relaxed text-navy/70 sm:text-base">
                 {p(t.hero.sub)}
               </p>
-              <div className="hero-enter hero-d4 mt-7 flex flex-wrap items-center gap-3">
-                <Link to="/book" className="btn-pill-primary text-base">
+              <div ref={ctaRef} className="hero-enter hero-d4 mt-7 grid gap-3 sm:flex sm:flex-wrap sm:items-center">
+                <Link to="/book" className="btn-pill-primary justify-center text-base">
                   {p(t.hero.cta)}
                   <ArrowRight className="h-5 w-5 rtl:-scale-x-100" />
                 </Link>
-                <a href="#how" className="btn-pill-outline">
+                <a href="#how" className="btn-pill-outline justify-center">
                   {p(t.hero.ctaSecondary)}
                 </a>
               </div>
@@ -432,7 +444,7 @@ export default function Home() {
               </p>
               <Link
                 to="/checks"
-                className="mt-4 inline-flex items-center gap-1.5 text-sm font-black text-flame-ink underline-offset-4 hover:underline"
+                className="mt-2 inline-flex min-h-11 items-center gap-1.5 text-sm font-black text-flame-ink underline-offset-4 hover:underline"
               >
                 {p(t.trustRow.checksCta)}
                 {/* "Learn more" twice on one page: say what about, for screen readers and search engines. */}
@@ -455,7 +467,7 @@ export default function Home() {
               </p>
               <Link
                 to="/clients"
-                className="mt-4 inline-flex items-center gap-1.5 text-sm font-black text-flame-ink underline-offset-4 hover:underline"
+                className="mt-2 inline-flex min-h-11 items-center gap-1.5 text-sm font-black text-flame-ink underline-offset-4 hover:underline"
               >
                 {p(t.trustRow.clientsCta)}
                 <ArrowRight className="h-4 w-4 rtl:-scale-x-100" />
@@ -476,7 +488,7 @@ export default function Home() {
               </p>
               <Link
                 to="/guarantee"
-                className="mt-4 inline-flex items-center gap-1.5 text-sm font-black text-flame-ink underline-offset-4 hover:underline"
+                className="mt-2 inline-flex min-h-11 items-center gap-1.5 text-sm font-black text-flame-ink underline-offset-4 hover:underline"
               >
                 {p(t.trustRow.guaranteeCta)}
                 <span className="sr-only"> — {p(t.trustRow.guaranteeTitle)}</span>
@@ -574,17 +586,21 @@ export default function Home() {
         </div>
       </section>
 
-      <Footer />
+      {/* Extra room at the bottom on phones so the booking bar never covers the footer. */}
+      <Footer className="pb-28 sm:pb-16" />
 
       {/* Sticky mobile booking bar */}
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t-[1.5px] border-navy/15 bg-paper/95 p-3 backdrop-blur-md sm:hidden">
+      <div
+        inert={!showBar}
+        className={`fixed inset-x-0 bottom-0 z-40 border-t-[1.5px] border-navy/15 bg-paper/95 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-md transition-transform duration-300 sm:hidden ${
+          showBar ? "translate-y-0" : "translate-y-full"
+        }`}
+      >
         <Link to="/book" className="btn-pill-primary w-full !min-h-12 text-base">
           {p(t.nav.book)}
           <ArrowRight className="h-5 w-5 rtl:-scale-x-100" />
         </Link>
       </div>
-      {/* spacer so the bar never covers content */}
-      <div className="h-16 sm:hidden" />
     </div>
   );
 }

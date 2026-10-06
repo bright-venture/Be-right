@@ -71,14 +71,14 @@ export function DocumentUpload({
 
   return (
     <div className="rounded-2xl border-2 border-navy/20 bg-white p-4">
-      <div className="flex flex-wrap items-center gap-3">
+      {/* Phones: text full width, button underneath; wider screens: side by side. */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="min-w-0 flex-1">
           <p className="font-display text-sm font-extrabold text-navy">
             {label} <span className="text-flame-ink">*</span>
           </p>
-          <p className="text-xs text-navy/70">
-            {hint} · {p(t.docs.maxSize)}
-          </p>
+          <p className="mt-0.5 text-xs leading-relaxed text-navy/70">{hint}</p>
+          <p className="mt-0.5 text-xs font-semibold text-navy/60">{p(t.docs.maxSize)}</p>
         </div>
         <input
           ref={input}
@@ -92,7 +92,7 @@ export function DocumentUpload({
           type="button"
           onClick={() => input.current?.click()}
           disabled={busy}
-          className="btn-pill-outline !min-h-10 !px-4 !py-1.5 text-xs"
+          className="btn-pill-outline !min-h-11 w-full justify-center !px-4 !py-1.5 text-xs sm:w-auto"
         >
           {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileUp className="h-4 w-4" />}
           {fileName ? p(t.docs.replace) : p(t.docs.choose)}
