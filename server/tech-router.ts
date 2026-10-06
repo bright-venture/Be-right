@@ -13,6 +13,7 @@ import {
 import { ACTIVE_JOB_STATUSES, ASSIGNABLE_STATUSES } from "@contracts/workflow";
 import { applyTransition, findRequest, logEvent } from "./lib/workflow";
 import { profilePhotoUrl } from "./lib/storage";
+import { ratingsFor } from "./queries/ratings";
 import { notify } from "./notify";
 
 export const techRouter = createRouter({
@@ -29,7 +30,7 @@ export const techRouter = createRouter({
       .where(eq(users.role, "technician"));
     if (!techs.length) return [];
     const ids = techs.map((x) => x.id);
-    const [apps, counts] = await Promise.all([
+    const [apps, counts, ratings] = await Promise.all([
       db
         .select({
           id: technicianApplications.id,
@@ -50,6 +51,7 @@ export const techRouter = createRouter({
         .from(serviceRequests)
         .where(inArray(serviceRequests.technicianId, ids))
         .groupBy(serviceRequests.technicianId, serviceRequests.status),
+      ratingsFor(ids),
     ]);
     return Promise.all(
       techs.map(async (x) => {
@@ -70,6 +72,7 @@ export const techRouter = createRouter({
           availability: app?.availability ?? null,
           activeJobs: sum(ACTIVE_JOB_STATUSES),
           completedJobs: sum(["completed"]),
+          rating: ratings.get(x.id) ?? { average: null, count: 0 },
         };
       }),
     );

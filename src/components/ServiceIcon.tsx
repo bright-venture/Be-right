@@ -88,6 +88,17 @@ export function ServiceIcon({
           <path d="m11.5 16 3 3 6-6" />
         </svg>
       );
+    case "landscaping":
+      return (
+        <svg {...common}>
+          {/* stylized tree with ground line */}
+          <path d="M16 27v-8" />
+          <path d="M16 19c-4.5 0-8-3.5-8-8 0-4 3-7 8-7s8 3 8 7c0 4.5-3.5 8-8 8z" />
+          <path d="M16 8v11M11.5 11l4.5 4.5M20.5 11 16 15.5" />
+          <path d="M5 27h22" />
+          <path d="M8 23c1-1.5 2-1.5 3 0M21 23c1-1.5 2-1.5 3 0" />
+        </svg>
+      );
     case "appliance":
       return (
         <svg {...common}>

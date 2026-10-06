@@ -33,17 +33,17 @@
 
 @layer base {
   :root {
-    --background: 39 30% 90%; /* warm paper #EDE7DC */
+    --background: 220 23% 97%; /* light neutral surface */
     --foreground: 218 77% 20%; /* deep navy #0C2B5C */
     --card: 0 0% 100%;
     --card-foreground: 218 77% 20%;
     --popover: 0 0% 100%;
     --popover-foreground: 218 77% 20%;
     --primary: 218 77% 20%;
-    --primary-foreground: 39 30% 94%;
-    --secondary: 39 22% 85%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 25% 94%;
     --secondary-foreground: 218 77% 20%;
-    --muted: 39 18% 85%;
+    --muted: 220 20% 94%;
     --muted-foreground: 218 20% 38%;
     --accent: 19 92% 50%; /* flame orange #F4530A */
     --accent-foreground: 0 0% 100%;
@@ -64,7 +64,7 @@
     scroll-behavior: smooth;
   }
   body {
-    background-color: #ede7dc;
+    background-color: #f7f8fa;
     color: #0c2b5c;
     font-family: "Rubik", "Archivo", sans-serif;
     -webkit-font-smoothing: antialiased;
@@ -77,54 +77,163 @@
     font-family: "Rubik", sans-serif;
   }
   ::selection {
-    background: #f4530a;
+    background: #c94407;
     color: #fff;
   }
 }
 
 @layer components {
-  /* Pill button system — 2px navy border, reference-style hover fills */
+  /* ---------- Buttons: pill system with hard offset shadow ---------- */
   .btn-pill {
-    @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-full border-2 border-navy px-7 py-3 font-display text-sm font-bold tracking-wide transition-all duration-200;
+    @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-full px-7 py-3 font-display text-sm font-bold tracking-wide transition-all duration-200;
   }
   .btn-pill-primary {
-    @apply btn-pill border-flame bg-flame text-white hover:bg-flame-dark hover:border-flame-dark active:scale-[0.97];
+    @apply btn-pill text-white;
+    background: linear-gradient(150deg, #c94407 0%, #a33706 100%);
+    box-shadow: 0 4px 12px rgb(244 83 10 / 0.2);
+  }
+  .btn-pill-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 7px 18px rgb(244 83 10 / 0.25);
+  }
+  .btn-pill-primary:active {
+    transform: translateY(1px);
+    box-shadow: 0 2px 6px rgb(244 83 10 / 0.15);
   }
   .btn-pill-outline {
-    @apply btn-pill bg-transparent text-navy hover:bg-navy hover:text-paper active:scale-[0.97];
+    @apply btn-pill border-2 border-navy bg-transparent text-navy hover:bg-navy hover:text-paper;
+  }
+  .btn-pill-outline:active {
+    transform: scale(0.97);
   }
   .btn-pill-white {
-    @apply btn-pill bg-white text-navy hover:bg-flame hover:border-flame hover:text-white active:scale-[0.97];
+    @apply btn-pill bg-white text-navy;
+    box-shadow: 0 4px 12px rgb(8 30 66 / 0.12);
+  }
+  .btn-pill-white:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 7px 18px rgb(8 30 66 / 0.16);
+  }
+  .btn-pill-white:active {
+    transform: translateY(1px);
+    box-shadow: 0 2px 6px rgb(8 30 66 / 0.1);
   }
 
-  /* Bordered card */
+  /* ---------- Cards ---------- */
   .card-br {
-    @apply rounded-3xl border-2 border-navy bg-white;
+    @apply rounded-3xl bg-white;
+    border: 1px solid rgb(12 43 92 / 0.1);
+    box-shadow: 0 4px 20px rgb(12 43 92 / 0.035);
+  }
+  .card-hover {
+    transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.25s;
+  }
+  .card-hover:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 28px rgb(12 43 92 / 0.08);
   }
 
-  /* Technical label — uppercase chip with rounded border frame */
+  /* ---------- Editorial labels & type ---------- */
   .tech-label {
-    @apply inline-block rounded-full border-2 border-current px-4 py-1 font-display text-[11px] font-bold uppercase tracking-[0.18em];
+    @apply inline-flex items-center gap-2.5 font-display text-[11px] font-black uppercase tracking-[0.3em];
+  }
+  .tech-label::before {
+    content: "";
+    width: 26px;
+    height: 2px;
+    background: currentColor;
+    flex-shrink: 0;
+  }
+  .text-gradient-flame {
+    background: linear-gradient(110deg, #f4530a 15%, #ff8a4c 50%, #d84505 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  /* Underline brush stroke for hero accents */
+  .stroke-underline {
+    position: relative;
+    white-space: nowrap;
+  }
+  .stroke-underline::after {
+    content: "";
+    position: absolute;
+    inset-inline: -1%;
+    bottom: 0.06em;
+    height: 0.13em;
+    background: #f4530a;
+    border-radius: 999px;
+    z-index: -1;
+    transform: rotate(-0.8deg);
+  }
+
+  /* ---------- Surfaces ---------- */
+  .glass {
+    background: rgb(255 255 255 / 0.94);
+    backdrop-filter: blur(12px) saturate(1.3);
+    -webkit-backdrop-filter: blur(12px) saturate(1.3);
+    border-bottom: 1px solid rgb(12 43 92 / 0.08);
+  }
+  /* Blueprint dot grid on paper */
+  .dotgrid {
+    background-image: radial-gradient(rgb(12 43 92 / 0.035) 1px, transparent 1px);
+    background-size: 28px 28px;
+  }
+  /* Diagonal tape bands */
+  .tape-navy {
+    background: linear-gradient(135deg, #0c2b5c 0%, #081e42 100%);
+  }
+  .grain::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.05;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  /* Big arch frame (poster-style media window) */
+  .arch-frame {
+    border: 2px solid #0c2b5c;
+    border-radius: 999px 999px 28px 28px;
+    box-shadow: 10px 10px 0 rgb(244 83 10 / 0.9);
+  }
+  /* Section number — oversized ghost numeral */
+  .ghost-num {
+    @apply pointer-events-none select-none font-display font-black leading-none;
+    color: transparent;
+    -webkit-text-stroke: 1.5px rgb(12 43 92 / 0.16);
   }
 }
 
 @layer utilities {
+  /* h-13 / w-13 are not in Tailwind's default scale */
+  .h-13 {
+    height: 3.25rem;
+  }
+  .w-13 {
+    width: 3.25rem;
+  }
   .text-balance {
     text-wrap: balance;
   }
-  /* Split-line reveal used in the hero */
   .reveal-line {
     display: block;
     overflow: hidden;
   }
+  /* Hidden until the launch choreography (bird run) completes — the
+     .hero-ready class on the page root starts the staggered reveal */
   .reveal-line > span {
     display: block;
+    opacity: 0;
+    transform: translateY(110%);
+  }
+  .hero-ready .reveal-line > span {
     animation: rise-in 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
   }
-  .reveal-line:nth-child(2) > span {
+  .hero-ready .reveal-line:nth-child(2) > span {
     animation-delay: 0.12s;
   }
-  .reveal-line:nth-child(3) > span {
+  .hero-ready .reveal-line:nth-child(3) > span {
     animation-delay: 0.24s;
   }
   @keyframes rise-in {
@@ -138,70 +247,8 @@
     }
   }
 }
-/* ---------- Preloader (road-runner intro) ---------- */
-@keyframes pl-run {
-  0% {
-    transform: translateX(124vw);
-  }
-  26% {
-    transform: translateX(62vw); /* halt mid-screen */
-  }
-  40% {
-    transform: translateX(62vw);
-  }
-  100% {
-    transform: translateX(-24vw);
-  }
-}
-@keyframes pl-bob {
-  0%,
-  100% {
-    transform: translateY(0) rotate(-3deg);
-  }
-  50% {
-    transform: translateY(-10px) rotate(2deg);
-  }
-}
-@keyframes pl-dust {
-  0% {
-    opacity: 0.9;
-    transform: translate(0, 0) scale(0.5);
-  }
-  100% {
-    opacity: 0;
-    transform: translate(-34px, -14px) scale(1.5);
-  }
-}
-@keyframes pl-meep {
-  0%,
-  27% {
-    opacity: 0;
-    transform: translate(-50%, 6px) scale(0.6);
-  }
-  31%,
-  37% {
-    opacity: 1;
-    transform: translate(-50%, 0) scale(1);
-  }
-  39.5% {
-    opacity: 0;
-  }
-  41.5%,
-  48% {
-    opacity: 1;
-    transform: translate(-50%, 0) scale(1.06);
-  }
-  51%,
-  100% {
-    opacity: 0;
-    transform: translate(-50%, -8px) scale(1);
-  }
-}
-@keyframes pl-dash {
-  to {
-    stroke-dashoffset: -36;
-  }
-}
+
+/* ---------- Preloader (intro) ---------- */
 @keyframes pl-blink {
   0%,
   100% {
@@ -211,14 +258,6 @@
   50% {
     opacity: 0.45;
     transform: scale(0.82);
-  }
-}
-@keyframes pl-burst {
-  from {
-    transform: scale(0) rotate(-24deg);
-  }
-  to {
-    transform: scale(1) rotate(6deg);
   }
 }
 @keyframes pl-pop {
@@ -231,3 +270,176 @@
     transform: scale(1);
   }
 }
+
+/* ---------- Hero polish ---------- */
+/* Gentle mascot bob — transform-only, no distortion */
+@keyframes hero-bob {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-9px) rotate(-0.6deg);
+  }
+}
+.hero-bob {
+  animation: hero-bob 5.2s ease-in-out infinite;
+  will-change: transform;
+}
+/* Offscreen pause: JS toggles this when the hero leaves the viewport */
+.hero-motion-paused .hero-bob,
+.hero-motion-paused .dotgrid::before {
+  animation-play-state: paused;
+}
+/* Subtle background drift on the hero dot grid */
+.dotgrid::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgb(12 43 92 / 0.09) 1.5px, transparent 1.5px);
+  background-size: 26px 26px;
+  pointer-events: none;
+  animation: hero-drift 26s ease-in-out infinite alternate;
+}
+@keyframes hero-drift {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 26px 13px;
+  }
+}
+/* Intro run-in: bird slides in from the side over 1.1s, then swaps to standing */
+@keyframes pl-run-in {
+  from {
+    transform: translateX(-34vw) rotate(-2deg);
+  }
+  62% {
+    transform: translateX(1.5vw) rotate(0.6deg);
+  }
+  100% {
+    transform: translateX(0) rotate(0deg);
+  }
+}
+.pl-run-in {
+  animation: pl-run-in 1.1s cubic-bezier(0.3, 0.9, 0.35, 1) both;
+}
+
+/* Hero run-across: from left screen edge (--run-from, set by JS) to the mascot slot over ~2s */
+@keyframes hero-run-across {
+  from {
+    transform: translateX(var(--run-from, -100vw)) rotate(-1.5deg) scaleX(var(--run-flip, 1));
+  }
+  80% {
+    transform: translateX(calc(1.5% * var(--run-flip, 1))) rotate(0.5deg) scaleX(var(--run-flip, 1));
+  }
+  100% {
+    transform: translateX(0) rotate(0deg) scaleX(var(--run-flip, 1));
+  }
+}
+
+/* Staggered entrance — opacity + small slide, final state identical to static layout */
+@keyframes hero-enter {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.hero-enter {
+  opacity: 0; /* revealed by .hero-ready once the bird settles */
+}
+.hero-ready .hero-enter {
+  animation: hero-enter 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.hero-d1 { animation-delay: 0.05s; }
+.hero-d2 { animation-delay: 0.16s; }
+.hero-d3 { animation-delay: 0.27s; }
+.hero-d4 { animation-delay: 0.38s; }
+.hero-d5 { animation-delay: 0.5s; }
+.hero-d6 { animation-delay: 0.62s; }
+
+/* ---------- Reduced motion: respect user preference ---------- */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .animate-marquee,
+  .animate-marquee-rtl {
+    animation: none !important;
+    width: auto;
+    transform: none;
+  }
+  .reveal-line > span,
+  .animate-rise-in,
+  .animate-floaty,
+  .hero-enter,
+  .hero-bob,
+  .pl-run-in,
+  .dotgrid::before {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .card-hover,
+  .btn-pill-primary,
+  .btn-pill-white {
+    transition: none !important;
+  }
+}
+
+/* Five client logos on desktop, four/three on tablets and two on phones.
+   Two identical runs create a seamless loop without a jump at the last logo. */
+.client-logo-row { --logo-count: 2; }
+.client-logo-track {
+  display: flex;
+  width: calc(1800% / var(--logo-count));
+  animation: client-logos-scroll 36s linear infinite;
+}
+.client-logo-item { flex: 0 0 calc(100% / 18); min-width: 0; }
+.client-logo-row:hover .client-logo-track,
+.client-logo-row:focus-within .client-logo-track { animation-play-state: paused !important; }
+@keyframes client-logos-scroll { to { transform: translateX(-50%); } }
+@media (min-width: 640px) { .client-logo-row { --logo-count: 3; } }
+@media (min-width: 768px) { .client-logo-row { --logo-count: 4; } }
+@media (min-width: 1024px) { .client-logo-row { --logo-count: 5; } }
+@media (prefers-reduced-motion: reduce) {
+  .client-logo-track { width: 100%; flex-wrap: wrap; animation: none; gap: 12px 0; }
+  .client-logo-item { flex-basis: calc(100% / var(--logo-count)); }
+  .client-logo-copy { display: none; }
+}
+
+/* Cohesive homepage layout; shared controls retain their existing behaviour. */
+.home-page > section:not(.home-hero) { padding-block: 76px; }
+.home-page > section h2 { text-wrap: balance; }
+.home-page > section p { line-height: 1.75; }
+.home-hero { background: linear-gradient(115deg, #ffffff 35%, #eef4fc 100%); }
+.hero-benefits li { border: 0; background: transparent; box-shadow: none; padding-inline: 0; font-size: 12px; font-weight: 600; }
+.hero-benefits li span { width: 6px; height: 6px; }
+.home-page #clients { padding-block: 36px; background: white; border-block: 1px solid rgb(12 43 92 / .07); }
+.home-page #clients h2 { font-size: 22px; margin-top: 8px; }
+.home-page #services, .home-page #pricing, .home-page #trust, .home-page #faq { background: #fff; }
+.home-page #coverage, .home-page #plans { background: #f4f7fb; }
+.service-tile { min-height: 140px; border: 1px solid rgb(12 43 92 / .09); border-radius: 20px; box-shadow: none; }
+.service-tile:hover { transform: translateY(-3px); border-color: rgb(244 83 10 / .45); box-shadow: 0 10px 24px rgb(12 43 92 / .07); }
+.service-tile .ghost-num { display: none; }
+.service-tile > span:last-child { font-size: 14px; font-weight: 700; }
+.category-rail { background: white; border: 1px solid rgb(12 43 92 / .08); border-radius: 24px; padding: 14px; box-shadow: 0 8px 28px rgb(12 43 92 / .045); }
+.category-rail button { box-shadow: none; }
+.category-rail button[aria-haspopup="menu"] { box-shadow: 0 3px 10px rgb(244 83 10 / .16); }
+:focus-visible { outline: 3px solid #0B63CE; outline-offset: 4px; }
+@media (max-width: 639px) {
+  .home-page > section:not(.home-hero) { padding-block: 48px; }
+  .home-page #clients { padding-block: 28px; }
+  .category-rail { padding: 10px; border-radius: 18px; }
+  .home-hero h1 { font-size: 38px; }
+}
+
+/* Keep the coastal cities visible beside the mascot in both languages. */
+.hero-coastal-map { transform: translateX(-70px); }
+.hero-bird-offset { transform: translateX(83px); }
+[dir="rtl"] .hero-coastal-map { transform: translateX(-55px); }
+[dir="rtl"] .hero-bird-offset { transform: translateX(86px); }

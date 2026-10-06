@@ -185,6 +185,31 @@ export const technicianApplications = pgTable("technician_applications", {
 
 export type TechnicianApplication = typeof technicianApplications.$inferSelect;
 
+/** A customer's rating of a completed job: one per request (see server/reviews-router.ts). */
+export const reviews = pgTable(
+  "reviews",
+  {
+    id: serial("id").primaryKey(),
+    requestId: integer("request_id")
+      .notNull()
+      .unique()
+      .references(() => serviceRequests.id, { onDelete: "cascade" }),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id),
+    /** Who did the job, so their average can be shown. */
+    technicianId: integer("technician_id").references(() => users.id),
+    category: varchar("category", { length: 64 }).notNull(),
+    /** 1 to 5 stars. */
+    rating: integer("rating").notNull(),
+    comment: text("comment"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [index("reviews_technician_idx").on(t.technicianId)],
+).enableRLS();
+
+export type Review = typeof reviews.$inferSelect;
+
 /** Request counters for abuse-prone endpoints, one row per key (see server/lib/rateLimit.ts). */
 export const rateLimits = pgTable("rate_limits", {
   key: varchar("key", { length: 128 }).primaryKey(),

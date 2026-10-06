@@ -4,6 +4,7 @@ import {
   COMPANY,
   REJECTED_APPLICATION_RETENTION_DAYS as REJECT_DAYS,
   WORKMANSHIP_GUARANTEE_DAYS as GUARANTEE_DAYS,
+  arabicDays,
 } from "@contracts/legal";
 import type { LocalText } from "@contracts/services";
 
@@ -81,7 +82,7 @@ export const TERMS: LegalDocument = {
       paragraphs: [
         t(
           `If completed work isn't right, report it in the app within ${GUARANTEE_DAYS} days and we will come back to fix the same problem at no extra labour cost. This doesn't cover new faults, misuse, work done by others afterwards, or manufacturer defects in parts (which follow the supplier's warranty).`,
-          `إذا لم يكن العمل المنجز على ما يرام، أبلغنا عبر التطبيق خلال ${GUARANTEE_DAYS} يوماً وسنعود لإصلاح المشكلة نفسها دون كلفة يد عاملة إضافية. لا يشمل ذلك الأعطال الجديدة أو سوء الاستخدام أو أعمالاً قام بها غيرنا لاحقاً أو عيوب تصنيع القطع (التي تخضع لكفالة المورّد).`,
+          `إذا لم يكن العمل المنجز على ما يرام، أبلغنا عبر التطبيق خلال ${arabicDays(GUARANTEE_DAYS)} وسنعود لإصلاح المشكلة نفسها دون كلفة يد عاملة إضافية. لا يشمل ذلك الأعطال الجديدة أو سوء الاستخدام أو أعمالاً قام بها غيرنا لاحقاً أو عيوب تصنيع القطع (التي تخضع لكفالة المورّد).`,
         ),
       ],
     },
@@ -143,8 +144,8 @@ export const PRIVACY: LegalDocument = {
           "الحساب: الاسم والبريد الإلكتروني ورقم الهاتف/واتساب وكلمة المرور (تُخزَّن بشكل مشفّر لدى مزوّد المصادقة فقط؛ ولا نطّلع عليها أبداً).",
         ),
         t(
-          "Bookings: the service, your answers to the guided questions, photos and videos you upload, the visit address, map pin, preferred date and notes, plus the status history of each request.",
-          "الحجوزات: الخدمة المطلوبة وأجوبتك على الأسئلة الموجّهة والصور والفيديوهات التي ترفعها وعنوان الزيارة وموقعه على الخريطة والتاريخ المفضل والملاحظات، إضافة إلى سجل حالة كل طلب.",
+          "Bookings: the service, your answers to the guided questions, photos and videos you upload, the visit address, map pin, preferred date and notes, the status history of each request, and any rating or comment you leave after a job.",
+          "الحجوزات: الخدمة المطلوبة وأجوبتك على الأسئلة الموجّهة والصور والفيديوهات التي ترفعها وعنوان الزيارة وموقعه على الخريطة والتاريخ المفضل والملاحظات، وسجل حالة كل طلب، وأي تقييم أو تعليق تتركه بعد إنجاز المهمة.",
         ),
         t(
           "Technician location: only while a job is active and only after the technician turns on location sharing; we keep the latest position for that job.",
@@ -173,8 +174,8 @@ export const PRIVACY: LegalDocument = {
       title: t("3. Who sees it", "٣. من يطّلع عليها"),
       paragraphs: [
         t(
-          "Be Right specialists see requests and applications to do their job. The technician assigned to your job sees your name, phone, address, map pin, answers and photos. You see your technician's name, photo and, while the job is active, their live location. Applicants' ID documents are seen only by our hiring team and are never shown to customers.",
-          "يطّلع مختصو بي رايت على الطلبات وطلبات التوظيف لأداء عملهم. يرى الفني المعيّن لمهمتك اسمك وهاتفك وعنوانك وموقعك على الخريطة وأجوبتك وصورك. وترى أنت اسم الفني وصورته، وموقعه المباشر أثناء تنفيذ المهمة. أما هويات المتقدّمين فلا يطّلع عليها إلا فريق التوظيف ولا تُعرض على العملاء إطلاقاً.",
+          "Be Right specialists see requests and applications to do their job. The technician assigned to your job sees your name, phone, address, map pin, answers and photos. You see your technician's name, photo and, while the job is active, their live location, and their average rating. Your rating counts towards that average without your name; your comment is read only by our team. Applicants' ID documents are seen only by our hiring team and are never shown to customers.",
+          "يطّلع مختصو بي رايت على الطلبات وطلبات التوظيف لأداء عملهم. يرى الفني المعيّن لمهمتك اسمك وهاتفك وعنوانك وموقعك على الخريطة وأجوبتك وصورك. وترى أنت اسم الفني وصورته، وموقعه المباشر أثناء تنفيذ المهمة، ومتوسط تقييمه. يُحتسب تقييمك في هذا المتوسط دون اسمك، ولا يقرأ تعليقك إلا فريقنا. أما هويات المتقدّمين فلا يطّلع عليها إلا فريق التوظيف ولا تُعرض على العملاء إطلاقاً.",
         ),
         t(
           "We use trusted providers to run the service: Supabase (database, sign-in and file storage, hosted in the EU – Frankfurt), Netlify (website hosting), Resend (account and request-update emails, EU), Cloudflare (our domain, and visit statistics without cookies or personal profiles) and a map provider, OpenStreetMap or MapTiler (map images, which receive your IP address when a map loads). They process data only on our instructions. We never sell your data.",

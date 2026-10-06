@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router";
-import { ChevronDown, Loader2, MapPin } from "lucide-react";
+import { ChevronDown, Loader2, MapPin, MessageCircle, Repeat, Star } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { ServiceIcon } from "@/components/ServiceIcon";
@@ -8,6 +8,9 @@ import { MediaGrid } from "@/components/MediaGrid";
 import JobMap from "@/components/map/JobMap";
 import { AnswerList } from "@/components/AnswerList";
 import { ReportProblem } from "@/components/ReportProblem";
+import { RateJob } from "@/components/RateJob";
+import { Stars } from "@/components/Stars";
+import { COMPANY } from "@contracts/legal";
 import { useI18n } from "@/i18n";
 import { isRecent } from "@/lib/time";
 import { useRoleGate } from "@/hooks/useRoleGate";
@@ -55,11 +58,13 @@ function initials(name: string | null) {
 function TechnicianCard({
   name,
   photoUrl,
+  rating,
   home,
   location,
 }: {
   name: string | null;
   photoUrl: string | null;
+  rating: { average: number | null; count: number };
   home: { lat: number; lng: number } | null;
   location: { lat: string; lng: string; updatedAt: Date } | null;
 }) {
@@ -91,6 +96,19 @@ function TechnicianCard({
             {p(t.tracking.techOnWay)}
           </p>
           <p className="font-display text-base font-extrabold text-navy">{name ?? "Be Right"}</p>
+          <span className="mt-0.5 flex items-center gap-1.5 text-xs font-bold text-navy/70">
+            {rating.average !== null ? (
+              <>
+                <Stars value={rating.average} size={13} />
+                {rating.average.toFixed(1)} · {rating.count} {p(t.rating.jobs)}
+              </>
+            ) : (
+              <>
+                <Star className="h-3.5 w-3.5 text-flame" fill="currentColor" aria-hidden />
+                {p(t.rating.new)}
+              </>
+            )}
+          </span>
         </div>
         {fresh && (
           <span className="ms-auto inline-flex items-center gap-1.5 rounded-full bg-bird px-3 py-1 text-xs font-bold text-white">
@@ -328,6 +346,7 @@ export default function Requests() {
                       <TechnicianCard
                         name={detail.data.technician.name}
                         photoUrl={detail.data.technician.photoUrl}
+                        rating={detail.data.technician.rating}
                         home={
                           detail.data.request.lat != null && detail.data.request.lng != null
                             ? { lat: detail.data.request.lat, lng: detail.data.request.lng }
@@ -369,6 +388,29 @@ export default function Requests() {
                         {p(t.requests.cancel)}
                       </button>
                     )}
+                    {detail.data.request.status === "completed" && (
+                      <>
+                        <RateJob key={`rate-${r.id}`} requestId={r.id} rated={!!detail.data.review} />
+                        <Link to={`/book?cat=${detail.data.request.category}`} className="btn-pill-outline mt-4 !px-5 !py-2">
+                          <Repeat className="h-4 w-4" aria-hidden />
+                          {p(t.rebook)}
+                        </Link>
+                      </>
+                    )}
+
+                    {/* WhatsApp about this job: only once the business number is set (contracts/legal.ts). */}
+                    {COMPANY.whatsapp && (
+                      <a
+                        href={`https://wa.me/${COMPANY.whatsapp}?text=${encodeURIComponent(`Be Right #${r.id}: `)}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="mt-4 ms-3 inline-flex items-center gap-2 rounded-full border-2 border-green-700 bg-green-700/10 px-4 py-2 text-sm font-bold text-green-800 transition-colors hover:bg-green-700 hover:text-white"
+                      >
+                        <MessageCircle className="h-4 w-4" aria-hidden />
+                        {p(t.requests.whatsappUs)}
+                      </a>
+                    )}
+
                     {detail.data.guarantee && (
                       <ReportProblem
                         key={r.id}

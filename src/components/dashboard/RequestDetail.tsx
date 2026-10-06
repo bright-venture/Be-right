@@ -3,6 +3,7 @@ import { Loader2, Mail, MessageCircle, Phone } from "lucide-react";
 import type { inferRouterOutputs } from "@trpc/server";
 import type { AppRouter } from "../../../server/router";
 import { ServiceIcon } from "@/components/ServiceIcon";
+import { Stars } from "@/components/Stars";
 import { MediaGrid } from "@/components/MediaGrid";
 import { AnswerList } from "@/components/AnswerList";
 import JobMap from "@/components/map/JobMap";
@@ -192,6 +193,17 @@ export function RequestDetail({
               </p>
             )}
           </section>
+
+          {d.review && (
+            <section className="rounded-2xl border-2 border-flame/40 bg-flame/5 p-4">
+              <p className={LABEL}>{p(t.dash4.customerRating)}</p>
+              <p className="mt-2 flex items-center gap-2 text-sm font-bold text-navy">
+                <Stars value={d.review.rating} size={16} />
+                {d.review.rating}/5
+              </p>
+              {d.review.comment && <p className="mt-2 text-sm text-navy/80">“{d.review.comment}”</p>}
+            </section>
+          )}
 
           <Preparation key={r.id} request={r} onSaved={invalidate} />
 

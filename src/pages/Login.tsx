@@ -26,14 +26,14 @@ export default function Login({ mode = "signin" }: { mode?: AuthMode }) {
   return (
     <div className="flex min-h-screen flex-col bg-paper">
       <Navbar />
-      <main className="flex flex-1 items-center justify-center px-4 py-24">
-        <div className="card-br w-full max-w-md p-6 sm:p-8">
+      <main className="dotgrid flex flex-1 items-center justify-center px-4 py-24">
+        <div className="card-br w-full max-w-md !rounded-[28px] p-6 sm:p-8" style={{ boxShadow: "0 6px 0 rgb(12 43 92 / 0.12)" }}>
           <img
             src="/assets/mascot-320.webp"
             width={320}
             height={408}
             alt=""
-            className="mx-auto mb-5 h-auto w-20"
+            className="mx-auto mb-5 h-auto w-20 drop-shadow-[0_10px_14px_rgba(8,30,66,0.2)]"
           />
           <AuthPanel key={mode} next={next} initialMode={mode} headingLevel="h1" />
           {accountError && (

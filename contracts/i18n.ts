@@ -1,5 +1,6 @@
 // Bilingual UI strings (English / Arabic).
-import type { Lang, RequestStatus, UrgencyLevel } from "./services";
+import type { Lang, RequestStatus, UrgencyLevel, LocalText } from "./services";
+import { arabicDays, WORKMANSHIP_GUARANTEE_DAYS as DAYS } from "./legal";
 
 export const t = {
   brand: { en: "Be Right", ar: "بي رايت" },
@@ -13,7 +14,9 @@ export const t = {
     how: { en: "How it works", ar: "كيف منشتغل" },
     why: { en: "Why Be Right", ar: "ليش بي رايت" },
     trust: { en: "Our promise", ar: "وعدنا" },
-    join: { en: "For technicians", ar: "للفنيين" },
+    guarantee: { en: "Guarantee", ar: "الضمانة" },
+    coverage: { en: "Coverage", ar: "مناطق التغطية" },
+    join: { en: "For technicians", ar: "للمعلّمين" },
     book: { en: "Book a service", ar: "احجز خدمة" },
     myRequests: { en: "My requests", ar: "طلباتي" },
     dashboard: { en: "Dashboard", ar: "لوحة التحكم" },
@@ -28,9 +31,9 @@ export const t = {
     signInTitle: { en: "Sign in", ar: "تسجيل الدخول" },
     signInSub: {
       en: "One sign-in for everyone: customers, technicians and Be Right staff.",
-      ar: "تسجيل دخول واحد للكل: العملاء، الفنيين وفريق بي رايت.",
+      ar: "تسجيل دخول واحد للكل: الزبائن، المعلّمين وفريق بي رايت.",
     },
-    signUpTitle: { en: "Create a customer account", ar: "اعمل حساب عميل" },
+    signUpTitle: { en: "Create a customer account", ar: "اعمل حساب زبون" },
     signUpSub: {
       en: "To book repairs, follow your requests and approve prices.",
       ar: "لتحجز تصليحات، تتابع طلباتك وتوافق على الأسعار.",
@@ -43,8 +46,8 @@ export const t = {
       en: "So our team can reach you about your visits.",
       ar: "ليقدر فريقنا يتواصل معك بخصوص زياراتك.",
     },
-    createCustomer: { en: "Create a customer account", ar: "اعمل حساب عميل" },
-    techApply: { en: "Want to work with us as a technician?", ar: "بدك تشتغل معنا كفني؟" },
+    createCustomer: { en: "Create a customer account", ar: "اعمل حساب زبون" },
+    techApply: { en: "Want to work with us as a technician?", ar: "بدك تشتغل معنا كمعلّم؟" },
     applyLink: { en: "Apply here", ar: "قدّم طلبك هون" },
     password: { en: "Password", ar: "كلمة السر" },
     passwordHint: { en: "At least 8 characters", ar: "٨ أحرف على الأقل" },
@@ -87,7 +90,7 @@ export const t = {
     welcomeTitle: { en: "Welcome to Be Right", ar: "أهلاً فيك ببي رايت" },
     welcomeSub: {
       en: "You've been added as a technician. Choose a password to open your jobs.",
-      ar: "انضفت كفني. اختار كلمة سر لتفتح مهامك.",
+      ar: "انضفت كمعلّم. اختار كلمة سر لتفتح مهامك.",
     },
     saveNew: { en: "Save password", ar: "احفظ كلمة السر" },
     resetDone: { en: "Password updated. You're signed in.", ar: "تغيّرت كلمة السر. إنت داخل." },
@@ -121,91 +124,162 @@ export const t = {
     errGeneric: { en: "Something went wrong. Please try again.", ar: "صار خطأ. جرّب مرة تانية." },
   },
   hero: {
-    kicker: { en: "Home maintenance · Lebanon", ar: "صيانة منزلية · لبنان" },
-    h1a: { en: "Fast. Fair. Safe.", ar: "سرعة. سعر عادل. أمان." },
-    h1b: { en: "Guaranteed.", ar: "وضمانة." },
+    kicker: { en: "Services & maintenance · Lebanon", ar: "خدمات وصيانة · لبنان" },
+    h1a: { en: "Reliable services", ar: "خدمات موثوقة" },
+    h1b: { en: "in Lebanon.", ar: "بلبنان." },
+    promise: { en: "Fast. Simple. Sorted.", ar: "منحلّها بسرعة وبسهولة." },
     sub: {
-      en: "Home maintenance in Lebanon without the phone roulette. Book in about a minute, approve the price before dispatch, and if it's not right — we come back and make it right. It's in the name.",
-      ar: "صيانة منزلية بلبنان بلا لعبة التليفونات. احجز بحوالي دقيقة، وافق على السعر قبل الإرسال، وإذا مش مظبوطة — منرجع منظبطها. هيك اسمنا.",
+      en: "For homes, restaurants, offices, buildings and businesses. Book online in a few simple steps. A specialist reviews your request, you approve the price before dispatch — and if it's not right, we come back and make it right.",
+      ar: "للبيوت والمطاعم والمكاتب والمباني والشركات. احجز أونلاين بخطوات بسيطة. مختص بيراجع طلبك، وبتوافق على السعر قبل ما نبعت المعلّم لعندك — وإذا مش مظبوطة، منرجع منظبطها.",
     },
     cta: { en: "Book a service", ar: "احجز خدمة" },
     ctaSecondary: { en: "How it works", ar: "كيف منشتغل" },
     chip1: { en: "Free to book", ar: "الحجز مجاني" },
-    chip2: { en: "About 60 seconds", ar: "حوالي ٦٠ ثانية" },
-    chip3: { en: "You approve the price first", ar: "السعر بموافقتك أولاً" },
+    chip2: { en: "Book online", ar: "احجز أونلاين" },
+    chip3: { en: "You approve the price first", ar: "بتوافق عالسعر بالأول" },
+    chip4: { en: "Free revisit if it's not right", ar: "زيارة مجانية إذا مش مظبوطة" },
     stat1: { en: "guided questions, no technical words needed", ar: "أسئلة موجّهة، بلا مصطلحات تقنية" },
-    stat2: { en: "specialist review before every dispatch", ar: "مراجعة مختص قبل كل إرسال" },
+    stat2: { en: "specialist review before every dispatch", ar: "مختص بيراجع الطلب قبل ما نبعت المعلّم لعندك" },
     stat3: { en: "price approved by you before we roll", ar: "السعر بموافقتك قبل ما نتحرك" },
   },
   marquee: {
     text: {
-      en: "Be right · Be bright · Fast · Fair price · Safe · Guaranteed · Fixed right the first time · ",
-      ar: "بي رايت · سرعة · سعر عادل · أمان · ضمانة · صح من أول مرة · ",
+      en: "Glad to help you · Fast · Fair price · Safe · Guaranteed · Fixed right the first time · ",
+      ar: "بيسعدنا نساعدك · سرعة · سعر عادل · أمان · ضمانة · صح من أول مرة · ",
     },
   },
   services: {
     kicker: { en: "(Services)", ar: "(خدماتنا)" },
-    title: { en: "One call. Every trade.", ar: "اتصال واحد. كل المهن." },
+    title: { en: "One call. Every trade.", ar: "كل الخدمات بمحل واحد." },
     sub: {
-      en: "Ten services for homes, buildings, restaurants and businesses — each launched only when qualified workers, tools and service hours are ready.",
-      ar: "عشر خدمات للبيوت والمباني والمطاعم والشركات — كل خدمة منطلّقها بس لما يكون في فريق مؤهل وعدّة جاهزة.",
+      en: "Eleven services for homes, restaurants, offices, buildings and businesses — each launched only when qualified workers, tools and service hours are ready.",
+      ar: "حدعشر خدمة للبيوت والمطاعم والمكاتب والمباني والشركات — كل خدمة منطلّقها بس لما يكون في فريق مؤهل وعدّة جاهزة.",
     },
     bookThis: { en: "Book", ar: "احجز" },
   },
   how: {
     kicker: { en: "(How it works)", ar: "(كيف منشتغل)" },
-    title: { en: "Specialist-led, from hello to done.", ar: "بإشراف مختص، من أول اتصال لآخر تصليحة." },
+    title: { en: "Fast. Simple. Sorted.", ar: "منحلّها بسرعة وبسهولة." },
     steps: [
       {
-        title: { en: "Open & describe", ar: "افتح واشرح" },
+        title: { en: "Tell us", ar: "خبّرنا" },
         body: {
-          en: "Open the app or scan our QR code on site. Pick a service, answer simple questions, add safe photos or video.",
-          ar: "افتح التطبيق أو امسح رمز QR بالموقع. اختار الخدمة، جاوب على أسئلة بسيطة، وضيف صور أو فيديو بأمان.",
+          en: "Describe the problem — pick a service, answer a few questions, add photos if needed.",
+          ar: "اشرح المشكلة — اختار الخدمة، جاوب على شوية أسئلة، وضيف صور إذا بدك.",
         },
       },
       {
-        title: { en: "Specialist review", ar: "مراجعة المختص" },
+        title: { en: "Approve", ar: "وافِق" },
         body: {
-          en: "A remote engineer checks the issue and urgency, and lists the skills, tools, safety gear and likely parts.",
-          ar: "مهندس عن بُعد بيراجع المشكلة واستعجالها، وبيحدد المهارات والعدّة ومعدات السلامة والقطع المتوقعة.",
+          en: "Confirm your quote — a specialist reviews your request and you approve the price before dispatch.",
+          ar: "أكّد عرض السعر — مختص بيراجع طلبك وبتوافق على السعر قبل ما نبعت المعلّم لعندك.",
         },
       },
       {
-        title: { en: "You approve", ar: "موافقتك" },
+        title: { en: "We fix", ar: "منصلّح" },
         body: {
-          en: "We show the visit fee or quote, the appointment and any priority charge. Nothing moves before you approve.",
-          ar: "منعرضلك كلفة الزيارة أو العرض والموعد وأي رسوم استعجال. ما منتحرك قبل موافقتك.",
-        },
-      },
-      {
-        title: { en: "We prepare & dispatch", ar: "منحضّر ومنبعت" },
-        body: {
-          en: "A qualified worker is assigned — you see who's coming. If parts are needed, we route them to an approved supplier first.",
-          ar: "منعيّن فني مؤهل وبتلاقي مين جاي. إذا في قطع، منوجّهه لمورّد معتمد أول شي.",
-        },
-      },
-      {
-        title: { en: "Work with support", ar: "شغل بمتابعة" },
-        body: {
-          en: "The worker records arrival and progress. The specialist supports any changes — you approve extra cost before extra work.",
-          ar: "الفني بيسجّل وصوله وتقدم الشغل. المختص بيتابع أي تعديل — وأي كلفة إضافية بموافقتك أولاً.",
-        },
-      },
-      {
-        title: { en: "Finish & follow-up", ar: "خلاص ومساعدة بعدية" },
-        body: {
-          en: "Completion evidence is uploaded, we check the result, and your case stays open for feedback or a revisit.",
-          ar: "بيترفع إثبات الإنجاز، منراجع النتيجة، وطلبك بيضل مفتوح لأي ملاحظة أو زيارة تانية.",
+          en: "Your technician gets it done — a qualified technician completes the job, with specialist follow-up.",
+          ar: "المعلّم تبعك بيخلّصها — معلّم مؤهل بيخلّص الشغلة، بمتابعة من المختص.",
         },
       },
     ] as { title: { en: string; ar: string }; body: { en: string; ar: string } }[],
+    moreTitle: { en: "More details", ar: "تفاصيل أكتر" },
+    moreItems: [
+      {
+        en: "A remote specialist checks the issue and urgency, and lists the skills, tools and likely parts before anyone drives to you.",
+        ar: "مختص عن بُعد بيراجع المشكلة واستعجالها، وبيحدد المهارات والعدّة والقطع المتوقعة قبل ما حدا يتحرك لعندك.",
+      },
+      {
+        en: "If parts are needed, we route them through an approved supplier first.",
+        ar: "إذا في قطع، منأمنها من مورّد معتمد أول شي.",
+      },
+      {
+        en: "The technician records arrival and progress. Any extra cost needs your approval before extra work.",
+        ar: "المعلّم بيسجّل وصوله وتقدم الشغل. أي كلفة إضافية بدها موافقتك قبل أي شغل زيادة.",
+      },
+      {
+        en: "Completion photos are uploaded, we check the result, and your request stays open for feedback or a free revisit.",
+        ar: "المعلّم بيبعت صور الشغل بعد ما يخلّص، منراجع النتيجة، وطلبك بيضل مفتوح لأي ملاحظة أو زيارة مجانية.",
+      },
+    ] as LocalText[],
+  },
+  coverage: {
+    kicker: { en: "(Where we operate)", ar: "(وين منشتغل)" },
+    title: { en: "Serving all of Lebanon.", ar: "منخدم كل لبنان." },
+    other: { en: "Other services", ar: "خدمات تانية" },
+    otherSub: {
+      en: "For buildings, offices and events.",
+      ar: "للمباني والمكاتب والمناسبات.",
+    },
+  },
+  pricing: {
+    kicker: { en: "(Pricing & our guarantee)", ar: "(الأسعار والضمانة)" },
+    title: { en: "Clear pricing. Real guarantee.", ar: "أسعار واضحة. ضمانة حقيقية." },
+    feeTitle: { en: "Visit & inspection", ar: "الزيارة والكشف" },
+    feeBody: {
+      en: "Booking a request is always free — you only ever pay for actual work. Any visit or inspection fee is confirmed with you before dispatch, and we tell you upfront whether it's deducted from the final repair cost.",
+      ar: "تقديم الطلب مجاني دايماً — بتدفع بس عالشغل الفعلي. أي رسوم زيارة أو كشف منأكدها معك قبل ما نبعت المعلّم لعندك، ومنخبّرك من الأول إذا بتنخصم من كلفة التصليح النهائية.",
+    },
+    partsTitle: { en: "Labour, parts & priority", ar: "الشغل والقطع والاستعجال" },
+    partsBody: {
+      en: "Your quote separates labour, parts at supplier prices, and any priority charge — so you see exactly what you're paying for.",
+      ar: "عرض السعر بيفصل الأجرة، والقطع بسعر المورّد، وأي رسوم استعجال — لتعرف بالضبط شو عم تدفع.",
+    },
+    approveTitle: { en: "You approve everything", ar: "كل شي بموافقتك" },
+    approveBody: {
+      en: "You approve the quote before dispatch — and any additional charges before extra work. Nothing moves without your approval.",
+      ar: "بتوافق على العرض قبل ما نبعت المعلّم لعندك — وعلى أي رسوم إضافية قبل أي شغل زيادة. ولا شي بيمشي بلا موافقتك.",
+    },
+    guaranteeTitle: { en: `The ${DAYS}-day guarantee`, ar: `ضمانة الـ${arabicDays(DAYS)}` },
+    guaranteeBody: {
+      en: `If the same issue comes back within ${DAYS} days of a completed job, report it from your requests page and the revisit is free.`,
+      ar: `إذا نفس المشكلة رجعت خلال ${arabicDays(DAYS)} من إنجاز الشغلة، بلّغ عنها من صفحة طلباتك والزيارة مجانية.`,
+    },
+    guaranteeExclusions: {
+      en: "Covers workmanship on the reported issue. New or unrelated problems, misuse, or third-party alterations aren't covered.",
+      ar: "بتغطي جودة الشغل على المشكلة المبلّغ عنها. المشاكل الجديدة أو غير المرتبطة، أو سوء الاستخدام، أو تعديلات طرف تالت مش مشمولة.",
+    },
+  },
+  faq: {
+    kicker: { en: "(FAQ)", ar: "(أسئلة شائعة)" },
+    title: { en: "Quick answers.", ar: "أجوبة سريعة." },
+    items: [
+      {
+        q: { en: "Which areas do you cover?", ar: "أي مناطق بتغطوا؟" },
+        a: {
+          en: "All of Lebanon — any town or village. We confirm appointment availability for your address before approval.",
+          ar: "كل لبنان — أي مدينة أو ضيعة. منأكد توفر الموعد لعنوانك قبل الموافقة.",
+        },
+      },
+      {
+        q: { en: "Is booking really free?", ar: "الحجز فعلاً مجاني؟" },
+        a: {
+          en: "Yes — submitting a request costs nothing. You only pay for approved work, and any visit fee is confirmed with you before dispatch.",
+          ar: "أيه — تقديم الطلب ما بيكلف شي. بتدفع بس عالشغل الموافق عليه، وأي رسوم زيارة منأكدها معك قبل ما نبعت المعلّم لعندك.",
+        },
+      },
+      {
+        q: { en: "How do I schedule or reschedule?", ar: "كيف بحدد أو بغيّر الموعد؟" },
+        a: {
+          en: "Pick your preferred date and time slot when booking. A specialist confirms the appointment, and you can message us from your requests page to change it.",
+          ar: "اختار التاريخ والوقت المفضل عند الحجز. المختص بيأكد الموعد، وفيك تراسلنا من صفحة طلباتك لتغييرو.",
+        },
+      },
+      {
+        q: { en: "How do I request a free revisit?", ar: "كيف بطلب زيارة مجانية؟" },
+        a: {
+          en: `Open your completed request within ${DAYS} days, tap “Report a problem”, tell us what's wrong and pick a day for the visit — if it's covered, the revisit is free.`,
+          ar: `افتح طلبك المكتمل خلال ${arabicDays(DAYS)}، اضغط «بلّغ عن مشكلة»، خبّرنا شو المشكلة واختار يوم الزيارة — وإذا مشمولة، الزيارة مجانية.`,
+        },
+      },
+    ] as { q: { en: string; ar: string }; a: { en: string; ar: string } }[],
   },
   why: {
     kicker: { en: "(Why Be Right)", ar: "(ليش بي رايت)" },
     title: { en: "Not a directory. A managed repair.", ar: "مش دليل أرقام. تصليحة مدارة." },
     sub: {
       en: "Other apps give you a phone number. We give you a case owner. The specialist prepares the job before travel so the technician arrives with the right context, tools and likely parts.",
-      ar: "التطبيقات التانية بتعطيك رقم تليفون. نحنا منعطيك مسؤول ملف. المختص بيحضّر الشغل قبل ما يتحرك الفني، فيوصل معو المعلومات والعدّة والقطع الصح.",
+      ar: "التطبيقات التانية بتعطيك رقم تليفون. نحنا منعطيك مسؤول ملف. المختص بيحضّر الشغل قبل ما يتحرك المعلّم، فيوصل معو المعلومات والعدّة والقطع الصح.",
     },
     urgencyTitle: { en: "Urgency you can see", ar: "استعجال واضح" },
     urgencySub: {
@@ -215,7 +289,7 @@ export const t = {
   },
   trust: {
     kicker: { en: "(Our promise)", ar: "(وعدنا)" },
-    title: { en: "Four promises. Every job.", ar: "أربع وعود. بكل شغلة." },
+    title: { en: "Our promise. Every job.", ar: "وعدنا. بكل شغلة." },
     sub: {
       en: "Speed, fair pricing, safety and a guarantee — this is what Be Right means.",
       ar: "سرعة، سعر عادل، أمان وضمانة — هيدا معنى بي رايت.",
@@ -224,8 +298,8 @@ export const t = {
       {
         title: { en: "Fast", ar: "سرعة" },
         body: {
-          en: "Book in about a minute — no calls, no waiting for a callback. Urgent cases jump the queue and a specialist reviews them first.",
-          ar: "احجز بحوالي دقيقة — بلا اتصالات، بلا انتظار حدا يرد. الحالات الطارئة بتتقدّم الطابور والمختص بيراجعها أول شي.",
+          en: "Book online in a few simple steps — no calls, no waiting for a callback. Urgent cases jump the queue and a specialist reviews them first.",
+          ar: "احجز أونلاين بخطوات بسيطة — بلا اتصالات، بلا انتظار حدا يرد. الحالات الطارئة بتتقدّم الطابور والمختص بيراجعها أول شي.",
         },
       },
       {
@@ -239,7 +313,7 @@ export const t = {
         title: { en: "Safe", ar: "أمان" },
         body: {
           en: "Verified technicians only — and guided photos mean you never open a live panel or touch a gas line just to explain the problem.",
-          ar: "فنيين موثّقين بس — والتصوير الموجّه يعني إنك أبداً ما بتفتح لوحة كهربا أو بتقرب من خط غاز لتشرح المشكلة.",
+          ar: "معلّمين موثّقين بس — والتصوير الموجّه يعني إنك أبداً ما بتفتح لوحة كهربا أو بتقرب من خط غاز لتشرح المشكلة.",
         },
       },
       {
@@ -254,18 +328,19 @@ export const t = {
   cta: {
     title: { en: "Something broken?", ar: "في شي مكسور؟" },
     sub: {
-      en: "Book in two minutes. A specialist takes it from there.",
-      ar: "احجز بدقيقتين. والمختص بيتابع من هون.",
+      en: "Book online in a few simple steps. A specialist takes it from there.",
+      ar: "احجز أونلاين بخطوات بسيطة. والمختص بيتابع من هون.",
     },
     button: { en: "Book a service", ar: "احجز خدمة" },
   },
   footer: {
-    tagline: { en: "Be right. Be bright.", ar: "بي رايت. صح من أول مرة." },
+    tagline: { en: "Glad to help you.", ar: "بيسعدنا نساعدك." },
     contactSoon: {
-      en: "Contact details coming soon — reach us through the app.",
-      ar: "معلومات التواصل قريباً — كلمنا من التطبيق.",
+      en: "Contact details coming soon — book online and we'll call you back.",
+      ar: "معلومات التواصل قريباً — احجز أونلاين ومنرجع منحكيك.",
     },
     rights: { en: "Be Right by Bright · be-rightbright.com", ar: "بي رايت من برايت · be-rightbright.com" },
+    replayIntro: { en: "Replay intro", ar: "شوف المقدمة" },
   },
   book: {
     title: { en: "Book a service", ar: "احجز خدمة" },
@@ -293,9 +368,9 @@ export const t = {
     slotAfternoon: { en: "Afternoon (12–5)", ar: "بعد الضهر (١٢–٥)" },
     slotEvening: { en: "Evening (5–9)", ar: "مساءً (٥–٩)" },
     area: { en: "Area / city", ar: "المنطقة / المدينة" },
-    areaPh: { en: "e.g. Achrafieh, Beirut", ar: "مثال: الأشرفية، بيروت" },
+    areaPh: { en: "Any town or village in Lebanon", ar: "أي مدينة أو ضيعة بلبنان" },
     address: { en: "Address details", ar: "تفاصيل العنوان" },
-    addressPh: { en: "Building, floor, landmarks…", ar: "المبنى، الطابق، علامات مميزة…" },
+    addressPh: { en: "Building, floor, landmarks…", ar: "البناية، الطابق، وأقرب محل معروف…" },
     phone: { en: "Phone / WhatsApp", ar: "هاتف / واتساب" },
     phonePh: { en: "+961 …", ar: "+961 …" },
     notes: { en: "Anything else? (optional)", ar: "شي زيادة؟ (اختياري)" },
@@ -306,7 +381,7 @@ export const t = {
     suggestedUrgency: { en: "Suggested urgency from your answers", ar: "الاستعجال المقترح حسب أجوبتك" },
     urgencyDisclaimer: {
       en: "A specialist confirms urgency and any surcharge before dispatch — nothing is charged without your approval.",
-      ar: "المختص بيأكد الاستعجال وأي رسوم إضافية قبل الإرسال — ما في أي دفع بلا موافقتك.",
+      ar: "المختص بيأكد الاستعجال وأي رسوم إضافية قبل ما نبعت المعلّم لعندك — ما في أي دفع بلا موافقتك.",
     },
     successTitle: { en: "Request received!", ar: "وصلنا طلبك!" },
     successBody: {
@@ -351,9 +426,10 @@ export const t = {
     cancel: { en: "Cancel request", ar: "إلغاء الطلب" },
     coveredUntil: {
       en: "Covered by our {days}-day guarantee until {date}.",
-      ar: "مشمول بضماننا لـ{days} يوم لغاية {date}.",
+      ar: "مشمول بضمانتنا لـ{days} لغاية {date}.",
     },
     reportProblem: { en: "Something not right? Report a problem", ar: "في شي مش مزبوط؟ بلّغ عن مشكلة" },
+    whatsappUs: { en: "WhatsApp us about this job", ar: "كلّمنا واتساب عن هالطلب" },
     reportTitle: { en: "What isn't right?", ar: "شو المشكلة؟" },
     reportHint: {
       en: "Tell us what happened. Our specialist reviews it and we come back; if it's covered by the guarantee, there's nothing to pay.",
@@ -375,7 +451,7 @@ export const t = {
     askCancel: { en: "Need to cancel the visit?", ar: "بدك تلغي الزيارة؟" },
     askCancelHint: {
       en: "The technician is already booked, so our specialist will confirm the cancellation with you.",
-      ar: "الفني صار محجوز، فالمختص رح يأكّد معك الإلغاء.",
+      ar: "المعلّم صار محجوز، فالمختص رح يأكّد معك الإلغاء.",
     },
     askCancelPh: { en: "Tell us why (optional)", ar: "خبّرنا ليش (اختياري)" },
     askCancelSend: { en: "Ask to cancel", ar: "اطلب الإلغاء" },
@@ -398,7 +474,7 @@ export const t = {
     quoteNote: { en: "Quote note", ar: "ملاحظة العرض" },
     advance: { en: "Advance status", ar: "حدّث الحالة" },
     note: { en: "Note (optional)", ar: "ملاحظة (اختياري)" },
-    customer: { en: "Customer", ar: "العميل" },
+    customer: { en: "Customer", ar: "الزبون" },
     suggested: { en: "System suggestion", ar: "اقتراح النظام" },
     review: { en: "Start review", ar: "ابدأ المراجعة" },
     schedule: { en: "Schedule", ar: "حدد الموعد" },
@@ -425,20 +501,19 @@ export const t = {
   } as Record<UrgencyLevel, { en: string; ar: string }>,
   tech: {
     title: { en: "My jobs", ar: "مهامي" },
-    problem: { en: "What the customer told us", ar: "شو خبّرنا العميل" },
+    problem: { en: "What the customer told us", ar: "شو خبّرنا الزبون" },
     fromSpecialist: { en: "From your specialist", ar: "من المختص" },
-    photos: { en: "Customer photos", ar: "صور العميل" },
+    photos: { en: "Customer photos", ar: "صور الزبون" },
     urgency: { en: "Urgency", ar: "الاستعجال" },
     empty: { en: "No jobs assigned to you yet.", ar: "ما في مهام معيّنة إلك بعد." },
-
-    customer: { en: "Customer", ar: "العميل" },
+    customer: { en: "Customer", ar: "الزبون" },
     appointment: { en: "Appointment", ar: "الموعد" },
     shareStart: { en: "Start live location", ar: "ابدأ مشاركة الموقع" },
     shareStop: { en: "Stop sharing", ar: "أوقف المشاركة" },
     sharing: { en: "Live location on", ar: "الموقع المباشر شغّال" },
     shareHint: {
       en: "The customer sees your location while the job is active. Keep this page open on the way: sharing pauses while your screen is locked.",
-      ar: "العميل بيشوف موقعك طالما الشغل شغّال. خلّي هالصفحة مفتوحة بالطريق: المشاركة بتوقف لما تقفل الشاشة.",
+      ar: "الزبون بيشوف موقعك طالما الشغل شغّال. خلّي هالصفحة مفتوحة بالطريق: المشاركة بتوقف لما تقفل الشاشة.",
     },
     geoError: {
       en: "Location unavailable — allow location access and try again.",
@@ -450,26 +525,26 @@ export const t = {
     notePh: { en: "Note for the specialist (optional)", ar: "ملاحظة للمختص (اختياري)" },
   },
   tracking: {
-    techOnWay: { en: "Your technician", ar: "الفني تبعك" },
+    techOnWay: { en: "Your technician", ar: "المعلّم تبعك" },
     liveLocation: { en: "Live location", ar: "الموقع المباشر" },
     lastUpdate: { en: "Last update", ar: "آخر تحديث" },
     lastSeen: { en: "Last seen here at {time}", ar: "آخر مرة انشاف هون الساعة {time}" },
     noLocationYet: {
       en: "The technician hasn't shared their location yet.",
-      ar: "الفني لسا ما شارك موقعه.",
+      ar: "المعلّم بعده ما شارك موقعه.",
     },
   },
   events: {
-    assigned: { en: "Technician assigned", ar: "تم تعيين الفني" },
-    arrived: { en: "Technician arrived", ar: "الفني وصل" },
+    assigned: { en: "Technician assigned", ar: "تم تعيين المعلّم" },
+    arrived: { en: "Technician arrived", ar: "المعلّم وصل" },
     in_progress: { en: "Work started", ar: "الشغل بدأ" },
     completed: { en: "Job completed", ar: "الشغل خلص" },
     prepared: { en: "Job preparation updated", ar: "تحدّث تحضير المهمة" },
-    cancel_requested: { en: "Customer asked to cancel", ar: "العميل طلب الإلغاء" },
-    unassigned: { en: "Technician unassigned", ar: "انشال الفني من المهمة" },
+    cancel_requested: { en: "Customer asked to cancel", ar: "الزبون طلب الإلغاء" },
+    unassigned: { en: "Technician unassigned", ar: "انشال المعلّم من المهمة" },
   },
   join: {
-    nav: { en: "For technicians", ar: "للفنيين" },
+    nav: { en: "For technicians", ar: "للمعلّمين" },
     kicker: { en: "(Work with us)", ar: "(اشتغل معنا)" },
     sectionTitle: { en: "Good at your trade? Work with Be Right.", ar: "شاطر بمهنتك؟ اشتغل مع بي رايت." },
     bullet1: {
@@ -478,14 +553,14 @@ export const t = {
     },
     bullet2: {
       en: "Arrive prepared — specialist instructions, photos and parts routing before you drive.",
-      ar: "وصل محضّر — تعليمات المختص والصور وتوجيه القطع قبل ما تتحرك.",
+      ar: "تعال جاهز للشغل — تعليمات المختص والصور وتوجيه القطع قبل ما تتحرك.",
     },
     bullet3: {
       en: "No haggling — the price is approved before you're dispatched.",
       ar: "بلا فصال — السعر متفق عليه قبل ما تنبعت.",
     },
     cta: { en: "Apply to join", ar: "قدّم طلبك" },
-    title: { en: "Apply as a technician", ar: "قدّم طلبك كفني" },
+    title: { en: "Apply as a technician", ar: "قدّم طلبك كمعلّم" },
     sub: {
       en: "Tell us about your trade. Our team reviews every application and contacts you for onboarding.",
       ar: "خبّرنا عن مهنتك. فريقنا بيراجع كل طلب وبيتصل فيك للانضمام.",
@@ -516,8 +591,8 @@ export const t = {
   },
   dash3: {
     tabQueue: { en: "Requests queue", ar: "طابور الطلبات" },
-    tabApplications: { en: "Technician applications", ar: "طلبات الفنيين" },
-    tabTechnicians: { en: "Technicians", ar: "الفنيين" },
+    tabApplications: { en: "Technician applications", ar: "طلبات المعلّمين" },
+    tabTechnicians: { en: "Technicians", ar: "المعلّمين" },
     noApplications: { en: "No applications yet.", ar: "ما في طلبات بعد." },
     new: { en: "New", ar: "جديد" },
     contacted: { en: "Contacted", ar: "تم التواصل" },
@@ -531,14 +606,14 @@ export const t = {
     tools: { en: "Own tools", ar: "عدّة خاصة" },
     transport: { en: "Own transport", ar: "نقل خاص" },
     notProvided: { en: "Not provided", ar: "مش محدد" },
-    hire: { en: "Hire as technician", ar: "وظّف كفني" },
+    hire: { en: "Hire as technician", ar: "وظّف كمعلّم" },
     hireConfirm: {
       en: "Create a technician account for {email}? If they don't have an account yet, they'll get an email to set their password.",
-      ar: "نعمل حساب فني لـ {email}؟ إذا ما عندو حساب، رح يوصلو إيميل ليختار كلمة سر.",
+      ar: "نعمل حساب معلّم لـ {email}؟ إذا ما عندو حساب، رح يوصلو إيميل ليختار كلمة سر.",
     },
     hireConfirmExisting: {
       en: "{email} already belongs to the account \"{name}\". That account (not a new one for {applicant}) will become a technician and can no longer book as a customer. Continue?",
-      ar: "{email} تابع لحساب \"{name}\". هيدا الحساب (مش حساب جديد لـ {applicant}) رح يصير فني وما بقى فيه يحجز كعميل. نكمّل؟",
+      ar: "{email} تابع لحساب \"{name}\". هيدا الحساب (مش حساب جديد لـ {applicant}) رح يصير معلّم وما بقى فيه يحجز كزبون. نكمّل؟",
     },
     hireEmail: { en: "Applicant's email (needed to hire)", ar: "إيميل المتقدّم (لازم للتوظيف)" },
     hiredInvited: {
@@ -547,29 +622,29 @@ export const t = {
     },
     hiredExisting: {
       en: "Hired. {email} is now a technician and can be assigned jobs.",
-      ar: "تم التوظيف. {email} صار فني وفيك تعيّنو على مهام.",
+      ar: "تم التوظيف. {email} صار معلّم وفيك تعيّنو على مهام.",
     },
-    technicianAccount: { en: "Technician account active", ar: "حساب الفني شغّال" },
+    technicianAccount: { en: "Technician account active", ar: "حساب المعلّم شغّال" },
   },
   dash2: {
-    assignTech: { en: "Assign technician", ar: "عيّن فني" },
+    assignTech: { en: "Assign technician", ar: "عيّن معلّم" },
     chooseTech: { en: "Select…", ar: "اختار…" },
-    currentTech: { en: "Assigned technician", ar: "الفني المعيّن" },
+    currentTech: { en: "Assigned technician", ar: "المعلّم المعيّن" },
     none: { en: "Not assigned", ar: "غير معيّن" },
     needTechToSchedule: {
       en: "Assign a technician before scheduling.",
-      ar: "عيّن فني قبل ما تحدد الموعد.",
+      ar: "عيّن معلّم قبل ما تحدد الموعد.",
     },
     remove: { en: "Remove", ar: "شيل" },
     noTechToAssign: {
       en: "No technicians yet. Hire one from Technician applications (open the application → Hire as technician).",
-      ar: "ما في فنيين بعد. وظّف واحد من طلبات الفنيين (افتح الطلب ← وظّف كفني).",
+      ar: "ما في معلّمين بعد. وظّف واحد من طلبات المعلّمين (افتح الطلب ← وظّف كمعلّم).",
     },
   },
   dash4: {
     // overview
     needsAction: { en: "Needs you", ar: "بحاجتك" },
-    waitingCustomer: { en: "Waiting for customer", ar: "بانتظار العميل" },
+    waitingCustomer: { en: "Waiting for customer", ar: "بانتظار الزبون" },
     inProgress: { en: "Scheduled & in progress", ar: "محدّدة وقيد التنفيذ" },
     urgentOpen: { en: "Urgent & critical", ar: "مستعجلة وحرجة" },
     doneToday: { en: "Completed today", ar: "خلصت اليوم" },
@@ -588,15 +663,15 @@ export const t = {
     // detail
     nextStep: { en: "Next step", ar: "الخطوة الجاية" },
     stepReview: { en: "Confirm the urgency to start the review.", ar: "أكّد الاستعجال لتبلّش المراجعة." },
-    stepQuote: { en: "Send the customer a price to approve.", ar: "ابعت للعميل سعر ليوافق عليه." },
+    stepQuote: { en: "Send the customer a price to approve.", ar: "ابعت للزبون سعر ليوافق عليه." },
     stepWaitQuote: {
       en: "Waiting for the customer to approve the quote of ${amount}.",
-      ar: "بانتظار موافقة العميل على عرض ${amount}.",
+      ar: "بانتظار موافقة الزبون على عرض ${amount}.",
     },
-    stepAssign: { en: "Assign a technician, then schedule the visit.", ar: "عيّن فني، بعدين حدّد موعد الزيارة." },
+    stepAssign: { en: "Assign a technician, then schedule the visit.", ar: "عيّن معلّم، بعدين حدّد موعد الزيارة." },
     stepScheduled: {
       en: "The visit is scheduled. The technician starts work from their app (or you can start it here).",
-      ar: "الزيارة محدّدة. الفني بيبلّش الشغل من تطبيقه (أو فيك تبلّشها من هون).",
+      ar: "الزيارة محدّدة. المعلّم بيبلّش الشغل من تطبيقه (أو فيك تبلّشها من هون).",
     },
     stepInProgress: { en: "Work is in progress. Mark it completed when done.", ar: "الشغل ماشي. علّمه مكتمل لما يخلص." },
     stepClosed: { en: "This request is closed.", ar: "هالطلب مسكّر." },
@@ -609,9 +684,11 @@ export const t = {
     notCovered: { en: "Not covered? Send a price instead:", ar: "مش مشمولة؟ ابعت سعر بدالها:" },
     originalTech: { en: "Did the original job: {name}", ar: "عمل المهمة الأصلية: {name}" },
     changeQuote: { en: "Change the quote", ar: "غيّر العرض" },
+    rating: { en: "Rating", ar: "التقييم" },
+    customerRating: { en: "Customer's rating", ar: "تقييم الزبون" },
     updateQuote: { en: "Update quote", ar: "حدّث العرض" },
     cancelAsked: { en: "Asked to cancel", ar: "طلب الإلغاء" },
-    cancelAskedNote: { en: "The customer asked to cancel this visit.", ar: "العميل طلب يلغي هالزيارة." },
+    cancelAskedNote: { en: "The customer asked to cancel this visit.", ar: "الزبون طلب يلغي هالزيارة." },
     cancelAskedReason: { en: "Their reason: {reason}", ar: "السبب: {reason}" },
     closeOpen: { en: "Cancel this request…", ar: "إلغاء هالطلب…" },
     closeReasonPh: {
@@ -630,7 +707,7 @@ export const t = {
     prepTitle: { en: "Job preparation", ar: "تحضير المهمة" },
     prepHint: {
       en: "The technician sees this on their job card before driving out.",
-      ar: "الفني بيشوف هالشي على بطاقة المهمة قبل ما يتحرّك.",
+      ar: "المعلّم بيشوف هالشي على بطاقة المهمة قبل ما يتحرّك.",
     },
     prepDiagnosis: { en: "Likely problem", ar: "المشكلة المرجّحة" },
     prepDiagnosisPh: { en: "e.g. Worn cartridge in the kitchen mixer tap", ar: "مثال: خرطوشة حنفية المطبخ مهترية" },
@@ -641,7 +718,7 @@ export const t = {
     prepInstructions: { en: "Instructions", ar: "تعليمات" },
     prepInstructionsPh: {
       en: "e.g. Customer will shut the main valve; check under-sink cabinet for water damage",
-      ar: "مثال: العميل رح يسكّر المحبس الرئيسي؛ شيك الخزانة تحت المجلى إذا في ضرر مي",
+      ar: "مثال: الزبون رح يسكّر المحبس الرئيسي؛ شيك الخزانة تحت المجلى إذا في ضرر مي",
     },
     prepSave: { en: "Save preparation", ar: "احفظ التحضير" },
     prepSaved: { en: "Saved {time}", ar: "انحفظ {time}" },
@@ -655,14 +732,14 @@ export const t = {
     hideDocuments: { en: "Hide documents", ar: "خبّي المستندات" },
     removeConfirm: {
       en: "Remove {name} as a technician? Their account becomes a customer account, and jobs waiting to be scheduled go back to Needs you. You can hire them again later.",
-      ar: "تشيل {name} من الفنيين؟ حسابه بيرجع حساب عميل، والمهام يلي ناطرة موعد بترجع لـ«بحاجتك». فيك توظّفه مرة تانية بعدين.",
+      ar: "تشيل {name} من المعلّمين؟ حسابه بيرجع حساب زبون، والمهام يلي ناطرة موعد بترجع لـ«بحاجتك». فيك توظّفه مرة تانية بعدين.",
     },
     noTechnicians: {
       en: "No technicians yet. Technicians join by applying, then you hire them.",
-      ar: "ما في فنيين بعد. الفنيين بينضمّوا بتقديم طلب، وإنت بتوظّفهم.",
+      ar: "ما في معلّمين بعد. المعلّمين بينضمّوا بتقديم طلب، وإنت بتوظّفهم.",
     },
-    goToApplications: { en: "Open technician applications", ar: "افتح طلبات الفنيين" },
-    formerTechnician: { en: "No longer a technician", ar: "ما عاد فني" },
+    goToApplications: { en: "Open technician applications", ar: "افتح طلبات المعلّمين" },
+    formerTechnician: { en: "No longer a technician", ar: "ما عاد معلّم" },
   },
   map: {
     pickerLabel: { en: "Map: tap to place your address pin", ar: "خريطة: اضغط لتحط دبوس عنوانك" },
@@ -680,7 +757,7 @@ export const t = {
       ar: "ما قدرنا نجيب موقعك. اسمح بالوصول للموقع أو اضغط عالخريطة.",
     },
     home: { en: "Visit address", ar: "عنوان الزيارة" },
-    technician: { en: "Technician", ar: "الفني" },
+    technician: { en: "Technician", ar: "المعلّم" },
     directions: { en: "Directions", ar: "الطريق" },
     googleMaps: { en: "Google Maps", ar: "Google Maps" },
     waze: { en: "Waze", ar: "Waze" },
@@ -690,12 +767,12 @@ export const t = {
     title: { en: "Required documents", ar: "المستندات المطلوبة" },
     privacy: {
       en: "Only Be Right's hiring team sees these. They're stored privately and never shown to customers, except your photo once you work with us.",
-      ar: "بس فريق التوظيف ببي رايت بيشوفها. محفوظة بشكل خاص وما بتنعرض للعملاء، إلا صورتك لما تشتغل معنا.",
+      ar: "بس فريق التوظيف ببي رايت بيشوفها. محفوظة بشكل خاص وما بتنعرض للزبائن، إلا صورتك لما تشتغل معنا.",
     },
     idDocument: { en: "ID card or passport", ar: "هوية أو باسبور" },
     idDocumentHint: { en: "Photo or PDF, both sides if ID card", ar: "صورة أو PDF، الوجهين إذا هوية" },
     photo: { en: "Profile photo", ar: "صورة شخصية" },
-    photoHint: { en: "Clear photo of your face; customers will see it", ar: "صورة واضحة لوجهك؛ العملاء رح يشوفوها" },
+    photoHint: { en: "Clear photo of your face; customers will see it", ar: "صورة واضحة لوجهك؛ الزبائن رح يشوفوها" },
     choose: { en: "Upload", ar: "حمّل" },
     replace: { en: "Replace", ar: "غيّر" },
     badFile: { en: "Use a photo or PDF up to 10 MB.", ar: "استعمل صورة أو PDF لحد ١٠ ميغا." },
@@ -766,7 +843,7 @@ export const t = {
     deleted: { en: "Your account was deleted.", ar: "انحذف حسابك." },
     staffNote: {
       en: "To close a technician or staff account, contact the Be Right team.",
-      ar: "لتسكّر حساب فني أو موظف، تواصل مع فريق بي رايت.",
+      ar: "لتسكّر حساب معلّم أو موظف، تواصل مع فريق بي رايت.",
     },
   },
   notFound: {
@@ -794,9 +871,156 @@ export const t = {
     },
   },
   preloader: {
-    meep: { en: "BEEP BEEP!", ar: "بيب بيب!" },
-    slogan: { en: "Be right. Be bright.", ar: "بي رايت. صح من أول مرة." },
-    skip: { en: "Tap to skip", ar: "اضغط للتخطي" },
+    slogan: { en: "Glad to help you.", ar: "بيسعدنا نساعدك." },
+    skip: { en: "Skip intro", ar: "تخطي المقدمة" },
+  },
+  rating: {
+    prompt: { en: "How was the job?", ar: "كيف كانت الشغلة؟" },
+    commentPh: { en: "A few words (optional)", ar: "كلمتين (اختياري)" },
+    submit: { en: "Send rating", ar: "أرسل التقييم" },
+    thanks: { en: "Thanks for the rating!", ar: "شكراً على التقييم!" },
+    jobs: { en: "jobs rated", ar: "تقييم" },
+    new: { en: "New on Be Right", ar: "جديد عنا" },
+  },
+  rebook: { en: "Book again", ar: "احجز من جديد" },
+  guaranteePage: {
+    title: { en: "The Be Right Guarantee", ar: "ضمانة بي رايت" },
+    sub: {
+      en: "If it's not right, we come back and make it right. It's in the name — here's exactly what that means.",
+      ar: "إذا مش مظبوطة، منرجع منظبطها. هيك اسمنا — وهيدا شو يعني بالضبط.",
+    },
+    cta: { en: "Book with confidence", ar: "احجز وانت مرتاح" },
+  },
+  clients: {
+    kicker: { en: "(Trusted by)", ar: "(بيثقوا فينا)" },
+    title: { en: "Our clients", ar: "زبائننا" },
+    sub: {
+      en: "Retail groups, malls and duty-free operators across the country.",
+      ar: "سوبرماركت، مولات وديوتي فري بكل المناطق.",
+    },
+    pageTitle: { en: "Our clients", ar: "زبائننا" },
+    pageSub: {
+      en: "A growing list of Lebanese businesses that trust Be Right for maintenance.",
+      ar: "شركات لبنانية بتثق ببي رايت للصيانة، ولائحة زبائننا عم تكبر.",
+    },
+  },
+  trustRow: {
+    checksTitle: { en: "Technician checks", ar: "كيف منتأكد من المعلّمين" },
+    checksBody: {
+      en: "Identity, trade experience and references — reviewed before a technician's first job.",
+      ar: "الهوية والخبرة والمراجع — بينراجعوا قبل أول شغلة للمعلّم.",
+    },
+    checksCta: { en: "Learn more", ar: "اعرف أكتر" },
+    clientsTitle: { en: "Our clients", ar: "زبائننا" },
+    clientsBody: {
+      en: "Supermarkets, malls and duty-free operators already work with us.",
+      ar: "سوبرماركت ومولات وأسواق حرة عم تشتغل معنا.",
+    },
+    clientsCta: { en: "View clients", ar: "شوف زبائننا" },
+    guaranteeTitle: { en: "Be Right guarantee", ar: "ضمانة بي رايت" },
+    guaranteeBody: {
+      en: "Not right? We come back and make it right — the revisit is free.",
+      ar: "مش مظبوطة؟ منرجع منظبطها — الزيارة مجانية.",
+    },
+    guaranteeCta: { en: "Learn more", ar: "اعرف أكتر" },
+  },
+  checksPage: {
+    kicker: { en: "(Technician checks)", ar: "(كيف منتأكد من المعلّمين)" },
+    title: { en: "Every technician is checked before their first job.", ar: "منتأكد من هوية وخبرة كل معلّم قبل أول شغلة." },
+    sub: {
+      en: "Be Right technicians are our own team and vetted partners. Here's what we review before anyone is sent to your home.",
+      ar: "المعلّمين ببي رايت من فريقنا ومن شركائنا. هيك منتأكد من هويتهم وخبرتهم قبل ما نبعت حدا لعندك.",
+    },
+    s1t: { en: "Identity verified", ar: "الهوية موثّقة" },
+    s1b: {
+      en: "Government ID on file for every technician and partner.",
+      ar: "هوية رسمية بالملف لكل معلّم وشريك.",
+    },
+    s2t: { en: "Trade & experience reviewed", ar: "المهنة والخبرة مراجعتين" },
+    s2b: {
+      en: "We look at each technician's trade background and hands-on experience before they join.",
+      ar: "منراجع خلفية كل معلّم وخبرتو العملية قبل ما ينضم.",
+    },
+    s3t: { en: "References checked", ar: "منتواصل مع زبائنهم وأصحاب شغلهم السابقين" },
+    s3b: {
+      en: "Previous employers or clients are contacted for a reference.",
+      ar: "منتواصل مع أصحاب عمل أو زبائن سابقين للمراجعة.",
+    },
+    s4t: { en: "Onboarding & supervision", ar: "تأهيل وإشراف" },
+    s4b: {
+      en: "New technicians work under specialist supervision, and every job is reviewed with photos.",
+      ar: "المعلّمين الجداد بيشتغلوا بإشراف مختص، وكل شغلة بينراجعوها بالصور.",
+    },
+    noteLabel: { en: "Being finalised", ar: "قيد التثبيت" },
+    note: {
+      en: "The full checklist and standards are being finalised with our operations team and will be published here.",
+      ar: "اللائحة الكاملة والمعايير عم تتثبت مع فريق العمليات ورح تنشر هون.",
+    },
+    cta: { en: "Book a checked technician", ar: "احجز معلّم من فريقنا" },
+  },
+  picker: {
+    emergency: { en: "Emergency", ar: "طوارئ" },
+    emergencyQ: { en: "What's the emergency?", ar: "شو المشكلة المستعجلة؟" },
+    locationQ: { en: "Where in Lebanon?", ar: "وين بلبنان؟" },
+    locationPh: { en: "City or area — e.g. Hamra, Jounieh, Tripoli", ar: "المدينة أو المنطقة — مثال: الحمرا، جونيه، طرابلس" },
+    continue: { en: "Continue", ar: "تابِع" },
+    back: { en: "Back", ar: "رجوع" },
+    close: { en: "Close", ar: "سكّر" },
+    needHelp: { en: "What do you need help with?", ar: "بشو بدك مساعدة؟" },
+    otherHelp: { en: "Something else", ar: "شي تاني" },
+    problems: {
+      leak: { en: "Water leak", ar: "تسريب مي" },
+      "blocked-toilet": { en: "Blocked toilet", ar: "تواليت مسكّر" },
+      "locked-out": { en: "Locked out", ar: "الباب تسكّر وإنت برّا؟" },
+      "broken-door-window": { en: "Broken door or window", ar: "باب أو شباك مكسور" },
+      "no-power": { en: "Electrics not working", ar: "الكهربا مضروبة" },
+      "damaged-roof": { en: "Damaged roof", ar: "سقف متضرر" },
+      "no-hot-water": { en: "No hot water", ar: "ما في مي سخنة" },
+      "blocked-drain": { en: "Blocked drain", ar: "مجاري مسكرة" },
+      "tap-toilet": { en: "Faucet / toilet problem", ar: "مشكلة حنفية / تواليت" },
+      "water-pump": { en: "Water pump", ar: "مضخة مي" },
+      "water-tank": { en: "Water tank", ar: "خزان مي" },
+      "water-heater": { en: "Water heater", ar: "سخان مي" },
+      "no-light-power": { en: "No lights or power", ar: "لا ضو ولا كهربا" },
+      "socket-switch": { en: "Socket or switch", ar: "فيش أو مفتاح" },
+      "breaker": { en: "Breaker keeps tripping", ar: "القاطع عم يفصل" },
+      "generator-inverter": { en: "Generator / inverter", ar: "مولدة / إنفرتر" },
+      "fan-light": { en: "Fan or lighting", ar: "مروحة أو إنارة" },
+      "ac-not-cooling": { en: "Not cooling", ar: "ما عم يبرّد" },
+      "ac-leak": { en: "Leaking water", ar: "عم يقطّر مي" },
+      "ac-noise": { en: "Strange noise", ar: "صوت غريب" },
+      "ac-cleaning": { en: "Cleaning & maintenance", ar: "تنظيف وصيانة" },
+      "ac-install": { en: "Install / uninstall", ar: "تركيب / فك" },
+      "fridge": { en: "Fridge / freezer", ar: "براد / فريزر" },
+      "washer": { en: "Washing machine", ar: "غسالة" },
+      "oven": { en: "Oven / hob", ar: "فرن / طباخ" },
+      "dishwasher": { en: "Dishwasher", ar: "جلاية" },
+      "door-lock": { en: "Door / lock", ar: "باب / قفل" },
+      "wardrobe": { en: "Wardrobe / cabinets", ar: "خزانة / مطبخ" },
+      "furniture": { en: "Furniture repair", ar: "تصليح أثاث" },
+      "carpentry-other": { en: "Other carpentry", ar: "نجارة تانية" },
+      "room": { en: "One room", ar: "غرفة" },
+      "whole-home": { en: "Whole home", ar: "كل البيت" },
+      "shop-front": { en: "Shop / office front", ar: "واجهة محل / مكتب" },
+      "touch-up": { en: "Touch-ups", ar: "رتوش دهان" },
+      "deep-clean": { en: "Deep cleaning", ar: "تنظيف عميق" },
+      "regular-clean": { en: "Regular cleaning", ar: "تنظيف دوري" },
+      "after-work": { en: "After renovation", ar: "بعد ورشة" },
+      "garden-care": { en: "Garden care", ar: "عناية بالحديقة" },
+      "tree-trimming": { en: "Tree trimming", ar: "تقليم أشجار" },
+      "pest-control": { en: "Pest control", ar: "مكافحة حشرات" },
+    },
+    emergencyTag: { en: "Priority dispatch", ar: "أولوية بالمواعيد" },
+    trades: {
+      plumbing: { en: "plumber", ar: "سنكري" },
+      electrical: { en: "electrician", ar: "كهربجي" },
+      ac: { en: "AC technician", ar: "معلّم تكييف" },
+      appliance: { en: "appliance technician", ar: "معلّم أجهزة" },
+      carpentry: { en: "carpenter", ar: "نجّار" },
+      painting: { en: "painter", ar: "دهّان" },
+      cleaning: { en: "cleaning team", ar: "فريق تنظيف" },
+      landscaping: { en: "gardener", ar: "بستاني" },
+    },
   },
 };
 

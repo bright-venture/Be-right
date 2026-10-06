@@ -4,7 +4,7 @@
 import { and, count, eq } from "drizzle-orm";
 import { requestEvents, serviceRequests, technicianApplications, users } from "@db/schema";
 import { CATEGORY_MAP, URGENCY_META, type LocalText, type UrgencyLevel } from "@contracts/services";
-import { WORKMANSHIP_GUARANTEE_DAYS } from "@contracts/legal";
+import { arabicDays, WORKMANSHIP_GUARANTEE_DAYS } from "@contracts/legal";
 import { t } from "@contracts/i18n";
 import { getDb } from "./queries/connection";
 import { env } from "./lib/env";
@@ -326,7 +326,7 @@ export const notify = {
           both(`Your ${d.category.en} job is complete. Thank you for choosing Be Right.`, `شغل ${d.category.ar} خلص. شكراً لأنك اخترت بي رايت.`),
           both(
             `If anything isn't right within ${WORKMANSHIP_GUARANTEE_DAYS} days, reply to this email and we'll come back to make it right.`,
-            `إذا في شي مش مزبوط خلال ${WORKMANSHIP_GUARANTEE_DAYS} يوم، رد على هالإيميل ومنرجع منصلّحه.`,
+            `إذا في شي مش مزبوط خلال ${arabicDays(WORKMANSHIP_GUARANTEE_DAYS)}، رد على هالإيميل ومنرجع منصلّحه.`,
           ),
         ],
         path: "/requests",
@@ -390,7 +390,7 @@ export const notify = {
         lines: [
           both(
             `This is covered by our ${WORKMANSHIP_GUARANTEE_DAYS}-day guarantee, so there's nothing to pay. We'll confirm the date and technician shortly.`,
-            `هالشي مشمول بضمان الـ${WORKMANSHIP_GUARANTEE_DAYS} يوم، فما في شي تدفعه. منأكّدلك الموعد والفني قريباً.`,
+            `هالشي مشمول بضمانة الـ${arabicDays(WORKMANSHIP_GUARANTEE_DAYS)}، فما في شي تدفعه. منأكّدلك الموعد والمعلّم قريباً.`,
           ),
         ],
         path: "/requests",

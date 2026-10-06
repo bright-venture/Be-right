@@ -31,11 +31,13 @@ import {
 import {
   CATEGORIES,
   CATEGORY_MAP,
+  CATEGORY_TINT,
   computeUrgency,
   URGENCY_META,
   type UrgencyLevel,
 } from "@contracts/services";
 import {
+  answersFromLink,
   isValidVisitDate,
   MAX_BOOKING_FILES,
   MAX_BOOKING_VIDEOS,
@@ -75,10 +77,13 @@ export default function Book() {
   const navigate = useNavigate();
 
   const initialCat = params.get("cat") ?? "";
+  // The home page's service picker hands over the problem, the area and "emergency".
+  const fromPicker = params.has("ans") || params.has("area") || params.get("priority") === "1";
   // Restore an unfinished booking (e.g. after returning from the sign-in email link),
-  // unless the visitor came in for a different service.
+  // unless the visitor came in for a different service or picked a new problem.
   const [draft] = useState(() => {
     const d = loadDraftFields();
+    if (d && fromPicker) return null;
     if (d && initialCat && CATEGORY_MAP[initialCat] && d.category !== initialCat) return null;
     return d;
   });
@@ -88,7 +93,10 @@ export default function Book() {
   const [category, setCategory] = useState(
     draft?.category ?? (initialCat && CATEGORY_MAP[initialCat] ? initialCat : ""),
   );
-  const [answers, setAnswers] = useState<Record<string, string>>(draft?.answers ?? {});
+  const [answers, setAnswers] = useState<Record<string, string>>(
+    () => draft?.answers ?? answersFromLink(initialCat, params.get("ans")),
+  );
+  const [emergency] = useState(() => draft?.emergency ?? params.get("priority") === "1");
   const [media, setMedia] = useState<MediaDraft[]>([]);
   const [uploadError, setUploadError] = useState<"file" | "videos" | null>(null);
   const [preparingFiles, setPreparingFiles] = useState(false);
@@ -96,7 +104,7 @@ export default function Book() {
   const [slot, setSlot] = useState<TimeSlot | "">(
     TIME_SLOTS.includes(draft?.slot as TimeSlot) ? (draft!.slot as TimeSlot) : "",
   );
-  const [area, setArea] = useState(draft?.area ?? "");
+  const [area, setArea] = useState(draft?.area ?? (params.get("area") ?? "").trim().slice(0, 255));
   const [address, setAddress] = useState(draft?.address ?? "");
   const [phone, setPhone] = useState(draft?.phone ?? "");
   const [notes, setNotes] = useState(draft?.notes ?? "");
@@ -120,6 +128,8 @@ export default function Book() {
     [cat, answers],
   );
   const urgency = category ? computeUrgency(category, answers) : null;
+  // Emergency bookings are never below "urgent" (the server applies the same rule).
+  if (urgency && emergency && (urgency.level === "normal" || urgency.level === "priority")) urgency.level = "urgent";
 
   const createUpload = trpc.storage.createUpload.useMutation();
   const createMutation = trpc.requests.create.useMutation();
@@ -160,8 +170,8 @@ export default function Book() {
 
   useEffect(() => {
     if (doneId !== null || !category) return;
-    saveDraftFields({ step, category, answers, date, slot, area, address, phone, notes, pin });
-  }, [doneId, step, category, answers, date, slot, area, address, phone, notes, pin]);
+    saveDraftFields({ step, category, answers, date, slot, area, address, phone, notes, pin, emergency });
+  }, [doneId, step, category, answers, date, slot, area, address, phone, notes, pin, emergency]);
 
   useEffect(() => {
     if (filesRestored.current && doneId === null) void saveDraftFiles(media.map((m) => m.file));
@@ -242,6 +252,7 @@ export default function Book() {
         phone: contactPhone,
         notes: notes || undefined,
         media: uploaded,
+        emergency: emergency || undefined,
       });
       await clearDraft();
       setDoneId(res.id);
@@ -312,7 +323,7 @@ export default function Book() {
   return (
     <div className="flex min-h-screen flex-col bg-paper">
       <Navbar />
-      <main className="mx-auto w-full max-w-3xl flex-1 px-4 pb-20 pt-24 sm:px-6">
+      <main className="dotgrid mx-auto w-full max-w-3xl flex-1 px-4 pb-20 pt-24 sm:px-6">
         <h1 className="font-display text-3xl font-black text-navy sm:text-4xl">
           {p(t.book.title)}
         </h1>
@@ -340,24 +351,37 @@ export default function Book() {
                 {p(t.book.pickCategory)}
               </h2>
               <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
-                {CATEGORIES.map((c) => (
-                  <button
-                    key={c.id}
-                    onClick={() => {
-                      setCategory(c.id);
-                      setAnswers({});
-                      setStep(1);
-                    }}
-                    className={`card-br flex min-h-32 flex-col items-start justify-between p-4 text-start transition-all hover:-translate-y-1 hover:bg-navy hover:text-paper ${
-                      category === c.id ? "!bg-navy !text-paper" : ""
-                    }`}
-                  >
-                    <ServiceIcon id={c.id} className="h-8 w-8 text-bird" />
-                    <span className="font-display text-sm font-extrabold sm:text-base">
-                      {p(c.name)}
-                    </span>
-                  </button>
-                ))}
+                {CATEGORIES.map((c) => {
+                  const tint = CATEGORY_TINT[c.id] ?? { bg: "#ECEFF4", ink: "#0C2B5C" };
+                  const active = category === c.id;
+                  return (
+                    <button
+                      key={c.id}
+                      onClick={() => {
+                        setCategory(c.id);
+                        setAnswers({});
+                        setStep(1);
+                      }}
+                      aria-pressed={active}
+                      className={`flex min-h-32 flex-col items-start justify-between rounded-[26px] border-[1.5px] border-navy/12 bg-white p-4 text-start shadow-[0_3px_0_rgb(12_43_92/0.1)] transition-all hover:-translate-y-1 hover:border-navy hover:shadow-[0_6px_0_rgb(12_43_92/0.9)] ${
+                        active ? "!border-navy !shadow-[0_6px_0_rgb(244_83_10/0.9)]" : ""
+                      }`}
+                      style={{
+                        background: `linear-gradient(180deg, rgb(255 255 255 / 0.55) 0%, rgb(255 255 255 / 0) 60%), ${tint.bg}`,
+                      }}
+                    >
+                      <span
+                        className="flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-[0_2px_8px_rgb(8_30_66_/_0.12)]"
+                        style={{ color: tint.ink }}
+                      >
+                        <ServiceIcon id={c.id} className="h-6 w-6" />
+                      </span>
+                      <span className="font-display text-sm font-extrabold text-navy sm:text-base">
+                        {p(c.name)}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             </>
           )}

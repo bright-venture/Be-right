@@ -1,4 +1,4 @@
-import { StrictMode, useState } from 'react'
+import { StrictMode, useEffect, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router'
 import './index.css'
@@ -8,6 +8,7 @@ import { Preloader } from "./components/Preloader"
 import { ErrorBoundary } from "./components/ErrorBoundary"
 import { installErrorReporting, reloadForNewBuild } from "./lib/reportError"
 import { startAnalytics } from "./lib/analytics"
+import { INTRO_REPLAY_EVENT, markIntroSeen, shouldPlayIntro } from "./lib/intro"
 import App from './App.tsx'
 
 installErrorReporting()
@@ -22,6 +23,7 @@ window.addEventListener("vite:preloadError", (event) => {
  * hash carries `type=invite` / `type=recovery`. Wherever that link lands (Supabase
  * falls back to the Site URL if the requested page isn't allowed), send them to
  * the set-password page first — keeping the hash so the sign-in still completes.
+ * (Leaving the home page also means no intro in front of the form.)
  */
 function routeAuthEmailLinks() {
   const { hash, pathname } = window.location
@@ -29,26 +31,34 @@ function routeAuthEmailLinks() {
   if (!type || pathname === "/reset-password") return
   const query = type === "invite" ? `?welcome=1&next=${encodeURIComponent("/tech")}` : ""
   window.history.replaceState(null, "", `/reset-password${query}${hash}`)
-  sessionStorage.setItem("br-intro", "1") // no intro animation in front of the form
 }
 routeAuthEmailLinks()
 
 function Root() {
-  // Show the intro once per tab session; skip it on later navigations.
-  const [introDone, setIntroDone] = useState(
-    () => sessionStorage.getItem("br-intro") === "1",
-  )
+  // The bird intro: once per browser session, on the home page only.
+  const [introDone, setIntroDone] = useState(() => !shouldPlayIntro())
+
+  // Footer "Replay intro" plays it again on demand.
+  useEffect(() => {
+    const replay = () => setIntroDone(false)
+    window.addEventListener(INTRO_REPLAY_EVENT, replay)
+    return () => window.removeEventListener(INTRO_REPLAY_EVENT, replay)
+  }, [])
+
   return (
     <>
       {!introDone && (
         <Preloader
           onDone={() => {
-            sessionStorage.setItem("br-intro", "1")
+            markIntroSeen()
             setIntroDone(true)
           }}
         />
       )}
-      <App />
+      {/* While the intro plays, the page behind it can't be clicked or tabbed into. */}
+      <div inert={!introDone}>
+        <App />
+      </div>
     </>
   )
 }

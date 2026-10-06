@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { FileText, Loader2, Mail, MessageCircle, Phone } from "lucide-react";
+import { FileText, Loader2, Mail, MessageCircle, Phone, Star } from "lucide-react";
 import type { inferRouterOutputs } from "@trpc/server";
 import type { AppRouter } from "../../../server/router";
 import { ServiceIcon } from "@/components/ServiceIcon";
@@ -66,7 +66,7 @@ function TechnicianCard({ tech: x }: { tech: Technician }) {
         </div>
       </div>
 
-      <dl className="mt-4 grid grid-cols-2 gap-2 text-center">
+      <dl className="mt-4 grid grid-cols-3 gap-2 text-center">
         <div className="rounded-xl bg-paper p-2">
           <dt className="text-[11px] font-bold text-navy/70">{p(t.dash4.activeJobs)}</dt>
           <dd className="font-display text-xl font-black text-navy">{x.activeJobs}</dd>
@@ -74,6 +74,19 @@ function TechnicianCard({ tech: x }: { tech: Technician }) {
         <div className="rounded-xl bg-paper p-2">
           <dt className="text-[11px] font-bold text-navy/70">{p(t.dash4.completedJobs)}</dt>
           <dd className="font-display text-xl font-black text-navy">{x.completedJobs}</dd>
+        </div>
+        <div className="rounded-xl bg-paper p-2">
+          <dt className="text-[11px] font-bold text-navy/70">{p(t.dash4.rating)}</dt>
+          <dd className="font-display text-xl font-black text-navy">
+            {x.rating.average !== null ? (
+              <span className="inline-flex items-center gap-1" title={`${x.rating.count}`}>
+                {x.rating.average.toFixed(1)}
+                <Star className="h-4 w-4 text-flame" fill="currentColor" aria-hidden />
+              </span>
+            ) : (
+              "—"
+            )}
+          </dd>
         </div>
       </dl>
 

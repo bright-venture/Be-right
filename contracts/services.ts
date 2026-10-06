@@ -1,6 +1,8 @@
 // Shared domain model: service categories, guided question trees, urgency engine.
 // Used by both the booking flow (frontend) and request creation (backend).
 
+import { arabicDigits, WORKMANSHIP_GUARANTEE_DAYS as GUARANTEE_DAYS } from "./legal";
+
 export type Lang = "en" | "ar";
 
 export type UrgencyLevel = "normal" | "priority" | "urgent" | "critical";
@@ -59,7 +61,7 @@ export interface ServiceCategory {
 export const CATEGORIES: ServiceCategory[] = [
   {
     id: "plumbing",
-    name: { en: "Plumbing", ar: "سباكة" },
+    name: { en: "Plumbing", ar: "سنكري" },
     blurb: {
       en: "Leaks, blocked drains, faucets, toilets, pumps and heaters.",
       ar: "تسريب، انسداد مجاري، حنفيات، تواليت، مضخات وسخانات.",
@@ -99,7 +101,7 @@ export const CATEGORIES: ServiceCategory[] = [
         options: [
           { value: "drops", label: { en: "Drops", ar: "نقاط" } },
           { value: "continuous", label: { en: "Continuous trickle", ar: "تسريب متواصل" }, weight: 2 },
-          { value: "large", label: { en: "Large flow", ar: "تدفق كبير" }, weight: 3 },
+          { value: "large", label: { en: "Large flow", ar: "المي عم تنزل بقوة" }, weight: 3 },
         ],
       },
       {
@@ -177,7 +179,7 @@ export const CATEGORIES: ServiceCategory[] = [
   },
   {
     id: "ac",
-    name: { en: "Air conditioning", ar: "تكييف" },
+    name: { en: "Air conditioning", ar: "مكيّف" },
     blurb: {
       en: "Cleaning, servicing, installation and repairs.",
       ar: "تنظيف، صيانة، تركيب وتصليح.",
@@ -353,9 +355,9 @@ export const CATEGORIES: ServiceCategory[] = [
       {
         id: "floors",
         kind: "choice",
-        label: { en: "Stairs or elevator?", ar: "درج ولا مصعد؟" },
+        label: { en: "Stairs or elevator?", ar: "درج ولا أسانسير؟" },
         options: [
-          { value: "elevator", label: { en: "Elevator available", ar: "في مصعد" } },
+          { value: "elevator", label: { en: "Elevator available", ar: "في أسانسير" } },
           { value: "stairs_low", label: { en: "Stairs, up to 2 floors", ar: "درج، لحد طابقين" }, weight: 1 },
           { value: "stairs_high", label: { en: "Stairs, 3+ floors", ar: "درج، ٣ طوابق أو أكتر" }, weight: 1 },
         ],
@@ -443,8 +445,83 @@ export const CATEGORIES: ServiceCategory[] = [
     ],
   },
   {
+    id: "landscaping",
+    name: { en: "Landscaping", ar: "تنسيق حدائق" },
+    blurb: {
+      en: "Gardens, irrigation, tree trimming, fences and outdoor care.",
+      ar: "حدائق، ري، تقليم أشجار، أسيجة وعناية خارجية.",
+    },
+    questions: [
+      {
+        id: "work",
+        kind: "choice",
+        label: { en: "What do you need?", ar: "شو بدك؟" },
+        options: [
+          { value: "design", label: { en: "New garden / redesign", ar: "حديقة جديدة / إعادة تصميم" } },
+          { value: "maintenance", label: { en: "Regular maintenance", ar: "صيانة دورية" } },
+          { value: "trimming", label: { en: "Tree / hedge trimming", ar: "تقليم أشجار / أسيجة خضرا" }, weight: 1 },
+          { value: "irrigation", label: { en: "Irrigation system", ar: "نظام ري" } },
+          { value: "fence", label: { en: "Fence / pergola / stonework", ar: "سيجة / برجولا / حجر" } },
+          { value: "cleanup", label: { en: "Cleanup / overgrowth removal", ar: "تنظيف / إزالة أعشاب" } },
+          { value: "other", label: { en: "Something else", ar: "شي تاني" } },
+        ],
+      },
+      {
+        id: "space",
+        kind: "choice",
+        label: { en: "How big is the space?", ar: "قديه كبيرة المساحة؟" },
+        options: [
+          { value: "balcony", label: { en: "Balcony / rooftop", ar: "بلكون / سطح" } },
+          { value: "small", label: { en: "Small garden (up to 100 m²)", ar: "حديقة صغيرة (لحد ١٠٠ م²)" } },
+          { value: "medium", label: { en: "Medium (100–300 m²)", ar: "وسط (١٠٠–٣٠٠ م²)" } },
+          { value: "large", label: { en: "Large / villa / commercial", ar: "كبيرة / فيلا / تجاري" }, weight: 1 },
+        ],
+      },
+      {
+        id: "heightRisk",
+        kind: "choice",
+        when: { id: "work", equals: "trimming" },
+        label: {
+          en: "Any tall trees near power lines or buildings?",
+          ar: "في أشجار عالية قرب خطوط كهربا أو مباني؟",
+        },
+        hint: {
+          en: "Stay clear of the area — just tell us what you see.",
+          ar: "ابعد عن المنطقة — بس خبرنا شو شايف.",
+        },
+        options: [
+          { value: "no", label: { en: "No", ar: "لا" } },
+          { value: "tall", label: { en: "Tall trees, clear area", ar: "أشجار عالية، المنطقة فاضية" }, weight: 1 },
+          { value: "near_lines", label: { en: "Yes, near power lines / buildings", ar: "إيه، قرب كهربا / مباني" }, critical: true },
+        ],
+      },
+      {
+        id: "water",
+        kind: "choice",
+        when: { id: "work", equals: "irrigation" },
+        label: { en: "Is there a water source on site?", ar: "في مصدر مي بالموقع؟" },
+        options: [
+          { value: "tap", label: { en: "Yes, outdoor tap", ar: "إيه، حنفية برّا" } },
+          { value: "tank", label: { en: "Tank / pump only", ar: "خزان / مضخة بس" } },
+          { value: "none", label: { en: "No source yet", ar: "لسا ما في" } },
+        ],
+      },
+      {
+        id: "frequency",
+        kind: "choice",
+        when: { id: "work", equals: "maintenance" },
+        label: { en: "How often?", ar: "قديه مرة بالشهر؟" },
+        options: [
+          { value: "once", label: { en: "One-time visit", ar: "زيارة وحدة" } },
+          { value: "monthly", label: { en: "Monthly", ar: "شهري" } },
+          { value: "weekly", label: { en: "Weekly", ar: "أسبوعي" } },
+        ],
+      },
+    ],
+  },
+  {
     id: "appliance",
-    name: { en: "Appliance repair", ar: "تصليح أجهزة" },
+    name: { en: "Appliance repair", ar: "تصليحات" },
     blurb: {
       en: "Washers, fridges, ovens and household appliances.",
       ar: "غسالات، برادات، أفران وأجهزة منزلية.",
@@ -481,6 +558,94 @@ export const CATEGORIES: ServiceCategory[] = [
 export const CATEGORY_MAP: Record<string, ServiceCategory> = Object.fromEntries(
   CATEGORIES.map((c) => [c.id, c]),
 );
+
+// ---------- soft pastel tints per category (Urban-Company-style tiles) ----------
+
+export const CATEGORY_TINT: Record<string, { bg: string; ink: string }> = {
+  plumbing: { bg: "#E7F0FC", ink: "#0B63CE" },
+  electrical: { bg: "#FBF1DC", ink: "#A8740F" },
+  ac: { bg: "#E3F4F8", ink: "#0E7C9C" },
+  carpentry: { bg: "#F4EBDF", ink: "#8A6234" },
+  painting: { bg: "#F0EBFA", ink: "#6C4FC4" },
+  cleaning: { bg: "#E5F4ED", ink: "#1F7A55" },
+  porter: { bg: "#ECEFF4", ink: "#4A5A75" },
+  valet: { bg: "#EAEDFB", ink: "#3F55C0" },
+  security: { bg: "#E6ECF6", ink: "#0C2B5C" },
+  landscaping: { bg: "#E9F4E4", ink: "#3F7A2E" },
+  appliance: { bg: "#F9EBEF", ink: "#B0405F" },
+};
+
+// ---------- the Be Right Guarantee ----------
+
+export const GUARANTEE_POINTS: LocalText[] = [
+  {
+    en: "Every job is documented — photos before and after, and a specialist reviews the result.",
+    ar: "كل شغلة موثّقة — صور قبل وبعد، ومختص بيراجع النتيجة.",
+  },
+  {
+    en: `If something isn't right within ${GUARANTEE_DAYS} days, report it from your requests page — the revisit is free.`,
+    ar: `إذا في شي مش مظبوط خلال ${arabicDigits(GUARANTEE_DAYS)} أيام، بلّغ عنه من صفحة طلباتك — الزيارة مجانية.`,
+  },
+  {
+    en: "The price you approved is the price you pay. Extra work only happens after your approval.",
+    ar: "السعر يلي وافقت عليه هو يلي بتدفعه. أي شغل زيادة بصير بس بعد موافقتك.",
+  },
+  {
+    en: "Verified technicians only — identity and trade checked before their first job.",
+    ar: "معلّمين موثّقين بس — الهوية والمهنة بينفحصوا قبل أول شغلة.",
+  },
+];
+
+// ---------- coverage areas ----------
+
+// Nationwide — all of Lebanon.
+export const COVERAGE_NOTE: LocalText = {
+  en: "From Beirut to Tripoli, Saida to the Bekaa — any town or village. We confirm appointment availability for your address before approval.",
+  ar: "من بيروت لطرابلس، من صيدا للبقاع — أي مدينة أو ضيعة. منأكد توفر الموعد لعنوانك قبل الموافقة.",
+};
+export const COVERAGE_AREAS: { group: LocalText; areas: LocalText[] }[] = [
+  {
+    group: { en: "Everywhere in Lebanon", ar: "كل المناطق اللبنانية" },
+    areas: [
+      { en: "Beirut", ar: "بيروت" },
+      { en: "Mount Lebanon", ar: "جبل لبنان" },
+      { en: "Tripoli & the North", ar: "طرابلس والشمال" },
+      { en: "Saida & the South", ar: "صيدا والجنوب" },
+      { en: "Bekaa", ar: "البقاع" },
+      { en: "Nabatieh", ar: "النبطية" },
+      { en: "Baalbek & Hermel", ar: "بعلبك والهرمل" },
+      { en: "Akkar", ar: "عكار" },
+    ],
+  },
+];
+
+// ---------- main vs other services (homepage grouping) ----------
+
+export const MAIN_SERVICES = [
+  "plumbing",
+  "electrical",
+  "ac",
+  "appliance",
+  "carpentry",
+  "painting",
+  "cleaning",
+  "landscaping",
+];
+export const OTHER_SERVICES = ["porter", "valet", "security"];
+
+// ---------- verified client list (owner-supplied) ----------
+// Owner-supplied clients; logos collected from official brand sources.
+export const CLIENTS: { name: string; logo: string; note: LocalText }[] = [
+  { name: "Spinneys", logo: "/assets/clients/spinneys.png", note: { en: "Gray Mackenzie Retail SAL", ar: "غراي ماكنزي ريتيل ش.م.ل" } },
+  { name: "Happy Supermarkets", logo: "/assets/clients/happy.png", note: { en: "Supermarkets", ar: "سوبرماركت" } },
+  { name: "Sky Gate", logo: "/assets/clients/sky-gate.png", note: { en: "Sky Gate Beirut", ar: "سكاي غيت بيروت" } },
+  { name: "Noknok", logo: "/assets/clients/noknok.png", note: { en: "Grocery delivery", ar: "توصيل بقالة" } },
+  { name: "GrabnGO", logo: "/assets/clients/grabngo.png", note: { en: "Convenience stores", ar: "متاجر سريعة" } },
+  { name: "Malik's", logo: "/assets/clients/maliks.png", note: { en: "Bookshops & stationery", ar: "مكتبات وقرطاسية" } },
+  { name: "Tawfeer", logo: "/assets/clients/tawfeer.png", note: { en: "Supermarkets", ar: "سوبرماركت" } },
+  { name: "Beirut Duty Free", logo: "/assets/clients/beirut-duty-free.png", note: { en: "PAC SAL", ar: "باك ش.م.ل" } },
+  { name: "Karout Mall", logo: "/assets/clients/teska.png", note: { en: "Teska", ar: "تيسكا" } },
+];
 
 // ---------- urgency engine ----------
 

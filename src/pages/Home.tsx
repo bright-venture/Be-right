@@ -1,361 +1,587 @@
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
 import {
   ArrowRight,
-  Zap,
-  PiggyBank,
-  ShieldCheck,
   BadgeCheck,
+  ChevronDown,
+  ClipboardCheck,
+  MapPin,
+  PiggyBank,
+  ReceiptText,
+  ShieldCheck,
+  Store,
 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { Marquee } from "@/components/Marquee";
+import { HeroBird } from "@/components/HeroBird";
+import { LEBANON_PATH } from "@/components/Preloader";
+import { ClientCarousel } from "@/components/ClientCarousel";
+import { CategoryPicker } from "@/components/CategoryPicker";
 import { ServiceIcon } from "@/components/ServiceIcon";
-import { AccountDeletedNotice } from "@/components/AccountDeletedNotice";
 import { useI18n } from "@/i18n";
 import {
-  CATEGORIES,
-  URGENCY_META,
-  type UrgencyLevel,
+  CATEGORY_MAP,
+  CATEGORY_TINT,
+  COVERAGE_AREAS,
+  COVERAGE_NOTE,
+  MAIN_SERVICES,
+  OTHER_SERVICES,
 } from "@contracts/services";
+import { INTRO_DONE_EVENT } from "@/lib/intro";
+import { AccountDeletedNotice } from "@/components/AccountDeletedNotice";
 
-const URGENCY_COLORS: Record<UrgencyLevel, string> = {
-  normal: "border-navy bg-white text-navy",
-  priority: "border-bird bg-bird text-white",
-  urgent: "border-flame bg-flame text-white",
-  critical: "border-navy-deep bg-navy-deep text-white",
-};
+// City positions projected into the geoBoundaries Lebanon silhouette.
+const COASTAL_CITIES = [
+  { en: "Tripoli", ar: "طرابلس", x: 312.0, y: 132.6 },
+  { en: "Batroun", ar: "البترون", x: 233.2, y: 223.5 },
+  { en: "Byblos", ar: "جبيل", x: 229.0, y: 291.9 },
+  { en: "Jounieh", ar: "جونيه", x: 216.2, y: 363.4 },
+  { en: "Beirut", ar: "بيروت", x: 167.1, y: 407.8 },
+  { en: "Saida", ar: "صيدا", x: 112.0, y: 579.3 },
+  { en: "Tyre", ar: "صور", x: 36.8, y: 724.3 },
+];
 
 export default function Home() {
   const { t, p, lang } = useI18n();
   const isAr = lang === "ar";
 
+  /* Launch choreography: the bird runs across first, then this flag starts
+     the staggered content reveal. A Skip on the intro cuts straight to
+     revealed content. Safety fallback can never strand content. */
+  const [heroReady, setHeroReady] = useState(false);
+  useEffect(() => {
+    const cut = () => setHeroReady(true);
+    window.addEventListener(INTRO_DONE_EVENT, cut);
+    const t = setTimeout(() => setHeroReady(true), 9000);
+    return () => {
+      window.removeEventListener(INTRO_DONE_EVENT, cut);
+      clearTimeout(t);
+    };
+  }, []);
+
+  /* Pause looping hero motion when the hero scrolls offscreen */
+  const heroRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const el = heroRef.current;
+    if (!el || !("IntersectionObserver" in window)) return;
+    const io = new IntersectionObserver(
+      ([entry]) => el.classList.toggle("hero-motion-paused", !entry.isIntersecting),
+      { threshold: 0.05 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
+  const mainCats = MAIN_SERVICES.map((id) => CATEGORY_MAP[id]).filter(Boolean);
+  const otherCats = OTHER_SERVICES.map((id) => CATEGORY_MAP[id]).filter(Boolean);
+
+  const renderTile = (c: (typeof mainCats)[number], i: number) => {
+    const tint = CATEGORY_TINT[c.id] ?? { bg: "#ECEFF4", ink: "#0C2B5C" };
+    return (
+      <Link
+        key={c.id}
+        to={`/book?cat=${c.id}`}
+        className="service-tile group relative flex h-full min-h-[168px] flex-col items-center justify-center gap-2.5 rounded-[26px] border-[1.5px] border-navy/12 bg-white px-2 py-5 text-center shadow-[0_3px_0_rgb(12_43_92/0.1)] transition-all duration-200 hover:-translate-y-1.5 hover:border-navy hover:shadow-[0_7px_0_rgb(12_43_92/0.9)] focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-flame active:translate-y-0 active:shadow-[0_2px_0_rgb(12_43_92/0.9)]"
+      >
+        <span className="ghost-num absolute end-3 top-2 text-xl">
+          {String(i + 1).padStart(2, "0")}
+        </span>
+        <span
+          className="flex h-13 w-13 items-center justify-center rounded-2xl p-3 transition-transform duration-200 group-hover:scale-110 group-hover:-rotate-6"
+          style={{ background: tint.bg, color: tint.ink }}
+        >
+          <ServiceIcon id={c.id} className="h-6 w-6" />
+        </span>
+        <span className="text-[12.5px] font-black leading-tight text-navy">{p(c.name)}</span>
+      </Link>
+    );
+  };
+
+  const pricingCards = [
+    { icon: ReceiptText, title: t.pricing.feeTitle, body: t.pricing.feeBody },
+    { icon: PiggyBank, title: t.pricing.partsTitle, body: t.pricing.partsBody },
+    { icon: ClipboardCheck, title: t.pricing.approveTitle, body: t.pricing.approveBody },
+  ];
+
   return (
-    <div className="min-h-screen bg-paper">
+    <div className={`home-page min-h-screen overflow-x-clip bg-paper ${heroReady ? "hero-ready" : ""}`}>
       <Navbar />
       <AccountDeletedNotice />
 
-      <main>
-        {/* ============ HERO ============ */}
-        <section className="relative overflow-hidden pt-16">
-          <div className="mx-auto grid max-w-6xl items-center gap-8 px-4 pb-16 pt-10 sm:px-6 lg:grid-cols-[1.2fr_1fr] lg:pt-16">
-            <div>
-              <span className="tech-label text-flame-ink">
-                {p(t.hero.kicker)}
-              </span>
+      {/* ============ HERO — editorial poster ============ */}
+      <section ref={heroRef} className="home-hero relative overflow-hidden pt-16">
+        <div className="relative mx-auto max-w-6xl px-4 pb-16 pt-10 sm:px-6 sm:pt-14">
+          <div className="grid items-center gap-10 lg:grid-cols-[1.2fr_0.8fr]">
+            <div className="relative z-10 min-w-0">
+              {/* Mobile mascot slot — the bird's landing spot on small screens.
+                  Anchored to the screen's far edge so the run truly crosses
+                  the viewport (enters left in EN, right in AR). */}
+              <div className="mb-6 flex items-end justify-end gap-3 sm:hidden">
+                <div className="hero-enter hero-d2 relative mb-10 rounded-2xl border-2 border-navy bg-white px-3.5 py-1.5 shadow-[0_3px_0_rgb(12_43_92/0.3)]">
+                  <span className="whitespace-nowrap font-display text-sm font-black text-navy">
+                    {p(t.footer.tagline)}
+                  </span>
+                  <span
+                    aria-hidden
+                    className="absolute -bottom-[7px] end-2.5 h-3 w-3 rotate-45 border-b-2 border-e-2 border-navy bg-white"
+                  />
+                </div>
+                <HeroBird className="h-28 w-28 shrink-0" onSettled={() => setHeroReady(true)} />
+              </div>
+              <span className="tech-label hero-enter text-flame-ink">{p(t.hero.kicker)}</span>
               <h1
-                className={`mt-6 font-display font-black leading-[1.04] tracking-tight text-navy ${
+                className={`mt-6 font-display font-black leading-[1.02] tracking-tight text-navy ${
                   isAr
-                    ? "text-[42px] sm:text-[64px] lg:text-[76px]"
-                    : "text-[46px] sm:text-[72px] lg:text-[88px]"
+                    ? "text-[36px] sm:text-[48px] lg:text-[60px]"
+                    : "text-[40px] sm:text-[56px] lg:text-[68px]"
                 }`}
               >
                 <span className="reveal-line">
                   <span>{p(t.hero.h1a)}</span>
                 </span>
                 <span className="reveal-line">
-                  <span className="text-flame">{p(t.hero.h1b)}</span>
+                  <span className="stroke-underline">{p(t.hero.h1b)}</span>
                 </span>
               </h1>
-              <p className="mt-6 max-w-xl text-lg leading-relaxed text-navy/80">
+              <p className="hero-enter hero-d2 mt-4 font-display text-lg font-black uppercase tracking-[0.14em] text-flame-ink sm:text-xl">
+                {p(t.hero.promise)}
+              </p>
+              <p className="hero-enter hero-d3 mt-4 max-w-xl text-[15px] leading-relaxed text-navy/70 sm:text-base">
                 {p(t.hero.sub)}
               </p>
-              <div className="mt-8 flex flex-wrap gap-3">
+              <div className="hero-enter hero-d4 mt-7 flex flex-wrap items-center gap-3">
                 <Link to="/book" className="btn-pill-primary text-base">
                   {p(t.hero.cta)}
                   <ArrowRight className="h-5 w-5 rtl:-scale-x-100" />
                 </Link>
-                <a href="#how" className="btn-pill-outline text-base">
+                <a href="#how" className="btn-pill-outline">
                   {p(t.hero.ctaSecondary)}
                 </a>
               </div>
-              <ul className="mt-8 flex flex-wrap gap-2.5">
-                {[t.hero.chip1, t.hero.chip2, t.hero.chip3].map((c, i) => (
+              <ul className="hero-benefits hero-enter hero-d5 mt-6 flex flex-wrap gap-x-5 gap-y-2">
+                {[t.hero.chip1, t.hero.chip2, t.hero.chip3, t.hero.chip4].map((c, i) => (
                   <li
                     key={i}
-                    className="inline-flex items-center gap-2 rounded-full border-2 border-navy bg-white px-4 py-2 text-sm font-bold text-navy"
+                    className="inline-flex items-center gap-2 rounded-full border-[1.5px] border-navy/70 bg-white px-3.5 py-1.5 text-xs font-black text-navy shadow-[0_2px_0_rgb(12_43_92/0.25)]"
                   >
-                    <span className="h-2 w-2 rounded-full bg-flame" />
+                    <span className="h-1.5 w-1.5 rounded-full bg-flame" />
                     {p(c)}
                   </li>
                 ))}
               </ul>
             </div>
 
-            <div className="relative mx-auto w-full max-w-sm lg:max-w-none">
-              <div className="absolute inset-x-8 bottom-4 top-16 rounded-[48px] border-2 border-navy bg-white" />
-              <img
-                src="/assets/mascot-480.webp"
-                srcSet="/assets/mascot-480.webp 480w, /assets/mascot-946.webp 946w"
-                sizes="(min-width: 1024px) 448px, 384px"
-                width={946}
-                height={1207}
-                fetchPriority="high"
-                alt="Be Right bird mascot in a hard hat and safety vest"
-                className="relative z-10 mx-auto h-auto w-full max-w-md animate-floaty"
-              />
+            {/* Nationwide service artwork — an open map, rather than a portrait frame. */}
+            <div className="relative mx-auto hidden w-full max-w-[420px] pt-20 sm:block">
+              <div className="hero-enter hero-d1 absolute top-0 end-0 z-20 max-w-full">
+                <div className="relative rounded-2xl border-2 border-navy bg-white px-6 py-4 shadow-[0_4px_0_rgb(12_43_92/0.2)]">
+                  <span className="font-display text-2xl font-black text-navy">{p(t.footer.tagline)}</span>
+                  <span aria-hidden className="absolute -bottom-[9px] start-12 h-4 w-4 rotate-45 border-b-2 border-e-2 border-navy bg-white" />
+                </div>
+              </div>
+              <div className="relative flex items-end justify-center">
+                <svg aria-hidden viewBox="-170 -30 840 898.2" className="hero-coastal-map pointer-events-none absolute inset-0 h-full w-full">
+                  <path d={LEBANON_PATH} fill="#E2EBF7" stroke="#0C2B5C" strokeOpacity="0.18" strokeWidth="3" />
+                  {COASTAL_CITIES.map(city => (
+                    <g key={city.en}>
+                      {city.en === "Beirut" && <circle cx={city.x} cy={city.y} r="20" fill="#F4530A" fillOpacity="0.14" />}
+                      <circle cx={city.x} cy={city.y} r={city.en === "Beirut" ? 10 : 7} fill="#F4530A" stroke="white" strokeWidth="3" />
+                    </g>
+                  ))}
+                </svg>
+                <HeroBird className="hero-bird-offset relative z-10 w-[85%]" onSettled={() => setHeroReady(true)} />
+              </div>
+              <div className="relative z-20 mx-auto -mt-5 flex w-fit items-center gap-2 rounded-full border border-navy/15 bg-white px-4 py-2">
+                <BadgeCheck className="h-5 w-5 text-flame" />
+                <span className="font-display text-xs font-black text-navy">{p(t.hero.chip4)}</span>
+              </div>
             </div>
           </div>
-        </section>
 
-        <Marquee />
+          {/* Category picker — Checkatrade-style pill row + guided modal */}
+          <CategoryPicker />
+        </div>
+      </section>
 
-        {/* ============ SERVICES ============ */}
-        <section id="services" className="scroll-mt-20 py-16 sm:py-24">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6">
-            <span className="tech-label text-navy/70">
-              {p(t.services.kicker)}
-            </span>
-            <div className="mt-4 flex flex-wrap items-end justify-between gap-4">
-              <h2 className="max-w-xl font-display text-4xl font-black tracking-tight text-navy sm:text-5xl">
+      {/* ============ CLIENTS — one brand per slide ============ */}
+      <section id="clients" className="border-t-[1.5px] border-navy/10 py-14">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <span className="tech-label text-navy/70">{p(t.clients.kicker)}</span>
+              <h2 className="mt-4 font-display text-3xl font-black tracking-tight text-navy sm:text-4xl">
+                {p(t.clients.title)}
+              </h2>
+            </div>
+            <p className="max-w-sm text-[13px] leading-relaxed text-navy/70">{p(t.clients.sub)}</p>
+          </div>
+          <ClientCarousel />
+        </div>
+      </section>
+
+      {/* ============ SERVICES — grouped index ============ */}
+      <section id="services" className="scroll-mt-20 border-b-[1.5px] border-navy/10 py-14">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <span className="tech-label text-navy/70">{p(t.services.kicker)}</span>
+              <h2 className="mt-4 font-display text-3xl font-black tracking-tight text-navy sm:text-4xl">
                 {p(t.services.title)}
               </h2>
-              <p className="max-w-md text-sm leading-relaxed text-navy/70">
-                {p(t.services.sub)}
-              </p>
             </div>
+            <p className="max-w-sm text-[13px] leading-relaxed text-navy/70">{p(t.services.sub)}</p>
+          </div>
 
-            <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {CATEGORIES.map((c, i) => (
-                <Link
-                  key={c.id}
-                  to={`/book?cat=${c.id}`}
-                  className={`card-br group flex min-h-44 flex-col justify-between p-5 transition-all duration-200 hover:-translate-y-1 hover:bg-navy hover:text-paper ${
-                    // playful stagger on wide screens
-                    i % 4 === 1 || i % 4 === 3 ? "xl:translate-y-4" : ""
-                  }`}
-                >
-                  <div className="flex items-start justify-between">
-                    <span className="text-bird transition-colors group-hover:text-flame">
-                      <ServiceIcon id={c.id} className="h-9 w-9" />
-                    </span>
-                    <span className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-current opacity-0 transition-opacity group-hover:opacity-100">
-                      <ArrowRight className="h-4 w-4 rtl:-scale-x-100" />
-                    </span>
-                  </div>
-                  <div>
-                    <h3 className="font-display text-xl font-extrabold">
-                      {p(c.name)}
-                    </h3>
-                    <p className="mt-1 text-[13px] leading-snug opacity-70">
-                      {p(c.blurb)}
-                    </p>
-                  </div>
-                </Link>
-              ))}
+          <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
+            {mainCats.map((c, i) => renderTile(c, i))}
+          </div>
 
-              {/* CTA tile completes the grid */}
+          {/* Other services — compact row */}
+          <div className="mt-8">
+            <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+              <h3 className="font-display text-lg font-black text-navy">{p(t.coverage.other)}</h3>
+              <span className="text-xs font-semibold text-navy/70">{p(t.coverage.otherSub)}</span>
+            </div>
+            <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {otherCats.map((c, i) => renderTile(c, mainCats.length + i))}
+              {/* Catch-all CTA tile */}
               <Link
                 to="/book"
-                className="card-br group flex min-h-44 flex-col justify-between border-flame bg-flame p-5 text-white transition-all duration-200 hover:-translate-y-1 hover:bg-flame-dark xl:translate-y-4"
+                className="service-tile group relative flex h-full min-h-[168px] flex-col items-center justify-center gap-1.5 rounded-[26px] px-2 py-5 text-center text-white transition-all duration-200 hover:-translate-y-1.5 focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-navy active:translate-y-0"
+                style={{
+                  background: "linear-gradient(150deg, #C94407 0%, #A33706 100%)",
+                  boxShadow: "0 6px 18px rgb(244 83 10 / 0.18)",
+                }}
               >
-                <span className="font-display text-[11px] font-bold uppercase tracking-[0.2em]">
-                  Be Right
+                <span className="text-[13px] font-black leading-tight">{p(t.cta.title)}</span>
+                <span className="inline-flex items-center gap-1 text-[11px] font-bold underline underline-offset-2">
+                  {p(t.services.bookThis)}
+                  <ArrowRight className="h-3 w-3 rtl:-scale-x-100" />
                 </span>
-                <div>
-                  <h3 className="font-display text-xl font-extrabold">
-                    {p(t.cta.title)}
-                  </h3>
-                  <span className="mt-2 inline-flex items-center gap-2 font-bold underline underline-offset-4">
-                    {p(t.services.bookThis)}
-                    <ArrowRight className="h-4 w-4 rtl:-scale-x-100" />
-                  </span>
-                </div>
               </Link>
             </div>
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* ============ HOW IT WORKS (dark) ============ */}
-        <section
-          id="how"
-          className="scroll-mt-20 border-y-2 border-navy bg-navy py-16 text-paper sm:py-24"
-        >
-          <div className="mx-auto max-w-6xl px-4 sm:px-6">
-            <span className="tech-label text-flame-light">
-              {p(t.how.kicker)}
-            </span>
-            <h2 className="mt-4 max-w-2xl font-display text-4xl font-black tracking-tight sm:text-5xl">
-              {p(t.how.title)}
-            </h2>
+      {/* ============ HOW IT WORKS — 3 steps ============ */}
+      <section id="how" className="tape-navy grain relative scroll-mt-20 py-16 text-paper">
+        <div className="relative mx-auto max-w-6xl px-4 sm:px-6">
+          <span className="tech-label text-flame-light">{p(t.how.kicker)}</span>
+          <h2 className="mt-4 font-display text-3xl font-black tracking-tight sm:text-4xl">
+            {p(t.how.title)}
+          </h2>
 
-            <ol className="mt-12 grid grid-cols-1 gap-px overflow-hidden rounded-3xl border-2 border-paper/25 bg-paper/20 sm:grid-cols-2 lg:grid-cols-3">
-              {t.how.steps.map((s, i) => (
-                <li
-                  key={i}
-                  className="flex min-h-48 flex-col justify-between bg-navy p-6"
-                >
-                  <span className="font-display text-5xl font-black text-flame-light">
-                    {String(i + 1).padStart(2, "0")}
-                  </span>
-                  <div className="mt-6">
-                    <h3 className="font-display text-lg font-extrabold">
-                      {p(s.title)}
-                    </h3>
-                    <p className="mt-2 text-sm leading-relaxed text-paper/70">
-                      {p(s.body)}
-                    </p>
-                  </div>
-                </li>
-              ))}
-            </ol>
-          </div>
-        </section>
+          <ol className="mt-10 grid grid-cols-1 gap-5 md:grid-cols-3">
+            {t.how.steps.map((s, i) => (
+              <li
+                key={i}
+                className="relative rounded-3xl border-[1.5px] border-paper/20 bg-paper/[0.06] p-6 pt-9 backdrop-blur-sm"
+              >
+                <span className="absolute -top-4 start-5 rounded-full bg-flame px-3.5 py-1.5 font-display text-sm font-black text-white shadow-[0_3px_0_rgb(8_30_66/0.8)]">
+                  {i + 1}
+                </span>
+                <h3 className="font-display text-lg font-black">{p(s.title)}</h3>
+                <p className="mt-2 text-[13px] leading-relaxed text-paper/80">{p(s.body)}</p>
+                {i < 2 && (
+                  <ArrowRight
+                    aria-hidden
+                    className="absolute -end-3.5 top-1/2 hidden h-7 w-7 -translate-y-1/2 text-flame rtl:-scale-x-100 md:block"
+                  />
+                )}
+              </li>
+            ))}
+          </ol>
 
-        {/* ============ WHY / URGENCY ============ */}
-        <section id="why" className="scroll-mt-20 py-16 sm:py-24">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6">
-            <span className="tech-label text-navy/70">{p(t.why.kicker)}</span>
-            <div className="mt-4 grid gap-10 lg:grid-cols-2">
-              <div>
-                <h2 className="font-display text-4xl font-black tracking-tight text-navy sm:text-5xl">
-                  {p(t.why.title)}
-                </h2>
-                <p className="mt-5 max-w-lg text-lg leading-relaxed text-navy/80">
-                  {p(t.why.sub)}
-                </p>
-              </div>
-
-              <div className="card-br p-6 sm:p-8">
-                <h3 className="font-display text-xl font-extrabold text-navy">
-                  {p(t.why.urgencyTitle)}
-                </h3>
-                <p className="mt-2 text-sm leading-relaxed text-navy/70">
-                  {p(t.why.urgencySub)}
-                </p>
-                <div className="mt-6 flex flex-col gap-3">
-                  {(Object.keys(URGENCY_META) as UrgencyLevel[]).map(level => (
-                    <div
-                      key={level}
-                      className={`flex items-center justify-between gap-4 rounded-2xl border-2 px-5 py-3 ${URGENCY_COLORS[level]}`}
-                    >
-                      <span className="font-display font-extrabold">
-                        {p(URGENCY_META[level].label)}
-                      </span>
-                      <span className="text-end text-xs leading-snug">
-                        {p(URGENCY_META[level].note)}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* ============ PROMISE (speed / price / safety / guarantee) ============ */}
-        <section
-          id="trust"
-          className="scroll-mt-20 border-t-2 border-navy/10 py-16 sm:py-24"
-        >
-          <div className="mx-auto max-w-6xl px-4 sm:px-6">
-            <span className="tech-label text-navy/70">{p(t.trust.kicker)}</span>
-            <div className="mt-4 flex flex-wrap items-end justify-between gap-4">
-              <h2 className="max-w-xl font-display text-4xl font-black tracking-tight text-navy sm:text-5xl">
-                {p(t.trust.title)}
-              </h2>
-              <p className="max-w-md text-sm leading-relaxed text-navy/70">
-                {p(t.trust.sub)}
-              </p>
-            </div>
-            <div className="mt-10 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              {t.trust.items.map((item, i) => {
-                const Icon = [Zap, PiggyBank, ShieldCheck, BadgeCheck][i];
-                return (
-                  <div
-                    key={i}
-                    className={`card-br group p-6 transition-all duration-200 hover:-translate-y-1 ${
-                      i === 3 ? "border-flame bg-navy text-paper" : ""
-                    }`}
-                  >
-                    <span
-                      className={`inline-flex h-12 w-12 items-center justify-center rounded-full border-2 ${
-                        i === 3
-                          ? "border-flame bg-flame text-white"
-                          : "border-flame text-flame-ink"
-                      }`}
-                    >
-                      <Icon className="h-6 w-6" />
-                    </span>
-                    <h3
-                      className={`mt-4 font-display text-lg font-extrabold ${
-                        i === 3 ? "text-white" : "text-navy"
-                      }`}
-                    >
-                      {p(item.title)}
-                    </h3>
-                    <p
-                      className={`mt-2 text-sm leading-relaxed ${
-                        i === 3 ? "text-paper/80" : "text-navy/70"
-                      }`}
-                    >
-                      {p(item.body)}
-                    </p>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </section>
-
-        {/* ============ JOIN (technicians) ============ */}
-        <section
-          id="join"
-          className="border-t-2 border-navy bg-bird py-16 text-white sm:py-24"
-        >
-          <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 sm:px-6 lg:grid-cols-2">
-            <div>
-              <span className="tech-label text-white">{p(t.join.kicker)}</span>
-              <h2 className="mt-4 font-display text-4xl font-black tracking-tight sm:text-5xl">
-                {p(t.join.sectionTitle)}
-              </h2>
-              <Link to="/join" className="btn-pill-white mt-8 text-base">
-                {p(t.join.cta)}
-                <ArrowRight className="h-5 w-5 rtl:-scale-x-100" />
-              </Link>
-            </div>
-            <ul className="flex flex-col gap-3">
-              {[t.join.bullet1, t.join.bullet2, t.join.bullet3].map((b, i) => (
-                <li
-                  key={i}
-                  className="flex items-start gap-4 rounded-2xl border-2 border-white/40 bg-white/10 p-5 text-sm font-medium leading-relaxed"
-                >
-                  <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 border-flame bg-flame font-display text-sm font-black">
-                    {i + 1}
-                  </span>
-                  {p(b)}
+          <details className="group mt-8 rounded-3xl border-[1.5px] border-paper/20 bg-paper/[0.04]">
+            <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-4 px-6 py-4 font-display text-sm font-black uppercase tracking-[0.15em] text-paper/90 [&::-webkit-details-marker]:hidden">
+              {p(t.how.moreTitle)}
+              <ChevronDown className="h-5 w-5 transition-transform group-open:rotate-180" />
+            </summary>
+            <ul className="grid gap-4 px-6 pb-6 pt-2 sm:grid-cols-2">
+              {t.how.moreItems.map((m, i) => (
+                <li key={i} className="flex gap-3 text-[13px] leading-relaxed text-paper/75">
+                  <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-flame" />
+                  {p(m)}
                 </li>
               ))}
             </ul>
-          </div>
-        </section>
+          </details>
+        </div>
+      </section>
 
-        {/* ============ CTA (orange flip) ============ */}
-        <section className="border-y-2 border-navy bg-flame py-16 text-white sm:py-20">
-          <div className="mx-auto flex max-w-6xl flex-col items-center gap-8 px-4 text-center sm:px-6">
-            <img
-              src="/assets/mascot-320.webp"
-              width={320}
-              height={408}
-              loading="lazy"
-              alt=""
-              aria-hidden
-              className="h-auto w-40 drop-shadow-[0_8px_0_rgba(12,43,92,0.25)]"
-            />
-            <h2 className="font-display text-4xl font-black tracking-tight sm:text-6xl">
+      {/* ============ COVERAGE ============ */}
+      <section id="coverage" className="scroll-mt-20 border-b-[1.5px] border-navy/10 py-14">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <span className="tech-label text-navy/70">{p(t.coverage.kicker)}</span>
+              <h2 className="mt-4 font-display text-3xl font-black tracking-tight text-navy sm:text-4xl">
+                {p(t.coverage.title)}
+              </h2>
+            </div>
+            <p className="max-w-sm text-[13px] leading-relaxed text-navy/70">{p(COVERAGE_NOTE)}</p>
+          </div>
+          <div className="mt-8 grid gap-4">
+            {COVERAGE_AREAS.map((g, i) => (
+              <div key={i} className="card-br p-6">
+                <h3 className="flex items-center gap-2 font-display text-lg font-black text-navy">
+                  <span
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-navy text-paper"
+                    style={{ boxShadow: "0 2px 0 rgb(244 83 10 / 0.9)" }}
+                  >
+                    <MapPin className="h-4 w-4" />
+                  </span>
+                  {p(g.group)}
+                </h3>
+                <ul className="mt-4 flex flex-wrap gap-2">
+                  {g.areas.map((a, j) => (
+                    <li
+                      key={j}
+                      className="rounded-full border-[1.5px] border-navy/20 bg-paper px-3 py-1 text-xs font-bold text-navy/75"
+                    >
+                      {p(a)}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ============ PRICING & GUARANTEE ============ */}
+      <section id="pricing" className="scroll-mt-20 py-14">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <span className="tech-label text-navy/70">{p(t.pricing.kicker)}</span>
+              <h2 className="mt-4 font-display text-3xl font-black tracking-tight text-navy sm:text-4xl">
+                {p(t.pricing.title)}
+              </h2>
+            </div>
+          </div>
+          <div className="mt-8 grid gap-4 md:grid-cols-3">
+            {pricingCards.map((c, i) => (
+              <div key={i} className="card-br card-hover p-6">
+                <span
+                  className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-navy text-paper"
+                  style={{ boxShadow: "0 3px 0 rgb(244 83 10 / 0.9)" }}
+                >
+                  <c.icon className="h-5 w-5" />
+                </span>
+                <h3 className="mt-4 font-display text-lg font-black text-navy">{p(c.title)}</h3>
+                <p className="mt-2 text-[13px] leading-relaxed text-navy/70">{p(c.body)}</p>
+              </div>
+            ))}
+          </div>
+          {/* Guarantee card */}
+          <div className="tape-navy grain relative mt-4 overflow-hidden rounded-[28px] p-7 text-paper sm:p-8">
+            <div className="relative flex flex-wrap items-center gap-6">
+              <span
+                className="inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-flame text-white"
+                style={{ boxShadow: "0 4px 0 rgb(8 30 66 / 0.9)" }}
+              >
+                <ShieldCheck className="h-7 w-7" />
+              </span>
+              <div className="min-w-0 basis-full sm:flex-1 sm:basis-auto">
+                <h3 className="font-display text-xl font-black">{p(t.pricing.guaranteeTitle)}</h3>
+                <p className="mt-1.5 max-w-2xl text-[13px] leading-relaxed text-paper/80">
+                  {p(t.pricing.guaranteeBody)}
+                </p>
+                <p className="mt-2 text-xs leading-relaxed text-paper/55">
+                  {p(t.pricing.guaranteeExclusions)}
+                </p>
+              </div>
+              <Link
+                to="/guarantee"
+                className="btn-pill-white shrink-0 !min-h-11 !px-5 !py-2 text-sm"
+              >
+                {p(t.nav.guarantee)}
+                <ArrowRight className="h-4 w-4 rtl:-scale-x-100" />
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ============ TRUST — three-column row (checks / clients / guarantee) ============ */}
+      <section id="trust" className="scroll-mt-20 py-14">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <div className="flex flex-wrap items-end justify-between gap-4 border-b-[1.5px] border-navy/15 pb-6">
+            <div>
+              <span className="tech-label text-navy/70">{p(t.trust.kicker)}</span>
+              <h2 className="mt-4 font-display text-3xl font-black tracking-tight text-navy sm:text-4xl">
+                {p(t.trust.title)}
+              </h2>
+            </div>
+          </div>
+          <div className="grid gap-4 pt-8 md:grid-cols-3">
+            <div className="card-br card-hover flex flex-col p-6">
+              <span
+                className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-navy text-paper"
+                style={{ boxShadow: "0 3px 0 rgb(244 83 10 / 0.9)" }}
+              >
+                <ClipboardCheck className="h-5 w-5" />
+              </span>
+              <h3 className="mt-4 font-display text-lg font-black text-navy">
+                {p(t.trustRow.checksTitle)}
+              </h3>
+              <p className="mt-1.5 flex-1 text-[13px] leading-relaxed text-navy/70">
+                {p(t.trustRow.checksBody)}
+              </p>
+              <Link
+                to="/checks"
+                className="mt-4 inline-flex items-center gap-1.5 text-sm font-black text-flame-ink underline-offset-4 hover:underline"
+              >
+                {p(t.trustRow.checksCta)}
+                <ArrowRight className="h-4 w-4 rtl:-scale-x-100" />
+              </Link>
+            </div>
+            <div className="card-br card-hover flex flex-col p-6">
+              <span
+                className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-navy text-paper"
+                style={{ boxShadow: "0 3px 0 rgb(244 83 10 / 0.9)" }}
+              >
+                <Store className="h-5 w-5" />
+              </span>
+              <h3 className="mt-4 font-display text-lg font-black text-navy">
+                {p(t.trustRow.clientsTitle)}
+              </h3>
+              <p className="mt-1.5 flex-1 text-[13px] leading-relaxed text-navy/70">
+                {p(t.trustRow.clientsBody)}
+              </p>
+              <Link
+                to="/clients"
+                className="mt-4 inline-flex items-center gap-1.5 text-sm font-black text-flame-ink underline-offset-4 hover:underline"
+              >
+                {p(t.trustRow.clientsCta)}
+                <ArrowRight className="h-4 w-4 rtl:-scale-x-100" />
+              </Link>
+            </div>
+            <div className="card-br card-hover flex flex-col p-6">
+              <span
+                className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-navy text-paper"
+                style={{ boxShadow: "0 3px 0 rgb(244 83 10 / 0.9)" }}
+              >
+                <ShieldCheck className="h-5 w-5" />
+              </span>
+              <h3 className="mt-4 font-display text-lg font-black text-navy">
+                {p(t.trustRow.guaranteeTitle)}
+              </h3>
+              <p className="mt-1.5 flex-1 text-[13px] leading-relaxed text-navy/70">
+                {p(t.trustRow.guaranteeBody)}
+              </p>
+              <Link
+                to="/guarantee"
+                className="mt-4 inline-flex items-center gap-1.5 text-sm font-black text-flame-ink underline-offset-4 hover:underline"
+              >
+                {p(t.trustRow.guaranteeCta)}
+                <ArrowRight className="h-4 w-4 rtl:-scale-x-100" />
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ============ FAQ ============ */}
+      <section id="faq" className="scroll-mt-20 border-t-[1.5px] border-navy/10 py-14">
+        <div className="mx-auto max-w-3xl px-4 sm:px-6">
+          <span className="tech-label text-navy/70">{p(t.faq.kicker)}</span>
+          <h2 className="mt-4 font-display text-3xl font-black tracking-tight text-navy sm:text-4xl">
+            {p(t.faq.title)}
+          </h2>
+          <div className="mt-8 flex flex-col gap-3">
+            {t.faq.items.map((item, i) => (
+              <details key={i} className="group card-br overflow-hidden">
+                <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-4 p-5 font-display text-base font-black text-navy [&::-webkit-details-marker]:hidden">
+                  {p(item.q)}
+                  <ChevronDown className="h-5 w-5 shrink-0 text-flame transition-transform group-open:rotate-180" />
+                </summary>
+                <p className="border-t border-navy/10 px-5 pb-5 pt-4 text-sm leading-relaxed text-navy/75">
+                  {p(item.a)}
+                </p>
+              </details>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ============ JOIN — bird-blue band ============ */}
+      <section
+        id="join"
+        className="grain relative py-14 text-white"
+        style={{
+          background:
+            "repeating-linear-gradient(-45deg, transparent 0 14px, rgb(255 255 255 / 0.05) 14px 28px), linear-gradient(135deg, #0B63CE 0%, #0C2B5C 100%)",
+        }}
+      >
+        <div className="relative mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-8 px-4 sm:px-6">
+          <div className="max-w-xl">
+            <span className="tech-label text-white">{p(t.join.kicker)}</span>
+            <h2 className="mt-3 font-display text-3xl font-black tracking-tight sm:text-4xl">
+              {p(t.join.sectionTitle)}
+            </h2>
+            <p className="mt-3 text-sm leading-relaxed text-white/85">{p(t.join.bullet1)}</p>
+          </div>
+          <Link to="/join" className="btn-pill-white text-base">
+            {p(t.join.cta)}
+            <ArrowRight className="h-5 w-5 rtl:-scale-x-100" />
+          </Link>
+        </div>
+      </section>
+
+      {/* ============ FINAL CTA ============ */}
+      <section
+        className="grain relative overflow-hidden py-20 text-white"
+        style={{
+          background:
+            "repeating-linear-gradient(-45deg, transparent 0 16px, rgb(255 255 255 / 0.05) 16px 32px), linear-gradient(150deg, #C94407 0%, #A33706 60%, #8F3005 100%)",
+        }}
+      >
+        <span
+          aria-hidden
+          className="pointer-events-none absolute -bottom-10 start-0 select-none font-display text-[150px] font-black leading-none text-white/10 sm:text-[220px]"
+        >
+          GO!
+        </span>
+        <div className="relative mx-auto flex max-w-6xl flex-col items-center gap-8 px-4 text-center sm:px-6">
+          <img
+            src="/assets/mascot-320.webp"
+            width={320}
+            height={408}
+            loading="lazy"
+            alt=""
+            aria-hidden
+            className="h-auto w-24 drop-shadow-[0_14px_20px_rgba(8,30,66,0.4)]"
+          />
+          <div>
+            <h2 className="font-display text-4xl font-black tracking-tight sm:text-5xl">
               {p(t.cta.title)}
             </h2>
-            <p className="max-w-lg text-lg text-white">{p(t.cta.sub)}</p>
-            <Link
-              to="/book"
-              className="btn-pill border-white bg-white !text-flame hover:bg-navy hover:border-navy hover:!text-white text-lg"
-            >
-              {p(t.cta.button)}
-            </Link>
+            <p className="mt-3 text-base text-white">{p(t.cta.sub)}</p>
           </div>
-        </section>
-      </main>
+          <Link
+            to="/book"
+            className="btn-pill bg-white !text-flame-ink shadow-[0_6px_0_#081E42] hover:-translate-y-0.5 hover:shadow-[0_8px_0_#081E42] active:translate-y-1 active:shadow-[0_2px_0_#081E42]"
+          >
+            {p(t.cta.button)}
+            <ArrowRight className="h-5 w-5 rtl:-scale-x-100" />
+          </Link>
+        </div>
+      </section>
 
       <Footer />
+
+      {/* Sticky mobile booking bar */}
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t-[1.5px] border-navy/15 bg-paper/95 p-3 backdrop-blur-md sm:hidden">
+        <Link to="/book" className="btn-pill-primary w-full !min-h-12 text-base">
+          {p(t.nav.book)}
+          <ArrowRight className="h-5 w-5 rtl:-scale-x-100" />
+        </Link>
+      </div>
+      {/* spacer so the bar never covers content */}
+      <div className="h-16 sm:hidden" />
     </div>
   );
 }

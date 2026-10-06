@@ -89,6 +89,35 @@ export function validateAnswers(categoryId: string, answers: Record<string, stri
   return null;
 }
 
+/**
+ * Answers handed over in a link (the home page's service picker: `/book?cat=…&ans=…`):
+ * keeps only those that fit the category's questions, so an outdated or edited link
+ * can't pre-fill anything the booking form wouldn't offer.
+ */
+export function answersFromLink(categoryId: string, raw: string | null): Record<string, string> {
+  const cat = CATEGORY_MAP[categoryId];
+  if (!cat || !raw) return {};
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return {};
+  }
+  if (!parsed || typeof parsed !== "object") return {};
+  const answers: Record<string, string> = {};
+  for (const q of cat.questions) {
+    const value = (parsed as Record<string, unknown>)[q.id];
+    if (typeof value !== "string") continue;
+    const fits = q.kind === "choice" ? !!q.options?.some((o) => o.value === value) : value.length <= 500;
+    if (fits) answers[q.id] = value;
+  }
+  // A follow-up question only counts when the answer it depends on was given.
+  for (const q of cat.questions) {
+    if (q.when && answers[q.when.id] !== q.when.equals) delete answers[q.id];
+  }
+  return answers;
+}
+
 /** YYYY-MM-DD that is a real calendar date, not before `today` (also YYYY-MM-DD). */
 export function isValidVisitDate(value: string, today: string) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;

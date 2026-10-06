@@ -8,6 +8,7 @@ import type { RequestStatus, UrgencyLevel } from "@contracts/services";
 import { QUOTE_AMOUNT_PATTERN, URGENCY_LEVELS } from "@contracts/workflow";
 import { applyTransition, findRequest, logEvent } from "./lib/workflow";
 import { profilePhotoUrl } from "./lib/storage";
+import { ratingFor, reviewOf } from "./queries/ratings";
 import { TRPCError } from "@trpc/server";
 import { notify } from "./notify";
 
@@ -67,6 +68,7 @@ export const specialistRouter = createRouter({
           phone: tech.phone,
           photoUrl: await profilePhotoUrl(tech.avatar),
           stillTechnician: tech.role === "technician",
+          rating: await ratingFor(tech.id),
         }
       : null;
     // A guarantee visit: which job it's about, and who did it (often the one to send back).
@@ -83,7 +85,8 @@ export const specialistRouter = createRouter({
           technicianName: originalTech?.name ?? originalTech?.email ?? null,
         }
       : null;
-    return { request: row, customer, media, events, location, technician, guarantee };
+    const review = row.status === "completed" ? await reviewOf(row.id) : null;
+    return { request: row, customer, media, events, location, technician, guarantee, review };
   }),
 
   startReview: specialistQuery

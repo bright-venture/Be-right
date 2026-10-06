@@ -28,6 +28,7 @@ import { isInLebanon } from "@contracts/geo";
 import { isValidPhone } from "@contracts/phone";
 import { applyTransition, findRequest, logEvent, type RequestScope } from "./lib/workflow";
 import { notify } from "./notify";
+import { ratingFor, reviewOf } from "./queries/ratings";
 import { WORKMANSHIP_GUARANTEE_DAYS } from "@contracts/legal";
 
 const mediaItem = z.object({
@@ -84,6 +85,8 @@ export const requestsRouter = createRouter({
         // Map pin for the visit address.
         lat: z.number().min(-90).max(90),
         lng: z.number().min(-180).max(180),
+        /** Booked through the home page's Emergency button. */
+        emergency: z.boolean().optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -104,6 +107,7 @@ export const requestsRouter = createRouter({
       checkMedia(ctx.user.authId, input.media);
 
       const urgency = computeUrgency(input.category, input.answers);
+      if (input.emergency && (urgency.level === "normal" || urgency.level === "priority")) urgency.level = "urgent";
       const id = await getDb().transaction(async (tx) => {
         const [created] = await tx
           .insert(serviceRequests)
@@ -182,8 +186,13 @@ export const requestsRouter = createRouter({
       media,
       events,
       technician: row.technicianId
-        ? { name: tech?.name ?? null, photoUrl: await profilePhotoUrl(tech?.avatar) }
+        ? {
+            name: tech?.name ?? null,
+            photoUrl: await profilePhotoUrl(tech?.avatar),
+            rating: await ratingFor(row.technicianId),
+          }
         : null,
+      review: row.status === "completed" ? await reviewOf(row.id) : null,
       // Live location is only shared while the job is active.
       location: loc ? { lat: loc.lat, lng: loc.lng, updatedAt: loc.updatedAt } : null,
       guarantee: row.status === "completed" ? await guaranteeStatus(db, row.id) : null,

@@ -9,7 +9,7 @@ module.exports = {
         body: ['Rubik', 'Archivo', 'sans-serif'],
       },
       colors: {
-        paper: "#EDE7DC",
+        paper: "#F7F8FA",
         navy: {
           DEFAULT: "#0C2B5C",
           deep: "#081E42",

@@ -5,7 +5,7 @@ import { trpc } from "@/providers/trpc";
 import { supabase } from "@/lib/supabase";
 import { shrinkImage } from "@/lib/shrinkImage";
 import { isNetworkError, isRateLimited, refusalMessage } from "@/lib/errors";
-import { WORKMANSHIP_GUARANTEE_DAYS } from "@contracts/legal";
+import { arabicDays, WORKMANSHIP_GUARANTEE_DAYS } from "@contracts/legal";
 import { isValidVisitDate, MAX_BOOKING_VIDEOS, MAX_PROBLEM_FILES, TIME_SLOTS, todayInBeirut, type TimeSlot } from "@contracts/workflow";
 
 const MAX_FILE_BYTES = 20 * 1024 * 1024;
@@ -122,7 +122,7 @@ export function ReportProblem({
       <p className="flex items-center gap-2 text-sm font-semibold text-navy">
         <ShieldCheck className="h-5 w-5 shrink-0 text-bird" />
         {p(t.requests.coveredUntil)
-          .replace("{days}", String(WORKMANSHIP_GUARANTEE_DAYS))
+          .replace("{days}", lang === "ar" ? arabicDays(WORKMANSHIP_GUARANTEE_DAYS) : String(WORKMANSHIP_GUARANTEE_DAYS))
           .replace("{date}", until)}
       </p>
 

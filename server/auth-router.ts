@@ -4,7 +4,7 @@ import { TRPCError } from "@trpc/server";
 import { and, eq, inArray } from "drizzle-orm";
 import { createRouter, authedQuery, customerQuery, publicQuery } from "./middleware";
 import { getDb } from "./queries/connection";
-import { requestEvents, requestMedia, serviceRequests, technicianLocations, users } from "../db/schema";
+import { requestEvents, requestMedia, reviews, serviceRequests, technicianLocations, users } from "../db/schema";
 import { LEGAL_VERSION } from "@contracts/legal";
 import { isValidPhone } from "@contracts/phone";
 import { canTransition } from "@contracts/workflow";
@@ -91,7 +91,8 @@ export const authRouter = createRouter({
           .update(serviceRequests)
           .set({ address: ERASED, phone: ERASED, notes: null, lat: null, lng: null, cancelReason: null })
           .where(inArray(serviceRequests.id, ids));
-        // What the customer wrote in timelines (e.g. why they asked to cancel).
+        // What the customer wrote: rating comments (the stars stay, anonymous) and timeline notes.
+        await tx.update(reviews).set({ comment: null }).where(eq(reviews.userId, user.id));
         await tx
           .update(requestEvents)
           .set({ note: null })

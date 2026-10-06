@@ -3,6 +3,7 @@ import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { and, eq } from "drizzle-orm";
 import { requestEvents, requestMedia, serviceRequests, users, type User } from "@db/schema";
 import type { Email } from "./lib/email";
+import { WORKMANSHIP_GUARANTEE_DAYS as DAYS } from "@contracts/legal";
 import {
   ADMIN_EMAIL,
   BEIRUT_PIN,
@@ -110,8 +111,8 @@ describe("report a problem (workmanship guarantee)", () => {
     const { guarantee } = await c.requests.get({ id: done });
     expect(guarantee?.openClaimId).toBeNull();
     const days = (guarantee!.endsAt!.getTime() - Date.now()) / 86_400_000;
-    expect(days).toBeGreaterThan(29.9);
-    expect(days).toBeLessThanOrEqual(30);
+    expect(days).toBeGreaterThan(DAYS - 0.1);
+    expect(days).toBeLessThanOrEqual(DAYS);
   });
 
   it("opens a linked visit at the same address, once at a time", async () => {
@@ -143,10 +144,10 @@ describe("report a problem (workmanship guarantee)", () => {
     const done = await job(customer, "completed");
     await db
       .update(requestEvents)
-      .set({ createdAt: new Date(Date.now() - 31 * 86_400_000) })
+      .set({ createdAt: new Date(Date.now() - (DAYS + 1) * 86_400_000) })
       .where(and(eq(requestEvents.requestId, done), eq(requestEvents.status, "completed")));
     await expect((await callerFor(customer)).requests.reportProblem(problem(done))).rejects.toMatchObject({
-      message: "The 30-day guarantee for this job has ended",
+      message: `The ${DAYS}-day guarantee for this job has ended`,
     });
   });
 
@@ -176,6 +177,51 @@ describe("report a problem (workmanship guarantee)", () => {
     const id = await job(customer, "submitted");
     await s.specialist.startReview({ id, urgency: "normal" });
     await expect(s.specialist.acceptGuarantee({ id })).rejects.toMatchObject({ message: "Only guarantee visits can be free" });
+  });
+});
+
+describe("ratings", () => {
+  it("lets the customer rate a completed job once, and shows the technician's average", async () => {
+    const c = await callerFor(customer);
+    const s = await callerFor(admin);
+    const notDone = await job(customer, "scheduled");
+    await rejected(c.reviews.submit({ requestId: notDone, rating: 5 }));
+
+    const first = await job(customer, "completed");
+    await rejected((await callerFor(await makeUser("stranger@example.com"))).reviews.submit({ requestId: first, rating: 1 }), "NOT_FOUND");
+    await rejected(c.reviews.submit({ requestId: first, rating: 6 }));
+    await c.reviews.submit({ requestId: first, rating: 5, comment: "Quick and tidy" });
+    await expect(c.reviews.submit({ requestId: first, rating: 1 })).rejects.toMatchObject({ message: "You already rated this job" });
+
+    const second = await job(customer, "completed");
+    await c.reviews.submit({ requestId: second, rating: 4 });
+
+    const { review, technician } = await c.requests.get({ id: first });
+    expect(review).toMatchObject({ rating: 5, comment: "Quick and tidy", technicianId: tech.id });
+    expect(technician?.rating.count).toBeGreaterThanOrEqual(2);
+    expect(technician?.rating.average).toBeGreaterThan(4);
+    expect((await s.specialist.detail({ id: second })).review).toMatchObject({ rating: 4 });
+    const profile = (await s.tech.list()).find((x) => x.id === tech.id);
+    expect(profile?.rating.count).toBe(technician?.rating.count);
+  });
+
+  it("keeps the stars but erases the comment when the customer deletes their account", async () => {
+    const leaving = await makeUser("rated-and-left@example.com");
+    const done = await job(leaving, "completed");
+    await (await callerFor(leaving)).reviews.submit({ requestId: done, rating: 3, comment: "My name is in here" });
+    await (await callerFor(leaving)).auth.deleteAccount();
+    expect((await (await callerFor(admin)).specialist.detail({ id: done })).review).toMatchObject({ rating: 3, comment: null });
+  });
+});
+
+describe("emergency bookings", () => {
+  it("are at least urgent, whatever the answers say", async () => {
+    const c = await callerFor(customer);
+    const s = await callerFor(admin);
+    const calm = await c.requests.create({ ...booking, emergency: true });
+    expect((await s.specialist.detail({ id: calm.id })).request.urgencySuggested).toBe("urgent");
+    const normal = await c.requests.create(booking);
+    expect((await s.specialist.detail({ id: normal.id })).request.urgencySuggested).toBe("normal");
   });
 });
 
