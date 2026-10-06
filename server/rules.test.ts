@@ -1,7 +1,7 @@
 // Business rules and input validation that the happy-path workflow test doesn't cover.
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import type { User } from "@db/schema";
-import { ADMIN_EMAIL, BEIRUT_PIN, callerFor, createTestDb, futureDate, makeTechnician, makeUser } from "./test/harness";
+import { ADMIN_EMAIL, BEIRUT_PIN, addJobPhoto, callerFor, createTestDb, futureDate, makeTechnician, makeUser } from "./test/harness";
 
 const state = vi.hoisted(() => ({ db: undefined as unknown }));
 vi.mock("./queries/connection", () => ({ getDb: () => state.db }));
@@ -280,8 +280,12 @@ describe("technician accounts", () => {
     // Finish every active job, then removal works.
     const t = await callerFor(tech);
     for (const job of await t.tech.myJobs()) {
-      if (job.status === "scheduled") await t.tech.fieldEvent({ requestId: job.id, action: "start" });
+      if (job.status === "scheduled") {
+        await addJobPhoto(t, job.id, "before");
+        await t.tech.fieldEvent({ requestId: job.id, action: "start" });
+      }
       if (["scheduled", "in_progress"].includes(job.status)) {
+        await addJobPhoto(t, job.id, "after");
         await t.tech.fieldEvent({ requestId: job.id, action: "complete" });
       }
     }

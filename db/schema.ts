@@ -13,6 +13,7 @@ import {
   doublePrecision,
   type AnyPgColumn,
 } from "drizzle-orm/pg-core";
+import type { MediaKind } from "../contracts/workflow";
 
 // Every table enables Row Level Security with no policies. The app server talks to
 // Postgres directly (bypassing RLS), while Supabase's public REST API — reachable with
@@ -131,6 +132,8 @@ export const requestMedia = pgTable(
     fileName: varchar("file_name", { length: 512 }).notNull(),
     size: bigint("size", { mode: "number" }).notNull(),
     contentType: varchar("content_type", { length: 128 }),
+    /** "customer" (booking, problem report) or the technician's "before" / "after" job photos. */
+    kind: varchar("kind", { length: 16 }).$type<MediaKind>().default("customer").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => [index("request_media_request_idx").on(t.requestId)],

@@ -10,11 +10,33 @@ import {
   technicianLocations,
   users,
 } from "../db/schema";
-import { ACTIVE_JOB_STATUSES, ASSIGNABLE_STATUSES } from "@contracts/workflow";
+import {
+  ACTIVE_JOB_STATUSES,
+  ASSIGNABLE_STATUSES,
+  JOB_PHOTO_KINDS,
+  MAX_JOB_PHOTOS,
+  type JobPhotoKind,
+} from "@contracts/workflow";
 import { applyTransition, findRequest, logEvent } from "./lib/workflow";
-import { profilePhotoUrl } from "./lib/storage";
+import { deleteFiles, mediaExists, profilePhotoUrl, userUploadPrefix } from "./lib/storage";
 import { ratingsFor } from "./queries/ratings";
 import { notify } from "./notify";
+
+type Db = Parameters<typeof findRequest>[0];
+
+async function jobPhotoCount(db: Db, requestId: number, kind: JobPhotoKind) {
+  const [row] = await db
+    .select({ n: sql<number>`count(*)::int` })
+    .from(requestMedia)
+    .where(and(eq(requestMedia.requestId, requestId), eq(requestMedia.kind, kind)));
+  return row?.n ?? 0;
+}
+
+/** The technician documents every job: before photos to start work, after photos to complete it. */
+const PHOTO_REQUIRED: Record<"start" | "complete", { kind: JobPhotoKind; message: string }> = {
+  start: { kind: "before", message: "Add at least one before photo to start the work" },
+  complete: { kind: "after", message: "Add at least one after photo to complete the job" },
+};
 
 export const techRouter = createRouter({
   /**
@@ -194,6 +216,10 @@ export const techRouter = createRouter({
         }
         await logEvent(getDb(), job.id, "arrived", ctx.user.id, input.note);
       } else {
+        const required = PHOTO_REQUIRED[input.action];
+        if ((await jobPhotoCount(getDb(), input.requestId, required.kind)) === 0) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: required.message });
+        }
         await applyTransition({
           id: input.requestId,
           name: input.action === "start" ? "startWork" : "complete",
@@ -203,6 +229,88 @@ export const techRouter = createRouter({
         });
         if (input.action === "complete") await notify.completed(input.requestId);
       }
+      return { ok: true };
+    }),
+
+  /**
+   * Technician: attach uploaded before/after photos to a job under way. Before photos
+   * can be taken from the moment the visit is scheduled; after photos once work started.
+   */
+  addJobPhotos: technicianQuery
+    .input(
+      z.object({
+        requestId: z.number().int(),
+        kind: z.enum(JOB_PHOTO_KINDS),
+        photos: z
+          .array(
+            z.object({
+              key: z.string().max(512),
+              fileName: z.string().max(512),
+              size: z.number().int().nonnegative(),
+              contentType: z.string().max(128),
+            }),
+          )
+          .min(1)
+          .max(MAX_JOB_PHOTOS),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const prefix = userUploadPrefix(ctx.user.authId);
+      if (input.photos.some((m) => !m.key.startsWith(prefix) || !m.contentType.startsWith("image/"))) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid photo" });
+      }
+      if (!(await mediaExists(input.photos.map((m) => m.key)))) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "A photo didn't finish uploading, please try again" });
+      }
+      await getDb().transaction(async (tx) => {
+        const job = await findRequest(tx, input.requestId, { technicianId: ctx.user.id }, true);
+        const open = input.kind === "before" ? ACTIVE_JOB_STATUSES.includes(job.status) : job.status === "in_progress";
+        if (!open) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: input.kind === "before" ? "Job is not active" : "Start the work before adding after photos",
+          });
+        }
+        if ((await jobPhotoCount(tx, job.id, input.kind)) + input.photos.length > MAX_JOB_PHOTOS) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: `Up to ${MAX_JOB_PHOTOS} ${input.kind} photos per job` });
+        }
+        await tx.insert(requestMedia).values(
+          input.photos.map((m) => ({
+            requestId: job.id,
+            key: m.key,
+            fileName: m.fileName,
+            size: m.size,
+            contentType: m.contentType,
+            kind: input.kind,
+          })),
+        );
+      });
+      return { ok: true };
+    }),
+
+  /** Technician: take back one of their own before/after photos while the job is still open. */
+  removeJobPhoto: technicianQuery
+    .input(z.object({ requestId: z.number().int(), key: z.string().max(512) }))
+    .mutation(async ({ ctx, input }) => {
+      const db = getDb();
+      const job = await findRequest(db, input.requestId, { technicianId: ctx.user.id });
+      if (!ACTIVE_JOB_STATUSES.includes(job.status)) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Job is not active" });
+      }
+      const removed = await db
+        .delete(requestMedia)
+        .where(
+          and(
+            eq(requestMedia.requestId, job.id),
+            eq(requestMedia.key, input.key),
+            inArray(requestMedia.kind, [...JOB_PHOTO_KINDS]),
+            // Only the technician's own uploads, never the customer's photos.
+            sql`${requestMedia.key} like ${userUploadPrefix(ctx.user.authId) + "%"}`,
+          ),
+        )
+        .returning({ key: requestMedia.key });
+      if (!removed.length) throw new TRPCError({ code: "NOT_FOUND" });
+      await deleteFiles("media", [input.key]);
       return { ok: true };
     }),
 

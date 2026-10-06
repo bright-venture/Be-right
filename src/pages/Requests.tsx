@@ -5,6 +5,7 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { ServiceIcon } from "@/components/ServiceIcon";
 import { MediaGrid } from "@/components/MediaGrid";
+import { BeforeAfter } from "@/components/JobPhotos";
 import JobMap from "@/components/map/JobMap";
 import { AnswerList } from "@/components/AnswerList";
 import { ReportProblem } from "@/components/ReportProblem";
@@ -366,17 +367,20 @@ export default function Requests() {
                       className="mt-3 flex flex-col gap-1.5 text-sm"
                     />
 
-                    {/* photos */}
-                    {detail.data.media.length > 0 && (
+                    {/* the customer's own photos, then the technician's before/after photos */}
+                    {detail.data.media.some((m) => m.kind === "customer") && (
                       <>
                         <p className="mt-6 font-display text-xs font-bold uppercase tracking-[0.2em] text-navy/70">
                           {p(t.requests.photos)}
                         </p>
                         <div className="mt-3">
-                          <MediaGrid items={detail.data.media} />
+                          <MediaGrid items={detail.data.media.filter((m) => m.kind === "customer")} />
                         </div>
                       </>
                     )}
+                    <div className="mt-6 empty:hidden">
+                      <BeforeAfter media={detail.data.media} forCustomer />
+                    </div>
 
                     {detail.data.request.status !== "quote_ready" &&
                       canTransition("cancel", detail.data.request.status as RequestStatus) && (

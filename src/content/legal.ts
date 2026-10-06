@@ -144,8 +144,8 @@ export const PRIVACY: LegalDocument = {
           "الحساب: الاسم والبريد الإلكتروني ورقم الهاتف/واتساب وكلمة المرور (تُخزَّن بشكل مشفّر لدى مزوّد المصادقة فقط؛ ولا نطّلع عليها أبداً).",
         ),
         t(
-          "Bookings: the service, your answers to the guided questions, photos and videos you upload, the visit address, map pin, preferred date and notes, the status history of each request, and any rating or comment you leave after a job.",
-          "الحجوزات: الخدمة المطلوبة وأجوبتك على الأسئلة الموجّهة والصور والفيديوهات التي ترفعها وعنوان الزيارة وموقعه على الخريطة والتاريخ المفضل والملاحظات، وسجل حالة كل طلب، وأي تقييم أو تعليق تتركه بعد إنجاز المهمة.",
+          "Bookings: the service, your answers to the guided questions, photos and videos you upload, photos the technician takes of the work area before and after the job, the visit address, map pin, preferred date and notes, the status history of each request, and any rating or comment you leave after a job.",
+          "الحجوزات: الخدمة المطلوبة وأجوبتك على الأسئلة الموجّهة والصور والفيديوهات التي ترفعها، وصور مكان العمل التي يلتقطها الفني قبل المهمة وبعدها، وعنوان الزيارة وموقعه على الخريطة والتاريخ المفضل والملاحظات، وسجل حالة كل طلب، وأي تقييم أو تعليق تتركه بعد إنجاز المهمة.",
         ),
         t(
           "Technician location: only while a job is active and only after the technician turns on location sharing; we keep the latest position for that job.",

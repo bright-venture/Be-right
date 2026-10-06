@@ -4,7 +4,9 @@ import {
   ADMIN_EMAIL,
   BEIRUT_PIN,
   callerFor,
+  addJobPhoto,
   createTestDb,
+  deletedMedia,
   documentKeys,
   futureDate,
   makeTechnician,
@@ -394,8 +396,32 @@ describe("full repair workflow", () => {
 
     expect((await t.storage.urls({ keys: [aliceKey()] })).urls[aliceKey()]).toBeTruthy();
 
+    // Every job is documented: no start without a before photo, no finish without an after photo.
+    await expect(t.tech.fieldEvent({ requestId, action: "start" })).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    await expect(addJobPhoto(t, requestId, "after")).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    await expect(addJobPhoto(other, requestId, "before")).rejects.toMatchObject({ code: "NOT_FOUND" });
+    const photo = (key: string) => [{ key, fileName: "p.jpg", size: 1, contentType: "image/jpeg" }];
+    // Only the technician's own, finished uploads.
+    await expect(
+      t.tech.addJobPhotos({ requestId, kind: "before", photos: photo(aliceKey()) }),
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    await expect(
+      t.tech.addJobPhotos({ requestId, kind: "before", photos: photo(`requests/${tina.authId}/missing.jpg`) }),
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+
+    await addJobPhoto(t, requestId, "before");
+    const wrong = await addJobPhoto(t, requestId, "before");
+    await t.tech.removeJobPhoto({ requestId, key: wrong });
+    expect(deletedMedia).toContain(wrong);
+    // The customer's own photo can't be removed by the technician.
+    await expect(t.tech.removeJobPhoto({ requestId, key: aliceKey() })).rejects.toMatchObject({ code: "NOT_FOUND" });
+
     await t.tech.fieldEvent({ requestId, action: "start" });
+    await expect(t.tech.fieldEvent({ requestId, action: "complete" })).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    await addJobPhoto(t, requestId, "after");
     await t.tech.fieldEvent({ requestId, action: "complete", note: "Valve replaced" });
+    // Closed: no more photos.
+    await expect(addJobPhoto(t, requestId, "after")).rejects.toMatchObject({ code: "BAD_REQUEST" });
     await expect(
       t.tech.reportLocation({ requestId, lat: 1, lng: 1 }),
     ).rejects.toMatchObject({ code: "BAD_REQUEST" });
@@ -406,6 +432,13 @@ describe("full repair workflow", () => {
     const done = await a.requests.get({ id: requestId });
     expect(done.request.status).toBe("completed");
     expect(done.location).toBeNull(); // live location hidden once the job is closed
+    // The customer sees their own photo and the technician's before and after photos.
+    const kinds = done.media.map((m) => m.kind);
+    expect(kinds.filter((k) => k === "customer")).toHaveLength(1);
+    expect(kinds.filter((k) => k === "before")).toHaveLength(1);
+    expect(kinds.filter((k) => k === "after")).toHaveLength(1);
+    const keys = done.media.map((m) => m.key);
+    expect(Object.keys((await a.storage.urls({ keys })).urls).sort()).toEqual([...keys].sort());
     expect(done.events.map((e) => e.status)).toEqual(
       expect.arrayContaining(["submitted", "in_review", "quote_ready", "approved", "assigned", "scheduled", "arrived", "in_progress", "completed"]),
     );

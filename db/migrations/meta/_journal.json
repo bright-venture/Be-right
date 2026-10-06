@@ -92,6 +92,13 @@
       "when": 1791272765621,
       "tag": "0012_proof_of_address",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1791285490798,
+      "tag": "0013_job_photos",
+      "breakpoints": true
     }
   ]
 }

@@ -1,0 +1,1 @@
+ALTER TABLE "request_media" ADD COLUMN "kind" varchar(16) DEFAULT 'customer' NOT NULL;

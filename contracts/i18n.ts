@@ -525,6 +525,35 @@ export const t = {
     complete: { en: "Complete job", ar: "أنهي الشغل" },
     notePh: { en: "Note for the specialist (optional)", ar: "ملاحظة للمختص (اختياري)" },
   },
+  /** The technician's before/after photos of a job, and how customers and specialists see them. */
+  jobPhotos: {
+    title: { en: "Before and after", ar: "قبل وبعد" },
+    before: { en: "Before", ar: "قبل" },
+    after: { en: "After", ar: "بعد" },
+    beforeHint: {
+      en: "Photograph the problem before you touch anything. Needed to start the work.",
+      ar: "صوّر المشكلة قبل ما تلمس شي. لازم لتبلّش الشغل.",
+    },
+    afterHint: {
+      en: "Photograph the finished work. Needed to complete the job.",
+      ar: "صوّر الشغل بعد ما يخلص. لازم لتسكّر المهمة.",
+    },
+    afterLocked: { en: "Start the work to add after photos.", ar: "بلّش الشغل لتزيد صور بعد." },
+    add: { en: "Take or add photos", ar: "صوّر أو زيد صور" },
+    remove: { en: "Remove photo", ar: "شيل الصورة" },
+    count: { en: "{n} of {max}", ar: "{n} من {max}" },
+    needBefore: { en: "Add a before photo first.", ar: "زيد صورة قبل أول." },
+    needAfter: { en: "Add an after photo first.", ar: "زيد صورة بعد أول." },
+    uploadFailed: {
+      en: "A photo didn't upload. Check your connection and try again.",
+      ar: "في صورة ما انرفعت. شيك عالإنترنت وجرّب مرة تانية.",
+    },
+    tooMany: { en: "Up to {max} photos on each side.", ar: "لحد {max} صور بكل جهة." },
+    customerNote: {
+      en: "Photos your technician took before and after the work.",
+      ar: "صور أخدها المعلّم قبل الشغل وبعده.",
+    },
+  },
   tracking: {
     techOnWay: { en: "Your technician", ar: "المعلّم تبعك" },
     liveLocation: { en: "Live location", ar: "الموقع المباشر" },

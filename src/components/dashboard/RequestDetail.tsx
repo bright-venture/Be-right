@@ -5,6 +5,7 @@ import type { AppRouter } from "../../../server/router";
 import { ServiceIcon } from "@/components/ServiceIcon";
 import { Stars } from "@/components/Stars";
 import { MediaGrid } from "@/components/MediaGrid";
+import { BeforeAfter } from "@/components/JobPhotos";
 import { AnswerList } from "@/components/AnswerList";
 import JobMap from "@/components/map/JobMap";
 import { useI18n } from "@/i18n";
@@ -150,12 +151,15 @@ export function RequestDetail({
             {r.notes && <p className="mt-3 rounded-xl bg-navy/5 p-3 text-navy/80">{r.notes}</p>}
           </section>
 
-          {d.media.length > 0 && (
+          {d.media.some((m) => m.kind === "customer") && (
             <section>
               <p className={LABEL}>{p(t.dash.media)}</p>
-              <MediaGrid items={d.media} className="mt-2 grid grid-cols-3 gap-2" />
+              <MediaGrid items={d.media.filter((m) => m.kind === "customer")} className="mt-2 grid grid-cols-3 gap-2" />
             </section>
           )}
+          <section className="empty:hidden">
+            <BeforeAfter media={d.media} />
+          </section>
         </div>
 
         {/* right: technician, preparation, timeline */}

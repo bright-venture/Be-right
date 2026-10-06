@@ -58,6 +58,17 @@ export const ASSIGNABLE_STATUSES: readonly RequestStatus[] = ["approved", "sched
 /** Statuses in which the job is live for the technician (location sharing, field actions). */
 export const ACTIVE_JOB_STATUSES: readonly RequestStatus[] = ["scheduled", "in_progress"];
 
+/**
+ * Who a request's photo comes from: the customer (booking or problem report), or the
+ * technician documenting the job before starting work and after finishing it.
+ */
+export const MEDIA_KINDS = ["customer", "before", "after"] as const;
+export type MediaKind = (typeof MEDIA_KINDS)[number];
+export const JOB_PHOTO_KINDS = ["before", "after"] as const satisfies readonly MediaKind[];
+export type JobPhotoKind = (typeof JOB_PHOTO_KINDS)[number];
+/** Photos a technician can add per side (before / after) of one job. */
+export const MAX_JOB_PHOTOS = 6;
+
 /** Photos/videos per booking. Videos can't be shrunk in the browser, so they're capped. */
 export const MAX_BOOKING_FILES = 8;
 export const MAX_BOOKING_VIDEOS = 2;

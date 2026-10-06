@@ -8,6 +8,7 @@ import {
   ADMIN_EMAIL,
   BEIRUT_PIN,
   callerFor,
+  addJobPhoto,
   createTestDb,
   documentKeys,
   futureDate,
@@ -148,8 +149,10 @@ describe("notification emails", () => {
 
   it("tells the customer the job is done, with the guarantee", async () => {
     const h = await callerFor(hassan);
+    await addJobPhoto(h, id, "before");
     await h.tech.fieldEvent({ requestId: id, action: "start" });
     expect(state.sent).toHaveLength(0);
+    await addJobPhoto(h, id, "after");
     await h.tech.fieldEvent({ requestId: id, action: "complete" });
     expect(emailTo("rami@example.com").text).toContain(`within ${DAYS} days`);
   });

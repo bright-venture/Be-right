@@ -88,6 +88,7 @@ export async function storageStub(importOriginal: () => Promise<unknown>) {
     }),
     // A key containing "missing" stands for a file that was never uploaded.
     documentsExist: async (keys: string[]) => keys.every((k) => !k.includes("missing")),
+    mediaExists: async (keys: string[]) => keys.every((k) => !k.includes("missing")),
     createDocumentUrls: async (keys: string[]) => Object.fromEntries(keys.map((k) => [k, `https://signed/${k}`])),
     profilePhotoUrl: async (key: string | null | undefined) => (key ? `https://signed/${key}` : null),
     deleteDocuments: async (keys: string[]) => {
@@ -109,6 +110,18 @@ export const deletedDocuments: string[] = [];
 export const deletedMedia: string[] = [];
 /** Files the storage stub pretends are in the buckets (for the orphan clean-up). */
 export const storedFiles: { bucket: "docs" | "media"; key: string; createdAt: Date }[] = [];
+
+/** The assigned technician uploads one before/after photo and attaches it to the job. */
+export async function addJobPhoto(
+  caller: Awaited<ReturnType<typeof callerFor>>,
+  requestId: number,
+  kind: "before" | "after",
+) {
+  const photo = { fileName: `${kind}-${randomUUID()}.jpg`, size: 1000, contentType: "image/jpeg" };
+  const { key } = await caller.storage.createJobUpload({ requestId, ...photo });
+  await caller.tech.addJobPhotos({ requestId, kind, photos: [{ key, ...photo }] });
+  return key;
+}
 
 /** A valid visit date: 30 days from now, as YYYY-MM-DD. */
 export function futureDate(days = 30) {

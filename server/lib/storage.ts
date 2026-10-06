@@ -88,6 +88,13 @@ export function createSignedUrls(keys: string[]) {
   return signedUrls("media", keys, SIGNED_URL_TTL_SECONDS);
 }
 
+/** True only if every photo was actually uploaded. */
+export async function mediaExists(keys: string[]) {
+  const bucket = getSupabaseAdmin().storage.from(env.storageBucket);
+  const results = await Promise.all(keys.map((k) => bucket.exists(k)));
+  return results.every((r) => r.data === true);
+}
+
 /* ---------- technician application documents ---------- */
 
 /** Application uploads happen before any account exists, so keys are random and kind-tagged. */

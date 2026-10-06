@@ -5,6 +5,7 @@ import { Footer } from "@/components/Footer";
 import { ServiceIcon } from "@/components/ServiceIcon";
 import { AnswerList } from "@/components/AnswerList";
 import { MediaGrid } from "@/components/MediaGrid";
+import { BeforeAfter, JobPhotoUpload } from "@/components/JobPhotos";
 import JobMap from "@/components/map/JobMap";
 import { DirectionsLinks } from "@/components/map/DirectionsLinks";
 import { useI18n } from "@/i18n";
@@ -129,6 +130,9 @@ export default function Tech() {
           {rows.map((r) => {
             const active = ACTIVE_JOB_STATUSES.includes(r.status as RequestStatus);
             const sharing = sharingFor === r.id;
+            const customerPhotos = r.media.filter((m) => m.kind === "customer");
+            const hasBefore = r.media.some((m) => m.kind === "before");
+            const hasAfter = r.media.some((m) => m.kind === "after");
             return (
               <div key={r.id} className="card-br p-5">
                 <div className="flex items-start justify-between gap-3">
@@ -209,15 +213,21 @@ export default function Tech() {
                     </span>
                   </div>
                   <AnswerList category={r.category} answersJson={r.answers} className="mt-2 flex flex-col gap-1.5 text-sm" />
-                  {r.media.length > 0 && (
+                  {customerPhotos.length > 0 && (
                     <>
                       <p className="mt-4 font-display text-xs font-bold uppercase tracking-[0.2em] text-navy/70">
                         {p(t.tech.photos)}
                       </p>
-                      <MediaGrid items={r.media} className="mt-2 grid grid-cols-3 gap-2 sm:grid-cols-4" />
+                      <MediaGrid items={customerPhotos} className="mt-2 grid grid-cols-3 gap-2 sm:grid-cols-4" />
                     </>
                   )}
                 </div>
+
+                {!active && (hasBefore || hasAfter) && (
+                  <div className="mt-4 rounded-2xl border-2 border-navy/15 p-4">
+                    <BeforeAfter media={r.media} />
+                  </div>
+                )}
 
                 {active && (
                   <div className="mt-4 flex flex-col gap-3">
@@ -257,6 +267,15 @@ export default function Tech() {
                       )}
                     </div>
 
+                    {/* before/after photos: needed to start and to complete the work */}
+                    <JobPhotoUpload requestId={r.id} kind="before" media={r.media} />
+                    <JobPhotoUpload
+                      requestId={r.id}
+                      kind="after"
+                      media={r.media}
+                      locked={r.status !== "in_progress"}
+                    />
+
                     {/* field actions */}
                     <input
                       value={notes[r.id] ?? ""}
@@ -290,14 +309,17 @@ export default function Tech() {
                                 note: notes[r.id] || undefined,
                               })
                             }
-                            disabled={fieldEvent.isPending}
-                            className="btn-pill-primary"
+                            disabled={fieldEvent.isPending || !hasBefore}
+                            className="btn-pill-primary disabled:cursor-not-allowed disabled:opacity-50"
                           >
                             {fieldEvent.isPending && (
                               <Loader2 className="h-4 w-4 animate-spin" />
                             )}
                             {p(t.tech.startWork)}
                           </button>
+                          {!hasBefore && (
+                            <p className="w-full text-xs font-semibold text-navy/70">{p(t.jobPhotos.needBefore)}</p>
+                          )}
                         </>
                       )}
                       {r.status === "in_progress" && (
@@ -310,14 +332,17 @@ export default function Tech() {
                             });
                             if (sharing) stop();
                           }}
-                          disabled={fieldEvent.isPending}
-                          className="btn-pill-primary"
+                          disabled={fieldEvent.isPending || !hasAfter}
+                          className="btn-pill-primary disabled:cursor-not-allowed disabled:opacity-50"
                         >
                           {fieldEvent.isPending && (
                             <Loader2 className="h-4 w-4 animate-spin" />
                           )}
                           {p(t.tech.complete)}
                         </button>
+                      )}
+                      {r.status === "in_progress" && !hasAfter && (
+                        <p className="w-full text-xs font-semibold text-navy/70">{p(t.jobPhotos.needAfter)}</p>
                       )}
                     </div>
                     {fieldEvent.isError && (

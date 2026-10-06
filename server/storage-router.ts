@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { eq, inArray } from "drizzle-orm";
-import { createRouter, authedQuery, customerQuery, publicQuery } from "./middleware";
+import { createRouter, authedQuery, customerQuery, publicQuery, technicianQuery } from "./middleware";
 import {
   createDocumentUploadUrl,
   createSignedUrls,
@@ -16,6 +16,8 @@ import {
 import { getDb } from "./queries/connection";
 import { clientIp, LIMITS, rateLimit } from "./lib/rateLimit";
 import { requestMedia, serviceRequests } from "../db/schema";
+import { ACTIVE_JOB_STATUSES } from "@contracts/workflow";
+import { findRequest } from "./lib/workflow";
 
 export const storageRouter = createRouter({
   // Returns a one-time signed URL token; the browser uploads the file directly to storage.
@@ -33,6 +35,31 @@ export const storageRouter = createRouter({
       }
       if (!/^(image|video)\//.test(input.contentType)) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "Only photos and videos are allowed" });
+      }
+      await rateLimit(`media-upload:user:${ctx.user.id}`, LIMITS.mediaUploadPerUser);
+      return createUploadUrl(ctx.user.authId, input.fileName);
+    }),
+
+  // The assigned technician's before/after photos of a job that's under way.
+  createJobUpload: technicianQuery
+    .input(
+      z.object({
+        requestId: z.number().int(),
+        fileName: z.string().min(1).max(512),
+        size: z.number().int().positive(),
+        contentType: z.string().max(128),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      if (input.size > MAX_UPLOAD_BYTES) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "File too large (max 20 MB)" });
+      }
+      if (!input.contentType.startsWith("image/")) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Only photos are allowed" });
+      }
+      const job = await findRequest(getDb(), input.requestId, { technicianId: ctx.user.id });
+      if (!ACTIVE_JOB_STATUSES.includes(job.status)) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Job is not active" });
       }
       await rateLimit(`media-upload:user:${ctx.user.id}`, LIMITS.mediaUploadPerUser);
       return createUploadUrl(ctx.user.authId, input.fileName);
