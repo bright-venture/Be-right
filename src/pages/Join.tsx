@@ -10,6 +10,7 @@ import { useI18n } from "@/i18n";
 import { trpc } from "@/providers/trpc";
 import { CATEGORIES, type LocalText } from "@contracts/services";
 import { isValidPhone } from "@contracts/phone";
+import { APPLICATION_DOCUMENTS, DOCUMENT_FIELD, type ApplicationDocument } from "@contracts/applications";
 import { isRateLimited } from "@/lib/errors";
 import {
   AVAILABILITY,
@@ -71,8 +72,10 @@ export default function Join() {
   const [hasTools, setHasTools] = useState<"yes" | "no" | null>(null);
   const [hasTransport, setHasTransport] = useState<"yes" | "no" | null>(null);
   const [notes, setNotes] = useState("");
-  const [idDocumentKey, setIdDocumentKey] = useState<string | null>(null);
-  const [photoKey, setPhotoKey] = useState<string | null>(null);
+  /** Storage key of each uploaded document (missing until uploaded). */
+  const [documents, setDocuments] = useState<Partial<Record<ApplicationDocument, string>>>({});
+  const setDocument = (kind: ApplicationDocument) => (key: string | null) =>
+    setDocuments((d) => ({ ...d, [kind]: key ?? undefined }));
   const [consent, setConsent] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState("");
@@ -95,8 +98,7 @@ export default function Join() {
     availability !== null &&
     hasTools !== null &&
     hasTransport !== null &&
-    !!idDocumentKey &&
-    !!photoKey &&
+    APPLICATION_DOCUMENTS.every((kind) => !!documents[kind]) &&
     consent;
 
   async function submit() {
@@ -114,8 +116,11 @@ export default function Join() {
         hasTools: hasTools === "yes",
         hasTransport: hasTransport === "yes",
         notes: notes.trim() || undefined,
-        idDocumentKey: idDocumentKey!,
-        photoKey: photoKey!,
+        // `valid` above requires every document
+        ...(Object.fromEntries(APPLICATION_DOCUMENTS.map((kind) => [DOCUMENT_FIELD[kind], documents[kind]!])) as Record<
+          (typeof DOCUMENT_FIELD)[ApplicationDocument],
+          string
+        >),
         consent: true,
       });
       setDone(true);
@@ -281,18 +286,15 @@ export default function Join() {
                   <p className={LABEL}>{p(t.docs.title)}</p>
                   <p className="mt-1 text-xs leading-relaxed text-navy/70">{p(t.docs.privacy)}</p>
                   <div className="mt-3 flex flex-col gap-3">
-                    <DocumentUpload
-                      kind="idDocument"
-                      label={p(t.docs.idDocument)}
-                      hint={p(t.docs.idDocumentHint)}
-                      onUploaded={setIdDocumentKey}
-                    />
-                    <DocumentUpload
-                      kind="photo"
-                      label={p(t.docs.photo)}
-                      hint={p(t.docs.photoHint)}
-                      onUploaded={setPhotoKey}
-                    />
+                    {APPLICATION_DOCUMENTS.map((kind) => (
+                      <DocumentUpload
+                        key={kind}
+                        kind={kind}
+                        label={p(t.docs[kind])}
+                        hint={p(t.docs[`${kind}Hint`])}
+                        onUploaded={setDocument(kind)}
+                      />
+                    ))}
                   </div>
                 </div>
 

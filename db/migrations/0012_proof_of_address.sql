@@ -1,0 +1,1 @@
+ALTER TABLE "technician_applications" ADD COLUMN "proof_of_address_key" varchar(512);

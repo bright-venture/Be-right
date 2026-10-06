@@ -64,6 +64,8 @@ describe("API errors in production", () => {
         hasTools: true,
         hasTransport: true,
         idDocumentKey: key("idDocument"),
+        criminalRecordKey: key("criminalRecord"),
+        proofOfAddressKey: key("proofOfAddress"),
         photoKey: key("photo"),
         consent: true,
       },

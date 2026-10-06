@@ -14,7 +14,7 @@ export const env = {
   supabaseUrl: required("SUPABASE_URL"),
   supabaseServiceRoleKey: required("SUPABASE_SERVICE_ROLE_KEY"),
   storageBucket: process.env.SUPABASE_STORAGE_BUCKET || "request-media",
-  /** Private bucket for technician ID and profile photo. */
+  /** Private bucket for technician documents (ID, criminal record, proof of address, photo). */
   docsBucket: process.env.SUPABASE_DOCS_BUCKET || "technician-docs",
   /** Public address of the site, used in links inside emails. */
   siteUrl: (process.env.SITE_URL || "https://be-rightbright.com").replace(/\/+$/, ""),

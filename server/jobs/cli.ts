@@ -6,7 +6,7 @@ const dryRun = process.argv.includes("--dry-run");
 const verb = dryRun ? "[dry run] Would delete" : "Deleted";
 const rejected = await purgeRejectedDocuments({ dryRun });
 console.log(
-  `${verb} ${rejected.files} file(s) from ${rejected.applications} rejected application(s) (rejected before ${rejected.cutoff}), plus ${rejected.criminalRecords} old criminal record file(s).`,
+  `${verb} ${rejected.files} file(s) from ${rejected.applications} rejected application(s) (rejected before ${rejected.cutoff}).`,
 );
 const orphans = await purgeOrphanUploads({ dryRun });
 console.log(

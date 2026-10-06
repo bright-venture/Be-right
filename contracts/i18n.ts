@@ -1,6 +1,7 @@
 // Bilingual UI strings (English / Arabic).
 import type { Lang, RequestStatus, UrgencyLevel, LocalText } from "./services";
-import { arabicDays, WORKMANSHIP_GUARANTEE_DAYS as DAYS } from "./legal";
+import { arabicDays, arabicDigits, WORKMANSHIP_GUARANTEE_DAYS as DAYS } from "./legal";
+import { MAX_DOCUMENT_MB as MB } from "./applications";
 
 export const t = {
   brand: { en: "Be Right", ar: "بي رايت" },
@@ -771,12 +772,20 @@ export const t = {
     },
     idDocument: { en: "ID card or passport", ar: "هوية أو باسبور" },
     idDocumentHint: { en: "Photo or PDF, both sides if ID card", ar: "صورة أو PDF، الوجهين إذا هوية" },
+    criminalRecord: { en: "Criminal record (السجل العدلي)", ar: "السجل العدلي" },
+    criminalRecordHint: { en: "A recent copy, photo or PDF", ar: "نسخة حديثة، صورة أو PDF" },
+    proofOfAddress: { en: "Proof of address", ar: "إثبات سكن" },
+    proofOfAddressHint: {
+      en: "Recent electricity or water bill, rental contract, or residence certificate (إفادة سكن); photo or PDF",
+      ar: "فاتورة كهربا أو مي حديثة، عقد إيجار، أو إفادة سكن من المختار؛ صورة أو PDF",
+    },
+    maxSize: { en: `Max ${MB} MB per file`, ar: `الحد الأقصى ${arabicDigits(MB)} ميغا للملف` },
     photo: { en: "Profile photo", ar: "صورة شخصية" },
     photoHint: { en: "Clear photo of your face; customers will see it", ar: "صورة واضحة لوجهك؛ الزبائن رح يشوفوها" },
     choose: { en: "Upload", ar: "حمّل" },
     replace: { en: "Replace", ar: "غيّر" },
-    badFile: { en: "Use a photo or PDF up to 10 MB.", ar: "استعمل صورة أو PDF لحد ١٠ ميغا." },
-    badPhoto: { en: "Use a photo (JPG, PNG…) up to 10 MB.", ar: "استعمل صورة (JPG، PNG…) لحد ١٠ ميغا." },
+    badFile: { en: `Use a photo or PDF up to ${MB} MB.`, ar: `استعمل صورة أو PDF لحد ${arabicDigits(MB)} ميغا.` },
+    badPhoto: { en: `Use a photo (JPG, PNG…) up to ${MB} MB.`, ar: `استعمل صورة (JPG، PNG…) لحد ${arabicDigits(MB)} ميغا.` },
     uploadFailed: { en: "Upload failed. Please try again.", ar: "ما انرفع الملف. جرّب مرة تانية." },
     open: { en: "Open", ar: "افتح" },
     missing: { en: "Missing", ar: "ناقص" },
@@ -789,8 +798,8 @@ export const t = {
       ar: "انحذفت المستندات بتاريخ {date} حسب سياسة الخصوصية.",
     },
     missingAll: {
-      en: "Documents missing. Ask the applicant to apply again with their ID and photo.",
-      ar: "المستندات ناقصة. اطلب من المتقدّم يقدّم من جديد مع الهوية والصورة.",
+      en: "Documents missing. Ask the applicant to apply again with all four: ID, criminal record, proof of address and photo.",
+      ar: "المستندات ناقصة. اطلب من المتقدّم يقدّم من جديد مع الأربعة: الهوية، السجل العدلي، إثبات السكن والصورة.",
     },
   },
   legal: {
@@ -809,8 +818,8 @@ export const t = {
       ar: "أوافق على {terms} و{privacy}.",
     },
     agreeApplication: {
-      en: "I agree to the {privacy} and allow Be Right to review my ID for hiring.",
-      ar: "أوافق على {privacy} وأسمح لبي رايت بمراجعة هويتي لغرض التوظيف.",
+      en: "I agree to the {privacy} and allow Be Right to review my ID, criminal record and proof of address for hiring.",
+      ar: "أوافق على {privacy} وأسمح لبي رايت بمراجعة هويتي وسجلي العدلي وإثبات سكني لغرض التوظيف.",
     },
     mustAgree: { en: "Please accept to continue.", ar: "لازم توافق لتكمّل." },
   },

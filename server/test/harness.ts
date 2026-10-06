@@ -59,7 +59,12 @@ export const BEIRUT_PIN = { lat: 33.8886, lng: 35.5195 };
 /** Keys shaped like real uploaded application documents. */
 export function documentKeys() {
   const key = (kind: string) => `applications/${randomUUID()}/${kind}-file.jpg`;
-  return { idDocumentKey: key("idDocument"), photoKey: key("photo") };
+  return {
+    idDocumentKey: key("idDocument"),
+    criminalRecordKey: key("criminalRecord"),
+    proofOfAddressKey: key("proofOfAddress"),
+    photoKey: key("photo"),
+  };
 }
 
 /**

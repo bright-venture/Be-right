@@ -168,8 +168,8 @@ export const technicianApplications = pgTable("technician_applications", {
   hasTransport: boolean("has_transport"),
   /** Private storage keys (technician-docs bucket); required for new applications. */
   idDocumentKey: varchar("id_document_key", { length: 512 }),
-  /** No longer collected; old files are deleted by the daily clean-up. Drop once empty. */
   criminalRecordKey: varchar("criminal_record_key", { length: 512 }),
+  proofOfAddressKey: varchar("proof_of_address_key", { length: 512 }),
   photoKey: varchar("photo_key", { length: 512 }),
   /** Applicant consented to the Privacy Policy and document review (version accepted). */
   consentAt: timestamp("consent_at", { withTimezone: true }),

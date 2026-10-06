@@ -21,16 +21,29 @@ export const AVAILABILITY_LABELS: Record<Availability, LocalText> = {
   weekends: { en: "Weekends only", ar: "بس ويك إند" },
 };
 
-/** Documents every technician applicant must upload. */
-export const APPLICATION_DOCUMENTS = ["idDocument", "photo"] as const;
+/** Documents every technician applicant must upload, in the order the form shows them. */
+export const APPLICATION_DOCUMENTS = ["idDocument", "criminalRecord", "proofOfAddress", "photo"] as const;
 export type ApplicationDocument = (typeof APPLICATION_DOCUMENTS)[number];
 
-/** Photo must be an image; the ID may be a photo or a PDF scan. */
+/** Where each document's storage key is kept on an application (db/schema.ts). */
+export const DOCUMENT_FIELD = {
+  idDocument: "idDocumentKey",
+  criminalRecord: "criminalRecordKey",
+  proofOfAddress: "proofOfAddressKey",
+  photo: "photoKey",
+} as const satisfies Record<ApplicationDocument, string>;
+export type DocumentField = (typeof DOCUMENT_FIELD)[ApplicationDocument];
+
+/** The photo must be an image; the others may be a photo or a PDF scan. */
 export const DOCUMENT_TYPES: Record<ApplicationDocument, readonly string[]> = {
   idDocument: ["image/", "application/pdf"],
+  criminalRecord: ["image/", "application/pdf"],
+  proofOfAddress: ["image/", "application/pdf"],
   photo: ["image/"],
 };
-export const MAX_DOCUMENT_BYTES = 10 * 1024 * 1024;
+/** Largest file accepted per document (photos are shrunk in the browser before this check). */
+export const MAX_DOCUMENT_MB = 10;
+export const MAX_DOCUMENT_BYTES = MAX_DOCUMENT_MB * 1024 * 1024;
 
 export function isAllowedDocumentType(kind: ApplicationDocument, contentType: string) {
   return DOCUMENT_TYPES[kind].some((t) => (t.endsWith("/") ? contentType.startsWith(t) : contentType === t));

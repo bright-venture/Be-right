@@ -85,7 +85,7 @@ Specialists are every account with the specialist role plus `SPECIALIST_EMAILS`.
 
 | Job | When | What |
 | --- | --- | --- |
-| `cleanup-documents` (Netlify scheduled function) | daily | Deletes ID and photo of applications rejected 90+ days ago (Privacy Policy), plus any criminal record files left from before they stopped being collected. Period: `REJECTED_APPLICATION_RETENTION_DAYS` in `contracts/legal.ts`. Also deletes uploads never attached to an application or booking after 24 hours, and old rate-limit counters. |
+| `cleanup-documents` (Netlify scheduled function) | daily | Deletes the documents (ID, criminal record, proof of address, photo) of applications rejected 90+ days ago (Privacy Policy). Period: `REJECTED_APPLICATION_RETENTION_DAYS` in `contracts/legal.ts`. Also deletes uploads never attached to an application or booking after 24 hours, and old rate-limit counters. |
 
 Public uploads and applications are rate-limited per IP, per customer and per day; the limits are in `server/lib/rateLimit.ts`.
 

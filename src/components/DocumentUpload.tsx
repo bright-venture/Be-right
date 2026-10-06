@@ -13,7 +13,7 @@ import {
 } from "@contracts/applications";
 
 /**
- * One required applicant document (ID or photo). Uploads straight
+ * One required applicant document (ID, criminal record, proof of address or photo). Uploads straight
  * to private storage when picked and reports the stored key to the form.
  */
 export function DocumentUpload({
@@ -44,7 +44,7 @@ export function DocumentUpload({
     }
     setBusy(true);
     onUploaded(null);
-    // Photos are shrunk first (an ID stays sharp enough to read); PDFs go as they are.
+    // Photos are shrunk first (scanned documents stay sharp enough to read); PDFs go as they are.
     const file = await shrinkImage(picked, kind === "photo" ? { maxSide: 1024 } : { maxSide: 2000, quality: 0.85 });
     const contentType = file.type || "application/octet-stream";
     if (file.size > MAX_DOCUMENT_BYTES) {
@@ -76,7 +76,9 @@ export function DocumentUpload({
           <p className="font-display text-sm font-extrabold text-navy">
             {label} <span className="text-flame-ink">*</span>
           </p>
-          <p className="text-xs text-navy/70">{hint}</p>
+          <p className="text-xs text-navy/70">
+            {hint} · {p(t.docs.maxSize)}
+          </p>
         </div>
         <input
           ref={input}

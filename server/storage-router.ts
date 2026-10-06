@@ -38,7 +38,7 @@ export const storageRouter = createRouter({
       return createUploadUrl(ctx.user.authId, input.fileName);
     }),
 
-  // Technician applicants (no account yet) upload their ID and photo.
+  // Technician applicants (no account yet) upload their four documents.
   createDocumentUpload: publicQuery
     .input(
       z.object({

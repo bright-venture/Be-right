@@ -5,7 +5,14 @@ import { createRouter, publicQuery, specialistQuery } from "./middleware";
 import { getDb } from "./queries/connection";
 import { serviceRequests, technicianApplications, users } from "../db/schema";
 import { CATEGORIES } from "../contracts/services";
-import { AVAILABILITY, EXPERIENCE_LEVELS, MANUAL_APPLICATION_STATUSES } from "@contracts/applications";
+import {
+  APPLICATION_DOCUMENTS,
+  AVAILABILITY,
+  DOCUMENT_FIELD,
+  EXPERIENCE_LEVELS,
+  MANUAL_APPLICATION_STATUSES,
+  type ApplicationDocument,
+} from "@contracts/applications";
 import { getSupabaseAdmin } from "./lib/supabase";
 import { LEGAL_VERSION } from "@contracts/legal";
 import { isValidPhone } from "@contracts/phone";
@@ -14,6 +21,15 @@ import { notify } from "./notify";
 import { createDocumentUrls, documentKeyMatches, documentsExist } from "./lib/storage";
 
 const TRADE_IDS = CATEGORIES.map((c) => c.id) as [string, ...string[]];
+const documentKey = z.string().max(512);
+
+/** An application's four document keys, by document (null when missing). */
+function documentKeysOf(app: Record<(typeof DOCUMENT_FIELD)[ApplicationDocument], string | null>) {
+  return Object.fromEntries(APPLICATION_DOCUMENTS.map((kind) => [kind, app[DOCUMENT_FIELD[kind]]])) as Record<
+    ApplicationDocument,
+    string | null
+  >;
+}
 const email = z.string().trim().toLowerCase().email().max(320);
 
 /** Where the invitation link lands: set a password, then the technician's jobs page. */
@@ -40,21 +56,23 @@ export const joinRouter = createRouter({
         hasTransport: z.boolean(),
         notes: z.string().trim().max(2000).optional(),
         // Mandatory documents, uploaded first via storage.createDocumentUpload.
-        idDocumentKey: z.string().max(512),
-        photoKey: z.string().max(512),
-        // Privacy Policy + consent to review the ID.
+        idDocumentKey: documentKey,
+        criminalRecordKey: documentKey,
+        proofOfAddressKey: documentKey,
+        photoKey: documentKey,
+        // Privacy Policy + consent to review the documents.
         consent: z.literal(true),
       }),
     )
     .mutation(async ({ ctx, input }) => {
       await rateLimit(`apply:ip:${clientIp(ctx.req)}`, LIMITS.applicationPerIp);
-      const keys = [input.idDocumentKey, input.photoKey];
+      // Each key must be a real upload of the right kind (not, say, the photo sent as the ID).
+      const keys = APPLICATION_DOCUMENTS.map((kind) => input[DOCUMENT_FIELD[kind]]);
       if (
-        !documentKeyMatches(input.idDocumentKey, "idDocument") ||
-        !documentKeyMatches(input.photoKey, "photo") ||
+        APPLICATION_DOCUMENTS.some((kind) => !documentKeyMatches(input[DOCUMENT_FIELD[kind]], kind)) ||
         !(await documentsExist(keys))
       ) {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "Please upload your ID and photo" });
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Please upload all four documents" });
       }
       // \`consent\` is validated above (must be true); what's stored is when and which version.
       const [res] = await getDb()
@@ -71,6 +89,8 @@ export const joinRouter = createRouter({
           hasTransport: input.hasTransport,
           notes: input.notes ?? null,
           idDocumentKey: input.idDocumentKey,
+          criminalRecordKey: input.criminalRecordKey,
+          proofOfAddressKey: input.proofOfAddressKey,
           photoKey: input.photoKey,
           consentAt: new Date(),
           consentVersion: LEGAL_VERSION,
@@ -109,14 +129,14 @@ export const joinRouter = createRouter({
       where: eq(technicianApplications.id, input.id),
     });
     if (!app) throw new TRPCError({ code: "NOT_FOUND" });
-    const keys = { idDocument: app.idDocumentKey, photo: app.photoKey };
+    const keys = documentKeysOf(app);
     const urls = await createDocumentUrls(Object.values(keys).filter((k): k is string => !!k));
     const link = (key: string | null) =>
       key && urls[key] ? { url: urls[key], isPdf: key.toLowerCase().endsWith(".pdf") } : null;
-    return {
-      idDocument: link(keys.idDocument),
-      photo: link(keys.photo),
-    };
+    return Object.fromEntries(APPLICATION_DOCUMENTS.map((kind) => [kind, link(keys[kind])])) as Record<
+      ApplicationDocument,
+      { url: string; isPdf: boolean } | null
+    >;
   }),
 
   /** Before hiring: does this email already belong to an account? (shown in the confirmation) */
@@ -141,10 +161,10 @@ export const joinRouter = createRouter({
         where: eq(technicianApplications.id, input.id),
       });
       if (!app) throw new TRPCError({ code: "NOT_FOUND" });
-      if (!app.idDocumentKey || !app.photoKey) {
+      if (Object.values(documentKeysOf(app)).some((key) => !key)) {
         throw new TRPCError({
           code: "BAD_REQUEST",
-          message: "ID and photo are required. Ask the applicant to apply again with both.",
+          message: "All four documents are required. Ask the applicant to apply again with them.",
         });
       }
       const address = input.email ?? app.email?.toLowerCase();
