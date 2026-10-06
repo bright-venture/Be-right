@@ -20,7 +20,7 @@ export default function Checks() {
         <div className="text-center">
           <span
             className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-navy text-paper"
-            style={{ boxShadow: "0 5px 0 rgb(244 83 10 / 0.9)" }}
+            style={{ boxShadow: "0 5px 0 rgb(244 83 9 / 0.9)" }}
           >
             <ClipboardCheck className="h-8 w-8" />
           </span>
@@ -38,7 +38,7 @@ export default function Checks() {
             <li key={i} className="card-br card-hover p-6">
               <span
                 className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-navy text-paper"
-                style={{ boxShadow: "0 3px 0 rgb(244 83 10 / 0.9)" }}
+                style={{ boxShadow: "0 3px 0 rgb(244 83 9 / 0.9)" }}
               >
                 <it.icon className="h-5 w-5" />
               </span>

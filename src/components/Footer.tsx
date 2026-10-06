@@ -32,7 +32,7 @@ export function Footer({ className = "pb-16" }: { className?: string }) {
 
         <div className="mt-12 grid grid-cols-2 gap-x-6 gap-y-8 border-t border-paper/15 pt-10 md:grid-cols-[1.2fr_1fr_1fr] md:gap-10">
           <div className="col-span-2 md:col-span-1">
-            <div className="inline-block rounded-2xl bg-white px-4 py-2.5 shadow-[0_5px_0_rgb(244_83_10/0.9)]">
+            <div className="inline-block rounded-2xl bg-white px-4 py-2.5 shadow-[0_5px_0_rgb(244_83_9/0.9)]">
               <img src="/assets/wordmark.png" width={600} height={222} loading="lazy" alt="Be Right" className="h-10 w-auto" />
             </div>
             <p className="mt-4 max-w-md text-sm leading-relaxed text-paper/75">{p(t.footer.contactSoon)}</p>

@@ -119,8 +119,8 @@ export function Preloader({ onDone }: { onDone: () => void }) {
       className={`fixed inset-0 z-[100] overflow-hidden bg-navy-deep transition-opacity ${leaving ? "pointer-events-none opacity-0" : "opacity-100"}`}>
       <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
         <svg viewBox="0 0 640 838.2" preserveAspectRatio="xMidYMid meet" className="h-[70vh] w-auto opacity-30" aria-hidden="true">
-          <path d={LEBANON_PATH} fill="#123C7E" stroke="#F4530A" strokeWidth="8" strokeLinejoin="round" />
-          <circle cx={BEIRUT.x} cy={BEIRUT.y} r="14" fill="#F4530A" />
+          <path d={LEBANON_PATH} fill="#123C7E" stroke="#F45309" strokeWidth="8" strokeLinejoin="round" />
+          <circle cx={BEIRUT.x} cy={BEIRUT.y} r="14" fill="#F45309" />
         </svg>
       </div>
       <div className="relative flex h-full flex-col items-center justify-center px-4">

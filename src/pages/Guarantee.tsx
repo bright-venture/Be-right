@@ -31,7 +31,7 @@ export default function Guarantee() {
             <li key={i} className="card-br card-hover flex items-start gap-4 p-6">
               <span
                 className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-navy font-display text-base font-black text-paper"
-                style={{ boxShadow: "0 3px 0 rgb(244 83 10 / 0.9)" }}
+                style={{ boxShadow: "0 3px 0 rgb(244 83 9 / 0.9)" }}
               >
                 {String(i + 1).padStart(2, "0")}
               </span>

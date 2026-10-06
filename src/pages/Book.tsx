@@ -364,7 +364,7 @@ export default function Book() {
                       }}
                       aria-pressed={active}
                       className={`flex min-h-32 flex-col items-start justify-between rounded-[26px] border-[1.5px] border-navy/12 bg-white p-4 text-start shadow-[0_3px_0_rgb(12_43_92/0.1)] transition-all hover:-translate-y-1 hover:border-navy hover:shadow-[0_6px_0_rgb(12_43_92/0.9)] ${
-                        active ? "!border-navy !shadow-[0_6px_0_rgb(244_83_10/0.9)]" : ""
+                        active ? "!border-navy !shadow-[0_6px_0_rgb(244_83_9/0.9)]" : ""
                       }`}
                       style={{
                         background: `linear-gradient(180deg, rgb(255 255 255 / 0.55) 0%, rgb(255 255 255 / 0) 60%), ${tint.bg}`,

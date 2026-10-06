@@ -36,7 +36,7 @@ function render(m: Message) {
                 <h${rtl ? 2 : 1} style="margin:${rtl ? "20px 0 8px;font-size:20px" : "0 0 8px;font-size:22px"};">${esc(m.title[lang])}</h${rtl ? 2 : 1}>
                 ${m.lines.map((l) => `<p style="margin:0 0 12px;font-size:15px;line-height:${rtl ? 1.7 : 1.5};">${esc(l[lang])}</p>`).join("")}
                 <p style="margin:12px 0 24px;" align="center">
-                  <a href="${esc(url)}" style="display:inline-block;background:#C94407;color:#ffffff;text-decoration:none;font-weight:bold;font-size:15px;padding:14px 28px;border-radius:999px;">${esc(m.button[lang])}</a>
+                  <a href="${esc(url)}" style="display:inline-block;background:#F45309;color:#ffffff;text-decoration:none;font-weight:bold;font-size:15px;padding:14px 28px;border-radius:999px;">${esc(m.button[lang])}</a>
                 </p>
               </td>
             </tr>`;

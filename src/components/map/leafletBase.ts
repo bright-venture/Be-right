@@ -22,7 +22,7 @@ export function addBaseTiles(map: L.Map) {
 
 /** Brand-coloured pins drawn with HTML, so no marker image files are needed. */
 export function pinIcon(kind: "home" | "tech", label?: string) {
-  const color = kind === "home" ? "#C94407" : "#0B63CE";
+  const color = kind === "home" ? "#F45309" : "#0B63CE";
   const inner =
     kind === "home"
       ? `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#fff" stroke-width="2.5"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>`

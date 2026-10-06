@@ -14,9 +14,9 @@ module.exports = {
           DEFAULT: "#0C2B5C",
           deep: "#081E42",
         },
-        // Brand orange tuned for WCAG AA: white text on flame ≥ 4.5:1.
+        // Brand orange (buttons, fills, borders). Small orange text uses flame-ink, which stays readable on white.
         flame: {
-          DEFAULT: "#C94407",
+          DEFAULT: "#F45309",
           dark: "#A33706",
           ink: "#A33706", // small orange text on paper/white
           light: "#FF8A50", // orange text on navy

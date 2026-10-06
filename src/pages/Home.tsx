@@ -196,8 +196,8 @@ export default function Home() {
                   <path d={LEBANON_PATH} fill="#E2EBF7" stroke="#0C2B5C" strokeOpacity="0.18" strokeWidth="3" />
                   {COASTAL_CITIES.map(city => (
                     <g key={city.en}>
-                      {city.en === "Beirut" && <circle cx={city.x} cy={city.y} r="20" fill="#F4530A" fillOpacity="0.14" />}
-                      <circle cx={city.x} cy={city.y} r={city.en === "Beirut" ? 10 : 7} fill="#F4530A" stroke="white" strokeWidth="3" />
+                      {city.en === "Beirut" && <circle cx={city.x} cy={city.y} r="20" fill="#F45309" fillOpacity="0.14" />}
+                      <circle cx={city.x} cy={city.y} r={city.en === "Beirut" ? 10 : 7} fill="#F45309" stroke="white" strokeWidth="3" />
                     </g>
                   ))}
                 </svg>
@@ -261,8 +261,8 @@ export default function Home() {
                 to="/book"
                 className="service-tile group relative flex h-full min-h-[168px] flex-col items-center justify-center gap-1.5 rounded-[26px] px-2 py-5 text-center text-white transition-all duration-200 hover:-translate-y-1.5 focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-navy active:translate-y-0"
                 style={{
-                  background: "linear-gradient(150deg, #C94407 0%, #A33706 100%)",
-                  boxShadow: "0 6px 18px rgb(244 83 10 / 0.18)",
+                  background: "#F45309",
+                  boxShadow: "0 6px 18px rgb(244 83 9 / 0.18)",
                 }}
               >
                 <span className="text-[13px] font-black leading-tight">{p(t.cta.title)}</span>
@@ -340,7 +340,7 @@ export default function Home() {
                 <h3 className="flex items-center gap-2 font-display text-lg font-black text-navy">
                   <span
                     className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-navy text-paper"
-                    style={{ boxShadow: "0 2px 0 rgb(244 83 10 / 0.9)" }}
+                    style={{ boxShadow: "0 2px 0 rgb(244 83 9 / 0.9)" }}
                   >
                     <MapPin className="h-4 w-4" />
                   </span>
@@ -378,7 +378,7 @@ export default function Home() {
               <div key={i} className="card-br card-hover p-6">
                 <span
                   className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-navy text-paper"
-                  style={{ boxShadow: "0 3px 0 rgb(244 83 10 / 0.9)" }}
+                  style={{ boxShadow: "0 3px 0 rgb(244 83 9 / 0.9)" }}
                 >
                   <c.icon className="h-5 w-5" />
                 </span>
@@ -432,7 +432,7 @@ export default function Home() {
             <div className="card-br card-hover flex flex-col p-6">
               <span
                 className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-navy text-paper"
-                style={{ boxShadow: "0 3px 0 rgb(244 83 10 / 0.9)" }}
+                style={{ boxShadow: "0 3px 0 rgb(244 83 9 / 0.9)" }}
               >
                 <ClipboardCheck className="h-5 w-5" />
               </span>
@@ -455,7 +455,7 @@ export default function Home() {
             <div className="card-br card-hover flex flex-col p-6">
               <span
                 className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-navy text-paper"
-                style={{ boxShadow: "0 3px 0 rgb(244 83 10 / 0.9)" }}
+                style={{ boxShadow: "0 3px 0 rgb(244 83 9 / 0.9)" }}
               >
                 <Store className="h-5 w-5" />
               </span>
@@ -476,7 +476,7 @@ export default function Home() {
             <div className="card-br card-hover flex flex-col p-6">
               <span
                 className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-navy text-paper"
-                style={{ boxShadow: "0 3px 0 rgb(244 83 10 / 0.9)" }}
+                style={{ boxShadow: "0 3px 0 rgb(244 83 9 / 0.9)" }}
               >
                 <ShieldCheck className="h-5 w-5" />
               </span>
@@ -551,7 +551,7 @@ export default function Home() {
         className="grain relative overflow-hidden py-20 text-white"
         style={{
           background:
-            "repeating-linear-gradient(-45deg, transparent 0 16px, rgb(255 255 255 / 0.05) 16px 32px), linear-gradient(150deg, #C94407 0%, #A33706 60%, #8F3005 100%)",
+            "repeating-linear-gradient(-45deg, transparent 0 16px, rgb(255 255 255 / 0.05) 16px 32px), #F45309",
         }}
       >
         <span

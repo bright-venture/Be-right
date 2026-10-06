@@ -45,7 +45,7 @@
     --secondary-foreground: 218 77% 20%;
     --muted: 220 20% 94%;
     --muted-foreground: 218 20% 38%;
-    --accent: 19 92% 50%; /* flame orange #F4530A */
+    --accent: 19 93% 50%; /* flame orange #F45309 */
     --accent-foreground: 0 0% 100%;
     --destructive: 0 72% 45%;
     --destructive-foreground: 0 0% 98%;
@@ -77,7 +77,7 @@
     font-family: "Rubik", sans-serif;
   }
   ::selection {
-    background: #c94407;
+    background: #f45309;
     color: #fff;
   }
 }
@@ -89,16 +89,16 @@
   }
   .btn-pill-primary {
     @apply btn-pill text-white;
-    background: linear-gradient(150deg, #c94407 0%, #a33706 100%);
-    box-shadow: 0 4px 12px rgb(244 83 10 / 0.2);
+    background: #f45309;
+    box-shadow: 0 4px 12px rgb(244 83 9 / 0.2);
   }
   .btn-pill-primary:hover {
     transform: translateY(-2px);
-    box-shadow: 0 7px 18px rgb(244 83 10 / 0.25);
+    box-shadow: 0 7px 18px rgb(244 83 9 / 0.25);
   }
   .btn-pill-primary:active {
     transform: translateY(1px);
-    box-shadow: 0 2px 6px rgb(244 83 10 / 0.15);
+    box-shadow: 0 2px 6px rgb(244 83 9 / 0.15);
   }
   .btn-pill-outline {
     @apply btn-pill border-2 border-navy bg-transparent text-navy hover:bg-navy hover:text-paper;
@@ -145,7 +145,7 @@
     flex-shrink: 0;
   }
   .text-gradient-flame {
-    background: linear-gradient(110deg, #f4530a 15%, #ff8a4c 50%, #d84505 100%);
+    background: linear-gradient(110deg, #f45309 15%, #ff8a4c 50%, #d84505 100%);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
@@ -154,6 +154,9 @@
   .stroke-underline {
     position: relative;
     white-space: nowrap;
+    /* Hug the words even when a wrapper makes it a block (.reveal-line), so the stroke stops at the text. */
+    width: fit-content;
+    max-width: 100%;
   }
   .stroke-underline::after {
     content: "";
@@ -161,7 +164,7 @@
     inset-inline: -1%;
     bottom: 0.06em;
     height: 0.13em;
-    background: #f4530a;
+    background: #f45309;
     border-radius: 999px;
     z-index: -1;
     transform: rotate(-0.8deg);
@@ -195,7 +198,7 @@
   .arch-frame {
     border: 2px solid #0c2b5c;
     border-radius: 999px 999px 28px 28px;
-    box-shadow: 10px 10px 0 rgb(244 83 10 / 0.9);
+    box-shadow: 10px 10px 0 rgb(244 83 9 / 0.9);
   }
   /* Section number — oversized ghost numeral */
   .ghost-num {
@@ -424,12 +427,12 @@
 .home-page #services, .home-page #pricing, .home-page #trust, .home-page #faq { background: #fff; }
 .home-page #coverage, .home-page #plans { background: #f4f7fb; }
 .service-tile { min-height: 140px; border: 1px solid rgb(12 43 92 / .09); border-radius: 20px; box-shadow: none; }
-.service-tile:hover { transform: translateY(-3px); border-color: rgb(244 83 10 / .45); box-shadow: 0 10px 24px rgb(12 43 92 / .07); }
+.service-tile:hover { transform: translateY(-3px); border-color: rgb(244 83 9 / .45); box-shadow: 0 10px 24px rgb(12 43 92 / .07); }
 .service-tile .ghost-num { display: none; }
 .service-tile > span:last-child { font-size: 14px; font-weight: 700; }
 .category-rail { background: white; border: 1px solid rgb(12 43 92 / .08); border-radius: 24px; padding: 14px; box-shadow: 0 8px 28px rgb(12 43 92 / .045); }
 .category-rail button { box-shadow: none; }
-.category-rail button[aria-haspopup="menu"] { box-shadow: 0 3px 10px rgb(244 83 10 / .16); }
+.category-rail button[aria-haspopup="menu"] { box-shadow: 0 3px 10px rgb(244 83 9 / .16); }
 :focus-visible { outline: 3px solid #0B63CE; outline-offset: 4px; }
 @media (max-width: 639px) {
   .home-page > section:not(.home-hero) { padding-block: 48px; }
