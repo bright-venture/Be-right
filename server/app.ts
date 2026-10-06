@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import { secureHeaders } from "hono/secure-headers";
+import { cors } from "hono/cors";
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import { TRPCError } from "@trpc/server";
 import { clientIp, LIMITS, rateLimit } from "./lib/rateLimit";
@@ -18,6 +19,18 @@ app.use(
     contentSecurityPolicy: undefined,
     crossOriginEmbedderPolicy: false,
     crossOriginResourcePolicy: false,
+  }),
+);
+// The phone app (Capacitor) runs the site from the phone and calls this API from these
+// origins. Sign-in travels as a Bearer token, never a cookie, so no credentials are shared.
+const APP_ORIGINS = ["https://localhost", "capacitor://localhost"];
+app.use(
+  "/api/*",
+  cors({
+    origin: (origin) => (APP_ORIGINS.includes(origin) ? origin : null),
+    allowMethods: ["GET", "POST", "OPTIONS"],
+    allowHeaders: ["authorization", "content-type"],
+    maxAge: 86400,
   }),
 );
 app.get("/api/health", (c) => c.json({ ok: true }));

@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabase";
 import { AgreeCheckbox } from "@/components/AgreeCheckbox";
 import { LEGAL_VERSION } from "@contracts/legal";
 import { isValidPhone } from "@contracts/phone";
+import { siteOrigin } from "@/lib/native";
 
 const INPUT =
   "mt-2 min-h-12 w-full rounded-2xl border-2 border-navy/30 bg-white px-4 font-semibold text-navy placeholder:font-normal placeholder:text-navy/40 focus:border-flame focus:outline-none";
@@ -50,7 +51,8 @@ export function AuthPanel({
   const [unconfirmed, setUnconfirmed] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
 
-  const origin = window.location.origin;
+  // Email links open the website (from the app too: the app has no web address of its own).
+  const origin = siteOrigin();
   const returnUrl = `${origin}${next}`;
   const resetUrl = `${origin}/reset-password?next=${encodeURIComponent(next)}`;
   const Heading = headingLevel;

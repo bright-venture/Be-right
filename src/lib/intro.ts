@@ -1,3 +1,4 @@
+import { isNativeApp } from "./native";
 /** The bird intro (src/components/Preloader.tsx): when it plays, and how to replay it. */
 
 /** Footer "Replay intro" fires this; src/main.tsx shows the intro again. */
@@ -9,6 +10,8 @@ const SEEN_KEY = "br-video-intro-v2";
 
 /** Once per browser session, on the home page only, and never for reduced motion. */
 export function shouldPlayIntro() {
+  // The app opens straight on the content; the intro is a website welcome.
+  if (isNativeApp) return false;
   if (window.location.pathname !== "/") return false;
   if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return false;
   try {

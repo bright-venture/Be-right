@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Be Right</string>
+    <string name="title_activity_main">Be Right</string>
+    <string name="package_name">com.berightbright.app</string>
+    <string name="custom_url_scheme">com.berightbright.app</string>
+</resources>

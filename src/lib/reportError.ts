@@ -1,3 +1,4 @@
+import { apiUrl, isNativeApp } from "./native";
 // Sends front-end crashes to our own API (server/app.ts → "[client-error]" in the logs).
 // Only the error, the page path and the build are sent: never query strings or hashes,
 // which can carry sign-in tokens.
@@ -24,9 +25,10 @@ export function reportError(error: unknown, source: string) {
     release: import.meta.env.VITE_RELEASE,
   });
   try {
-    const queued = navigator.sendBeacon?.("/api/client-error", new Blob([body], { type: "application/json" }));
+    // The app reports to the live site, where a beacon can't carry JSON: it uses fetch.
+    const queued = !isNativeApp && navigator.sendBeacon?.("/api/client-error", new Blob([body], { type: "application/json" }));
     if (!queued) {
-      void fetch("/api/client-error", { method: "POST", body, keepalive: true, headers: { "content-type": "application/json" } });
+      void fetch(apiUrl("/api/client-error"), { method: "POST", body, keepalive: true, headers: { "content-type": "application/json" } });
     }
   } catch {
     // Reporting must never cause another error.

@@ -10,6 +10,7 @@ import { isNetworkError, refusalMessage } from "@/lib/errors";
 import { ACCOUNT_DELETED_FLAG } from "@/lib/session";
 import { isValidPhone } from "@contracts/phone";
 import { ROLES } from "@contracts/roles";
+import { siteOrigin } from "@/lib/native";
 
 const INPUT =
   "mt-2 min-h-12 w-full rounded-2xl border-2 border-navy/30 bg-white px-4 font-semibold text-navy placeholder:font-normal placeholder:text-navy/40 focus:border-flame focus:outline-none";
@@ -127,7 +128,7 @@ function EmailChange({ current }: { current: string }) {
     // Supabase sends a confirmation link to both addresses; the change happens once confirmed.
     const { error: err } = await supabase.auth.updateUser(
       { email: email.trim() },
-      { emailRedirectTo: `${window.location.origin}/account` },
+      { emailRedirectTo: `${siteOrigin()}/account` },
     );
     setBusy(false);
     if (err) setError(err.message || p(t.misc.error));

@@ -10,9 +10,11 @@ import { installErrorReporting, reloadForNewBuild } from "./lib/reportError"
 import { startAnalytics } from "./lib/analytics"
 import { INTRO_REPLAY_EVENT, markIntroSeen, shouldPlayIntro } from "./lib/intro"
 import App from './App.tsx'
+import { startNativeApp } from "./lib/native"
 
 installErrorReporting()
 startAnalytics()
+void startNativeApp()
 // A tab opened before a deploy asks for page files that are gone: load the new version.
 window.addEventListener("vite:preloadError", (event) => {
   if (reloadForNewBuild()) event.preventDefault()

@@ -5,6 +5,7 @@ import superjson from "superjson";
 import type { AppRouter } from "../../server/router";
 import { useEffect, type ReactNode } from "react";
 import { AUTH_CHANGED_EVENT, mightBeSignedIn } from "@/lib/session";
+import { apiUrl } from "@/lib/native";
 
 const loadSupabase = () => import("@/lib/supabase");
 
@@ -14,7 +15,7 @@ const queryClient = new QueryClient();
 const trpcClient = trpc.createClient({
   links: [
     httpBatchLink({
-      url: "/api/trpc",
+      url: apiUrl("/api/trpc"),
       transformer: superjson,
       async headers() {
         // Visitors who never signed in skip loading Supabase just to find no token.

@@ -1,3 +1,4 @@
+import { isNativeApp } from "./native";
 /**
  * Cloudflare Web Analytics: page views and load speed, no cookies, nothing personal.
  * Off until VITE_CF_ANALYTICS_TOKEN is set (Cloudflare → Analytics & Logs → Web Analytics).
@@ -8,7 +9,8 @@ export function startAnalytics() {
   // is easy to paste by mistake: take the token out of it (a wrong one makes every
   // report fail with a CORS error).
   const token = import.meta.env.VITE_CF_ANALYTICS_TOKEN?.match(/[0-9a-f]{32}/i)?.[0];
-  if (!token || !import.meta.env.PROD) return;
+  // Website visits only: the app's pages aren't web traffic.
+  if (!token || !import.meta.env.PROD || isNativeApp) return;
   const load = () => {
     const script = document.createElement("script");
     script.defer = true;
