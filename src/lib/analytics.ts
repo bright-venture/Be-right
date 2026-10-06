@@ -4,7 +4,10 @@
  * Loaded when the browser is idle so it never slows the first paint.
  */
 export function startAnalytics() {
-  const token = import.meta.env.VITE_CF_ANALYTICS_TOKEN;
+  // The setting should hold just the 32-character token, but Cloudflare's whole snippet
+  // is easy to paste by mistake: take the token out of it (a wrong one makes every
+  // report fail with a CORS error).
+  const token = import.meta.env.VITE_CF_ANALYTICS_TOKEN?.match(/[0-9a-f]{32}/i)?.[0];
   if (!token || !import.meta.env.PROD) return;
   const load = () => {
     const script = document.createElement("script");
