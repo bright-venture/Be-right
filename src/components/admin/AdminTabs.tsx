@@ -293,6 +293,13 @@ export function TeamTab() {
     },
   });
   const setStaffRole = trpc.admin.setStaffRole.useMutation({ onSuccess: () => utils.admin.team.invalidate() });
+  const resetTwoStep = trpc.admin.resetTwoStep.useMutation({
+    onSuccess: (_, vars) => {
+      const member = data?.find((m) => m.id === vars.userId);
+      setNotice(p(t.admin.twoStepResetDone).replace("{name}", member?.name || member?.email || ""));
+      void utils.admin.team.invalidate();
+    },
+  });
   const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
   const roleLabel = { specialist: t.admin.roleSpecialist, admin: t.admin.roleAdmin } as const;
 
@@ -360,6 +367,15 @@ export function TeamTab() {
                         {p(roleLabel[m.role as "specialist" | "admin"])}
                       </span>
                       {m.isYou && <span className="text-xs font-semibold text-navy/50">({p(t.admin.you)})</span>}
+                      {m.twoStep !== null && (
+                        <span
+                          className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${
+                            m.twoStep ? "bg-green-700/10 text-green-800" : "bg-flame/10 text-flame"
+                          }`}
+                        >
+                          {p(m.twoStep ? t.admin.twoStepOn : t.admin.twoStepOff)}
+                        </span>
+                      )}
                     </p>
                     <p className="truncate text-sm text-navy/60" dir="ltr">
                       <span className="block text-start">
@@ -372,6 +388,20 @@ export function TeamTab() {
                       {m.fromSettings && ` · ${p(t.admin.fromSettings)}`}
                     </p>
                   </div>
+                  {!m.isYou && m.twoStep && (
+                    <button
+                      type="button"
+                      disabled={resetTwoStep.isPending}
+                      onClick={() => {
+                        if (window.confirm(p(t.admin.twoStepResetAsk).replace("{name}", m.name || m.email || ""))) {
+                          resetTwoStep.mutate({ userId: m.id });
+                        }
+                      }}
+                      className="btn-pill-outline !min-h-10 w-full justify-center !px-3 text-xs sm:w-auto"
+                    >
+                      {p(t.admin.twoStepReset)}
+                    </button>
+                  )}
                   {!locked && (
                     <div className="grid w-full grid-cols-2 gap-2 sm:w-auto">
                       <button
@@ -401,7 +431,11 @@ export function TeamTab() {
             })}
           </ul>
         )}
-        {setStaffRole.error && <p role="alert" className="mt-3 text-sm font-semibold text-destructive">{setStaffRole.error.message}</p>}
+        {(setStaffRole.error ?? resetTwoStep.error) && (
+          <p role="alert" className="mt-3 text-sm font-semibold text-destructive">
+            {(setStaffRole.error ?? resetTwoStep.error)?.message}
+          </p>
+        )}
       </section>
     </div>
   );

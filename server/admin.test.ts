@@ -2,10 +2,14 @@
 // nobody else gets in.
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import type { User } from "@db/schema";
-import { ADMIN_PASSWORD_REQUIRED } from "@contracts/roles";
+import { ADMIN_PASSWORD_REQUIRED, ADMIN_TWO_STEP_REQUIRED } from "@contracts/roles";
 import { BEIRUT_PIN, callerFor, futureDate, makeSpecialist, makeTechnician, makeUser } from "./test/harness";
 
-const state = vi.hoisted(() => ({ db: undefined as unknown, invites: [] as string[] }));
+const state = vi.hoisted(() => ({
+  db: undefined as unknown,
+  invites: [] as string[],
+  deletedFactors: [] as { id: string; userId: string }[],
+}));
 
 vi.mock("./queries/connection", () => ({ getDb: () => state.db }));
 vi.mock("./lib/env", () => ({
@@ -29,6 +33,14 @@ vi.mock("./lib/supabase", () => ({
         inviteUserByEmail: async (email: string) => {
           state.invites.push(email);
           return { data: { user: { id: crypto.randomUUID() } }, error: null };
+        },
+        // Every staff account has one verified authenticator app.
+        mfa: {
+          listFactors: async () => ({ data: { factors: [{ id: "factor-1", status: "verified" }] }, error: null }),
+          deleteFactor: async (params: { id: string; userId: string }) => {
+            state.deletedFactors.push(params);
+            return { data: { id: params.id }, error: null };
+          },
         },
       },
     },
@@ -81,7 +93,25 @@ describe("admin area", () => {
         (await callerFor(owner, { signInMethods: methods })).admin.overview(),
       ).rejects.toMatchObject({ code: "FORBIDDEN", message: ADMIN_PASSWORD_REQUIRED });
     }
-    await expect((await callerFor(owner, { signInMethods: ["password"] })).admin.overview()).resolves.toBeDefined();
+    await expect((await callerFor(owner, { signInMethods: ["password", "totp"] })).admin.overview()).resolves.toBeDefined();
+  });
+
+  it("needs two-step login on top of the password", async () => {
+    await expect(
+      (await callerFor(owner, { signInMethods: ["password"], assuranceLevel: "aal1" })).admin.overview(),
+    ).rejects.toMatchObject({ code: "FORBIDDEN", message: ADMIN_TWO_STEP_REQUIRED });
+    await expect(
+      (await callerFor(owner, { signInMethods: ["password", "totp"], assuranceLevel: "aal2" })).admin.overview(),
+    ).resolves.toBeDefined();
+  });
+
+  it("resets someone else's two-step login, never your own", async () => {
+    const o = await callerFor(owner);
+    await expect(o.admin.resetTwoStep({ userId: owner.id })).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    expect(await o.admin.resetTwoStep({ userId: desk.id })).toMatchObject({ ok: true, removed: 1 });
+    expect(state.deletedFactors).toEqual([{ id: "factor-1", userId: desk.authId }]);
+    // Shown in the team list.
+    expect((await o.admin.team()).find((m) => m.id === desk.id)).toHaveProperty("twoStep", true);
   });
 
   it("lets admins do everything specialists do", async () => {

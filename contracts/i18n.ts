@@ -731,6 +731,41 @@ export const t = {
     noActivity: { en: "No activity yet.", ar: "ما في نشاط بعد." },
     request: { en: "Request #{id}", ar: "الطلب #{id}" },
     retry: { en: "Try again", ar: "جرّب مرة تانية" },
+    // two-step login (authenticator app)
+    twoStepTitle: { en: "Two-step login", ar: "الدخول بخطوتين" },
+    twoStepSetupSub: {
+      en: "Protect the admin area with a code from an app on your phone. You set this up once.",
+      ar: "احمي قسم الإدارة بكود من تطبيق على تلفونك. بتعملها مرة وحدة بس.",
+    },
+    twoStepInstall: {
+      en: "Install an authenticator app, such as Google Authenticator or Microsoft Authenticator.",
+      ar: "نزّل تطبيق مصادقة، متل Google Authenticator أو Microsoft Authenticator.",
+    },
+    twoStepScan: { en: "In the app, add an account and scan this code.", ar: "بالتطبيق، زيد حساب وامسح هالكود." },
+    twoStepManual: { en: "Can't scan it? Type this key instead:", ar: "ما فيك تمسحه؟ اكتب هالمفتاح:" },
+    twoStepType: { en: "Type the 6-digit code the app shows.", ar: "اكتب الكود (٦ أرقام) يلي بيطلع بالتطبيق." },
+    twoStepVerifySub: {
+      en: "Enter the 6-digit code from your authenticator app.",
+      ar: "اكتب الكود (٦ أرقام) من تطبيق المصادقة.",
+    },
+    twoStepCode: { en: "6-digit code", ar: "الكود (٦ أرقام)" },
+    twoStepConfirm: { en: "Confirm", ar: "تأكيد" },
+    twoStepWrong: {
+      en: "That code didn't work. Codes change every 30 seconds, so try the current one.",
+      ar: "هالكود ما زبط. الكود بيتغيّر كل ٣٠ ثانية، فجرّب الحالي.",
+    },
+    twoStepLost: {
+      en: "Lost your phone? Another admin can reset your two-step login in Admin, Team.",
+      ar: "ضيّعت تلفونك؟ إدارة تانية فيها تعيد ضبط الدخول بخطوتين من الإدارة، الفريق.",
+    },
+    twoStepOn: { en: "Two-step on", ar: "الخطوتين مفعّلة" },
+    twoStepOff: { en: "Two-step off", ar: "الخطوتين مش مفعّلة" },
+    twoStepReset: { en: "Reset two-step", ar: "إعادة ضبط الخطوتين" },
+    twoStepResetAsk: {
+      en: "Reset two-step login for {name}? They'll set it up again at their next admin sign-in.",
+      ar: "بدك تعيد ضبط الدخول بخطوتين لـ{name}؟ رح يرجع يعملها بأول دخول عالإدارة.",
+    },
+    twoStepResetDone: { en: "Two-step login reset for {name}.", ar: "انعاد ضبط الدخول بخطوتين لـ{name}." },
   },
   /** The visit fee, as specialists and technicians handle it. */
   visitFee: {

@@ -8,6 +8,8 @@ export type TrpcContext = {
   user?: User;
   /** How this session was started ("password", "otp", "oauth"...): the admin area needs a password. */
   signInMethods?: string[];
+  /** "aal2" when the session also passed two-step login (authenticator app). */
+  assuranceLevel?: string;
   /** A valid sign-in whose account couldn't be loaded (e.g. database error). */
   accountLoadFailed?: boolean;
 };
@@ -20,6 +22,7 @@ export async function createContext(
     const session = await authenticateSession(opts.req.headers);
     ctx.user = session?.user;
     ctx.signInMethods = session?.signInMethods;
+    ctx.assuranceLevel = session?.assuranceLevel;
   } catch (error) {
     // Authentication is optional here; protected procedures reject missing users.
     // Invalid tokens resolve to undefined, so reaching here means a real failure.

@@ -18,6 +18,17 @@ function roleFromSettings(email: string | null) {
   return e && (env.adminEmails ?? []).includes(e) ? ("admin" as const) : null;
 }
 
+/** Whether an account has two-step login set up (null when it can't be checked). */
+async function hasTwoStep(authId: string): Promise<boolean | null> {
+  try {
+    const { data, error } = await getSupabaseAdmin().auth.admin.mfa.listFactors({ userId: authId });
+    if (error) return null;
+    return data.factors.some((f) => f.status === "verified");
+  } catch {
+    return null;
+  }
+}
+
 /** Where a staff invitation lands: choose a password, then the dashboard. */
 function staffInviteRedirect(req: Request) {
   const origin = req.headers.get("origin") ?? env.siteUrl;
@@ -138,6 +149,7 @@ export const adminRouter = createRouter({
     const rows = await getDb()
       .select({
         id: users.id,
+        authId: users.authId,
         name: users.name,
         email: users.email,
         phone: users.phone,
@@ -148,7 +160,14 @@ export const adminRouter = createRouter({
       .from(users)
       .where(and(inArray(users.role, [...STAFF_ROLES]), isNull(users.deletedAt)))
       .orderBy(users.role, users.name);
-    return rows.map((r) => ({ ...r, fromSettings: !!roleFromSettings(r.email), isYou: r.id === ctx.user.id }));
+    return Promise.all(
+      rows.map(async ({ authId, ...r }) => ({
+        ...r,
+        fromSettings: !!roleFromSettings(r.email),
+        isYou: r.id === ctx.user.id,
+        twoStep: await hasTwoStep(authId),
+      })),
+    );
   }),
 
   /**
@@ -220,6 +239,26 @@ export const adminRouter = createRouter({
       await db.update(users).set({ role: input.role }).where(eq(users.id, target.id));
       return { ok: true };
     }),
+
+  /**
+   * Someone lost the phone with their authenticator app: remove their two-step login so
+   * they can set it up again at their next admin sign-in. Not for your own account.
+   */
+  resetTwoStep: adminQuery.input(z.object({ userId: z.number().int() })).mutation(async ({ ctx, input }) => {
+    if (input.userId === ctx.user.id) {
+      throw new TRPCError({ code: "BAD_REQUEST", message: "Ask another admin to reset your two-step login" });
+    }
+    const target = await getDb().query.users.findFirst({ where: eq(users.id, input.userId) });
+    if (!target || !(STAFF_ROLES as readonly string[]).includes(target.role)) throw new TRPCError({ code: "NOT_FOUND" });
+    const mfa = getSupabaseAdmin().auth.admin.mfa;
+    const { data, error } = await mfa.listFactors({ userId: target.authId });
+    if (error) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: error.message });
+    for (const factor of data.factors) {
+      const { error: deleteError } = await mfa.deleteFactor({ id: factor.id, userId: target.authId });
+      if (deleteError) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: deleteError.message });
+    }
+    return { ok: true, removed: data.factors.length };
+  }),
 
   /** What happened on requests, newest first, and who did it. */
   activity: adminQuery.query(async () => {

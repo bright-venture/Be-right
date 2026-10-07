@@ -54,5 +54,12 @@ export async function authenticateSession(headers: Headers) {
     phone,
     termsVersion,
   });
-  return user ? { user, signInMethods: signInMethods(claims.amr) } : undefined;
+  return user
+    ? {
+        user,
+        signInMethods: signInMethods(claims.amr),
+        // "aal2" once the session passed a second step (authenticator app code).
+        assuranceLevel: typeof claims.aal === "string" ? claims.aal : "aal1",
+      }
+    : undefined;
 }

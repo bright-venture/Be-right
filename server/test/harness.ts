@@ -23,7 +23,11 @@ export type TestDb = Awaited<ReturnType<typeof createTestDb>>;
 /** Each caller gets its own IP unless one is given, so per-IP rate limits don't leak between tests. */
 export async function callerFor(
   user?: User,
-  { ip = randomUUID() as string, signInMethods = ["password"] }: { ip?: string; signInMethods?: string[] } = {},
+  {
+    ip = randomUUID() as string,
+    signInMethods = ["password", "totp"],
+    assuranceLevel = "aal2",
+  }: { ip?: string; signInMethods?: string[]; assuranceLevel?: string } = {},
 ) {
   const { appRouter } = await import("../router");
   return appRouter.createCaller({
@@ -31,6 +35,7 @@ export async function callerFor(
     resHeaders: new Headers(),
     user,
     signInMethods: user ? signInMethods : undefined,
+    assuranceLevel: user ? assuranceLevel : undefined,
   });
 }
 

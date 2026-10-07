@@ -10,7 +10,8 @@ import { ActivityTab, CustomersTab, OverviewTab, TeamTab } from "@/components/ad
 import { useI18n } from "@/i18n";
 import { useAuth } from "@/hooks/useAuth";
 import { AuthPanel } from "@/components/AuthPanel";
-import { ADMIN_PASSWORD_REQUIRED, HOME_BY_ROLE, type Role } from "@contracts/roles";
+import { ADMIN_PASSWORD_REQUIRED, ADMIN_TWO_STEP_REQUIRED, HOME_BY_ROLE, type Role } from "@contracts/roles";
+import { AdminTwoStep } from "@/components/admin/AdminTwoStep";
 import { trpc } from "@/providers/trpc";
 
 const TABS = ["overview", "requests", "customers", "applications", "technicians", "team", "activity"] as const;
@@ -34,15 +35,49 @@ export default function Admin() {
   const role = user?.role as Role | undefined;
   const isAdmin = role === "admin";
   const [tab, setTab] = useState<Tab>("overview");
-  const applications = trpc.join.list.useQuery(undefined, { enabled: isAdmin });
-  // The admin area also checks how this session started (password only): ask the server.
+  const utils = trpc.useUtils();
+  // The server decides whether this session may use the admin area: a password sign-in,
+  // then two-step login (authenticator app). Nothing else loads until it says yes.
   const access = trpc.admin.access.useQuery(undefined, { enabled: isAdmin, retry: false });
+  const allowed = !!access.data;
   const needsPassword = access.error?.message === ADMIN_PASSWORD_REQUIRED;
+  const needsTwoStep = access.error?.message === ADMIN_TWO_STEP_REQUIRED;
+  const applications = trpc.join.list.useQuery(undefined, { enabled: allowed });
 
-  if (isLoading) {
+  if (isLoading || (isAdmin && access.isLoading)) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-paper">
         <Loader2 className="h-8 w-8 animate-spin text-navy" />
+      </div>
+    );
+  }
+
+  if (isAdmin && needsTwoStep) {
+    return (
+      <div className="flex min-h-screen flex-col bg-paper">
+        <Navbar />
+        <main className="flex flex-1 items-center justify-center px-4 py-24">
+          {/* Verified: the session is now a two-step one, so ask again (and reload everything). */}
+          <AdminTwoStep onDone={() => void utils.invalidate()} onSignOut={() => void otherAccount()} />
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (isAdmin && access.error && !needsPassword) {
+    return (
+      <div className="flex min-h-screen flex-col bg-paper">
+        <Navbar />
+        <main className="flex flex-1 flex-col items-center justify-center gap-4 px-4 py-24 text-center">
+          <p role="alert" className="text-sm font-semibold text-destructive">
+            {access.error.message}
+          </p>
+          <button type="button" onClick={() => void access.refetch()} className="btn-pill-outline !min-h-10 text-sm">
+            {p(t.admin.retry)}
+          </button>
+        </main>
+        <Footer />
       </div>
     );
   }
