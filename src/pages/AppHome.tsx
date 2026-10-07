@@ -8,7 +8,7 @@ import {
   Droplets,
   House,
   KeyRound,
-  Plus,
+  LayoutGrid,
   RotateCcw,
   Search,
   ShieldCheck,
@@ -179,7 +179,7 @@ export default function AppHome() {
             </Link>
           </div>
           <div className="mt-2 grid grid-cols-4 gap-x-2 gap-y-4">
-            {SERVICES_IN_ORDER.map((id) => {
+            {SERVICES_IN_ORDER.slice(0, 7).map((id) => {
               const c = CATEGORY_MAP[id];
               if (!c) return null;
               const tint = CATEGORY_TINT[id] ?? { bg: "#ECEFF4", ink: "#0C2B5C" };
@@ -195,12 +195,12 @@ export default function AppHome() {
                 </Link>
               );
             })}
-            {/* the twelfth tile completes the last row: anything not listed */}
-            <Link to="/book" className="flex flex-col items-center gap-1.5 text-center active:scale-95">
+            {/* The eighth tile completes the second row: every service, on the services screen. */}
+            <Link to="/services" className="flex flex-col items-center gap-1.5 text-center active:scale-95">
               <span className="flex h-[60px] w-[60px] items-center justify-center rounded-2xl bg-flame text-white">
-                <Plus className="h-7 w-7" strokeWidth={2.5} />
+                <LayoutGrid className="h-7 w-7" strokeWidth={2.25} />
               </span>
-              <span className="text-[11.5px] font-bold leading-tight text-navy">{p(t.app.somethingElse)}</span>
+              <span className="text-[11.5px] font-bold leading-tight text-navy">{p(t.app.allServices)}</span>
             </Link>
           </div>
         </section>

@@ -239,22 +239,22 @@ export default function Home() {
             <p className="max-w-sm text-[13px] leading-relaxed text-navy/70">{p(t.services.sub)}</p>
           </div>
 
-          {/* All eleven services in one grid; the catch-all tile makes twelve, so every row is full. */}
+          {/* All sixteen services in one grid: four full rows of four (eight of two on phones).
+              The catch-all is a full-width row under it, so no row is left half empty. */}
           <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
               {services.map((c, i) => renderTile(c, i))}
-              {/* Catch-all CTA tile */}
               <Link
                 to="/book"
-                className="service-tile group relative flex h-full min-h-[168px] flex-col items-center justify-center gap-1.5 rounded-[26px] px-2 py-5 text-center text-white transition-all duration-200 hover:-translate-y-1.5 focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-navy active:translate-y-0"
+                className="group col-span-full flex min-h-16 items-center justify-center gap-3 rounded-[26px] px-5 py-4 text-white transition-all duration-200 hover:-translate-y-1 focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-navy active:translate-y-0"
                 style={{
                   background: "#F45309",
                   boxShadow: "0 6px 18px rgb(244 83 9 / 0.18)",
                 }}
               >
-                <span className="text-[13px] font-black leading-tight">{p(t.cta.title)}</span>
-                <span className="inline-flex items-center gap-1 text-[11px] font-bold underline underline-offset-2">
+                <span className="font-display text-base font-black">{p(t.cta.title)}</span>
+                <span className="inline-flex items-center gap-1 text-sm font-bold underline underline-offset-2">
                   {p(t.services.bookThis)}
-                  <ArrowRight className="h-3 w-3 rtl:-scale-x-100" />
+                  <ArrowRight className="h-4 w-4 rtl:-scale-x-100" />
                 </span>
               </Link>
           </div>

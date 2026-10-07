@@ -63,8 +63,8 @@ export const CATEGORIES: ServiceCategory[] = [
     id: "plumbing",
     name: { en: "Plumbing", ar: "سنكري" },
     blurb: {
-      en: "Leaks, blocked drains, faucets, toilets, pumps and heaters.",
-      ar: "تسريب، انسداد مجاري، حنفيات، تواليت، مضخات وسخانات.",
+      en: "Leaks, blocked drains, faucets, toilets, pumps, heaters, water tanks and filters.",
+      ar: "تسريب، انسداد مجاري، حنفيات، تواليت، مضخات، سخانات، خزانات وفلاتر مي.",
     },
     questions: [
       {
@@ -77,6 +77,7 @@ export const CATEGORIES: ServiceCategory[] = [
           { value: "fixture", label: { en: "Faucet / toilet problem", ar: "مشكلة حنفية / تواليت" } },
           { value: "pump", label: { en: "Water pump", ar: "مضخة مي" } },
           { value: "heater", label: { en: "Water heater", ar: "سخان مي" } },
+          { value: "tank_filter", label: { en: "Water tank & filter maintenance", ar: "صيانة خزان وفلتر مي" } },
           { value: "other", label: { en: "Something else", ar: "شي تاني" } },
         ],
       },
@@ -234,7 +235,7 @@ export const CATEGORIES: ServiceCategory[] = [
         kind: "choice",
         label: { en: "What needs work?", ar: "شو بدك تصلّح؟" },
         options: [
-          { value: "door", label: { en: "Door / lock", ar: "باب / قفل" } },
+          { value: "door", label: { en: "Door", ar: "باب" } },
           { value: "cabinet", label: { en: "Cabinet / wardrobe", ar: "خزانة" } },
           { value: "shelves", label: { en: "Shelves", ar: "رفوف" } },
           { value: "furniture", label: { en: "Furniture repair", ar: "تصليح أثاث" } },
@@ -553,6 +554,212 @@ export const CATEGORIES: ServiceCategory[] = [
       },
     ],
   },
+  {
+    id: "waterproofing",
+    name: { en: "Waterproofing", ar: "عزل" },
+    blurb: {
+      en: "Roofs, bathrooms, damp walls, basements and water tanks.",
+      ar: "سطوح، حمامات، رطوبة بالحيطان، أقبية وخزانات.",
+    },
+    questions: [
+      {
+        id: "area",
+        kind: "choice",
+        label: { en: "Where is the problem?", ar: "وين المشكلة؟" },
+        options: [
+          { value: "roof", label: { en: "Roof", ar: "سطح" } },
+          { value: "bathroom", label: { en: "Bathroom", ar: "حمام" } },
+          { value: "walls", label: { en: "Damp walls", ar: "رطوبة بالحيطان" } },
+          { value: "basement", label: { en: "Basement", ar: "قبو" } },
+          { value: "balcony", label: { en: "Balcony", ar: "برندا" } },
+          { value: "tank", label: { en: "Water tank", ar: "خزان مي" } },
+        ],
+      },
+      {
+        id: "state",
+        kind: "choice",
+        label: { en: "What do you see now?", ar: "شو عم تشوف هلّق؟" },
+        options: [
+          { value: "leaking", label: { en: "Water coming in now", ar: "عم تدلف مي هلّق" }, weight: 2 },
+          { value: "damp", label: { en: "Damp or stains", ar: "رطوبة أو بقع" } },
+          { value: "prevent", label: { en: "Prevention before winter", ar: "وقاية قبل الشتي" } },
+        ],
+      },
+      {
+        id: "size",
+        kind: "choice",
+        label: { en: "How big is the area?", ar: "قديه كبيرة المساحة؟" },
+        options: [
+          { value: "small", label: { en: "Under 20 m²", ar: "أقل من ٢٠ م²" } },
+          { value: "medium", label: { en: "20 to 100 m²", ar: "من ٢٠ لـ١٠٠ م²" } },
+          { value: "large", label: { en: "Over 100 m²", ar: "أكتر من ١٠٠ م²" } },
+        ],
+      },
+    ],
+  },
+  {
+    id: "installation",
+    name: { en: "Installation & assembly", ar: "تركيب وتجميع" },
+    blurb: {
+      en: "Furniture assembly, TV mounting, curtains and blinds, shelves and mirrors.",
+      ar: "تجميع أثاث، تعليق تلفزيون، برادي وستائر، رفوف ومرايات.",
+    },
+    questions: [
+      {
+        id: "item",
+        kind: "choice",
+        label: { en: "What needs installing?", ar: "شو بدك تركّب؟" },
+        options: [
+          { value: "furniture", label: { en: "Furniture assembly", ar: "تجميع أثاث" } },
+          { value: "tv", label: { en: "TV mounting", ar: "تعليق تلفزيون" } },
+          { value: "curtains", label: { en: "Curtains and blinds", ar: "برادي وستائر" } },
+          { value: "shelves", label: { en: "Shelves and mirrors", ar: "رفوف ومرايات" } },
+          { value: "other", label: { en: "Something else", ar: "شي تاني" } },
+        ],
+      },
+      {
+        id: "count",
+        kind: "choice",
+        label: { en: "How many items?", ar: "قديه قطعة؟" },
+        options: [
+          { value: "1", label: { en: "1", ar: "١" } },
+          { value: "2-3", label: { en: "2 or 3", ar: "٢ أو ٣" } },
+          { value: "4+", label: { en: "4 or more", ar: "٤ أو أكتر" } },
+        ],
+      },
+      {
+        id: "parts",
+        kind: "choice",
+        label: { en: "Do you have the parts and fixings?", ar: "عندك القطع والبراغي؟" },
+        options: [
+          { value: "yes", label: { en: "Yes, everything", ar: "إيه، كل شي" } },
+          { value: "no", label: { en: "No, bring them", ar: "لا، جيبوها معكم" } },
+          { value: "unknown", label: { en: "Not sure", ar: "مش متأكد" } },
+        ],
+      },
+    ],
+  },
+  {
+    id: "locksmith",
+    name: { en: "Locksmith", ar: "أقفال ومفاتيح" },
+    blurb: {
+      en: "Lockouts, locks and keys for homes, businesses and cars.",
+      ar: "أبواب مسكّرة، أقفال ومفاتيح للبيوت والمحلات والسيارات.",
+    },
+    questions: [
+      {
+        id: "need",
+        kind: "choice",
+        label: { en: "What do you need?", ar: "شو بدك؟" },
+        options: [
+          { value: "home_lockout", label: { en: "Locked out of home or office", ar: "الباب تسكّر وإنت برّا" }, weight: 2 },
+          { value: "car_lockout", label: { en: "Locked out of my car", ar: "السيارة تسكّرت والمفتاح جوّا" }, weight: 2 },
+          { value: "lock_change", label: { en: "Change or repair a lock", ar: "تغيير أو تصليح قفل" } },
+          { value: "key_copy", label: { en: "New key or copy", ar: "مفتاح جديد أو نسخة" } },
+          { value: "car_key", label: { en: "Car key or remote programming", ar: "مفتاح أو ريموت سيارة" } },
+          { value: "safe", label: { en: "Safe", ar: "خزنة" } },
+        ],
+      },
+      {
+        id: "inside",
+        kind: "choice",
+        label: { en: "Is anyone stuck inside?", ar: "في حدا عالق جوّا؟" },
+        hint: {
+          en: "A child or someone vulnerable stuck inside a car or a home is an emergency: call the Civil Defense on 125 first.",
+          ar: "إذا في ولد أو حدا بحاجة مساعدة عالق جوّا سيارة أو بيت، هيدي حالة طوارئ: اتصل بالدفاع المدني على ١٢٥ أول شي.",
+        },
+        options: [
+          { value: "no", label: { en: "No", ar: "لا" } },
+          { value: "yes", label: { en: "Yes", ar: "إيه" }, critical: true },
+        ],
+      },
+    ],
+  },
+  {
+    id: "cameras",
+    name: { en: "Cameras & alarms", ar: "كاميرات وإنذار" },
+    blurb: {
+      en: "Security cameras, alarm systems and intercoms: installation and repair.",
+      ar: "كاميرات مراقبة، أنظمة إنذار وإنترفون: تركيب وتصليح.",
+    },
+    questions: [
+      {
+        id: "system",
+        kind: "choice",
+        label: { en: "Which system?", ar: "أي نظام؟" },
+        options: [
+          { value: "cameras", label: { en: "Security cameras", ar: "كاميرات مراقبة" } },
+          { value: "alarm", label: { en: "Alarm system", ar: "نظام إنذار" } },
+          { value: "intercom", label: { en: "Intercom or video doorbell", ar: "إنترفون أو جرس بكاميرا" } },
+          { value: "other", label: { en: "Something else", ar: "شي تاني" } },
+        ],
+      },
+      {
+        id: "need",
+        kind: "choice",
+        label: { en: "What do you need?", ar: "شو بدك؟" },
+        options: [
+          { value: "install", label: { en: "New installation", ar: "تركيب جديد" } },
+          { value: "repair", label: { en: "Not working, repair", ar: "مش عم يشتغل، تصليح" } },
+          { value: "extend", label: { en: "Add to my system", ar: "زيادة عالنظام" } },
+          { value: "phone", label: { en: "View it on my phone", ar: "شوفه عالتلفون" } },
+        ],
+      },
+      {
+        id: "points",
+        kind: "choice",
+        label: { en: "How many cameras or sensors?", ar: "قديه كاميرا أو حسّاس؟" },
+        options: [
+          { value: "1-4", label: { en: "1 to 4", ar: "من ١ لـ٤" } },
+          { value: "5-8", label: { en: "5 to 8", ar: "من ٥ لـ٨" } },
+          { value: "9+", label: { en: "9 or more", ar: "٩ أو أكتر" } },
+        ],
+      },
+    ],
+  },
+  {
+    id: "pest",
+    name: { en: "Pest control", ar: "مكافحة حشرات" },
+    blurb: {
+      en: "Cockroaches, ants, mice and rats, bed bugs and termites.",
+      ar: "صراصير، نمل، فيران وجرذان، بق وأرضة.",
+    },
+    questions: [
+      {
+        id: "pest",
+        kind: "choice",
+        label: { en: "What is the problem?", ar: "شو المشكلة؟" },
+        options: [
+          { value: "cockroaches", label: { en: "Cockroaches", ar: "صراصير" } },
+          { value: "ants", label: { en: "Ants", ar: "نمل" } },
+          { value: "rodents", label: { en: "Mice or rats", ar: "فيران أو جرذان" }, weight: 1 },
+          { value: "bedbugs", label: { en: "Bed bugs", ar: "بق" }, weight: 1 },
+          { value: "termites", label: { en: "Termites", ar: "أرضة" } },
+          { value: "other", label: { en: "Something else", ar: "شي تاني" } },
+        ],
+      },
+      {
+        id: "place",
+        kind: "choice",
+        label: { en: "Where?", ar: "وين؟" },
+        options: [
+          { value: "home", label: { en: "Home", ar: "بيت" } },
+          { value: "restaurant", label: { en: "Restaurant or kitchen", ar: "مطعم أو مطبخ" } },
+          { value: "business", label: { en: "Office or shop", ar: "مكتب أو محل" } },
+          { value: "building", label: { en: "Whole building", ar: "كل البناية" } },
+        ],
+      },
+      {
+        id: "level",
+        kind: "choice",
+        label: { en: "How often do you see them?", ar: "قديه عم تشوفهم؟" },
+        options: [
+          { value: "sometimes", label: { en: "Now and then", ar: "من وقت لوقت" } },
+          { value: "daily", label: { en: "Every day", ar: "كل يوم" }, weight: 1 },
+        ],
+      },
+    ],
+  },
 ];
 
 export const CATEGORY_MAP: Record<string, ServiceCategory> = Object.fromEntries(
@@ -573,6 +780,11 @@ export const CATEGORY_TINT: Record<string, { bg: string; ink: string }> = {
   security: { bg: "#E6ECF6", ink: "#0C2B5C" },
   landscaping: { bg: "#E9F4E4", ink: "#3F7A2E" },
   appliance: { bg: "#F9EBEF", ink: "#B0405F" },
+  waterproofing: { bg: "#E2EFF6", ink: "#1C6E93" },
+  installation: { bg: "#FCEEE3", ink: "#B4521A" },
+  locksmith: { bg: "#F6F0D9", ink: "#86680F" },
+  cameras: { bg: "#E9EAF3", ink: "#3A4270" },
+  pest: { bg: "#EDF3E0", ink: "#55701F" },
 };
 
 // ---------- the Be Right Guarantee ----------
@@ -629,6 +841,11 @@ export const SERVICES_IN_ORDER = [
   "appliance",
   "carpentry",
   "painting",
+  "waterproofing",
+  "installation",
+  "locksmith",
+  "cameras",
+  "pest",
   "cleaning",
   "landscaping",
   "porter",

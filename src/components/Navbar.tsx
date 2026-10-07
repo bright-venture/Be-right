@@ -228,7 +228,8 @@ function WebNavbar() {
           className="max-h-[calc(100dvh-4rem)] overflow-y-auto overscroll-contain border-t-[1.5px] border-navy/15 bg-paper px-4 py-4 shadow-[0_12px_24px_rgb(12_43_92/0.15)] lg:hidden"
         >
           <div className="flex flex-col gap-1">
-            {area && (
+            {/* Staff already have their area as the main header button. */}
+            {area && !staff && (
               <Link to={area.to} onClick={() => setOpen(false)} className={menuItem}>
                 {area.label}
               </Link>
@@ -253,10 +254,7 @@ function WebNavbar() {
               {p(t.nav.join)}
             </Link>
             {isAuthenticated ? (
-              <button
-                onClick={() => logout()}
-                className="flex min-h-11 items-center rounded-2xl px-4 text-start font-semibold text-navy/80 hover:bg-white"
-              >
+              <button onClick={() => logout()} className={`${menuItem} text-start`}>
                 {p(t.nav.logout)}
               </button>
             ) : (
@@ -269,9 +267,10 @@ function WebNavbar() {
                 </Link>
               </>
             )}
-            {/* Discreet language switch inside the mobile menu */}
+            {/* Discreet language switch inside the mobile menu, under a straight divider */}
+            <span aria-hidden className="mx-4 my-1 h-px bg-navy/10" />
             {langButton(
-              "mt-1 flex min-h-11 items-center gap-2 rounded-2xl border-t-[1.5px] border-navy/10 px-4 pt-3 text-sm font-bold text-navy/70 hover:text-flame",
+              "flex min-h-11 items-center gap-2 rounded-2xl px-4 text-sm font-bold text-navy/70 hover:text-flame",
               () => {
                 switchLang();
                 setOpen(false);
