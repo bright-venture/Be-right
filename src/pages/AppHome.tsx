@@ -1,5 +1,22 @@
 import { Link } from "react-router";
-import { ArrowRight, BadgeCheck, ChevronRight, RotateCcw, Search, ShieldCheck, Siren } from "lucide-react";
+import {
+  ArrowRight,
+  BadgeCheck,
+  ChevronRight,
+  CircleAlert,
+  DoorOpen,
+  Droplets,
+  House,
+  KeyRound,
+  RotateCcw,
+  Search,
+  ShieldCheck,
+  ShowerHead,
+  Siren,
+  Toilet,
+  ZapOff,
+  type LucideIcon,
+} from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { ServiceIcon } from "@/components/ServiceIcon";
@@ -16,6 +33,20 @@ import {
 } from "@contracts/services";
 import { EMERGENCY_PROBLEMS, bookingHref } from "@contracts/picker";
 import { WORKMANSHIP_GUARANTEE_DAYS, arabicDigits } from "@contracts/legal";
+
+/** An icon for each emergency problem on the home screen. */
+const EMERGENCY_ICONS: Record<(typeof EMERGENCY_PROBLEMS)[number], LucideIcon> = {
+  leak: Droplets,
+  "blocked-toilet": Toilet,
+  "locked-out": KeyRound,
+  "broken-door-window": DoorOpen,
+  "no-power": ZapOff,
+  "damaged-roof": House,
+  "no-hot-water": ShowerHead,
+};
+
+const EMERGENCY_TILE =
+  "flex min-h-[52px] items-center gap-2.5 rounded-2xl bg-white px-3 py-2 text-[13px] font-bold leading-tight text-navy active:scale-[0.97]";
 
 const SECTION = "font-display text-lg font-extrabold tracking-tight text-navy";
 
@@ -120,17 +151,21 @@ export default function AppHome() {
               <p className="text-sm text-white/90">{p(t.app.emergencySub)}</p>
             </div>
           </div>
-          {/* Every problem stays inside the card: the buttons wrap onto as many lines as they need. */}
-          <div className="mt-4 flex flex-wrap gap-2">
-            {EMERGENCY_PROBLEMS.map((id) => (
-              <Link
-                key={id}
-                to={bookingHref(id, { emergency: true })}
-                className="flex min-h-10 items-center rounded-full bg-white px-3.5 text-[13px] font-bold text-navy active:scale-95"
-              >
-                {p(t.picker.problems[id])}
-              </Link>
-            ))}
+          {/* Two even columns of equal tiles, plus "Other emergency" to complete the grid. */}
+          <div className="mt-4 grid auto-rows-fr grid-cols-2 gap-2">
+            {EMERGENCY_PROBLEMS.map((id) => {
+              const Icon = EMERGENCY_ICONS[id];
+              return (
+                <Link key={id} to={bookingHref(id, { emergency: true })} className={EMERGENCY_TILE}>
+                  <Icon className="h-5 w-5 shrink-0 text-flame" />
+                  {p(t.picker.problems[id])}
+                </Link>
+              );
+            })}
+            <Link to="/book?priority=1" className={EMERGENCY_TILE}>
+              <CircleAlert className="h-5 w-5 shrink-0 text-flame" />
+              {p(t.app.otherEmergency)}
+            </Link>
           </div>
         </section>
 

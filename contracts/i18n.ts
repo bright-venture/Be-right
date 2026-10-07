@@ -543,6 +543,7 @@ export const t = {
       en: "Priority dispatch for leaks, power cuts and lockouts.",
       ar: "أولوية بالمواعيد للتسريب وانقطاع الكهربا والأبواب المسكّرة.",
     },
+    otherEmergency: { en: "Other emergency", ar: "شي تاني مستعجل" },
     current: { en: "Your current request", ar: "طلبك الحالي" },
     view: { en: "View", ar: "شوف" },
     quoteReady: { en: "Your quote is ready. Review and approve it.", ar: "السعر جاهز. راجعه ووافق عليه." },
