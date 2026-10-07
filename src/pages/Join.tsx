@@ -68,7 +68,7 @@ function Choice<T extends string>({
           role="radio"
           aria-checked={value === o.value}
           onClick={() => onChange(o.value)}
-          className={`min-h-11 rounded-full border-2 px-3 py-2 text-center text-sm font-bold leading-tight transition-colors ${
+          className={`min-h-11 whitespace-nowrap rounded-full border-2 px-2 py-2 text-center text-[13px] font-bold leading-tight transition-colors ${
             value === o.value
               ? "border-navy bg-navy text-paper"
               : "border-navy/30 bg-white text-navy hover:border-navy"
@@ -155,7 +155,7 @@ export default function Join() {
     <div className="flex min-h-screen flex-col bg-paper">
       <Navbar />
       <main className="flex-1 pt-16">
-        <section className="mx-auto max-w-2xl px-4 py-12 sm:px-6 sm:py-16">
+        <section className="mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-16">
           {done ? (
             <div className="card-br p-8 text-center sm:p-12">
               <CheckCircle2 className="mx-auto h-14 w-14 text-flame" />
@@ -244,9 +244,9 @@ export default function Join() {
                     {p(t.join.trade)}
                     <Req />
                   </p>
-                  {/* Every trade in one grid. Rows stay full: an odd last trade spans two cells
-                      (2 columns on phones; on wide screens the 11th of 4 columns takes the last two). */}
-                  <div className="mt-3 grid auto-rows-fr grid-cols-2 gap-2 sm:grid-cols-4 max-sm:[&>*:last-child:nth-child(odd)]:col-span-2 sm:[&>*:last-child:nth-child(4n+3)]:col-span-2">
+                  {/* Every trade as an equal tile, icon above a one-line name: 2 per row on phones,
+                      4 on wide screens. The last row is centred, so nothing stretches or sits alone. */}
+                  <div className="mt-3 flex flex-wrap justify-center gap-2">
                     {SERVICES_IN_ORDER.map((id) => CATEGORY_MAP[id])
                       .filter(Boolean)
                       .map((c) => (
@@ -255,17 +255,20 @@ export default function Join() {
                           type="button"
                           aria-pressed={trade === c.id}
                           onClick={() => setTrade(c.id)}
-                          className={`flex min-h-12 items-center gap-2 rounded-2xl border-2 px-3 py-2 text-start text-sm font-bold leading-tight transition-colors ${
+                          className={`flex min-h-[84px] basis-[calc((100%-0.5rem)/2)] flex-col items-center justify-center gap-2 rounded-2xl border-2 px-1.5 py-3 text-center transition-colors sm:basis-[calc((100%-1.5rem)/4)] ${
                             trade === c.id
                               ? "border-navy bg-navy text-paper"
-                              : "border-navy/30 bg-white text-navy hover:border-navy"
+                              : "border-navy/20 bg-white text-navy hover:border-navy"
                           }`}
                         >
-                          <ServiceIcon
-                            id={c.id}
-                            className={`h-5 w-5 shrink-0 ${trade === c.id ? "text-flame-light" : "text-bird"}`}
-                          />
-                          {p(c.name)}
+                          <span
+                            className={`flex h-9 w-9 items-center justify-center rounded-xl ${
+                              trade === c.id ? "bg-white/15 text-flame-light" : "bg-bird/10 text-bird"
+                            }`}
+                          >
+                            <ServiceIcon id={c.id} className="h-5 w-5" />
+                          </span>
+                          <span className="whitespace-nowrap text-[13px] font-bold leading-none">{p(c.name)}</span>
                         </button>
                       ))}
                   </div>
@@ -308,7 +311,7 @@ export default function Join() {
                   <Choice
                     label={p(t.join.availability)}
                     options={labelled(AVAILABILITY, AVAILABILITY_LABELS)}
-                    columns="grid-cols-3"
+                    columns="grid-cols-1 sm:grid-cols-3"
                     value={availability}
                     onChange={setAvailability}
                   />

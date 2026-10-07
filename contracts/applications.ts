@@ -5,11 +5,11 @@ export const EXPERIENCE_LEVELS = ["lt1", "1-3", "3-5", "5-10", "10+"] as const;
 export type ExperienceLevel = (typeof EXPERIENCE_LEVELS)[number];
 
 export const EXPERIENCE_LABELS: Record<ExperienceLevel, LocalText> = {
-  lt1: { en: "Less than 1 year", ar: "أقل من سنة" },
+  lt1: { en: "Under 1 year", ar: "أقل من سنة" },
   "1-3": { en: "1–3 years", ar: "١–٣ سنين" },
   "3-5": { en: "3–5 years", ar: "٣–٥ سنين" },
   "5-10": { en: "5–10 years", ar: "٥–١٠ سنين" },
-  "10+": { en: "10+ years", ar: "أكتر من ١٠ سنين" },
+  "10+": { en: "10+ years", ar: "+١٠ سنين" },
 };
 
 export const AVAILABILITY = ["full_time", "part_time", "weekends"] as const;
