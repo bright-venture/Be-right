@@ -71,15 +71,17 @@ export default function Home() {
     return () => io.disconnect();
   }, []);
 
-  /* Phones: the sticky booking bar appears once the hero's own buttons scroll away,
-     so it never covers the hero or the category picker. */
-  const ctaRef = useRef<HTMLDivElement>(null);
+  /* Phones: the sticky booking bar appears once the whole hero (category picker included)
+     has scrolled away under the header, so it never covers the hero's own buttons. */
   const [showBar, setShowBar] = useState(false);
   useEffect(() => {
-    const el = ctaRef.current;
-    if (!el || !("IntersectionObserver" in window)) return setShowBar(true);
-    const io = new IntersectionObserver(([entry]) => setShowBar(!entry.isIntersecting && entry.boundingClientRect.top < 0));
-    io.observe(el);
+    const hero = heroRef.current;
+    if (!hero || !("IntersectionObserver" in window)) return setShowBar(true);
+    const io = new IntersectionObserver(
+      ([entry]) => setShowBar(!entry.isIntersecting && entry.boundingClientRect.bottom <= 64),
+      { rootMargin: "-64px 0px 0px 0px" },
+    );
+    io.observe(hero);
     return () => io.disconnect();
   }, []);
 
@@ -120,46 +122,41 @@ export default function Home() {
 
       {/* ============ HERO — editorial poster ============ */}
       <section ref={heroRef} className="home-hero relative overflow-hidden pt-16">
-        <div className="relative mx-auto max-w-6xl px-4 pb-16 pt-10 sm:px-6 sm:pt-14">
+        <div className="hero-inner relative mx-auto max-w-6xl px-4 pb-16 pt-10 sm:px-6 sm:pt-14">
           <div className="grid items-center gap-10 lg:grid-cols-[1.2fr_0.8fr]">
             <div className="relative z-10 min-w-0">
-              {/* Mobile mascot slot — the bird's landing spot on small screens.
-                  Anchored to the screen's far edge so the run truly crosses
-                  the viewport (enters left in EN, right in AR). */}
-              <div className="mb-6 flex items-end justify-end gap-3 sm:hidden">
-                <div className="hero-enter hero-d2 relative mb-10 rounded-2xl border-2 border-navy bg-white px-3.5 py-1.5 shadow-[0_3px_0_rgb(12_43_92/0.3)]">
-                  <span className="whitespace-nowrap font-display text-sm font-black text-navy">
-                    {p(t.footer.tagline)}
-                  </span>
-                  <span
-                    aria-hidden
-                    className="absolute -bottom-[7px] end-2.5 h-3 w-3 rotate-45 border-b-2 border-e-2 border-navy bg-white"
-                  />
-                </div>
-                <HeroBird className="h-28 w-28 shrink-0" onSettled={() => setHeroReady(true)} />
-              </div>
               <span className="tech-label hero-enter text-flame-ink">{p(t.hero.kicker)}</span>
-              <h1
-                className={`mt-6 font-display font-black leading-[1.02] tracking-tight text-navy ${
-                  isAr
-                    ? "text-[36px] sm:text-[48px] lg:text-[60px]"
-                    : "text-[40px] sm:text-[56px] lg:text-[68px]"
-                }`}
-              >
-                <span className="reveal-line">
-                  <span>{p(t.hero.h1a)}</span>
-                </span>
-                <span className="reveal-line">
-                  <span className="stroke-underline">{p(t.hero.h1b)}</span>
-                </span>
-              </h1>
-              <p className="hero-enter hero-d2 mt-4 font-display text-lg font-black uppercase tracking-[0.14em] text-flame-ink sm:text-xl">
-                {p(t.hero.promise)}
-              </p>
-              <p className="hero-enter hero-d3 mt-4 max-w-xl text-[15px] leading-relaxed text-navy/70 sm:text-base">
+              {/* Phones: the bird and its speech bubble sit beside the title and the promise;
+                  the paragraph wraps alongside. Larger screens: the group is invisible to layout. */}
+              <div className="hero-heading-group">
+                <div className="hero-title-bird sm:hidden">
+                  <div className="hero-title-speech hero-enter hero-d2">{p(t.footer.tagline)}</div>
+                  <HeroBird className="w-full" onSettled={() => setHeroReady(true)} />
+                </div>
+                <div className="hero-title-copy">
+                  <h1
+                    className={`mt-6 font-display font-black leading-[1.02] tracking-tight text-navy ${
+                      isAr
+                        ? "text-[36px] sm:text-[48px] lg:text-[60px]"
+                        : "text-[40px] sm:text-[56px] lg:text-[68px]"
+                    }`}
+                  >
+                    <span className="reveal-line">
+                      <span>{p(t.hero.h1a)}</span>
+                    </span>
+                    <span className="reveal-line">
+                      <span className="stroke-underline">{p(t.hero.h1b)}</span>
+                    </span>
+                  </h1>
+                  <p className="hero-promise hero-enter hero-d2 mt-4 font-display text-lg font-black uppercase tracking-[0.14em] text-flame-ink sm:text-xl">
+                    {p(t.hero.promise)}
+                  </p>
+                </div>
+              </div>
+              <p className="hero-description hero-enter hero-d3 mt-4 max-w-xl text-[15px] leading-relaxed text-navy/70 sm:text-base">
                 {p(t.hero.sub)}
               </p>
-              <div ref={ctaRef} className="hero-enter hero-d4 mt-7 grid gap-3 sm:flex sm:flex-wrap sm:items-center">
+              <div className="hero-actions hero-enter hero-d4 mt-7 grid gap-3 sm:flex sm:flex-wrap sm:items-center">
                 <Link to="/book" className="btn-pill-primary justify-center text-base">
                   {p(t.hero.cta)}
                   <ArrowRight className="h-5 w-5 rtl:-scale-x-100" />
@@ -580,7 +577,7 @@ export default function Home() {
       {/* Sticky mobile booking bar */}
       <div
         inert={!showBar}
-        className={`fixed inset-x-0 bottom-0 z-40 border-t-[1.5px] border-navy/15 bg-paper/95 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-md transition-transform duration-300 sm:hidden ${
+        className={`mobile-booking-bar fixed inset-x-0 bottom-0 z-40 border-t-[1.5px] border-navy/15 bg-paper/95 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-md transition-transform duration-300 sm:hidden ${
           showBar ? "translate-y-0" : "translate-y-full"
         }`}
       >

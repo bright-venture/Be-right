@@ -137,7 +137,7 @@ function WebNavbar() {
               {area.label}
             </Link>
           ) : (
-            <Link to="/book" className="btn-pill-primary !min-h-11 whitespace-nowrap !px-5 !py-2">
+            <Link to="/book" className="header-booking btn-pill-primary !min-h-11 whitespace-nowrap !px-5 !py-2">
               {p(t.nav.book)}
             </Link>
           )}
@@ -147,6 +147,7 @@ function WebNavbar() {
             onClick={() => setOpen(!open)}
             aria-label={p(t.nav.menu)}
             aria-expanded={open}
+            aria-controls="mobile-navigation"
           >
             {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
@@ -155,6 +156,7 @@ function WebNavbar() {
 
       {open && (
         <nav
+          id="mobile-navigation"
           className={`max-h-[calc(100dvh-4rem)] overflow-y-auto overscroll-contain border-t-[1.5px] border-navy/15 bg-paper px-4 py-4 shadow-[0_12px_24px_rgb(12_43_92/0.15)] ${isAuthenticated ? "" : "lg:hidden"}`}
         >
           <div className="flex flex-col gap-1">
