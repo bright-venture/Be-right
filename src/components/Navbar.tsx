@@ -188,7 +188,8 @@ function WebNavbar() {
                     {user?.name && user.email && <p className="truncate text-xs text-navy/60">{user.email}</p>}
                   </div>
                   <div className="flex flex-col p-1.5">
-                    {area && (
+                    {/* Staff already have their area as the main button next to this menu. */}
+                    {area && !staff && (
                       <Link to={area.to} onClick={() => setProfileOpen(false)} className={accountItem}>
                         <ClipboardList className="h-4 w-4 text-navy/60" aria-hidden />
                         {area.label}
