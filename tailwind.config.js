@@ -14,11 +14,11 @@ module.exports = {
           DEFAULT: "#0C2B5C",
           deep: "#081E42",
         },
-        // Brand orange (buttons, fills, borders). Small orange text uses flame-ink, which stays readable on white.
+        // Brand orange #F45309 everywhere: buttons, fills, borders and orange text alike.
         flame: {
           DEFAULT: "#F45309",
-          dark: "#A33706",
-          ink: "#A33706", // small orange text on paper/white
+          dark: "#F45309",
+          ink: "#F45309", // orange text, e.g. "Fast. Simple. Sorted." and section labels
           light: "#FF8A50", // orange text on navy
         },
         bird: "#0B63CE",
