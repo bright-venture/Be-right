@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect } from 'react'
 import { Routes, Route, useLocation } from 'react-router'
 import { Loader2 } from 'lucide-react'
 import Home from './pages/Home'
+import { isAppUi } from './lib/native'
 
 const Book = lazy(() => import('./pages/Book'))
 const Requests = lazy(() => import('./pages/Requests'))
@@ -16,6 +17,9 @@ const Guarantee = lazy(() => import('./pages/Guarantee'))
 const Checks = lazy(() => import('./pages/Checks'))
 const Clients = lazy(() => import('./pages/Clients'))
 const NotFound = lazy(() => import('./pages/NotFound'))
+// The phone app opens on its own home screen and has a services list (src/lib/native.ts).
+const AppHome = lazy(() => import('./pages/AppHome'))
+const AppServices = lazy(() => import('./pages/AppServices'))
 
 function PageFallback() {
   return (
@@ -35,7 +39,8 @@ export default function App() {
   return (
     <Suspense fallback={<PageFallback />}>
       <Routes>
-        <Route path="/" element={<Home />} />
+        <Route path="/" element={isAppUi ? <AppHome /> : <Home />} />
+        {isAppUi && <Route path="/services" element={<AppServices />} />}
         <Route path="/book" element={<Book />} />
         <Route path="/requests" element={<Requests />} />
         <Route path="/dashboard" element={<Dashboard />} />

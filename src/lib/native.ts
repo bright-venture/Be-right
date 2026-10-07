@@ -7,6 +7,23 @@ import { Capacitor } from "@capacitor/core";
 
 export const isNativeApp = Capacitor.isNativePlatform();
 
+/**
+ * The app's own screens (tab bar, app home, services list) instead of the website's.
+ * Always on in the phone app. In development, open any page with `?app` to preview
+ * them in the browser (`?app=0` switches back).
+ */
+export const isAppUi = isNativeApp || (import.meta.env.DEV && appPreview());
+
+function appPreview() {
+  try {
+    const flag = new URLSearchParams(window.location.search).get("app");
+    if (flag !== null) sessionStorage.setItem("br-app-ui", flag === "0" ? "0" : "1");
+    return sessionStorage.getItem("br-app-ui") === "1";
+  } catch {
+    return false;
+  }
+}
+
 /** The live website. The app talks to its API and sends email links to it. */
 export const SITE_ORIGIN = "https://be-rightbright.com";
 

@@ -4,8 +4,15 @@ import { Globe, Menu, X } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useI18n } from "@/i18n";
 import { HOME_BY_ROLE, isStaff, type Role } from "@contracts/roles";
+import { isAppUi } from "@/lib/native";
+import { AppTopBar } from "@/components/app/AppChrome";
 
+/** The website header. In the phone app, the app top bar takes its place (src/lib/native.ts). */
 export function Navbar() {
+  return isAppUi ? <AppTopBar /> : <WebNavbar />;
+}
+
+function WebNavbar() {
   const { lang, setLang, t, p } = useI18n();
   const { user, isAuthenticated, logout } = useAuth();
   const [open, setOpen] = useState(false);

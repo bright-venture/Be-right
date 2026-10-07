@@ -67,4 +67,13 @@ export const CATEGORY_PROBLEMS: Record<string, string[]> = {
   landscaping: ["garden-care", "tree-trimming"],
 };
 
-export const ROW_CATS = ["plumbing", "electrical", "ac", "appliance", "carpentry", "painting", "cleaning", "landscaping"];
+/** Booking form link for one problem, pre-filled; emergencies ask for priority dispatch. */
+export function bookingHref(problem: string, { emergency = false } = {}) {
+  const map = PROBLEM_MAP[problem];
+  const params = new URLSearchParams({ cat: map?.cat ?? "plumbing" });
+  if (map && Object.keys(map.answers).length) params.set("ans", JSON.stringify(map.answers));
+  if (emergency) params.set("priority", "1");
+  return `/book?${params.toString()}`;
+}
+
+export const ROW_CATS =["plumbing", "electrical", "ac", "appliance", "carpentry", "painting", "cleaning", "landscaping"];

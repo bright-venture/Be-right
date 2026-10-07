@@ -1,9 +1,16 @@
 import { Link } from "react-router";
 import { useI18n } from "@/i18n";
 import { INTRO_REPLAY_EVENT } from "@/lib/intro";
+import { isAppUi } from "@/lib/native";
+import { AppTabBar } from "@/components/app/AppChrome";
 
 /** `className` sets the bottom padding (default `pb-16`), e.g. extra room above a sticky bar. */
-export function Footer({ className = "pb-16" }: { className?: string }) {
+/** The website footer. In the phone app, the app tab bar takes its place (src/lib/native.ts). */
+export function Footer(props: { className?: string }) {
+  return isAppUi ? <AppTabBar /> : <WebFooter {...props} />;
+}
+
+function WebFooter({ className = "pb-16" }: { className?: string }) {
   const { t, p } = useI18n();
   const linkGroups = [
     [

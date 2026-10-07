@@ -5,8 +5,12 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 const root = path.resolve(import.meta.dirname, "..");
-const appRoutes = [...readFileSync(path.join(root, "src/App.tsx"), "utf8").matchAll(/path="([^"]+)"/g)]
-  .map((m) => m[1])
+// Pages that exist only in the phone app ({isAppUi && <Route …>}) never reach Netlify:
+// the app loads its pages from the phone itself.
+const appRoutes = readFileSync(path.join(root, "src/App.tsx"), "utf8")
+  .split("\n")
+  .filter((line) => !line.includes("isAppUi &&"))
+  .flatMap((line) => [...line.matchAll(/path="([^"]+)"/g)].map((m) => m[1]))
   .filter((r) => r !== "/" && r !== "*");
 const redirects = readFileSync(path.join(root, "netlify.toml"), "utf8")
   .split("[[redirects]]")

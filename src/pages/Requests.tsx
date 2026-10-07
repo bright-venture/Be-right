@@ -141,7 +141,8 @@ export default function Requests() {
   const { t, p, lang } = useI18n();
   const { role, isLoading: authLoading } = useRoleGate(["customer"], { requireSignIn: true });
   const isAuthenticated = role === "customer";
-  const [openId, setOpenId] = useState<number | null>(null);
+  // ?open=12 (from the app home screen) opens that request straight away.
+  const [openId, setOpenId] = useState<number | null>(() => Number(new URLSearchParams(window.location.search).get("open")) || null);
   const [askingCancel, setAskingCancel] = useState<number | null>(null);
   const [cancelReason, setCancelReason] = useState("");
   const utils = trpc.useUtils();
