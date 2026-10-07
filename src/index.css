@@ -181,6 +181,10 @@
   .dotgrid {
     background-image: radial-gradient(rgb(12 43 92 / 0.035) 1px, transparent 1px);
     background-size: 28px 28px;
+    /* Keeps the drifting dot layer (::before, below) inside this element and behind its
+       content, so white cards on top stay clean. */
+    position: relative;
+    isolation: isolate;
   }
   /* Diagonal tape bands */
   .tape-navy {
@@ -302,6 +306,7 @@
   background-image: radial-gradient(rgb(12 43 92 / 0.09) 1.5px, transparent 1.5px);
   background-size: 26px 26px;
   pointer-events: none;
+  z-index: -1;
   animation: hero-drift 26s ease-in-out infinite alternate;
 }
 @keyframes hero-drift {
