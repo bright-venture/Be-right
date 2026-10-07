@@ -64,7 +64,7 @@ function Status({ ok, error }: { ok?: string | null; error?: string | null }) {
   return null;
 }
 
-function Details({ name: initialName, phone: initialPhone }: { name: string; phone: string }) {
+export function Details({ name: initialName, phone: initialPhone }: { name: string; phone: string }) {
   const { t, p } = useI18n();
   const utils = trpc.useUtils();
   const [name, setName] = useState(initialName);
@@ -111,7 +111,7 @@ function Details({ name: initialName, phone: initialPhone }: { name: string; pho
   );
 }
 
-function EmailChange({ current }: { current: string }) {
+export function EmailChange({ current }: { current: string }) {
   const { t, p } = useI18n();
   const [email, setEmail] = useState("");
   const [busy, setBusy] = useState(false);
@@ -153,7 +153,7 @@ function EmailChange({ current }: { current: string }) {
   );
 }
 
-function PasswordChange({ email }: { email: string }) {
+export function PasswordChange({ email }: { email: string }) {
   const { t, p } = useI18n();
   const [current, setCurrent] = useState("");
   const [next, setNext] = useState("");
@@ -206,7 +206,7 @@ function PasswordChange({ email }: { email: string }) {
   );
 }
 
-function DeleteAccount() {
+export function DeleteAccount() {
   const { t, p } = useI18n();
   const [understood, setUnderstood] = useState(false);
   const remove = trpc.auth.deleteAccount.useMutation({

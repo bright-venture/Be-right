@@ -22,6 +22,7 @@ const AppHome = lazy(() => import('./pages/AppHome'))
 const AppServices = lazy(() => import('./pages/AppServices'))
 const AppRequests = lazy(() => import('./pages/AppRequests'))
 const AppRequest = lazy(() => import('./pages/AppRequest'))
+const AppAccount = lazy(() => import('./pages/AppAccount'))
 
 function PageFallback() {
   return (
@@ -54,7 +55,8 @@ export default function App() {
         <Route path="/join" element={<Join />} />
         <Route path="/terms" element={<Legal doc="terms" />} />
         <Route path="/privacy" element={<Legal doc="privacy" />} />
-        <Route path="/account" element={<Account />} />
+        <Route path="/account" element={isAppUi ? <AppAccount /> : <Account />} />
+        {isAppUi && <Route path="/account/:section" element={<AppAccount />} />}
         <Route path="/guarantee" element={<Guarantee />} />
         <Route path="/checks" element={<Checks />} />
         <Route path="/clients" element={<Clients />} />

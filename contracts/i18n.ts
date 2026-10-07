@@ -584,6 +584,13 @@ export const t = {
     address: { en: "Address", ar: "العنوان" },
     cancelledNote: { en: "This request was cancelled.", ar: "هالطلب تلغى." },
     notFound: { en: "We couldn't find this request.", ar: "ما لقينا هالطلب." },
+    // Account screen
+    accountGroup: { en: "Account", ar: "الحساب" },
+    language: { en: "Language", ar: "اللغة" },
+    help: { en: "Help and information", ar: "مساعدة ومعلومات" },
+    roleCustomer: { en: "Customer", ar: "زبون" },
+    roleTechnician: { en: "Technician", ar: "معلّم" },
+    roleSpecialist: { en: "Be Right specialist", ar: "مختص بي رايت" },
   },
   /** The technician's before/after photos of a job, and how customers and specialists see them. */
   jobPhotos: {
