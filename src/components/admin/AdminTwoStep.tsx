@@ -26,9 +26,9 @@ type State =
   | { mode: "failed"; message: string };
 
 /**
- * Two-step login for the admin area (Supabase MFA, TOTP). First time: scan a QR code with
+ * Two-step login for staff areas (Supabase MFA, TOTP). First time: scan a QR code with
  * an authenticator app and confirm a code. After that: the 6-digit code at each sign-in.
- * Either way the session is upgraded (aal2), which the server requires for /admin.
+ * Either way the session is upgraded (aal2), which the server requires for every staff endpoint.
  */
 export function AdminTwoStep({ onDone, onSignOut }: { onDone: () => void; onSignOut: () => void }) {
   const { t, p } = useI18n();
@@ -55,7 +55,7 @@ export function AdminTwoStep({ onDone, onSignOut }: { onDone: () => void; onSign
       }
       const { data: enrolled, error: enrollError } = await supabase.auth.mfa.enroll({
         factorType: "totp",
-        friendlyName: `Be Right admin ${new Date().toISOString().slice(0, 10)}`,
+        friendlyName: `Be Right ${new Date().toISOString().slice(0, 10)}`,
       });
       if (enrollError) return setState({ mode: "failed", message: enrollError.message });
       setState({ mode: "setup", factorId: enrolled.id, qr: qrImage(enrolled.totp.qr_code), secret: enrolled.totp.secret });

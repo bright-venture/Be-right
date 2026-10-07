@@ -16,10 +16,10 @@ export const HOME_BY_ROLE: Record<Role, string> = {
   admin: "/admin",
 };
 
-/** Why the admin area refused a signed-in admin: the session didn't start with a password. */
-export const ADMIN_PASSWORD_REQUIRED = "Sign in with your password to use the admin area.";
-/** …or it hasn't passed the second step (a code from an authenticator app) yet. */
-export const ADMIN_TWO_STEP_REQUIRED = "Enter the code from your authenticator app to use the admin area.";
+/** Why a staff area (dashboard, admin) refused a staff session: it didn't start with a password. */
+export const STAFF_PASSWORD_REQUIRED = "Sign in with your password to use Be Right's staff areas.";
+/** …or it hasn't passed two-step login (a code from an authenticator app) yet. */
+export const STAFF_TWO_STEP_REQUIRED = "Enter the code from your authenticator app to use Be Right's staff areas.";
 
 /** Can run the specialist dashboard (admins can do everything specialists can). */
 export function canDispatch(role: Role | null | undefined) {

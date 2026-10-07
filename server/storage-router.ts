@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { eq, inArray } from "drizzle-orm";
-import { createRouter, authedQuery, customerQuery, publicQuery, technicianQuery } from "./middleware";
+import { createRouter, authedQuery, customerQuery, publicQuery, staffSessionProblem, technicianQuery } from "./middleware";
 import {
   createDocumentUploadUrl,
   createSignedUrls,
@@ -109,7 +109,7 @@ export const storageRouter = createRouter({
           (r) =>
             r.ownerId === ctx.user.id ||
             r.technicianId === ctx.user.id ||
-            canDispatch(ctx.user.role),
+            (canDispatch(ctx.user.role) && !staffSessionProblem(ctx)),
         )
         .map((r) => r.key);
       return { urls: await createSignedUrls(allowed) };

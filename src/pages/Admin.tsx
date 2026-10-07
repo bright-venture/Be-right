@@ -10,8 +10,8 @@ import { ActivityTab, CustomersTab, OverviewTab, TeamTab } from "@/components/ad
 import { useI18n } from "@/i18n";
 import { useAuth } from "@/hooks/useAuth";
 import { AuthPanel } from "@/components/AuthPanel";
-import { ADMIN_PASSWORD_REQUIRED, ADMIN_TWO_STEP_REQUIRED, HOME_BY_ROLE, type Role } from "@contracts/roles";
-import { AdminTwoStep } from "@/components/admin/AdminTwoStep";
+import { HOME_BY_ROLE, type Role } from "@contracts/roles";
+import { StaffGate } from "@/components/admin/StaffGate";
 import { trpc } from "@/providers/trpc";
 
 const TABS = ["overview", "requests", "customers", "applications", "technicians", "team", "activity"] as const;
@@ -35,71 +35,16 @@ export default function Admin() {
   const role = user?.role as Role | undefined;
   const isAdmin = role === "admin";
   const [tab, setTab] = useState<Tab>("overview");
-  const utils = trpc.useUtils();
   // The server decides whether this session may use the admin area: a password sign-in,
   // then two-step login (authenticator app). Nothing else loads until it says yes.
   const access = trpc.admin.access.useQuery(undefined, { enabled: isAdmin, retry: false });
   const allowed = !!access.data;
-  const needsPassword = access.error?.message === ADMIN_PASSWORD_REQUIRED;
-  const needsTwoStep = access.error?.message === ADMIN_TWO_STEP_REQUIRED;
   const applications = trpc.join.list.useQuery(undefined, { enabled: allowed });
 
-  if (isLoading || (isAdmin && access.isLoading)) {
+  if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-paper">
         <Loader2 className="h-8 w-8 animate-spin text-navy" />
-      </div>
-    );
-  }
-
-  if (isAdmin && needsTwoStep) {
-    return (
-      <div className="flex min-h-screen flex-col bg-paper">
-        <Navbar />
-        <main className="flex flex-1 items-center justify-center px-4 py-24">
-          {/* Verified: the session is now a two-step one, so ask again (and reload everything). */}
-          <AdminTwoStep onDone={() => void utils.invalidate()} onSignOut={() => void otherAccount()} />
-        </main>
-        <Footer />
-      </div>
-    );
-  }
-
-  if (isAdmin && access.error && !needsPassword) {
-    return (
-      <div className="flex min-h-screen flex-col bg-paper">
-        <Navbar />
-        <main className="flex flex-1 flex-col items-center justify-center gap-4 px-4 py-24 text-center">
-          <p role="alert" className="text-sm font-semibold text-destructive">
-            {access.error.message}
-          </p>
-          <button type="button" onClick={() => void access.refetch()} className="btn-pill-outline !min-h-10 text-sm">
-            {p(t.admin.retry)}
-          </button>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
-
-  if (isAdmin && needsPassword) {
-    return (
-      <div className="flex min-h-screen flex-col bg-paper">
-        <Navbar />
-        <main className="flex flex-1 items-center justify-center px-4 py-24">
-          <div className="card-br flex w-full max-w-md flex-col gap-4 !rounded-[28px] p-6 sm:p-8">
-            <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-navy text-white">
-              <ShieldCheck className="h-6 w-6" />
-            </span>
-            <h1 className="font-display text-2xl font-black text-navy">{p(t.admin.signInTitle)}</h1>
-            <p className="text-sm leading-relaxed text-navy/70">{p(t.admin.passwordNeeded)}</p>
-            <p className="text-xs leading-relaxed text-navy/60">{p(t.admin.passwordHint)}</p>
-            <button type="button" onClick={() => void otherAccount()} className="btn-pill-primary !min-h-11 justify-center text-sm">
-              {p(t.admin.signInWithPassword)}
-            </button>
-          </div>
-        </main>
-        <Footer />
       </div>
     );
   }
@@ -145,45 +90,47 @@ export default function Admin() {
   const newApplications = (applications.data ?? []).filter((a) => a.status === "new").length;
 
   return (
-    <div className="flex min-h-screen flex-col bg-paper">
-      <Navbar />
-      <main className="mx-auto w-full max-w-7xl flex-1 px-4 pb-20 pt-24 sm:px-6">
-        <h1 className="font-display text-3xl font-black text-navy sm:text-4xl">{p(t.admin.title)}</h1>
-        <p className="mt-1 text-sm text-navy/60">{p(t.admin.sub)}</p>
+    <StaffGate access={access} onSignOut={() => void otherAccount()}>
+      <div className="flex min-h-screen flex-col bg-paper">
+        <Navbar />
+        <main className="mx-auto w-full max-w-7xl flex-1 px-4 pb-20 pt-24 sm:px-6">
+          <h1 className="font-display text-3xl font-black text-navy sm:text-4xl">{p(t.admin.title)}</h1>
+          <p className="mt-1 text-sm text-navy/60">{p(t.admin.sub)}</p>
 
-        {/* tabs: one row that scrolls sideways on phones */}
-        <div className="-mx-4 mt-6 overflow-x-auto px-4 [scrollbar-width:none] sm:mx-0 sm:px-0">
-          <div role="tablist" className="inline-flex gap-1 rounded-3xl border-2 border-navy bg-white p-1">
-            {TABS.map((k) => (
-              <button
-                key={k}
-                role="tab"
-                aria-selected={tab === k}
-                onClick={() => setTab(k)}
-                className={`inline-flex min-h-10 shrink-0 items-center gap-2 whitespace-nowrap rounded-full px-4 text-sm font-bold transition-colors ${
-                  tab === k ? "bg-navy text-paper" : "text-navy/70 hover:text-navy"
-                }`}
-              >
-                {p(t.admin.tabs[k])}
-                {k === "applications" && newApplications > 0 && (
-                  <span className={`rounded-full px-2 py-px text-[11px] font-black ${tab === k ? "bg-paper text-navy" : "bg-flame text-white"}`}>
-                    {newApplications}
-                  </span>
-                )}
-              </button>
-            ))}
+          {/* tabs: one row that scrolls sideways on phones */}
+          <div className="-mx-4 mt-6 overflow-x-auto px-4 [scrollbar-width:none] sm:mx-0 sm:px-0">
+            <div role="tablist" className="inline-flex gap-1 rounded-3xl border-2 border-navy bg-white p-1">
+              {TABS.map((k) => (
+                <button
+                  key={k}
+                  role="tab"
+                  aria-selected={tab === k}
+                  onClick={() => setTab(k)}
+                  className={`inline-flex min-h-10 shrink-0 items-center gap-2 whitespace-nowrap rounded-full px-4 text-sm font-bold transition-colors ${
+                    tab === k ? "bg-navy text-paper" : "text-navy/70 hover:text-navy"
+                  }`}
+                >
+                  {p(t.admin.tabs[k])}
+                  {k === "applications" && newApplications > 0 && (
+                    <span className={`rounded-full px-2 py-px text-[11px] font-black ${tab === k ? "bg-paper text-navy" : "bg-flame text-white"}`}>
+                      {newApplications}
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
 
-        {tab === "overview" && <OverviewTab />}
-        {tab === "requests" && <QueueTab onGoToApplications={() => setTab("applications")} />}
-        {tab === "customers" && <CustomersTab />}
-        {tab === "applications" && <ApplicationsTab />}
-        {tab === "technicians" && <TechniciansTab onGoToApplications={() => setTab("applications")} />}
-        {tab === "team" && <TeamTab />}
-        {tab === "activity" && <ActivityTab />}
-      </main>
-      <Footer />
-    </div>
+          {tab === "overview" && <OverviewTab />}
+          {tab === "requests" && <QueueTab onGoToApplications={() => setTab("applications")} />}
+          {tab === "customers" && <CustomersTab />}
+          {tab === "applications" && <ApplicationsTab />}
+          {tab === "technicians" && <TechniciansTab onGoToApplications={() => setTab("applications")} />}
+          {tab === "team" && <TeamTab />}
+          {tab === "activity" && <ActivityTab />}
+        </main>
+        <Footer />
+      </div>
+    </StaffGate>
   );
 }

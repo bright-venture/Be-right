@@ -653,14 +653,15 @@ export const t = {
     },
     goToMine: { en: "Go to my area", ar: "روح على قسمي" },
     passwordNeeded: {
-      en: "For security, the admin area needs a sign-in with your password. You're signed in with an email code or Google.",
-      ar: "للأمان، قسم الإدارة بدّو دخول بكلمة السر. إنت داخل بكود عالإيميل أو بغوغل.",
+      en: "For security, staff areas need a sign-in with your password. You're signed in with an email code or Google.",
+      ar: "للأمان، أقسام الفريق بدّها دخول بكلمة السر. إنت داخل بكود عالإيميل أو بغوغل.",
     },
     passwordHint: {
       en: "No password yet? On the sign-in screen, use \"Forgot password?\" to set one by email.",
       ar: "ما عندك كلمة سر؟ بشاشة الدخول، اضغط «نسيت كلمة السر؟» لتعمل وحدة بالإيميل.",
     },
     signInWithPassword: { en: "Sign in with password", ar: "ادخل بكلمة السر" },
+    passwordTitle: { en: "Password needed", ar: "لازم كلمة السر" },
     otherAccount: { en: "Switch account", ar: "بدّل الحساب" },
     tabs: {
       overview: { en: "Overview", ar: "نظرة عامة" },
@@ -734,8 +735,8 @@ export const t = {
     // two-step login (authenticator app)
     twoStepTitle: { en: "Two-step login", ar: "الدخول بخطوتين" },
     twoStepSetupSub: {
-      en: "Protect the admin area with a code from an app on your phone. You set this up once.",
-      ar: "احمي قسم الإدارة بكود من تطبيق على تلفونك. بتعملها مرة وحدة بس.",
+      en: "Staff areas are protected with a code from an app on your phone. You set this up once.",
+      ar: "أقسام الفريق محمية بكود من تطبيق على تلفونك. بتعملها مرة وحدة بس.",
     },
     twoStepInstall: {
       en: "Install an authenticator app, such as Google Authenticator or Microsoft Authenticator.",
@@ -755,15 +756,15 @@ export const t = {
       ar: "هالكود ما زبط. الكود بيتغيّر كل ٣٠ ثانية، فجرّب الحالي.",
     },
     twoStepLost: {
-      en: "Lost your phone? Another admin can reset your two-step login in Admin, Team.",
-      ar: "ضيّعت تلفونك؟ إدارة تانية فيها تعيد ضبط الدخول بخطوتين من الإدارة، الفريق.",
+      en: "Lost your phone? An admin can reset your two-step login in Admin, Team.",
+      ar: "ضيّعت تلفونك؟ الإدارة فيها تعيد ضبط الدخول بخطوتين من الإدارة، الفريق.",
     },
     twoStepOn: { en: "Two-step on", ar: "الخطوتين مفعّلة" },
     twoStepOff: { en: "Two-step off", ar: "الخطوتين مش مفعّلة" },
     twoStepReset: { en: "Reset two-step", ar: "إعادة ضبط الخطوتين" },
     twoStepResetAsk: {
-      en: "Reset two-step login for {name}? They'll set it up again at their next admin sign-in.",
-      ar: "بدك تعيد ضبط الدخول بخطوتين لـ{name}؟ رح يرجع يعملها بأول دخول عالإدارة.",
+      en: "Reset two-step login for {name}? They'll set it up again at their next sign-in.",
+      ar: "بدك تعيد ضبط الدخول بخطوتين لـ{name}؟ رح يرجع يعملها بأول دخول إلو.",
     },
     twoStepResetDone: { en: "Two-step login reset for {name}.", ar: "انعاد ضبط الدخول بخطوتين لـ{name}." },
   },

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq, ne } from "drizzle-orm";
 import { createRouter, publicQuery, specialistQuery } from "./middleware";
 import { getDb } from "./queries/connection";
 import { serviceRequests, technicianApplications, users } from "../db/schema";
@@ -123,11 +123,23 @@ export const joinRouter = createRouter({
       }),
     )
     .mutation(async ({ input }) => {
-      await getDb()
+      const db = getDb();
+      const app = await db.query.technicianApplications.findFirst({ where: eq(technicianApplications.id, input.id) });
+      if (!app) throw new TRPCError({ code: "NOT_FOUND" });
+      // A hired technician's application stays hired: "rejected" would start the deletion of
+      // the documents of someone who's working (and "Hire" would show again).
+      if (app.status === "hired") {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "This technician is hired. To stop working with them, remove them in Technicians.",
+        });
+      }
+      await db
         .update(technicianApplications)
         // Rejection starts the document-retention clock; un-rejecting stops it.
         .set({ status: input.status, rejectedAt: input.status === "rejected" ? new Date() : null })
-        .where(eq(technicianApplications.id, input.id));
+        // Checked again here, in case it was hired in the meantime.
+        .where(and(eq(technicianApplications.id, input.id), ne(technicianApplications.status, "hired")));
       return { ok: true };
     }),
 

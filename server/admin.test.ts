@@ -2,8 +2,8 @@
 // nobody else gets in.
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import type { User } from "@db/schema";
-import { ADMIN_PASSWORD_REQUIRED, ADMIN_TWO_STEP_REQUIRED } from "@contracts/roles";
-import { BEIRUT_PIN, callerFor, futureDate, makeSpecialist, makeTechnician, makeUser } from "./test/harness";
+import { STAFF_PASSWORD_REQUIRED, STAFF_TWO_STEP_REQUIRED } from "@contracts/roles";
+import { BEIRUT_PIN, callerFor, documentKeys, futureDate, makeSpecialist, makeTechnician, makeUser } from "./test/harness";
 
 const state = vi.hoisted(() => ({
   db: undefined as unknown,
@@ -91,7 +91,7 @@ describe("admin area", () => {
     for (const methods of [["otp"], ["oauth"], ["recovery"], []]) {
       await expect(
         (await callerFor(owner, { signInMethods: methods })).admin.overview(),
-      ).rejects.toMatchObject({ code: "FORBIDDEN", message: ADMIN_PASSWORD_REQUIRED });
+      ).rejects.toMatchObject({ code: "FORBIDDEN", message: STAFF_PASSWORD_REQUIRED });
     }
     await expect((await callerFor(owner, { signInMethods: ["password", "totp"] })).admin.overview()).resolves.toBeDefined();
   });
@@ -99,7 +99,7 @@ describe("admin area", () => {
   it("needs two-step login on top of the password", async () => {
     await expect(
       (await callerFor(owner, { signInMethods: ["password"], assuranceLevel: "aal1" })).admin.overview(),
-    ).rejects.toMatchObject({ code: "FORBIDDEN", message: ADMIN_TWO_STEP_REQUIRED });
+    ).rejects.toMatchObject({ code: "FORBIDDEN", message: STAFF_TWO_STEP_REQUIRED });
     await expect(
       (await callerFor(owner, { signInMethods: ["password", "totp"], assuranceLevel: "aal2" })).admin.overview(),
     ).resolves.toBeDefined();
@@ -112,6 +112,50 @@ describe("admin area", () => {
     expect(state.deletedFactors).toEqual([{ id: "factor-1", userId: desk.authId }]);
     // Shown in the team list.
     expect((await o.admin.team()).find((m) => m.id === desk.id)).toHaveProperty("twoStep", true);
+  });
+
+  it("protects every staff endpoint the same way, for specialists and admins", async () => {
+    const weak = [
+      { signInMethods: ["otp"], assuranceLevel: "aal1" }, // emailed code
+      { signInMethods: ["oauth"], assuranceLevel: "aal1" }, // Google
+      { signInMethods: ["password"], assuranceLevel: "aal1" }, // no two-step yet
+    ];
+    for (const user of [desk, owner]) {
+      for (const session of weak) {
+        const c = await callerFor(user, session);
+        await expect(c.specialist.queue()).rejects.toMatchObject({ code: "FORBIDDEN" });
+        await expect(c.specialist.access()).rejects.toMatchObject({ code: "FORBIDDEN" });
+        await expect(c.join.list()).rejects.toMatchObject({ code: "FORBIDDEN" });
+        await expect(c.join.documents({ id: 1 })).rejects.toMatchObject({ code: "FORBIDDEN" });
+        await expect(c.tech.list()).rejects.toMatchObject({ code: "FORBIDDEN" });
+      }
+      // Password plus two-step: allowed.
+      await expect((await callerFor(user)).specialist.access()).resolves.toEqual({ ok: true });
+    }
+  });
+
+  it("keeps a hired technician's application hired", async () => {
+    const o = await callerFor(owner);
+    const { id } = await (await callerFor()).join.submit({
+      name: "Rawad",
+      phone: "+961 70 999 000",
+      email: "rawad@example.com",
+      trade: "plumbing",
+      area: "Zahle",
+      experience: "3-5",
+      availability: "full_time",
+      hasTools: true,
+      transport: "car",
+      notes: "Ten years with residential plumbing",
+      ...documentKeys(),
+      consent: true,
+    });
+    await makeUser("rawad@example.com", "Rawad");
+    await o.join.hire({ id });
+    for (const status of ["rejected", "contacted", "new"] as const) {
+      await expect(o.join.setStatus({ id, status })).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    }
+    expect((await o.join.list()).find((a) => a.id === id)).toMatchObject({ status: "hired", rejectedAt: null });
   });
 
   it("lets admins do everything specialists do", async () => {

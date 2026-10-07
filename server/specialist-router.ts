@@ -24,6 +24,9 @@ const CLOSED: readonly RequestStatus[] = ["completed", "cancelled"];
 const URGENCY_RANK: Record<UrgencyLevel, number> = { critical: 0, urgent: 1, priority: 2, normal: 3 };
 
 export const specialistRouter = createRouter({
+  /** Can this session use the staff dashboard? (Refused without a password and two-step login.) */
+  access: specialistQuery.query(() => ({ ok: true })),
+
   queue: specialistQuery.query(async () => {
     const rows = await getDb()
       .select({
