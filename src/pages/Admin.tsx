@@ -10,7 +10,7 @@ import { ActivityTab, CustomersTab, OverviewTab, TeamTab } from "@/components/ad
 import { useI18n } from "@/i18n";
 import { useAuth } from "@/hooks/useAuth";
 import { AuthPanel } from "@/components/AuthPanel";
-import { HOME_BY_ROLE, type Role } from "@contracts/roles";
+import { ADMIN_PASSWORD_REQUIRED, HOME_BY_ROLE, type Role } from "@contracts/roles";
 import { trpc } from "@/providers/trpc";
 
 const TABS = ["overview", "requests", "customers", "applications", "technicians", "team", "activity"] as const;
@@ -35,11 +35,36 @@ export default function Admin() {
   const isAdmin = role === "admin";
   const [tab, setTab] = useState<Tab>("overview");
   const applications = trpc.join.list.useQuery(undefined, { enabled: isAdmin });
+  // The admin area also checks how this session started (password only): ask the server.
+  const access = trpc.admin.access.useQuery(undefined, { enabled: isAdmin, retry: false });
+  const needsPassword = access.error?.message === ADMIN_PASSWORD_REQUIRED;
 
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-paper">
         <Loader2 className="h-8 w-8 animate-spin text-navy" />
+      </div>
+    );
+  }
+
+  if (isAdmin && needsPassword) {
+    return (
+      <div className="flex min-h-screen flex-col bg-paper">
+        <Navbar />
+        <main className="flex flex-1 items-center justify-center px-4 py-24">
+          <div className="card-br flex w-full max-w-md flex-col gap-4 !rounded-[28px] p-6 sm:p-8">
+            <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-navy text-white">
+              <ShieldCheck className="h-6 w-6" />
+            </span>
+            <h1 className="font-display text-2xl font-black text-navy">{p(t.admin.signInTitle)}</h1>
+            <p className="text-sm leading-relaxed text-navy/70">{p(t.admin.passwordNeeded)}</p>
+            <p className="text-xs leading-relaxed text-navy/60">{p(t.admin.passwordHint)}</p>
+            <button type="button" onClick={() => void otherAccount()} className="btn-pill-primary !min-h-11 justify-center text-sm">
+              {p(t.admin.signInWithPassword)}
+            </button>
+          </div>
+        </main>
+        <Footer />
       </div>
     );
   }

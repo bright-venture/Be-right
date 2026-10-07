@@ -345,9 +345,12 @@ export function AuthPanel({
               {p(t.auth.resend)}
             </button>
           )}
-          <button type="button" onClick={() => go("code")} className={`${LINK} block w-full`}>
-            {p(t.auth.useCode)}
-          </button>
+          {/* Staff (admin) sign-in is password only: the admin area refuses code sign-ins. */}
+          {!staff && (
+            <button type="button" onClick={() => go("code")} className={`${LINK} block w-full`}>
+              {p(t.auth.useCode)}
+            </button>
+          )}
         </form>
       )}
 
@@ -411,7 +414,7 @@ export function AuthPanel({
         </form>
       )}
 
-      {GOOGLE_ENABLED && (view === "signin" || view === "signup") && (
+      {GOOGLE_ENABLED && !staff && (view === "signin" || view === "signup") && (
         <button type="button" onClick={onGoogle} disabled={busy} className="btn-pill-outline mt-3 w-full text-base">
           {p(t.auth.google)}
         </button>

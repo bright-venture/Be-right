@@ -2,7 +2,7 @@ import { ErrorMessages } from "@contracts/constants";
 import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import type { TrpcContext } from "./context";
-import type { Role } from "@contracts/roles";
+import { ADMIN_PASSWORD_REQUIRED, type Role } from "@contracts/roles";
 
 /**
  * Stack traces only on a developer's machine. Opt-in rather than "not production":
@@ -62,5 +62,15 @@ export const customerQuery = authedQuery.use(requireRole("customer"));
 export const technicianQuery = authedQuery.use(requireRole("technician"));
 /** Specialists: office staff running the dashboard. Admins can do all of it too. */
 export const specialistQuery = authedQuery.use(requireRole("specialist", "admin"));
-/** Admins: the admin area (customers, team, activity, figures). */
-export const adminQuery = authedQuery.use(requireRole("admin"));
+/**
+ * Admins: the admin area (customers, team, activity, figures). The session must have
+ * started with a password: an emailed code or a Google sign-in isn't enough here.
+ */
+export const adminQuery = authedQuery.use(requireRole("admin")).use(
+  t.middleware(({ ctx, next }) => {
+    if (!ctx.signInMethods?.includes("password")) {
+      throw new TRPCError({ code: "FORBIDDEN", message: ADMIN_PASSWORD_REQUIRED });
+    }
+    return next();
+  }),
+);

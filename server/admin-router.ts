@@ -29,6 +29,9 @@ function staffInviteRedirect(req: Request) {
  * Admins also have every specialist action (dashboard, applications, technicians).
  */
 export const adminRouter = createRouter({
+  /** Can this session use the admin area? (Refused unless an admin signed in with a password.) */
+  access: adminQuery.query(() => ({ ok: true })),
+
   /** The numbers at a glance. */
   overview: adminQuery.query(async () => {
     const db = getDb();

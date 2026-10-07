@@ -652,6 +652,15 @@ export const t = {
       ar: "هالقسم لإدارة بي رايت. إنت داخل بـ{email}.",
     },
     goToMine: { en: "Go to my area", ar: "روح على قسمي" },
+    passwordNeeded: {
+      en: "For security, the admin area needs a sign-in with your password. You're signed in with an email code or Google.",
+      ar: "للأمان، قسم الإدارة بدّو دخول بكلمة السر. إنت داخل بكود عالإيميل أو بغوغل.",
+    },
+    passwordHint: {
+      en: "No password yet? On the sign-in screen, use \"Forgot password?\" to set one by email.",
+      ar: "ما عندك كلمة سر؟ بشاشة الدخول، اضغط «نسيت كلمة السر؟» لتعمل وحدة بالإيميل.",
+    },
+    signInWithPassword: { en: "Sign in with password", ar: "ادخل بكلمة السر" },
     otherAccount: { en: "Switch account", ar: "بدّل الحساب" },
     tabs: {
       overview: { en: "Overview", ar: "نظرة عامة" },
@@ -721,6 +730,7 @@ export const t = {
     automatic: { en: "Automatic", ar: "تلقائي" },
     noActivity: { en: "No activity yet.", ar: "ما في نشاط بعد." },
     request: { en: "Request #{id}", ar: "الطلب #{id}" },
+    retry: { en: "Try again", ar: "جرّب مرة تانية" },
   },
   /** The visit fee, as specialists and technicians handle it. */
   visitFee: {

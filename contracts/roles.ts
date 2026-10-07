@@ -16,6 +16,9 @@ export const HOME_BY_ROLE: Record<Role, string> = {
   admin: "/admin",
 };
 
+/** Why the admin area refused a signed-in admin: the session didn't start with a password. */
+export const ADMIN_PASSWORD_REQUIRED = "Sign in with your password to use the admin area.";
+
 /** Can run the specialist dashboard (admins can do everything specialists can). */
 export function canDispatch(role: Role | null | undefined) {
   return role === "specialist" || role === "admin";

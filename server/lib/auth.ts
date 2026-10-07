@@ -7,12 +7,25 @@ function bearerToken(headers: Headers): string | null {
   return match ? match[1] : null;
 }
 
+/** How the session was started, from the token's `amr` claim: "password", "otp", "oauth", "recovery"... */
+function signInMethods(amr: unknown): string[] {
+  if (!Array.isArray(amr)) return [];
+  return amr
+    .map((entry) => (typeof entry === "string" ? entry : (entry as { method?: unknown })?.method))
+    .filter((m): m is string => typeof m === "string");
+}
+
 /**
  * Verifies the Supabase access token sent by the browser and returns the
  * matching app user (created on first sign-in). Returns undefined when the
  * request is anonymous or the token is invalid.
  */
 export async function authenticateRequest(headers: Headers) {
+  return (await authenticateSession(headers))?.user;
+}
+
+/** Like authenticateRequest, plus how this session was started. */
+export async function authenticateSession(headers: Headers) {
   const token = bearerToken(headers);
   if (!token) return undefined;
 
@@ -34,13 +47,12 @@ export async function authenticateRequest(headers: Headers) {
   // Recorded by the sign-up form when the "I agree" box is ticked.
   const termsVersion = text(meta.terms_version)?.slice(0, 32) ?? null;
 
-  return (
-    (await findOrCreateUser({
+  const user = await findOrCreateUser({
     authId: claims.sub,
     email: typeof claims.email === "string" && claims.email ? claims.email : null,
     name,
     phone,
     termsVersion,
-    })) ?? undefined
-  );
+  });
+  return user ? { user, signInMethods: signInMethods(claims.amr) } : undefined;
 }

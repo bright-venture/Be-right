@@ -47,9 +47,15 @@ export default function ResetPassword() {
     if (password.length < MIN_PASSWORD) return setError(p(t.auth.errWeak));
     setBusy(true);
     setError(null);
-    const { error } = await supabase.auth.updateUser({ password });
+    const { data, error } = await supabase.auth.updateUser({ password });
+    if (error) {
+      setBusy(false);
+      return setError(error.code === "weak_password" ? p(t.auth.errWeak) : error.message);
+    }
+    // Sign in again with the new password, so this session counts as a password sign-in
+    // (the admin area requires one; a reset link alone isn't enough).
+    if (data.user?.email) await supabase.auth.signInWithPassword({ email: data.user.email, password });
     setBusy(false);
-    if (error) return setError(error.code === "weak_password" ? p(t.auth.errWeak) : error.message);
     setDone(true);
     window.setTimeout(() => navigate(next, { replace: true }), 1500);
   }

@@ -2,6 +2,7 @@
 // nobody else gets in.
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import type { User } from "@db/schema";
+import { ADMIN_PASSWORD_REQUIRED } from "@contracts/roles";
 import { BEIRUT_PIN, callerFor, futureDate, makeSpecialist, makeTechnician, makeUser } from "./test/harness";
 
 const state = vi.hoisted(() => ({ db: undefined as unknown, invites: [] as string[] }));
@@ -72,6 +73,15 @@ describe("admin area", () => {
       await expect((await callerFor(user)).admin.overview()).rejects.toMatchObject({ code: "FORBIDDEN" });
     }
     await expect((await callerFor()).admin.customers()).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+  });
+
+  it("needs a password sign-in: an emailed code or Google isn't enough", async () => {
+    for (const methods of [["otp"], ["oauth"], ["recovery"], []]) {
+      await expect(
+        (await callerFor(owner, { signInMethods: methods })).admin.overview(),
+      ).rejects.toMatchObject({ code: "FORBIDDEN", message: ADMIN_PASSWORD_REQUIRED });
+    }
+    await expect((await callerFor(owner, { signInMethods: ["password"] })).admin.overview()).resolves.toBeDefined();
   });
 
   it("lets admins do everything specialists do", async () => {

@@ -10,7 +10,23 @@ import { CATEGORY_MAP, STATUS_ORDER, type RequestStatus } from "@contracts/servi
 const CARD = "rounded-3xl border border-navy/10 bg-white p-5";
 const H2 = "font-display text-lg font-extrabold text-navy";
 
-function Loading() {
+/** Still loading, or it failed: then say why and offer to try again (never an endless spinner). */
+function Pending({ error, retry }: { error?: { message: string } | null; retry?: () => void }) {
+  const { t, p } = useI18n();
+  if (error) {
+    return (
+      <div role="alert" className="mt-8 flex flex-col items-center gap-3 rounded-3xl border border-destructive/30 bg-white p-6 text-center">
+        <p className="text-sm font-semibold text-destructive">
+          {/fetch|network/i.test(error.message) ? p(t.misc.offline) : error.message}
+        </p>
+        {retry && (
+          <button type="button" onClick={retry} className="btn-pill-outline !min-h-10 !px-5 text-sm">
+            {p(t.admin.retry)}
+          </button>
+        )}
+      </div>
+    );
+  }
   return (
     <div className="flex justify-center py-16">
       <Loader2 className="h-7 w-7 animate-spin text-navy" />
@@ -62,8 +78,8 @@ const money = (n: number) => `$${n.toLocaleString("en-US", { maximumFractionDigi
 /** Figures at a glance: requests, money, people, demand. */
 export function OverviewTab() {
   const { t, p } = useI18n();
-  const { data } = trpc.admin.overview.useQuery(undefined, { refetchInterval: 60_000 });
-  if (!data) return <Loading />;
+  const { data, error, refetch } = trpc.admin.overview.useQuery(undefined, { refetchInterval: 60_000 });
+  if (!data) return <Pending error={error} retry={() => void refetch()} />;
 
   const by = data.requests.byStatus;
   const open = STATUS_ORDER.filter((s) => s !== "completed").reduce((sum, s) => sum + (by[s] ?? 0), 0);
@@ -149,7 +165,7 @@ export function OverviewTab() {
 /** Every customer account: search, and open one to see their requests. */
 export function CustomersTab() {
   const { t, p, lang } = useI18n();
-  const { data } = trpc.admin.customers.useQuery();
+  const { data, error, refetch } = trpc.admin.customers.useQuery();
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState<number | null>(null);
   const day = (d: Date | string | null) =>
@@ -161,7 +177,7 @@ export function CustomersTab() {
     return (data ?? []).filter((c) => [c.name, c.email, c.phone].some((v) => v?.toLowerCase().includes(q)));
   }, [data, query]);
 
-  if (!data) return <Loading />;
+  if (!data) return <Pending error={error} retry={() => void refetch()} />;
   return (
     <div className="mt-8">
       <div className="flex flex-wrap items-center gap-3">
@@ -265,7 +281,7 @@ function CustomerRequests({ id, email, phone, lastSignIn }: { id: number; email:
 export function TeamTab() {
   const { t, p, lang } = useI18n();
   const utils = trpc.useUtils();
-  const { data } = trpc.admin.team.useQuery();
+  const { data, error, refetch } = trpc.admin.team.useQuery();
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<"specialist" | "admin">("specialist");
   const [notice, setNotice] = useState<string | null>(null);
@@ -326,7 +342,7 @@ export function TeamTab() {
 
       <section>
         {!data ? (
-          <Loading />
+          <Pending error={error} retry={() => void refetch()} />
         ) : (
           <ul className="flex flex-col gap-2">
             {data.map((m) => {
@@ -394,8 +410,8 @@ export function TeamTab() {
 /** What happened on requests, newest first, and who did it. */
 export function ActivityTab() {
   const { t, p, lang } = useI18n();
-  const { data } = trpc.admin.activity.useQuery(undefined, { refetchInterval: 60_000 });
-  if (!data) return <Loading />;
+  const { data, error, refetch } = trpc.admin.activity.useQuery(undefined, { refetchInterval: 60_000 });
+  if (!data) return <Pending error={error} retry={() => void refetch()} />;
   if (data.length === 0) return <p className="mt-8 text-sm text-navy/60">{p(t.admin.noActivity)}</p>;
 
   const labels = { ...t.status, ...t.events } as Record<string, { en: string; ar: string }>;
