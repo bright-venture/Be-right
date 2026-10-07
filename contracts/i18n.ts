@@ -645,6 +645,14 @@ export const t = {
   admin: {
     title: { en: "Admin", ar: "الإدارة" },
     sub: { en: "Everything at Be Right in one place.", ar: "كل شي ببي رايت بمحل واحد." },
+    signInTitle: { en: "Admin sign-in", ar: "دخول الإدارة" },
+    signInSub: { en: "For Be Right admins only.", ar: "لإدارة بي رايت بس." },
+    notAdmin: {
+      en: "This area is for Be Right admins. You're signed in as {email}.",
+      ar: "هالقسم لإدارة بي رايت. إنت داخل بـ{email}.",
+    },
+    goToMine: { en: "Go to my area", ar: "روح على قسمي" },
+    otherAccount: { en: "Switch account", ar: "بدّل الحساب" },
     tabs: {
       overview: { en: "Overview", ar: "نظرة عامة" },
       requests: { en: "Requests", ar: "الطلبات" },

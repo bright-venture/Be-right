@@ -12,13 +12,10 @@ import { env } from "./lib/env";
 const STAFF_ROLES = ["specialist", "admin"] as const;
 const DAY = 86_400_000;
 
-/** Staff whose role comes from the server settings: changing it here wouldn't last. */
+/** Admins listed in ADMIN_EMAILS: the setting makes them admin again at sign-in, so it's locked here. */
 function roleFromSettings(email: string | null) {
   const e = email?.toLowerCase();
-  if (!e) return null;
-  if ((env.ownerEmails ?? []).includes(e)) return "admin" as const;
-  if (env.specialistEmails.includes(e)) return "specialist" as const;
-  return null;
+  return e && (env.adminEmails ?? []).includes(e) ? ("admin" as const) : null;
 }
 
 /** Where a staff invitation lands: choose a password, then the dashboard. */
@@ -207,7 +204,7 @@ export const adminRouter = createRouter({
       if (roleFromSettings(target.email)) {
         throw new TRPCError({
           code: "BAD_REQUEST",
-          message: "This role is set in the server settings (OWNER_EMAILS or SPECIALIST_EMAILS). Change it there.",
+          message: "This admin is set in the server settings (ADMIN_EMAILS). Change it there.",
         });
       }
       if (target.role === "admin" && input.role !== "admin") {

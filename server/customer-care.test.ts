@@ -5,7 +5,7 @@ import { requestEvents, requestMedia, serviceRequests, users, type User } from "
 import type { Email } from "./lib/email";
 import { WORKMANSHIP_GUARANTEE_DAYS as DAYS } from "@contracts/legal";
 import {
-  ADMIN_EMAIL,
+  SPECIALIST_EMAIL,
   BEIRUT_PIN,
   callerFor,
   createTestDb,
@@ -13,6 +13,7 @@ import {
   futureDate,
   makeTechnician,
   makeUser,
+  makeSpecialist,
   type TestDb,
 } from "./test/harness";
 
@@ -27,7 +28,6 @@ vi.mock("./lib/env", () => ({
     storageBucket: "test",
     docsBucket: "test-docs",
     siteUrl: "https://be-rightbright.com",
-    specialistEmails: ["specialist@example.com"],
   },
 }));
 vi.mock("./lib/storage", async (importOriginal) =>
@@ -50,7 +50,7 @@ let admin: User, customer: User, tech: User;
 beforeAll(async () => {
   db = await createTestDb();
   state.db = db;
-  admin = await makeUser(ADMIN_EMAIL);
+  admin = await makeSpecialist();
   customer = await makeUser("nour@example.com", "Nour");
   tech = await makeTechnician("ali@example.com", "Ali");
 }, 60_000);
@@ -131,7 +131,7 @@ describe("report a problem (workmanship guarantee)", () => {
       notes: "The leak under the sink is back since yesterday.",
       category: "plumbing",
     });
-    expect(state.sent.find((m) => m.to.includes(ADMIN_EMAIL))?.subject).toContain(`Guarantee claim #${claim} on job #${done}`);
+    expect(state.sent.find((m) => m.to.includes(SPECIALIST_EMAIL))?.subject).toContain(`Guarantee claim #${claim} on job #${done}`);
 
     // While that claim is open, the job can't be reported again.
     await expect(c.requests.reportProblem(problem(done))).rejects.toMatchObject({
@@ -273,7 +273,7 @@ describe("my account", () => {
     expect(rows.find((r) => r.id === done)).toMatchObject({ status: "completed", quoteAmount: "40", category: "plumbing" });
     expect(await db.select().from(requestMedia).where(eq(requestMedia.requestId, open))).toHaveLength(0);
     expect(deletedMedia).toContain(photo);
-    expect(state.sent.find((m) => m.to.includes(ADMIN_EMAIL))?.subject).toContain(`Request #${open} cancelled`);
+    expect(state.sent.find((m) => m.to.includes(SPECIALIST_EMAIL))?.subject).toContain(`Request #${open} cancelled`);
   });
 
   it("is only for customers", async () => {

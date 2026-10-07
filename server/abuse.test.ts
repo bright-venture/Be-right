@@ -26,7 +26,6 @@ vi.mock("./lib/env", () => ({
     supabaseServiceRoleKey: "",
     storageBucket: "test",
     docsBucket: "test-docs",
-    specialistEmails: [],
   },
 }));
 vi.mock("./lib/storage", async (importOriginal) =>

@@ -5,7 +5,7 @@ import { technicianLocations, type User } from "@db/schema";
 import type { Email } from "./lib/email";
 import { WORKMANSHIP_GUARANTEE_DAYS as DAYS } from "@contracts/legal";
 import {
-  ADMIN_EMAIL,
+  SPECIALIST_EMAIL,
   BEIRUT_PIN,
   callerFor,
   addJobPhoto,
@@ -14,6 +14,7 @@ import {
   futureDate,
   makeTechnician,
   makeUser,
+  makeSpecialist,
   type TestDb,
 } from "./test/harness";
 
@@ -28,7 +29,6 @@ vi.mock("./lib/env", () => ({
     storageBucket: "test",
     docsBucket: "test-docs",
     siteUrl: "https://be-rightbright.com",
-    specialistEmails: ["specialist@example.com"],
   },
 }));
 vi.mock("./lib/storage", async (importOriginal) =>
@@ -46,7 +46,7 @@ let admin: User, customer: User, ali: User, hassan: User;
 beforeAll(async () => {
   db = await createTestDb();
   state.db = db;
-  admin = await makeUser(ADMIN_EMAIL);
+  admin = await makeSpecialist();
   customer = await makeUser("rami@example.com", "Rami");
   ali = await makeTechnician("ali@example.com", "Ali");
   hassan = await makeTechnician("hassan@example.com", "Hassan");
@@ -80,7 +80,7 @@ describe("notification emails", () => {
 
   it("tells specialists about a new request, safely escaped", async () => {
     ({ id } = await (await callerFor(customer)).requests.create(booking));
-    const mail = emailTo(ADMIN_EMAIL);
+    const mail = emailTo(SPECIALIST_EMAIL);
     expect(mail.subject).toContain(`New request #${id}`);
     expect(mail.subject).toContain("طلب جديد");
     expect(mail.html).toContain("&lt;b&gt;Hamra&lt;/b&gt;");
@@ -109,7 +109,7 @@ describe("notification emails", () => {
 
   it("tells specialists when the customer approves", async () => {
     await (await callerFor(customer)).requests.approveQuote({ id, amount: "55" });
-    expect(emailTo(ADMIN_EMAIL).subject).toContain("assign a technician");
+    expect(emailTo(SPECIALIST_EMAIL).subject).toContain("assign a technician");
   });
 
   it("tells technicians about new and reassigned jobs, and drops the old position", async () => {
@@ -164,7 +164,7 @@ describe("notification emails", () => {
     const early = await c.requests.create(booking);
     state.sent.length = 0;
     await c.requests.cancel({ id: early.id });
-    expect(emailTo(ADMIN_EMAIL).subject).toContain("cancelled by the customer");
+    expect(emailTo(SPECIALIST_EMAIL).subject).toContain("cancelled by the customer");
 
     const late = await c.requests.create(booking);
     await s.specialist.startReview({ id: late.id, urgency: "normal" });
@@ -175,7 +175,7 @@ describe("notification emails", () => {
     state.sent.length = 0;
 
     await c.requests.requestCancel({ id: late.id, reason: "Fixed it myself" });
-    expect(emailTo(ADMIN_EMAIL).text).toContain("Fixed it myself");
+    expect(emailTo(SPECIALIST_EMAIL).text).toContain("Fixed it myself");
     state.sent.length = 0;
     await c.requests.requestCancel({ id: late.id }); // asking again sends nothing new
     expect(state.sent).toHaveLength(0);
@@ -200,7 +200,7 @@ describe("notification emails", () => {
       ...documentKeys(),
       consent: true,
     });
-    expect(emailTo(ADMIN_EMAIL).subject).toContain("Samir");
+    expect(emailTo(SPECIALIST_EMAIL).subject).toContain("Samir");
   });
 
   it("never fails the action when an email can't be sent", async () => {

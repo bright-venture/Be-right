@@ -6,18 +6,9 @@ import { env } from "../lib/env";
 
 const SIGN_IN_TOUCH_MS = 60 * 60 * 1000;
 
-function isSpecialistEmail(email: string | null) {
-  return !!email && env.specialistEmails.includes(email.toLowerCase());
-}
-
-/** Owners (OWNER_EMAILS) are admins. */
-function isOwnerEmail(email: string | null) {
-  return !!email && (env.ownerEmails ?? []).includes(email.toLowerCase());
-}
-
-/** The role an email gets from the settings, if any: owners first, then specialists. */
-function roleFromSettings(email: string | null) {
-  return isOwnerEmail(email) ? "admin" : isSpecialistEmail(email) ? "specialist" : null;
+/** ADMIN_EMAILS are admins (everyone else's role is given in the app). */
+function isAdminEmail(email: string | null) {
+  return !!email && (env.adminEmails ?? []).includes(email.toLowerCase());
 }
 
 async function findByAuthId(authId: string) {
@@ -56,7 +47,7 @@ export async function findOrCreateUser(identity: {
         phone: identity.phone ?? null,
         termsVersion: identity.termsVersion ?? null,
         termsAcceptedAt: identity.termsVersion ? new Date() : null,
-        role: roleFromSettings(identity.email) ?? "customer",
+        role: isAdminEmail(identity.email) ? "admin" : "customer",
       })
       .onConflictDoNothing({ target: schema.users.authId });
     const created = await findByAuthId(identity.authId);
@@ -72,12 +63,8 @@ export async function findOrCreateUser(identity: {
     patch.termsVersion = identity.termsVersion;
     patch.termsAcceptedAt = new Date();
   }
-  // Settings only ever promote (customer → specialist → admin); roles given in /admin stay.
-  const settingsRole = roleFromSettings(identity.email ?? existing.email);
-  if (settingsRole === "admin" && existing.role !== "admin") patch.role = "admin";
-  if (settingsRole === "specialist" && existing.role !== "specialist" && existing.role !== "admin") {
-    patch.role = "specialist";
-  }
+  // The setting only ever promotes to admin; roles given in /admin stay as they are.
+  if (existing.role !== "admin" && isAdminEmail(identity.email ?? existing.email)) patch.role = "admin";
   if (Date.now() - existing.lastSignInAt.getTime() > SIGN_IN_TOUCH_MS) {
     patch.lastSignInAt = new Date();
   }

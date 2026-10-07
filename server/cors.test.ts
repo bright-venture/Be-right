@@ -9,7 +9,6 @@ vi.mock("./lib/env", () => ({
     supabaseServiceRoleKey: "",
     storageBucket: "test",
     docsBucket: "test-docs",
-    specialistEmails: [],
   },
 }));
 

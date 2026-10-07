@@ -30,11 +30,14 @@ export function AuthPanel({
   next,
   initialMode = "signin",
   headingLevel = "h2",
+  staff,
 }: {
   /** Path to return to after email links (confirmation, code link, password reset). */
   next: string;
   initialMode?: AuthMode;
   headingLevel?: "h1" | "h2" | "h3";
+  /** Staff sign-in (/admin): its own title and subtitle, and no customer sign-up. */
+  staff?: { title: string; sub: string };
 }) {
   const { t, p } = useI18n();
   const [view, setView] = useState<View>(initialMode);
@@ -316,14 +319,14 @@ export function AuthPanel({
               ? p(t.auth.forgotTitle)
               : view === "code"
                 ? p(t.auth.codeTitle)
-                : p(t.auth.signInTitle)}
+                : (staff?.title ?? p(t.auth.signInTitle))}
         </Heading>
         <p className="mt-1 text-sm leading-relaxed text-navy/70">
           {view === "signup"
             ? p(t.auth.signUpSub)
             : view === "forgot"
               ? p(t.auth.forgotSub)
-              : p(t.auth.signInSub)}
+              : (staff?.sub ?? p(t.auth.signInSub))}
         </p>
       </div>
 
@@ -417,7 +420,7 @@ export function AuthPanel({
       <Messages error={error} notice={notice} />
 
       {/* Switch between signing in and creating a (customer) account */}
-      {view === "signin" && (
+      {view === "signin" && !staff && (
         <p className="mt-6 border-t-2 border-navy/10 pt-5 text-center text-sm text-navy/70">
           {p(t.auth.noAccount)}{" "}
           <button type="button" onClick={() => go("signup")} className="font-bold text-navy underline underline-offset-4">

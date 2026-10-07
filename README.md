@@ -22,8 +22,8 @@ another role's page redirects back (enforced on the server too):
 | --- | --- | --- |
 | Customer | Default for every new account | `/book`, `/requests` |
 | Technician | A specialist adds their email in Dashboard → Technicians (they sign up first) | `/tech` |
-| Specialist | Added by an admin in Admin → Team, or listed in `SPECIALIST_EMAILS` (applied on next sign-in) | `/dashboard` |
-| Admin | Email listed in `OWNER_EMAILS`, or made admin by another admin in Admin → Team. Can do everything a specialist can, plus figures, every customer, the team and the activity log | `/admin`, `/dashboard` |
+| Specialist | Added by an admin in Admin → Team | `/dashboard` |
+| Admin | Email listed in `ADMIN_EMAILS` (applied on next sign-in), or made admin by another admin in Admin → Team. Can do everything a specialist can, plus figures, every customer, the team and the activity log | `/admin`, `/dashboard` |
 
 Technician applications from `/join` need no account and appear in the dashboard.
 
@@ -79,7 +79,7 @@ Sent through Resend's API (`RESEND_API_KEY`), in English and Arabic, from `serve
 | A price is sent or changed, a guarantee visit is confirmed free, the visit is scheduled, the job is done, or our team cancels | Customer |
 | A job is assigned, reassigned away, scheduled or cancelled | Technician |
 
-Specialists are every account with the specialist role plus `SPECIALIST_EMAILS`. A failed email is logged
+Staff emails go to every specialist and admin account. A failed email is logged
 (**Netlify → Logs → Functions → api**, "[notify]") and never blocks the action. Replies go to `EMAIL_REPLY_TO`.
 
 ## Scheduled jobs
@@ -128,7 +128,7 @@ Without Docker: `npm ci && npm run build && NODE_ENV=production npm start`
 (the `VITE_*` variables must be present at build time).
 
 Runtime env needed on the server: `DATABASE_URL`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`,
-`SPECIALIST_EMAILS` (and optionally `SUPABASE_STORAGE_BUCKET`, `PORT`). Health check: `GET /api/health`.
+`ADMIN_EMAILS` (and optionally `SUPABASE_STORAGE_BUCKET`, `PORT`). Health check: `GET /api/health`.
 
 ## Scripts
 

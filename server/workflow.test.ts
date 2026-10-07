@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import type { User } from "@db/schema";
 import {
-  ADMIN_EMAIL,
+  SPECIALIST_EMAIL,
   BEIRUT_PIN,
   callerFor,
   addJobPhoto,
@@ -11,6 +11,7 @@ import {
   futureDate,
   makeTechnician,
   makeUser,
+  makeSpecialist,
   type TestDb,
 } from "./test/harness";
 
@@ -24,7 +25,6 @@ vi.mock("./lib/env", () => ({
     supabaseUrl: "",
     supabaseServiceRoleKey: "",
     storageBucket: "test",
-    specialistEmails: ["specialist@example.com"],
   },
 }));
 vi.mock("./lib/storage", async (importOriginal) =>
@@ -91,14 +91,14 @@ let tina: User; // technician
 beforeAll(async () => {
   db = await createTestDb();
   state.db = db;
-  admin = await makeUser(ADMIN_EMAIL, "Specialist");
+  admin = await makeSpecialist();
   alice = await makeUser("alice@example.com", "Alice");
   bob = await makeUser("bob@example.com", "Bob");
   tina = await makeUser("tina@example.com", "Tina");
 }, 60_000);
 
 describe("accounts", () => {
-  it("gives the specialist role only to SPECIALIST_EMAILS", () => {
+  it("starts new accounts as customers; specialists get the role from an admin", () => {
     expect(admin.role).toBe("specialist");
     expect(alice.role).toBe("customer");
   });
@@ -268,7 +268,7 @@ describe("hiring technicians from applications", () => {
 
   it("refuses to hire a specialist's email or an application without email", async () => {
     const s = await callerFor(admin);
-    const { id } = await (await callerFor()).join.submit({ ...application, email: ADMIN_EMAIL });
+    const { id } = await (await callerFor()).join.submit({ ...application, email: SPECIALIST_EMAIL });
     await expect(s.join.hire({ id })).rejects.toMatchObject({ code: "BAD_REQUEST" });
     // Older applications had no email: the specialist supplies one when hiring.
     const { technicianApplications } = await import("@db/schema");

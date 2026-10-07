@@ -11,7 +11,6 @@ vi.mock("./lib/env", () => ({
     supabaseServiceRoleKey: "",
     storageBucket: "test",
     docsBucket: "test-docs",
-    specialistEmails: [],
   },
 }));
 // Every database call crashes with a message that must never reach visitors.

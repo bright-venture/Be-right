@@ -9,7 +9,7 @@ import * as schema from "@db/schema";
 import * as relations from "@db/relations";
 import type { User } from "@db/schema";
 
-export const ADMIN_EMAIL = "specialist@example.com";
+export const SPECIALIST_EMAIL = "specialist@example.com";
 
 export async function createTestDb() {
   const client = new PGlite();
@@ -50,6 +50,16 @@ export async function makeTechnician(email: string, name = email.split("@")[0]) 
   const { users } = await import("@db/schema");
   const { eq } = await import("drizzle-orm");
   const [updated] = await getDb().update(users).set({ role: "technician" }).where(eq(users.id, user.id)).returning();
+  return updated;
+}
+
+/** A specialist account (in the app, an admin gives the role in Admin → Team). */
+export async function makeSpecialist(email = SPECIALIST_EMAIL, name = "Specialist") {
+  const user = await makeUser(email, name);
+  const { getDb } = await import("../queries/connection");
+  const { users } = await import("@db/schema");
+  const { eq } = await import("drizzle-orm");
+  const [updated] = await getDb().update(users).set({ role: "specialist" }).where(eq(users.id, user.id)).returning();
   return updated;
 }
 

@@ -4,12 +4,11 @@ import { eq } from "drizzle-orm";
 import { technicianApplications, type User } from "@db/schema";
 import { REJECTED_APPLICATION_RETENTION_DAYS as DAYS } from "@contracts/legal";
 import {
-  ADMIN_EMAIL,
   callerFor,
   createTestDb,
   deletedDocuments,
   documentKeys,
-  makeUser,
+  makeSpecialist,
   type TestDb,
 } from "./test/harness";
 
@@ -23,7 +22,6 @@ vi.mock("./lib/env", () => ({
     supabaseServiceRoleKey: "",
     storageBucket: "test",
     docsBucket: "test-docs",
-    specialistEmails: ["specialist@example.com"],
   },
 }));
 vi.mock("./lib/storage", async (importOriginal) =>
@@ -37,7 +35,7 @@ let admin: User;
 beforeAll(async () => {
   db = await createTestDb();
   state.db = db;
-  admin = await makeUser(ADMIN_EMAIL);
+  admin = await makeSpecialist();
 }, 60_000);
 
 /** Inserts an application with documents, in a given status, rejected/created `daysAgo`. */

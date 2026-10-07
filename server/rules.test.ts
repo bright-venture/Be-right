@@ -1,7 +1,7 @@
 // Business rules and input validation that the happy-path workflow test doesn't cover.
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import type { User } from "@db/schema";
-import { ADMIN_EMAIL, BEIRUT_PIN, addJobPhoto, callerFor, createTestDb, futureDate, makeTechnician, makeUser } from "./test/harness";
+import { BEIRUT_PIN, addJobPhoto, callerFor, createTestDb, futureDate, makeTechnician, makeUser, makeSpecialist } from "./test/harness";
 
 const state = vi.hoisted(() => ({ db: undefined as unknown }));
 vi.mock("./queries/connection", () => ({ getDb: () => state.db }));
@@ -12,7 +12,6 @@ vi.mock("./lib/env", () => ({
     supabaseUrl: "",
     supabaseServiceRoleKey: "",
     storageBucket: "test",
-    specialistEmails: ["specialist@example.com"],
   },
 }));
 vi.mock("./lib/storage", async (importOriginal) =>
@@ -35,7 +34,7 @@ let admin: User, customer: User, tech: User;
 
 beforeAll(async () => {
   state.db = await createTestDb();
-  admin = await makeUser(ADMIN_EMAIL);
+  admin = await makeSpecialist();
   customer = await makeUser("customer@example.com");
   tech = await makeTechnician("tech@example.com");
 }, 60_000);

@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Loader2 } from "lucide-react";
+import { Link, useNavigate } from "react-router";
+import { Loader2, ShieldCheck } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { ApplicationsTab } from "@/components/dashboard/ApplicationsTab";
@@ -7,7 +8,9 @@ import { QueueTab } from "@/components/dashboard/QueueTab";
 import { TechniciansTab } from "@/components/dashboard/TechniciansTab";
 import { ActivityTab, CustomersTab, OverviewTab, TeamTab } from "@/components/admin/AdminTabs";
 import { useI18n } from "@/i18n";
-import { useRoleGate } from "@/hooks/useRoleGate";
+import { useAuth } from "@/hooks/useAuth";
+import { AuthPanel } from "@/components/AuthPanel";
+import { HOME_BY_ROLE, type Role } from "@contracts/roles";
 import { trpc } from "@/providers/trpc";
 
 const TABS = ["overview", "requests", "customers", "applications", "technicians", "team", "activity"] as const;
@@ -20,15 +23,61 @@ type Tab = (typeof TABS)[number];
  */
 export default function Admin() {
   const { t, p } = useI18n();
-  const { role, isLoading } = useRoleGate(["admin"], { requireSignIn: true });
+  // No redirects: /admin is its own door. Signed out, it shows the admin sign-in here.
+  const { user, isLoading, logout } = useAuth();
+  const navigate = useNavigate();
+  // Switching accounts stays here, on the admin sign-in (signing out normally goes home).
+  const otherAccount = async () => {
+    await logout();
+    navigate("/admin", { replace: true });
+  };
+  const role = user?.role as Role | undefined;
   const isAdmin = role === "admin";
   const [tab, setTab] = useState<Tab>("overview");
   const applications = trpc.join.list.useQuery(undefined, { enabled: isAdmin });
 
-  if (isLoading || !isAdmin) {
+  if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-paper">
         <Loader2 className="h-8 w-8 animate-spin text-navy" />
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
+    return (
+      <div className="flex min-h-screen flex-col bg-paper">
+        <Navbar />
+        <main className="flex flex-1 items-center justify-center px-4 py-24">
+          <div className="card-br w-full max-w-md !rounded-[28px] p-6 sm:p-8">
+            <span className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-navy text-white">
+              <ShieldCheck className="h-6 w-6" />
+            </span>
+            {!user ? (
+              <AuthPanel
+                next="/admin"
+                headingLevel="h1"
+                staff={{ title: p(t.admin.signInTitle), sub: p(t.admin.signInSub) }}
+              />
+            ) : (
+              <div className="flex flex-col gap-4">
+                <h1 className="font-display text-2xl font-black text-navy">{p(t.admin.signInTitle)}</h1>
+                <p className="text-sm leading-relaxed text-navy/70">
+                  {p(t.admin.notAdmin).replace("{email}", user.email ?? "")}
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  <Link to={role ? HOME_BY_ROLE[role] : "/"} className="btn-pill-outline !min-h-11 justify-center text-sm">
+                    {p(t.admin.goToMine)}
+                  </Link>
+                  <button type="button" onClick={() => void otherAccount()} className="btn-pill-primary !min-h-11 justify-center text-sm">
+                    {p(t.admin.otherAccount)}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </main>
+        <Footer />
       </div>
     );
   }

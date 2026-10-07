@@ -2,7 +2,7 @@
 // nobody else gets in.
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import type { User } from "@db/schema";
-import { BEIRUT_PIN, callerFor, futureDate, makeTechnician, makeUser } from "./test/harness";
+import { BEIRUT_PIN, callerFor, futureDate, makeSpecialist, makeTechnician, makeUser } from "./test/harness";
 
 const state = vi.hoisted(() => ({ db: undefined as unknown, invites: [] as string[] }));
 
@@ -15,8 +15,7 @@ vi.mock("./lib/env", () => ({
     supabaseServiceRoleKey: "",
     storageBucket: "test",
     siteUrl: "https://be-rightbright.com",
-    ownerEmails: ["owner@example.com"],
-    specialistEmails: ["desk@example.com"],
+    adminEmails: ["owner@example.com"],
   },
 }));
 vi.mock("./lib/storage", async (importOriginal) =>
@@ -36,14 +35,14 @@ vi.mock("./lib/supabase", () => ({
 }));
 
 let owner: User;
-let desk: User; // specialist from the settings
+let desk: User; // a specialist
 let customer: User;
 let tech: User;
 
 beforeAll(async () => {
   state.db = await import("./test/harness").then((h) => h.createTestDb());
   owner = await makeUser("owner@example.com", "Owner");
-  desk = await makeUser("desk@example.com", "Desk");
+  desk = await makeSpecialist("desk@example.com", "Desk");
   customer = await makeUser("maya@example.com", "Maya");
   tech = await makeTechnician("fadi.tech@example.com", "Fadi");
   // One booking, so the figures and the customer list have something to show.
@@ -62,9 +61,10 @@ beforeAll(async () => {
 
 
 describe("admin area", () => {
-  it("makes owners admins on sign-in", () => {
+  it("makes ADMIN_EMAILS admins on sign-in, and nobody else", async () => {
     expect(owner.role).toBe("admin");
     expect(desk.role).toBe("specialist");
+    expect((await makeUser("someone@example.com")).role).toBe("customer");
   });
 
   it("is open to admins only", async () => {
@@ -114,9 +114,12 @@ describe("admin area", () => {
 
   it("changes team roles safely", async () => {
     const o = await callerFor(owner);
-    // Not your own role, and not roles that come from the settings.
+    // Not your own role, and not an admin listed in ADMIN_EMAILS (another admin can't demote them).
     await expect(o.admin.setStaffRole({ userId: owner.id, role: "specialist" })).rejects.toMatchObject({ code: "BAD_REQUEST" });
-    await expect(o.admin.setStaffRole({ userId: desk.id, role: "customer" })).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    await o.admin.setStaffRole({ userId: desk.id, role: "admin" });
+    const d = await callerFor({ ...desk, role: "admin" });
+    await expect(d.admin.setStaffRole({ userId: owner.id, role: "customer" })).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    await o.admin.setStaffRole({ userId: desk.id, role: "specialist" });
 
     // Promote, then take off the team.
     await o.admin.setStaffRole({ userId: customer.id, role: "admin" });

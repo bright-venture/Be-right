@@ -4,7 +4,7 @@ import { beforeAll, describe, expect, it, vi } from "vitest";
 import { eq } from "drizzle-orm";
 import { serviceRequests, type User } from "@db/schema";
 import { VISIT_FEE_USD } from "@contracts/workflow";
-import { ADMIN_EMAIL, BEIRUT_PIN, callerFor, createTestDb, futureDate, makeTechnician, makeUser, type TestDb } from "./test/harness";
+import { BEIRUT_PIN, callerFor, createTestDb, futureDate, makeTechnician, makeUser, type TestDb, makeSpecialist } from "./test/harness";
 
 const state = vi.hoisted(() => ({ db: undefined as unknown }));
 
@@ -16,7 +16,6 @@ vi.mock("./lib/env", () => ({
     supabaseUrl: "",
     supabaseServiceRoleKey: "",
     storageBucket: "test",
-    specialistEmails: ["specialist@example.com"],
   },
 }));
 vi.mock("./lib/storage", async (importOriginal) =>
@@ -58,7 +57,7 @@ const row = async (id: number) => (await db.select().from(serviceRequests).where
 beforeAll(async () => {
   db = await createTestDb();
   state.db = db;
-  admin = await makeUser(ADMIN_EMAIL, "Specialist");
+  admin = await makeSpecialist();
   customer = await makeUser("rana@example.com", "Rana");
   tech = await makeTechnician("karim.tech@example.com", "Karim");
 }, 60_000);

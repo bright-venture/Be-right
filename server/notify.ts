@@ -89,7 +89,7 @@ async function specialistEmails() {
     .select({ email: users.email })
     .from(users)
     .where(inArray(users.role, ["specialist", "admin"]));
-  return [...rows.map((r) => r.email), ...env.specialistEmails];
+  return rows.map((r) => r.email);
 }
 
 async function loadJob(id: number) {
