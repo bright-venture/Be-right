@@ -6,7 +6,7 @@ const publishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
 if (!url || !publishableKey) {
   console.error(
-    "Missing VITE_SUPABASE_URL / VITE_SUPABASE_PUBLISHABLE_KEY — sign-in and uploads will not work.",
+    "Missing VITE_SUPABASE_URL / VITE_SUPABASE_PUBLISHABLE_KEY: sign-in and uploads will not work.",
   );
 }
 

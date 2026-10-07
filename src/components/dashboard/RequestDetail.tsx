@@ -103,7 +103,7 @@ export function RequestDetail({
         <div className="flex flex-col gap-5">
           <section className="rounded-2xl border-2 border-navy/15 bg-paper p-4 text-sm">
             <p className={LABEL}>{p(t.dash.customer)}</p>
-            <p className="mt-2 font-bold text-navy">{d.customer?.name ?? "—"}</p>
+            <p className="mt-2 font-bold text-navy">{d.customer?.name ?? "-"}</p>
             {d.customer?.email && <p className="text-navy/70">{d.customer.email}</p>}
             <p className="mt-1 text-navy/70" dir="ltr">
               {r.phone}
@@ -123,7 +123,7 @@ export function RequestDetail({
             </div>
             <p className={`${LABEL} mt-4`}>{p(t.dash4.visit)}</p>
             <p className="mt-1 text-navy/80">
-              {r.area} — {r.address}
+              {r.area} · {r.address}
             </p>
             <p className="mt-1 text-navy/80">
               {r.preferredDate} ·{" "}
@@ -193,7 +193,7 @@ export function RequestDetail({
                 <span className="font-bold text-navy">
                   {r.guaranteeFor && r.quoteAmount === "0" ? p(t.requests.free) : `$${r.quoteAmount}`}
                 </span>
-                {r.quoteNote ? ` — ${r.quoteNote}` : ""}
+                {r.quoteNote ? ` · ${r.quoteNote}` : ""}
               </p>
             )}
           </section>

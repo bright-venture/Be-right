@@ -202,7 +202,7 @@ export default function Requests() {
                             )}
                           </>
                         ) : (
-                          <p className="mt-2 text-sm text-navy/70">—</p>
+                          <p className="mt-2 text-sm text-navy/70">-</p>
                         )}
                       </div>
                     </div>

@@ -118,7 +118,7 @@ export const specialistRouter = createRouter({
         actorId: ctx.user.id,
         scope: "any",
         patch: { quoteAmount: input.amount, quoteNote: input.note ?? null },
-        note: `Quote: $${input.amount}${input.note ? ` — ${input.note}` : ""}`,
+        note: `Quote: $${input.amount}${input.note ? `. ${input.note}` : ""}`,
       });
       await notify.quoteSent(input.id);
       return { ok: true };

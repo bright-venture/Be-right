@@ -166,8 +166,8 @@ export const CATEGORIES: ServiceCategory[] = [
         kind: "choice",
         label: { en: "Any exposed or damaged wiring?", ar: "في أسلاك مكشوفة أو متضررة؟" },
         hint: {
-          en: "Do not touch or open anything — just tell us what you see.",
-          ar: "لا تلمس أو تفتح شي — بس خبرنا شو شايف.",
+          en: "Do not touch or open anything. Just tell us what you see.",
+          ar: "لا تلمس أو تفتح شي. بس خبرنا شو شايف.",
         },
         options: [
           { value: "yes", label: { en: "Yes", ar: "إيه" }, critical: true },
@@ -486,8 +486,8 @@ export const CATEGORIES: ServiceCategory[] = [
           ar: "في أشجار عالية قرب خطوط كهربا أو مباني؟",
         },
         hint: {
-          en: "Stay clear of the area — just tell us what you see.",
-          ar: "ابعد عن المنطقة — بس خبرنا شو شايف.",
+          en: "Stay clear of the area. Just tell us what you see.",
+          ar: "ابعد عن المنطقة. بس خبرنا شو شايف.",
         },
         options: [
           { value: "no", label: { en: "No", ar: "لا" } },
@@ -579,20 +579,20 @@ export const CATEGORY_TINT: Record<string, { bg: string; ink: string }> = {
 
 export const GUARANTEE_POINTS: LocalText[] = [
   {
-    en: "Every job is documented — photos before and after, and a specialist reviews the result.",
-    ar: "كل شغلة موثّقة — صور قبل وبعد، ومختص بيراجع النتيجة.",
+    en: "Every job is documented with photos before and after, and a specialist reviews the result.",
+    ar: "كل شغلة موثّقة بصور قبل وبعد، ومختص بيراجع النتيجة.",
   },
   {
-    en: `If something isn't right within ${GUARANTEE_DAYS} days, report it from your requests page — the revisit is free.`,
-    ar: `إذا في شي مش مظبوط خلال ${arabicDigits(GUARANTEE_DAYS)} أيام، بلّغ عنه من صفحة طلباتك — الزيارة مجانية.`,
+    en: `If something isn't right within ${GUARANTEE_DAYS} days, report it from your requests page and the revisit is free.`,
+    ar: `إذا في شي مش مظبوط خلال ${arabicDigits(GUARANTEE_DAYS)} أيام، بلّغ عنه من صفحة طلباتك والزيارة مجانية.`,
   },
   {
     en: "The price you approved is the price you pay. Extra work only happens after your approval.",
     ar: "السعر يلي وافقت عليه هو يلي بتدفعه. أي شغل زيادة بصير بس بعد موافقتك.",
   },
   {
-    en: "Verified technicians only — identity and trade checked before their first job.",
-    ar: "معلّمين موثّقين بس — الهوية والمهنة بينفحصوا قبل أول شغلة.",
+    en: "Verified technicians only, with identity and trade checked before their first job.",
+    ar: "معلّمين موثّقين بس، الهوية والمهنة بينفحصوا قبل أول شغلة.",
   },
 ];
 
@@ -600,8 +600,8 @@ export const GUARANTEE_POINTS: LocalText[] = [
 
 // Nationwide — all of Lebanon.
 export const COVERAGE_NOTE: LocalText = {
-  en: "From Beirut to Tripoli, Saida to the Bekaa — any town or village. We confirm appointment availability for your address before approval.",
-  ar: "من بيروت لطرابلس، من صيدا للبقاع — أي مدينة أو ضيعة. منأكد توفر الموعد لعنوانك قبل الموافقة.",
+  en: "From Beirut to Tripoli, Saida to the Bekaa, any town or village. We confirm appointment availability for your address before approval.",
+  ar: "من بيروت لطرابلس، من صيدا للبقاع، أي مدينة أو ضيعة. منأكد توفر الموعد لعنوانك قبل الموافقة.",
 };
 export const COVERAGE_AREAS: { group: LocalText; areas: LocalText[] }[] = [
   {
@@ -690,22 +690,22 @@ export const URGENCY_META: Record<
   priority: {
     label: { en: "Priority", ar: "أولوية" },
     note: {
-      en: "Needs attention soon — a small priority fee may apply.",
-      ar: "بدو انتباه قريب — ممكن رسوم أولوية صغيرة.",
+      en: "Needs attention soon. A small priority fee may apply.",
+      ar: "بدو انتباه قريب. ممكن رسوم أولوية صغيرة.",
     },
   },
   urgent: {
     label: { en: "Urgent", ar: "مستعجل" },
     note: {
-      en: "Damage may increase quickly — a dispatch surcharge applies.",
-      ar: "الضرر ممكن يكبّر بسرعة — في رسوم إرسال إضافية.",
+      en: "Damage may increase quickly. A dispatch surcharge applies.",
+      ar: "الضرر ممكن يكبّر بسرعة. في رسوم إرسال إضافية.",
     },
   },
   critical: {
     label: { en: "Critical", ar: "حرج" },
     note: {
-      en: "Possible safety risk — a specialist will call you directly.",
-      ar: "ممكن خطر سلامة — المختص رح يتصل فيك مباشرة.",
+      en: "Possible safety risk. A specialist will call you directly.",
+      ar: "ممكن خطر سلامة. المختص رح يتصل فيك مباشرة.",
     },
   },
 };

@@ -62,7 +62,7 @@ function render(m: Message) {
 </html>`;
   const text = (["en", "ar"] as const)
     .map((lang) => [m.title[lang], ...m.lines.map((l) => l[lang]), `${m.button[lang]}: ${url}`].join("\n\n"))
-    .join("\n\n———\n\n");
+    .join("\n\n----------\n\n");
   // Area names etc. are typed by people: keep the subject on one line.
   const subject = `${m.subject.en} · ${m.subject.ar}`.replace(/\s+/g, " ").trim();
   return { subject, html, text };

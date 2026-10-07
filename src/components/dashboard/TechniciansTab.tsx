@@ -57,7 +57,7 @@ function TechnicianCard({ tech: x }: { tech: Technician }) {
       <div className="flex items-center gap-3">
         <Avatar name={x.name} photoUrl={x.photoUrl} size="h-14 w-14" />
         <div className="min-w-0 flex-1">
-          <p className="truncate font-display text-base font-extrabold text-navy">{x.name ?? "—"}</p>
+          <p className="truncate font-display text-base font-extrabold text-navy">{x.name ?? "-"}</p>
           {trade && (
             <p className="flex items-center gap-1.5 text-xs font-bold text-bird">
               <ServiceIcon id={x.trade!} className="h-4 w-4" /> {p(trade.name)}
@@ -84,7 +84,7 @@ function TechnicianCard({ tech: x }: { tech: Technician }) {
                 <Star className="h-4 w-4 text-flame" fill="currentColor" aria-hidden />
               </span>
             ) : (
-              "—"
+              "-"
             )}
           </dd>
         </div>

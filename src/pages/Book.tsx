@@ -296,7 +296,7 @@ export default function Book() {
               <span
                 className={`mt-4 inline-block rounded-full border-2 px-4 py-1 text-sm font-bold ${URGENCY_BADGE[doneUrgency]}`}
               >
-                {p(URGENCY_META[doneUrgency].label)} — {p(URGENCY_META[doneUrgency].note)}
+                {p(URGENCY_META[doneUrgency].label)}: {p(URGENCY_META[doneUrgency].note)}
               </span>
             )}
             <p className="mt-4 text-sm leading-relaxed text-navy/70">
@@ -340,7 +340,7 @@ export default function Book() {
           ))}
         </div>
         <p className="mt-2 font-display text-xs font-bold uppercase tracking-[0.2em] text-navy/70">
-          {step + 1} / {STEPS.length} — {p(stepLabels[step])}
+          {step + 1} / {STEPS.length} · {p(stepLabels[step])}
         </p>
 
         <div className="mt-8 animate-rise-in" key={step}>

@@ -172,7 +172,7 @@ export function QueueTab({ onGoToApplications }: { onGoToApplications: () => voi
                     #{r.id} · {CATEGORY_MAP[r.category] ? p(CATEGORY_MAP[r.category].name) : r.category}
                   </span>
                   <span className="block truncate text-xs text-navy/70">
-                    {customerName ?? customerEmail ?? "—"} · {r.area}
+                    {customerName ?? customerEmail ?? "-"} · {r.area}
                   </span>
                   <span className="mt-1 flex flex-wrap items-center gap-1.5">
                     <span className="rounded-full border border-navy/25 px-2 py-px text-[10px] font-bold text-navy">

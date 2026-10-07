@@ -159,7 +159,7 @@ export default function AppRequest() {
         {status === "quote_ready" && (
           <section className="rounded-3xl border-2 border-flame bg-white p-5 shadow-[0_10px_24px_rgb(244_83_9/0.15)]">
             <p className={LABEL}>{p(t.app.quoteTitle)}</p>
-            <p className="mt-1 font-display text-4xl font-black text-navy tabular-nums">{price ?? "—"}</p>
+            <p className="mt-1 font-display text-4xl font-black text-navy tabular-nums">{price ?? "-"}</p>
             {r.quoteNote && <p className="mt-2 text-sm text-navy/80">{r.quoteNote}</p>}
             <p className="mt-2 text-xs text-navy/60">{p(t.app.quoteHint)}</p>
             <div className="mt-4 grid grid-cols-2 gap-2">
@@ -266,7 +266,7 @@ export default function AppRequest() {
             </div>
             <div className="rounded-2xl bg-paper p-3">
               <p className="text-xs text-navy/60">{p(t.requests.quote)}</p>
-              <p className="mt-0.5 text-sm font-bold text-navy tabular-nums">{price ?? "—"}</p>
+              <p className="mt-0.5 text-sm font-bold text-navy tabular-nums">{price ?? "-"}</p>
             </div>
           </div>
           <div>

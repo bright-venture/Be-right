@@ -130,8 +130,8 @@ export const t = {
     h1b: { en: "in Lebanon.", ar: "بلبنان." },
     promise: { en: "Fast. Simple. Sorted.", ar: "منحلّها بسرعة وبسهولة." },
     sub: {
-      en: "For homes, restaurants, offices, buildings and businesses. Book online in a few simple steps. A specialist reviews your request, you approve the price before dispatch — and if it's not right, we come back and make it right.",
-      ar: "للبيوت والمطاعم والمكاتب والمباني والشركات. احجز أونلاين بخطوات بسيطة. مختص بيراجع طلبك، وبتوافق على السعر قبل ما نبعت المعلّم لعندك — وإذا مش مظبوطة، منرجع منظبطها.",
+      en: "For homes, restaurants, offices, buildings and businesses. Book online in a few simple steps. A specialist reviews your request, you approve the price before dispatch, and if it's not right, we come back and make it right.",
+      ar: "للبيوت والمطاعم والمكاتب والمباني والشركات. احجز أونلاين بخطوات بسيطة. مختص بيراجع طلبك، وبتوافق على السعر قبل ما نبعت المعلّم لعندك، وإذا مش مظبوطة، منرجع منظبطها.",
     },
     cta: { en: "Book a service", ar: "احجز خدمة" },
     ctaSecondary: { en: "How it works", ar: "كيف منشتغل" },
@@ -153,8 +153,8 @@ export const t = {
     kicker: { en: "(Services)", ar: "(خدماتنا)" },
     title: { en: "One call. Every trade.", ar: "كل الخدمات بمحل واحد." },
     sub: {
-      en: "Eleven services for homes, restaurants, offices, buildings and businesses — each launched only when qualified workers, tools and service hours are ready.",
-      ar: "حدعشر خدمة للبيوت والمطاعم والمكاتب والمباني والشركات — كل خدمة منطلّقها بس لما يكون في فريق مؤهل وعدّة جاهزة.",
+      en: "Eleven services for homes, restaurants, offices, buildings and businesses. Each one launches only when qualified workers, tools and service hours are ready.",
+      ar: "حدعشر خدمة للبيوت والمطاعم والمكاتب والمباني والشركات. كل خدمة منطلّقها بس لما يكون في فريق مؤهل وعدّة جاهزة.",
     },
     bookThis: { en: "Book", ar: "احجز" },
   },
@@ -165,22 +165,22 @@ export const t = {
       {
         title: { en: "Tell us", ar: "خبّرنا" },
         body: {
-          en: "Describe the problem — pick a service, answer a few questions, add photos if needed.",
-          ar: "اشرح المشكلة — اختار الخدمة، جاوب على شوية أسئلة، وضيف صور إذا بدك.",
+          en: "Describe the problem: pick a service, answer a few questions, add photos if needed.",
+          ar: "اشرح المشكلة: اختار الخدمة، جاوب على شوية أسئلة، وضيف صور إذا بدك.",
         },
       },
       {
         title: { en: "Approve", ar: "وافِق" },
         body: {
-          en: "Confirm your quote — a specialist reviews your request and you approve the price before dispatch.",
-          ar: "أكّد عرض السعر — مختص بيراجع طلبك وبتوافق على السعر قبل ما نبعت المعلّم لعندك.",
+          en: "Confirm your quote. A specialist reviews your request and you approve the price before dispatch.",
+          ar: "أكّد عرض السعر. مختص بيراجع طلبك وبتوافق على السعر قبل ما نبعت المعلّم لعندك.",
         },
       },
       {
         title: { en: "We fix", ar: "منصلّح" },
         body: {
-          en: "Your technician gets it done — a qualified technician completes the job, with specialist follow-up.",
-          ar: "المعلّم تبعك بيخلّصها — معلّم مؤهل بيخلّص الشغلة، بمتابعة من المختص.",
+          en: "Your technician gets it done. A qualified technician completes the job, with specialist follow-up.",
+          ar: "المعلّم تبعك بيخلّصها. معلّم مؤهل بيخلّص الشغلة، بمتابعة من المختص.",
         },
       },
     ] as { title: { en: string; ar: string }; body: { en: string; ar: string } }[],
@@ -218,18 +218,18 @@ export const t = {
     title: { en: "Clear pricing. Real guarantee.", ar: "أسعار واضحة. ضمانة حقيقية." },
     feeTitle: { en: "Visit & inspection", ar: "الزيارة والكشف" },
     feeBody: {
-      en: "Booking a request is always free — you only ever pay for actual work. Any visit or inspection fee is confirmed with you before dispatch, and we tell you upfront whether it's deducted from the final repair cost.",
-      ar: "تقديم الطلب مجاني دايماً — بتدفع بس عالشغل الفعلي. أي رسوم زيارة أو كشف منأكدها معك قبل ما نبعت المعلّم لعندك، ومنخبّرك من الأول إذا بتنخصم من كلفة التصليح النهائية.",
+      en: "Booking a request is always free. You only ever pay for actual work. Any visit or inspection fee is confirmed with you before dispatch, and we tell you upfront whether it's deducted from the final repair cost.",
+      ar: "تقديم الطلب مجاني دايماً. بتدفع بس عالشغل الفعلي. أي رسوم زيارة أو كشف منأكدها معك قبل ما نبعت المعلّم لعندك، ومنخبّرك من الأول إذا بتنخصم من كلفة التصليح النهائية.",
     },
     partsTitle: { en: "Labour, parts & priority", ar: "الشغل والقطع والاستعجال" },
     partsBody: {
-      en: "Your quote separates labour, parts at supplier prices, and any priority charge — so you see exactly what you're paying for.",
-      ar: "عرض السعر بيفصل الأجرة، والقطع بسعر المورّد، وأي رسوم استعجال — لتعرف بالضبط شو عم تدفع.",
+      en: "Your quote separates labour, parts at supplier prices, and any priority charge, so you see exactly what you're paying for.",
+      ar: "عرض السعر بيفصل الأجرة، والقطع بسعر المورّد، وأي رسوم استعجال، لتعرف بالضبط شو عم تدفع.",
     },
     approveTitle: { en: "You approve everything", ar: "كل شي بموافقتك" },
     approveBody: {
-      en: "You approve the quote before dispatch — and any additional charges before extra work. Nothing moves without your approval.",
-      ar: "بتوافق على العرض قبل ما نبعت المعلّم لعندك — وعلى أي رسوم إضافية قبل أي شغل زيادة. ولا شي بيمشي بلا موافقتك.",
+      en: "You approve the quote before dispatch, and any additional charges before extra work. Nothing moves without your approval.",
+      ar: "بتوافق على العرض قبل ما نبعت المعلّم لعندك، وعلى أي رسوم إضافية قبل أي شغل زيادة. ولا شي بيمشي بلا موافقتك.",
     },
     guaranteeTitle: { en: `The ${DAYS}-day guarantee`, ar: `ضمانة الـ${arabicDays(DAYS)}` },
     guaranteeBody: {
@@ -248,15 +248,15 @@ export const t = {
       {
         q: { en: "Which areas do you cover?", ar: "أي مناطق بتغطوا؟" },
         a: {
-          en: "All of Lebanon — any town or village. We confirm appointment availability for your address before approval.",
-          ar: "كل لبنان — أي مدينة أو ضيعة. منأكد توفر الموعد لعنوانك قبل الموافقة.",
+          en: "All of Lebanon, any town or village. We confirm appointment availability for your address before approval.",
+          ar: "كل لبنان، أي مدينة أو ضيعة. منأكد توفر الموعد لعنوانك قبل الموافقة.",
         },
       },
       {
         q: { en: "Is booking really free?", ar: "الحجز فعلاً مجاني؟" },
         a: {
-          en: "Yes — submitting a request costs nothing. You only pay for approved work, and any visit fee is confirmed with you before dispatch.",
-          ar: "أيه — تقديم الطلب ما بيكلف شي. بتدفع بس عالشغل الموافق عليه، وأي رسوم زيارة منأكدها معك قبل ما نبعت المعلّم لعندك.",
+          en: "Yes. Submitting a request costs nothing. You only pay for approved work, and any visit fee is confirmed with you before dispatch.",
+          ar: "أيه. تقديم الطلب ما بيكلف شي. بتدفع بس عالشغل الموافق عليه، وأي رسوم زيارة منأكدها معك قبل ما نبعت المعلّم لعندك.",
         },
       },
       {
@@ -269,8 +269,8 @@ export const t = {
       {
         q: { en: "How do I request a free revisit?", ar: "كيف بطلب زيارة مجانية؟" },
         a: {
-          en: `Open your completed request within ${DAYS} days, tap “Report a problem”, tell us what's wrong and pick a day for the visit — if it's covered, the revisit is free.`,
-          ar: `افتح طلبك المكتمل خلال ${arabicDays(DAYS)}، اضغط «بلّغ عن مشكلة»، خبّرنا شو المشكلة واختار يوم الزيارة — وإذا مشمولة، الزيارة مجانية.`,
+          en: `Open your completed request within ${DAYS} days, tap “Report a problem”, tell us what's wrong and pick a day for the visit. If it's covered, the revisit is free.`,
+          ar: `افتح طلبك المكتمل خلال ${arabicDays(DAYS)}، اضغط «بلّغ عن مشكلة»، خبّرنا شو المشكلة واختار يوم الزيارة. وإذا مشمولة، الزيارة مجانية.`,
         },
       },
     ] as { q: { en: string; ar: string }; a: { en: string; ar: string } }[],
@@ -284,23 +284,23 @@ export const t = {
     },
     urgencyTitle: { en: "Urgency you can see", ar: "استعجال واضح" },
     urgencySub: {
-      en: "Your answers — not a button — suggest the urgency. A specialist confirms it, and any surcharge is shown clearly before you approve.",
-      ar: "أجوبتك — مش زر — هي يلي بتحدد الاستعجال. المختص بيأكدو، وأي رسوم إضافية بتظهر بوضوح قبل موافقتك.",
+      en: "Your answers, not a button, suggest the urgency. A specialist confirms it, and any surcharge is shown clearly before you approve.",
+      ar: "أجوبتك، مش زر، هي يلي بتحدد الاستعجال. المختص بيأكدو، وأي رسوم إضافية بتظهر بوضوح قبل موافقتك.",
     },
   },
   trust: {
     kicker: { en: "(Our promise)", ar: "(وعدنا)" },
     title: { en: "Our promise. Every job.", ar: "وعدنا. بكل شغلة." },
     sub: {
-      en: "Speed, fair pricing, safety and a guarantee — this is what Be Right means.",
-      ar: "سرعة، سعر عادل، أمان وضمانة — هيدا معنى بي رايت.",
+      en: "Speed, fair pricing, safety and a guarantee: this is what Be Right means.",
+      ar: "سرعة، سعر عادل، أمان وضمانة: هيدا معنى بي رايت.",
     },
     items: [
       {
         title: { en: "Fast", ar: "سرعة" },
         body: {
-          en: "Book online in a few simple steps — no calls, no waiting for a callback. Urgent cases jump the queue and a specialist reviews them first.",
-          ar: "احجز أونلاين بخطوات بسيطة — بلا اتصالات، بلا انتظار حدا يرد. الحالات الطارئة بتتقدّم الطابور والمختص بيراجعها أول شي.",
+          en: "Book online in a few simple steps. No calls, no waiting for a callback. Urgent cases jump the queue and a specialist reviews them first.",
+          ar: "احجز أونلاين بخطوات بسيطة. بلا اتصالات، بلا انتظار حدا يرد. الحالات الطارئة بتتقدّم الطابور والمختص بيراجعها أول شي.",
         },
       },
       {
@@ -313,15 +313,15 @@ export const t = {
       {
         title: { en: "Safe", ar: "أمان" },
         body: {
-          en: "Verified technicians only — and guided photos mean you never open a live panel or touch a gas line just to explain the problem.",
-          ar: "معلّمين موثّقين بس — والتصوير الموجّه يعني إنك أبداً ما بتفتح لوحة كهربا أو بتقرب من خط غاز لتشرح المشكلة.",
+          en: "Verified technicians only, and guided photos mean you never open a live panel or touch a gas line just to explain the problem.",
+          ar: "معلّمين موثّقين بس، والتصوير الموجّه يعني إنك أبداً ما بتفتح لوحة كهربا أو بتقرب من خط غاز لتشرح المشكلة.",
         },
       },
       {
         title: { en: "Guaranteed", ar: "ضمانة" },
         body: {
-          en: "Every job is logged, photographed and reviewed. If it's not right, we come back and make it right — it's in the name.",
-          ar: "كل شغلة مسجّلة وموثّقة ومراجعة. إذا مش مظبوطة، منرجع منظبطها — هيك اسمنا.",
+          en: "Every job is logged, photographed and reviewed. If it's not right, we come back and make it right. It's in the name.",
+          ar: "كل شغلة مسجّلة وموثّقة ومراجعة. إذا مش مظبوطة، منرجع منظبطها. هيك اسمنا.",
         },
       },
     ] as { title: { en: string; ar: string }; body: { en: string; ar: string } }[],
@@ -337,8 +337,8 @@ export const t = {
   footer: {
     tagline: { en: "Glad to help you.", ar: "بيسعدنا نساعدك." },
     contactSoon: {
-      en: "Contact details coming soon — book online and we'll call you back.",
-      ar: "معلومات التواصل قريباً — احجز أونلاين ومنرجع منحكيك.",
+      en: "Contact details coming soon. Book online and we'll call you back.",
+      ar: "معلومات التواصل قريباً. احجز أونلاين ومنرجع منحكيك.",
     },
     rights: { en: "Be Right by Bright · be-rightbright.com", ar: "بي رايت من برايت · be-rightbright.com" },
     replayIntro: { en: "Replay intro", ar: "شوف المقدمة" },
@@ -381,8 +381,8 @@ export const t = {
     submitting: { en: "Sending…", ar: "عم نرسل…" },
     suggestedUrgency: { en: "Suggested urgency from your answers", ar: "الاستعجال المقترح حسب أجوبتك" },
     urgencyDisclaimer: {
-      en: "A specialist confirms urgency and any surcharge before dispatch — nothing is charged without your approval.",
-      ar: "المختص بيأكد الاستعجال وأي رسوم إضافية قبل ما نبعت المعلّم لعندك — ما في أي دفع بلا موافقتك.",
+      en: "A specialist confirms urgency and any surcharge before dispatch. Nothing is charged without your approval.",
+      ar: "المختص بيأكد الاستعجال وأي رسوم إضافية قبل ما نبعت المعلّم لعندك. ما في أي دفع بلا موافقتك.",
     },
     successTitle: { en: "Request received!", ar: "وصلنا طلبك!" },
     successBody: {
@@ -417,7 +417,7 @@ export const t = {
   },
   requests: {
     title: { en: "My requests", ar: "طلباتي" },
-    empty: { en: "No requests yet — book your first service.", ar: "ما في طلبات بعد — احجز أول خدمة." },
+    empty: { en: "No requests yet. Book your first service.", ar: "ما في طلبات بعد. احجز أول خدمة." },
     created: { en: "Created", ar: "تاريخ الطلب" },
     preferred: { en: "Preferred", ar: "الموعد المفضل" },
     urgency: { en: "Urgency", ar: "الاستعجال" },
@@ -517,8 +517,8 @@ export const t = {
       ar: "الزبون بيشوف موقعك طالما الشغل شغّال. خلّي هالصفحة مفتوحة بالطريق: المشاركة بتوقف لما تقفل الشاشة.",
     },
     geoError: {
-      en: "Location unavailable — allow location access and try again.",
-      ar: "الموقع مش متاح — اسمح بالوصول للموقع وجرّب مرة تانية.",
+      en: "Location unavailable. Allow location access and try again.",
+      ar: "الموقع مش متاح. اسمح بالوصول للموقع وجرّب مرة تانية.",
     },
     arrived: { en: "Arrived", ar: "وصلت" },
     startWork: { en: "Start work", ar: "ابدأ الشغل" },
@@ -638,16 +638,16 @@ export const t = {
     kicker: { en: "(Work with us)", ar: "(اشتغل معنا)" },
     sectionTitle: { en: "Good at your trade? Work with Be Right.", ar: "شاطر بمهنتك؟ اشتغل مع بي رايت." },
     bullet1: {
-      en: "Steady local work — jobs matched to your trade and your area.",
-      ar: "شغل محلي ثابت — مهام حسب مهنتك ومنطقتك.",
+      en: "Steady local work, with jobs matched to your trade and your area.",
+      ar: "شغل محلي ثابت، ومهام حسب مهنتك ومنطقتك.",
     },
     bullet2: {
-      en: "Arrive prepared — specialist instructions, photos and parts routing before you drive.",
-      ar: "تعال جاهز للشغل — تعليمات المختص والصور وتوجيه القطع قبل ما تتحرك.",
+      en: "Arrive prepared, with specialist instructions, photos and parts routing before you drive.",
+      ar: "تعال جاهز للشغل، مع تعليمات المختص والصور وتوجيه القطع قبل ما تتحرك.",
     },
     bullet3: {
-      en: "No haggling — the price is approved before you're dispatched.",
-      ar: "بلا فصال — السعر متفق عليه قبل ما تنبعت.",
+      en: "No haggling. The price is approved before you're dispatched.",
+      ar: "بلا فصال. السعر متفق عليه قبل ما تنبعت.",
     },
     cta: { en: "Apply to join", ar: "قدّم طلبك" },
     title: { en: "Apply as a technician", ar: "قدّم طلبك كمعلّم" },
@@ -985,8 +985,8 @@ export const t = {
   guaranteePage: {
     title: { en: "The Be Right Guarantee", ar: "ضمانة بي رايت" },
     sub: {
-      en: "If it's not right, we come back and make it right. It's in the name — here's exactly what that means.",
-      ar: "إذا مش مظبوطة، منرجع منظبطها. هيك اسمنا — وهيدا شو يعني بالضبط.",
+      en: "If it's not right, we come back and make it right. It's in the name. Here's exactly what that means.",
+      ar: "إذا مش مظبوطة، منرجع منظبطها. هيك اسمنا، وهيدا شو يعني بالضبط.",
     },
     cta: { en: "Book with confidence", ar: "احجز وانت مرتاح" },
   },
@@ -1006,8 +1006,8 @@ export const t = {
   trustRow: {
     checksTitle: { en: "Technician checks", ar: "كيف منتأكد من المعلّمين" },
     checksBody: {
-      en: "Identity, trade experience and references — reviewed before a technician's first job.",
-      ar: "الهوية والخبرة والمراجع — بينراجعوا قبل أول شغلة للمعلّم.",
+      en: "Identity, trade experience and references, reviewed before a technician's first job.",
+      ar: "الهوية والخبرة والمراجع، بينراجعوا قبل أول شغلة للمعلّم.",
     },
     checksCta: { en: "Learn more", ar: "اعرف أكتر" },
     clientsTitle: { en: "Our clients", ar: "زبائننا" },
@@ -1018,8 +1018,8 @@ export const t = {
     clientsCta: { en: "View clients", ar: "شوف زبائننا" },
     guaranteeTitle: { en: "Be Right guarantee", ar: "ضمانة بي رايت" },
     guaranteeBody: {
-      en: "Not right? We come back and make it right — the revisit is free.",
-      ar: "مش مظبوطة؟ منرجع منظبطها — الزيارة مجانية.",
+      en: "Not right? We come back and make it right, and the revisit is free.",
+      ar: "مش مظبوطة؟ منرجع منظبطها، والزيارة مجانية.",
     },
     guaranteeCta: { en: "Learn more", ar: "اعرف أكتر" },
   },
@@ -1061,7 +1061,7 @@ export const t = {
     emergency: { en: "Emergency", ar: "طوارئ" },
     emergencyQ: { en: "What's the emergency?", ar: "شو المشكلة المستعجلة؟" },
     locationQ: { en: "Where in Lebanon?", ar: "وين بلبنان؟" },
-    locationPh: { en: "City or area — e.g. Hamra, Jounieh, Tripoli", ar: "المدينة أو المنطقة — مثال: الحمرا، جونيه، طرابلس" },
+    locationPh: { en: "City or area, e.g. Hamra, Jounieh, Tripoli", ar: "المدينة أو المنطقة، مثال: الحمرا، جونيه، طرابلس" },
     continue: { en: "Continue", ar: "تابِع" },
     back: { en: "Back", ar: "رجوع" },
     close: { en: "Close", ar: "سكّر" },
