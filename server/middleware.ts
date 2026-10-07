@@ -40,11 +40,11 @@ const requireAuth = t.middleware(async (opts) => {
   return next({ ctx: { ...ctx, user: ctx.user } });
 });
 
-function requireRole(role: Role) {
+function requireRole(...roles: Role[]) {
   return t.middleware(async (opts) => {
     const { ctx, next } = opts;
 
-    if (!ctx.user || ctx.user.role !== role) {
+    if (!ctx.user || !roles.includes(ctx.user.role)) {
       throw new TRPCError({
         code: "FORBIDDEN",
         message: ErrorMessages.insufficientRole,
@@ -60,5 +60,7 @@ export const authedQuery = t.procedure.use(requireAuth);
 export const customerQuery = authedQuery.use(requireRole("customer"));
 /** Technicians: work the jobs assigned to them. */
 export const technicianQuery = authedQuery.use(requireRole("technician"));
-/** Specialists: office staff running the dashboard. */
-export const specialistQuery = authedQuery.use(requireRole("specialist"));
+/** Specialists: office staff running the dashboard. Admins can do all of it too. */
+export const specialistQuery = authedQuery.use(requireRole("specialist", "admin"));
+/** Admins: the admin area (customers, team, activity, figures). */
+export const adminQuery = authedQuery.use(requireRole("admin"));

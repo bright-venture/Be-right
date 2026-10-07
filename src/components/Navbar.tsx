@@ -32,7 +32,7 @@ function WebNavbar() {
   const area = role
     ? {
         to: HOME_BY_ROLE[role],
-        label: p({ customer: t.nav.myRequests, technician: t.nav.jobs, specialist: t.nav.dashboard }[role]),
+        label: p({ customer: t.nav.myRequests, technician: t.nav.jobs, specialist: t.nav.dashboard, admin: t.nav.admin }[role]),
       }
     : null;
 

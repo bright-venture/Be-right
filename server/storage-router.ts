@@ -18,6 +18,7 @@ import { clientIp, LIMITS, rateLimit } from "./lib/rateLimit";
 import { requestMedia, serviceRequests } from "../db/schema";
 import { ACTIVE_JOB_STATUSES } from "@contracts/workflow";
 import { findRequest } from "./lib/workflow";
+import { canDispatch } from "@contracts/roles";
 
 export const storageRouter = createRouter({
   // Returns a one-time signed URL token; the browser uploads the file directly to storage.
@@ -108,7 +109,7 @@ export const storageRouter = createRouter({
           (r) =>
             r.ownerId === ctx.user.id ||
             r.technicianId === ctx.user.id ||
-            ctx.user.role === "specialist",
+            canDispatch(ctx.user.role),
         )
         .map((r) => r.key);
       return { urls: await createSignedUrls(allowed) };

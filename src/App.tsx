@@ -7,6 +7,7 @@ import { isAppUi } from './lib/native'
 const Book = lazy(() => import('./pages/Book'))
 const Requests = lazy(() => import('./pages/Requests'))
 const Dashboard = lazy(() => import('./pages/Dashboard'))
+const Admin = lazy(() => import('./pages/Admin'))
 const Tech = lazy(() => import('./pages/Tech'))
 const Login = lazy(() => import('./pages/Login'))
 const ResetPassword = lazy(() => import('./pages/ResetPassword'))
@@ -48,6 +49,7 @@ export default function App() {
         <Route path="/requests" element={isAppUi ? <AppRequests /> : <Requests />} />
         {isAppUi && <Route path="/requests/:id" element={<AppRequest />} />}
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/admin" element={<Admin />} />
         <Route path="/tech" element={<Tech />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Login mode="signup" />} />

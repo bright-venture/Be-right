@@ -1,7 +1,7 @@
 // Notification emails: who hears about what, in English and Arabic.
 // Called by the routers after a change has been saved. A failed email is logged and
 // never undoes or blocks the change itself.
-import { and, count, eq } from "drizzle-orm";
+import { and, count, eq, inArray } from "drizzle-orm";
 import { requestEvents, serviceRequests, technicianApplications, users } from "@db/schema";
 import { CATEGORY_MAP, URGENCY_META, type LocalText, type UrgencyLevel } from "@contracts/services";
 import { arabicDays, WORKMANSHIP_GUARANTEE_DAYS } from "@contracts/legal";
@@ -85,7 +85,10 @@ async function safely(name: string, fn: () => Promise<void>) {
 /* ---------- data ---------- */
 
 async function specialistEmails() {
-  const rows = await getDb().select({ email: users.email }).from(users).where(eq(users.role, "specialist"));
+  const rows = await getDb()
+    .select({ email: users.email })
+    .from(users)
+    .where(inArray(users.role, ["specialist", "admin"]));
   return [...rows.map((r) => r.email), ...env.specialistEmails];
 }
 

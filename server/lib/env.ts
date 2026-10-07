@@ -23,6 +23,11 @@ export const env = {
   emailFrom: process.env.EMAIL_FROM || "Be Right <noreply@be-rightbright.com>",
   /** Where replies to notifications go (customers reply to report a problem). */
   emailReplyTo: process.env.EMAIL_REPLY_TO || "hello@be-rightbright.com",
+  /** Comma-separated emails that get the admin role on sign-in: the owners (see /admin). */
+  ownerEmails: (process.env.OWNER_EMAILS || "")
+    .split(",")
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean),
   /** Comma-separated emails that get the specialist role on sign-in (ADMIN_EMAILS is the old name). */
   specialistEmails: (process.env.SPECIALIST_EMAILS || process.env.ADMIN_EMAILS || "")
     .split(",")

@@ -20,7 +20,7 @@ import type { Transport } from "../contracts/applications";
 // Postgres directly (bypassing RLS), while Supabase's public REST API — reachable with
 // the browser's publishable key — gets no access to these tables at all.
 
-export const userRole = pgEnum("user_role", ["customer", "specialist", "technician"]);
+export const userRole = pgEnum("user_role", ["customer", "specialist", "technician", "admin"]);
 export const urgencyLevel = pgEnum("urgency_level", [
   "normal",
   "priority",

@@ -184,8 +184,8 @@ export const joinRouter = createRouter({
       let invited = false;
       const existing = await db.query.users.findFirst({ where: eq(users.email, address) });
       if (existing) {
-        if (existing.role === "specialist") {
-          throw new TRPCError({ code: "BAD_REQUEST", message: "This email belongs to a specialist" });
+        if (existing.role === "specialist" || existing.role === "admin") {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "This email belongs to a Be Right staff member" });
         }
         await db
           .update(users)

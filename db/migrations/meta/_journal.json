@@ -120,6 +120,13 @@
       "when": 1791359232830,
       "tag": "0016_vehicle_registration",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1791360582305,
+      "tag": "0017_admin_role",
+      "breakpoints": true
     }
   ]
 }

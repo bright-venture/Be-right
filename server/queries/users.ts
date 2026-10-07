@@ -10,6 +10,16 @@ function isSpecialistEmail(email: string | null) {
   return !!email && env.specialistEmails.includes(email.toLowerCase());
 }
 
+/** Owners (OWNER_EMAILS) are admins. */
+function isOwnerEmail(email: string | null) {
+  return !!email && (env.ownerEmails ?? []).includes(email.toLowerCase());
+}
+
+/** The role an email gets from the settings, if any: owners first, then specialists. */
+function roleFromSettings(email: string | null) {
+  return isOwnerEmail(email) ? "admin" : isSpecialistEmail(email) ? "specialist" : null;
+}
+
 async function findByAuthId(authId: string) {
   const rows = await getDb()
     .select()
@@ -46,7 +56,7 @@ export async function findOrCreateUser(identity: {
         phone: identity.phone ?? null,
         termsVersion: identity.termsVersion ?? null,
         termsAcceptedAt: identity.termsVersion ? new Date() : null,
-        role: isSpecialistEmail(identity.email) ? "specialist" : "customer",
+        role: roleFromSettings(identity.email) ?? "customer",
       })
       .onConflictDoNothing({ target: schema.users.authId });
     const created = await findByAuthId(identity.authId);
@@ -62,7 +72,10 @@ export async function findOrCreateUser(identity: {
     patch.termsVersion = identity.termsVersion;
     patch.termsAcceptedAt = new Date();
   }
-  if (existing.role !== "specialist" && isSpecialistEmail(identity.email ?? existing.email)) {
+  // Settings only ever promote (customer → specialist → admin); roles given in /admin stay.
+  const settingsRole = roleFromSettings(identity.email ?? existing.email);
+  if (settingsRole === "admin" && existing.role !== "admin") patch.role = "admin";
+  if (settingsRole === "specialist" && existing.role !== "specialist" && existing.role !== "admin") {
     patch.role = "specialist";
   }
   if (Date.now() - existing.lastSignInAt.getTime() > SIGN_IN_TOUCH_MS) {

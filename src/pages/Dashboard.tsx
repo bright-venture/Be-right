@@ -9,14 +9,16 @@ import { inView } from "@/components/dashboard/queueMeta";
 import { useI18n } from "@/i18n";
 import { useRoleGate } from "@/hooks/useRoleGate";
 import { trpc } from "@/providers/trpc";
+import { canDispatch } from "@contracts/roles";
 
 type Tab = "queue" | "applications" | "technicians";
 
 /** Specialist control center: requests queue, technician applications, technicians. */
 export default function Dashboard() {
   const { t, p } = useI18n();
-  const { role, isLoading: authLoading } = useRoleGate(["specialist"], { requireSignIn: true });
-  const isSpecialist = role === "specialist";
+  // Admins run the dashboard too.
+  const { role, isLoading: authLoading } = useRoleGate(["specialist", "admin"], { requireSignIn: true });
+  const isSpecialist = canDispatch(role);
   const [tab, setTab] = useState<Tab>("queue");
 
   // Badge counts (same queries the tabs use, so they share the cache).

@@ -22,7 +22,8 @@ another role's page redirects back (enforced on the server too):
 | --- | --- | --- |
 | Customer | Default for every new account | `/book`, `/requests` |
 | Technician | A specialist adds their email in Dashboard → Technicians (they sign up first) | `/tech` |
-| Specialist | Email listed in `SPECIALIST_EMAILS` (applied on next sign-in) | `/dashboard` |
+| Specialist | Added by an admin in Admin → Team, or listed in `SPECIALIST_EMAILS` (applied on next sign-in) | `/dashboard` |
+| Admin | Email listed in `OWNER_EMAILS`, or made admin by another admin in Admin → Team. Can do everything a specialist can, plus figures, every customer, the team and the activity log | `/admin`, `/dashboard` |
 
 Technician applications from `/join` need no account and appear in the dashboard.
 

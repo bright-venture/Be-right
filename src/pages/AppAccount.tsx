@@ -112,7 +112,12 @@ export default function AppAccount() {
     );
   }
 
-  const role = { customer: t.app.roleCustomer, technician: t.app.roleTechnician, specialist: t.app.roleSpecialist }[
+  const role = {
+    customer: t.app.roleCustomer,
+    technician: t.app.roleTechnician,
+    specialist: t.app.roleSpecialist,
+    admin: t.app.roleAdmin,
+  }[
     user.role as (typeof ROLES)[number]
   ];
 
