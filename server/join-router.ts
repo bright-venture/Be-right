@@ -12,6 +12,7 @@ import {
   EXPERIENCE_LEVELS,
   MANUAL_APPLICATION_STATUSES,
   TRANSPORT,
+  requiredDocuments,
   type ApplicationDocument,
 } from "@contracts/applications";
 import { getSupabaseAdmin } from "./lib/supabase";
@@ -24,7 +25,7 @@ import { createDocumentUrls, documentKeyMatches, documentsExist } from "./lib/st
 const TRADE_IDS = CATEGORIES.map((c) => c.id) as [string, ...string[]];
 const documentKey = z.string().max(512);
 
-/** An application's four document keys, by document (null when missing). */
+/** An application's document keys, by document (null when missing). */
 function documentKeysOf(app: Record<(typeof DOCUMENT_FIELD)[ApplicationDocument], string | null>) {
   return Object.fromEntries(APPLICATION_DOCUMENTS.map((kind) => [kind, app[DOCUMENT_FIELD[kind]]])) as Record<
     ApplicationDocument,
@@ -61,6 +62,8 @@ export const joinRouter = createRouter({
         idDocumentKey: documentKey,
         criminalRecordKey: documentKey,
         proofOfAddressKey: documentKey,
+        // Required when the applicant works with a vehicle (transport other than "none").
+        vehicleRegistrationKey: documentKey.optional(),
         photoKey: documentKey,
         // Privacy Policy + consent to review the documents.
         consent: z.literal(true),
@@ -68,13 +71,14 @@ export const joinRouter = createRouter({
     )
     .mutation(async ({ ctx, input }) => {
       await rateLimit(`apply:ip:${clientIp(ctx.req)}`, LIMITS.applicationPerIp);
-      // Each key must be a real upload of the right kind (not, say, the photo sent as the ID).
-      const keys = APPLICATION_DOCUMENTS.map((kind) => input[DOCUMENT_FIELD[kind]]);
+      // Each required key must be a real upload of the right kind (not, say, the photo sent as the ID).
+      const required = requiredDocuments(input.transport);
+      const keys = required.map((kind) => input[DOCUMENT_FIELD[kind]]);
       if (
-        APPLICATION_DOCUMENTS.some((kind) => !documentKeyMatches(input[DOCUMENT_FIELD[kind]], kind)) ||
-        !(await documentsExist(keys))
+        required.some((kind) => !documentKeyMatches(input[DOCUMENT_FIELD[kind]] ?? "", kind)) ||
+        !(await documentsExist(keys as string[]))
       ) {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "Please upload all four documents" });
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Please upload every required document" });
       }
       // \`consent\` is validated above (must be true); what's stored is when and which version.
       const [res] = await getDb()
@@ -94,6 +98,7 @@ export const joinRouter = createRouter({
           idDocumentKey: input.idDocumentKey,
           criminalRecordKey: input.criminalRecordKey,
           proofOfAddressKey: input.proofOfAddressKey,
+          vehicleRegistrationKey: required.includes("vehicleRegistration") ? input.vehicleRegistrationKey : null,
           photoKey: input.photoKey,
           consentAt: new Date(),
           consentVersion: LEGAL_VERSION,
@@ -136,9 +141,8 @@ export const joinRouter = createRouter({
     const urls = await createDocumentUrls(Object.values(keys).filter((k): k is string => !!k));
     const link = (key: string | null) =>
       key && urls[key] ? { url: urls[key], isPdf: key.toLowerCase().endsWith(".pdf") } : null;
-    return Object.fromEntries(APPLICATION_DOCUMENTS.map((kind) => [kind, link(keys[kind])])) as Record<
-      ApplicationDocument,
-      { url: string; isPdf: boolean } | null
+    return Object.fromEntries(requiredDocuments(app.transport).map((kind) => [kind, link(keys[kind])])) as Partial<
+      Record<ApplicationDocument, { url: string; isPdf: boolean } | null>
     >;
   }),
 
@@ -164,10 +168,11 @@ export const joinRouter = createRouter({
         where: eq(technicianApplications.id, input.id),
       });
       if (!app) throw new TRPCError({ code: "NOT_FOUND" });
-      if (Object.values(documentKeysOf(app)).some((key) => !key)) {
+      const keysOnFile = documentKeysOf(app);
+      if (requiredDocuments(app.transport).some((kind) => !keysOnFile[kind])) {
         throw new TRPCError({
           code: "BAD_REQUEST",
-          message: "All four documents are required. Ask the applicant to apply again with them.",
+          message: "Every required document is needed. Ask the applicant to apply again with them.",
         });
       }
       const address = input.email ?? app.email?.toLowerCase();

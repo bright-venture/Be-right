@@ -28,6 +28,7 @@ export async function purgeOrphanUploads({ now = new Date(), dryRun = false } = 
           b: technicianApplications.photoKey,
           c: technicianApplications.criminalRecordKey,
           d: technicianApplications.proofOfAddressKey,
+          e: technicianApplications.vehicleRegistrationKey,
         })
         .from(technicianApplications)
         .where(
@@ -36,12 +37,13 @@ export async function purgeOrphanUploads({ now = new Date(), dryRun = false } = 
             inArray(technicianApplications.photoKey, docs),
             inArray(technicianApplications.criminalRecordKey, docs),
             inArray(technicianApplications.proofOfAddressKey, docs),
+            inArray(technicianApplications.vehicleRegistrationKey, docs),
           ),
         ),
       // A hired technician's profile photo stays in use after the application closes.
       db.select({ key: users.avatar }).from(users).where(inArray(users.avatar, docs)),
     ]);
-    for (const row of apps) for (const key of [row.a, row.b, row.c, row.d]) if (key) usedDocs.add(key);
+    for (const row of apps) for (const key of [row.a, row.b, row.c, row.d, row.e]) if (key) usedDocs.add(key);
     for (const row of avatars) if (row.key) usedDocs.add(row.key);
   }
   const usedMedia = new Set(

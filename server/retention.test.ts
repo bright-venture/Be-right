@@ -79,17 +79,17 @@ describe("rejected-applicant document clean-up", () => {
     const hired = await application("hired", DAYS + 30);
 
     const preview = await purgeRejectedDocuments({ dryRun: true });
-    expect(preview).toMatchObject({ applications: 2, files: 8, dryRun: true }); // 4 documents each
+    expect(preview).toMatchObject({ applications: 2, files: 10, dryRun: true }); // 5 documents each
     expect(deletedDocuments).toHaveLength(0);
     expect((await load(due.id)).idDocumentKey).not.toBeNull();
 
     const result = await purgeRejectedDocuments();
-    expect(result).toMatchObject({ applications: 2, files: 8 });
+    expect(result).toMatchObject({ applications: 2, files: 10 });
     expect(deletedDocuments).toEqual(expect.arrayContaining([...due.keys, ...legacy.keys]));
 
     for (const id of [due.id, legacy.id]) {
       const row = await load(id);
-      expect(row).toMatchObject({ idDocumentKey: null, criminalRecordKey: null, proofOfAddressKey: null, photoKey: null });
+      expect(row).toMatchObject({ idDocumentKey: null, criminalRecordKey: null, proofOfAddressKey: null, vehicleRegistrationKey: null, photoKey: null });
       expect(row.documentsDeletedAt).toBeInstanceOf(Date);
     }
     for (const { id } of [recent, pending, hired]) {

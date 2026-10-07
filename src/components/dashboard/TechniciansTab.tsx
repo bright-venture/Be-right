@@ -137,7 +137,8 @@ function TechnicianCard({ tech: x }: { tech: Technician }) {
       {showDocs && (
         <ul className="mt-3 flex flex-col gap-1 rounded-xl bg-paper p-3 text-xs">
           {docs.isLoading && <Loader2 className="h-4 w-4 animate-spin text-navy" />}
-          {APPLICATION_DOCUMENTS.map((kind) => {
+          {/* only the documents this technician had to provide (the server lists those) */}
+          {APPLICATION_DOCUMENTS.filter((kind) => !docs.data || kind in docs.data).map((kind) => {
             const doc = docs.data?.[kind];
             return (
               !docs.isLoading && (

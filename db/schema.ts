@@ -180,6 +180,8 @@ export const technicianApplications = pgTable("technician_applications", {
   idDocumentKey: varchar("id_document_key", { length: 512 }),
   criminalRecordKey: varchar("criminal_record_key", { length: 512 }),
   proofOfAddressKey: varchar("proof_of_address_key", { length: 512 }),
+  /** The vehicle's registration papers (only when the applicant works with a vehicle). */
+  vehicleRegistrationKey: varchar("vehicle_registration_key", { length: 512 }),
   photoKey: varchar("photo_key", { length: 512 }),
   /** Applicant consented to the Privacy Policy and document review (version accepted). */
   consentAt: timestamp("consent_at", { withTimezone: true }),

@@ -157,8 +157,8 @@ export const PRIVACY: LegalDocument = {
           "موقع الفني: فقط أثناء تنفيذ المهمة وبعد أن يفعّل الفني مشاركة الموقع؛ ونحتفظ بآخر موقع لتلك المهمة فقط.",
         ),
         t(
-          "Technician applicants: contact details, trade, experience and availability, and the documents required for vetting: ID card or passport, criminal record, proof of address and a profile photo.",
-          "المتقدّمون للعمل كفنيين: بيانات التواصل والمهنة والخبرة وأوقات العمل، والمستندات المطلوبة للتدقيق: الهوية أو جواز السفر، والسجل العدلي، وإثبات السكن، وصورة شخصية.",
+          "Technician applicants: contact details, trade, experience, availability and transport, and the documents required for vetting: ID card or passport, criminal record, proof of address, a profile photo and, for those who work with a vehicle, its registration papers.",
+          "المتقدّمون للعمل كفنيين: بيانات التواصل والمهنة والخبرة وأوقات العمل ووسيلة النقل، والمستندات المطلوبة للتدقيق: الهوية أو جواز السفر، والسجل العدلي، وإثبات السكن، وصورة شخصية، ودفتر الآلية لمن يعمل بآلية.",
         ),
         t(
           "On your device we store only what the site needs to work: your sign-in session, language choice and an unfinished booking draft. We don't use advertising or tracking cookies.",

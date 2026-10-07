@@ -1,0 +1,1 @@
+ALTER TABLE "technician_applications" ADD COLUMN "vehicle_registration_key" varchar(512);

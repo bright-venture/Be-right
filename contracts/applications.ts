@@ -33,8 +33,8 @@ export const TRANSPORT_LABELS: Record<Transport, LocalText> = {
   truck: { en: "Truck", ar: "كميون" },
 };
 
-/** Documents every technician applicant must upload, in the order the form shows them. */
-export const APPLICATION_DOCUMENTS = ["idDocument", "criminalRecord", "proofOfAddress", "photo"] as const;
+/** Documents a technician applicant uploads, in the order the form shows them. */
+export const APPLICATION_DOCUMENTS = ["idDocument", "criminalRecord", "proofOfAddress", "vehicleRegistration", "photo"] as const;
 export type ApplicationDocument = (typeof APPLICATION_DOCUMENTS)[number];
 
 /** Where each document's storage key is kept on an application (db/schema.ts). */
@@ -42,6 +42,7 @@ export const DOCUMENT_FIELD = {
   idDocument: "idDocumentKey",
   criminalRecord: "criminalRecordKey",
   proofOfAddress: "proofOfAddressKey",
+  vehicleRegistration: "vehicleRegistrationKey",
   photo: "photoKey",
 } as const satisfies Record<ApplicationDocument, string>;
 export type DocumentField = (typeof DOCUMENT_FIELD)[ApplicationDocument];
@@ -51,8 +52,17 @@ export const DOCUMENT_TYPES: Record<ApplicationDocument, readonly string[]> = {
   idDocument: ["image/", "application/pdf"],
   criminalRecord: ["image/", "application/pdf"],
   proofOfAddress: ["image/", "application/pdf"],
+  vehicleRegistration: ["image/", "application/pdf"],
   photo: ["image/"],
 };
+
+/**
+ * The documents an applicant must provide: the vehicle's registration papers only when they
+ * work with a vehicle. Applications from before the transport question (null) weren't asked.
+ */
+export function requiredDocuments(transport: Transport | null | undefined): ApplicationDocument[] {
+  return APPLICATION_DOCUMENTS.filter((kind) => kind !== "vehicleRegistration" || (!!transport && transport !== "none"));
+}
 /** Largest file accepted per document (photos are shrunk in the browser before this check). */
 export const MAX_DOCUMENT_MB = 10;
 export const MAX_DOCUMENT_BYTES = MAX_DOCUMENT_MB * 1024 * 1024;

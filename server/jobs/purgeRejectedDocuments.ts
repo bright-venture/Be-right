@@ -19,6 +19,7 @@ export async function purgeRejectedDocuments({ now = new Date(), dryRun = false 
       idDocumentKey: technicianApplications.idDocumentKey,
       criminalRecordKey: technicianApplications.criminalRecordKey,
       proofOfAddressKey: technicianApplications.proofOfAddressKey,
+      vehicleRegistrationKey: technicianApplications.vehicleRegistrationKey,
       photoKey: technicianApplications.photoKey,
     })
     .from(technicianApplications)
@@ -32,13 +33,14 @@ export async function purgeRejectedDocuments({ now = new Date(), dryRun = false 
           isNotNull(technicianApplications.idDocumentKey),
           isNotNull(technicianApplications.criminalRecordKey),
           isNotNull(technicianApplications.proofOfAddressKey),
+          isNotNull(technicianApplications.vehicleRegistrationKey),
           isNotNull(technicianApplications.photoKey),
         ),
       ),
     );
 
   const keys = due
-    .flatMap((a) => [a.idDocumentKey, a.criminalRecordKey, a.proofOfAddressKey, a.photoKey])
+    .flatMap((a) => [a.idDocumentKey, a.criminalRecordKey, a.proofOfAddressKey, a.vehicleRegistrationKey, a.photoKey])
     .filter((k): k is string => !!k);
   if (!dryRun && due.length) {
     // Files first: if storage fails, the rows still point at them and the next run retries.
@@ -49,6 +51,7 @@ export async function purgeRejectedDocuments({ now = new Date(), dryRun = false 
         idDocumentKey: null,
         criminalRecordKey: null,
         proofOfAddressKey: null,
+        vehicleRegistrationKey: null,
         photoKey: null,
         documentsDeletedAt: now,
       })

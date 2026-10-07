@@ -63,6 +63,7 @@ export function documentKeys() {
     idDocumentKey: key("idDocument"),
     criminalRecordKey: key("criminalRecord"),
     proofOfAddressKey: key("proofOfAddress"),
+    vehicleRegistrationKey: key("vehicleRegistration"),
     photoKey: key("photo"),
   };
 }

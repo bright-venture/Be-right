@@ -6,12 +6,12 @@ import { trpc } from "@/providers/trpc";
 import { telLink, whatsappLink } from "@/lib/contact";
 import { CATEGORY_MAP } from "@contracts/services";
 import {
-  APPLICATION_DOCUMENTS,
   AVAILABILITY_LABELS,
   DOCUMENT_FIELD,
   EXPERIENCE_LABELS,
   MANUAL_APPLICATION_STATUSES,
   TRANSPORT_LABELS,
+  requiredDocuments,
   type Availability,
   type ExperienceLevel,
 } from "@contracts/applications";
@@ -82,7 +82,8 @@ function ApplicationCard({
   // "hired" by hand without an account ever being created.
   const hired = app.status === "hired" && app.hiredUserId != null;
   const hireEmail = app.email ?? email.trim();
-  const hasDocuments = APPLICATION_DOCUMENTS.every((kind) => !!app[DOCUMENT_FIELD[kind]]);
+  const needed = requiredDocuments(app.transport);
+  const hasDocuments = needed.every((kind) => !!app[DOCUMENT_FIELD[kind]]);
   const canHire = !hired && hasDocuments && EMAIL_PATTERN.test(hireEmail);
   // Short-lived links, fetched only when the card is open.
   const docs = trpc.join.documents.useQuery({ id: app.id }, { enabled: open, staleTime: 60_000 });
@@ -178,8 +179,13 @@ function ApplicationCard({
           {/* identity documents (private, specialists only) */}
           <div className="mt-4">
             <p className="font-display text-xs font-bold uppercase tracking-[0.2em] text-navy/70">{p(t.docs.title)}</p>
-            <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
-              {(["photo", "idDocument", "criminalRecord", "proofOfAddress"] as const).map((kind) => {
+            {/* photo first, then the papers; an odd last one fills its row on phones */}
+            <div
+              className={`mt-2 grid grid-cols-2 gap-2 max-sm:[&>*:last-child:nth-child(odd)]:col-span-2 ${
+                needed.length === 5 ? "sm:grid-cols-5" : "sm:grid-cols-4"
+              }`}
+            >
+              {(["photo", ...needed.filter((kind) => kind !== "photo")] as const).map((kind) => {
                 const doc = docs.data?.[kind];
                 return (
                   <div key={kind} className="rounded-xl border-2 border-navy/15 bg-paper p-2 text-center">

@@ -10,7 +10,7 @@ import { useI18n } from "@/i18n";
 import { trpc } from "@/providers/trpc";
 import { CATEGORY_MAP, SERVICES_IN_ORDER, type LocalText } from "@contracts/services";
 import { isValidPhone } from "@contracts/phone";
-import { APPLICATION_DOCUMENTS, DOCUMENT_FIELD, type ApplicationDocument } from "@contracts/applications";
+import { DOCUMENT_FIELD, requiredDocuments, type ApplicationDocument } from "@contracts/applications";
 import { isRateLimited } from "@/lib/errors";
 import {
   AVAILABILITY,
@@ -109,6 +109,8 @@ export default function Join() {
   const labelled = <T extends string>(values: readonly T[], labels: Record<T, LocalText>) =>
     values.map((v) => ({ value: v, label: p(labels[v]) }));
 
+  // The vehicle's papers are asked for once the applicant says they use a vehicle.
+  const required = requiredDocuments(transport);
   const valid =
     name.trim().length >= 2 &&
     isValidPhone(phone) &&
@@ -120,7 +122,7 @@ export default function Join() {
     hasTools !== null &&
     transport !== null &&
     notes.trim().length >= 3 &&
-    APPLICATION_DOCUMENTS.every((kind) => !!documents[kind]) &&
+    required.every((kind) => !!documents[kind]) &&
     consent;
 
   async function submit() {
@@ -139,7 +141,7 @@ export default function Join() {
         transport: transport!,
         notes: notes.trim(),
         // `valid` above requires every document
-        ...(Object.fromEntries(APPLICATION_DOCUMENTS.map((kind) => [DOCUMENT_FIELD[kind], documents[kind]!])) as Record<
+        ...(Object.fromEntries(required.map((kind) => [DOCUMENT_FIELD[kind], documents[kind]!])) as Record<
           (typeof DOCUMENT_FIELD)[ApplicationDocument],
           string
         >),
@@ -354,7 +356,7 @@ export default function Join() {
                   </p>
                   <p className="mt-1 text-xs leading-relaxed text-navy/70">{p(t.docs.privacy)}</p>
                   <div className="mt-3 flex flex-col gap-3">
-                    {APPLICATION_DOCUMENTS.map((kind) => (
+                    {required.map((kind) => (
                       <DocumentUpload
                         key={kind}
                         kind={kind}

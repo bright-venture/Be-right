@@ -197,6 +197,21 @@ describe("technician documents", () => {
     });
   });
 
+  it("asks for the vehicle papers only from applicants who use a vehicle", async () => {
+    const c = await callerFor();
+    const docs = documentKeys();
+    // A car without its registration papers: refused.
+    const noPapers: Partial<typeof application> = { ...application, ...docs, email: "nopapers@example.com" };
+    delete noPapers.vehicleRegistrationKey;
+    await expect(c.join.submit(noPapers as typeof application)).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    // No transport: no papers needed, and none kept even if sent.
+    const { id } = await c.join.submit({ ...application, ...docs, transport: "none", email: "walker@example.com" });
+    const row = (await (await callerFor(admin)).join.list()).find((a) => a.id === id);
+    expect(row).toMatchObject({ transport: "none", hasTransport: false, vehicleRegistrationKey: null });
+    const links = await (await callerFor(admin)).join.documents({ id });
+    expect(Object.keys(links)).not.toContain("vehicleRegistration");
+  });
+
   it("checks document type and size before handing out an upload link", async () => {
     const c = await callerFor();
     await expect(
