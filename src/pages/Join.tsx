@@ -109,8 +109,9 @@ export default function Join() {
   const labelled = <T extends string>(values: readonly T[], labels: Record<T, LocalText>) =>
     values.map((v) => ({ value: v, label: p(labels[v]) }));
 
-  // The vehicle's papers are asked for once the applicant says they use a vehicle.
-  const required = requiredDocuments(transport);
+  // The vehicle's papers show from the start (so nobody misses them) and only go away when
+  // the applicant answers "No transport".
+  const required = requiredDocuments(transport ?? "car");
   const valid =
     name.trim().length >= 2 &&
     isValidPhone(phone) &&

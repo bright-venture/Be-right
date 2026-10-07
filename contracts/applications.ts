@@ -34,7 +34,7 @@ export const TRANSPORT_LABELS: Record<Transport, LocalText> = {
 };
 
 /** Documents a technician applicant uploads, in the order the form shows them. */
-export const APPLICATION_DOCUMENTS = ["idDocument", "criminalRecord", "proofOfAddress", "vehicleRegistration", "photo"] as const;
+export const APPLICATION_DOCUMENTS = ["photo", "idDocument", "proofOfAddress", "criminalRecord", "vehicleRegistration"] as const;
 export type ApplicationDocument = (typeof APPLICATION_DOCUMENTS)[number];
 
 /** Where each document's storage key is kept on an application (db/schema.ts). */

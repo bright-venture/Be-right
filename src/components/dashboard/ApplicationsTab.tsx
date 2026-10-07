@@ -185,7 +185,7 @@ function ApplicationCard({
                 needed.length === 5 ? "sm:grid-cols-5" : "sm:grid-cols-4"
               }`}
             >
-              {(["photo", ...needed.filter((kind) => kind !== "photo")] as const).map((kind) => {
+              {needed.map((kind) => {
                 const doc = docs.data?.[kind];
                 return (
                   <div key={kind} className="rounded-xl border-2 border-navy/15 bg-paper p-2 text-center">
