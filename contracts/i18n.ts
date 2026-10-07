@@ -59,8 +59,6 @@ export const t = {
     signIn: { en: "Sign in", ar: "تسجيل الدخول" },
     signUp: { en: "Create account", ar: "اعمل الحساب" },
     forgot: { en: "Forgot password?", ar: "نسيت كلمة السر؟" },
-    useCode: { en: "Email me a code instead", ar: "ابعتلي رمز عالإيميل بدالها" },
-    usePassword: { en: "Use my password instead", ar: "استعمل كلمة السر" },
     haveAccount: { en: "Already have an account?", ar: "عندك حساب؟" },
     noAccount: { en: "New to Be Right?", ar: "جديد على بي رايت؟" },
     confirmTitle: { en: "Confirm your email", ar: "أكّد الإيميل تبعك" },
@@ -80,13 +78,6 @@ export const t = {
       en: "If an account exists for {email}, a reset link is on its way.",
       ar: "إذا في حساب على {email}، رابط التغيير عالطريق.",
     },
-    codeTitle: { en: "Sign in with a code", ar: "ادخل برمز" },
-    sendCode: { en: "Email me a code", ar: "ابعتلي رمز" },
-    codeSent: {
-      en: "Check {email}. Type the code from the email, or tap the link in it.",
-      ar: "شوف {email}. اكتب الرمز من الإيميل، أو اضغط عالرابط فيه.",
-    },
-    code: { en: "Code from the email", ar: "الرمز من الإيميل" },
     back: { en: "Back to sign in", ar: "رجوع لتسجيل الدخول" },
     setNewTitle: { en: "Choose a new password", ar: "اختار كلمة سر جديدة" },
     welcomeTitle: { en: "Welcome to Be Right", ar: "أهلاً فيك ببي رايت" },
@@ -100,7 +91,6 @@ export const t = {
       en: "This reset link has expired or was already used. Request a new one.",
       ar: "هالرابط انتهى أو استعمل قبل. اطلب واحد جديد.",
     },
-    google: { en: "Continue with Google", ar: "كمّل مع Google" },
     errInvalid: { en: "Wrong email or password.", ar: "الإيميل أو كلمة السر غلط." },
     errNotConfirmed: {
       en: "Please confirm your email first. We can send the link again.",
@@ -654,8 +644,8 @@ export const t = {
     },
     goToMine: { en: "Go to my area", ar: "روح على قسمي" },
     passwordNeeded: {
-      en: "For security, staff areas need a sign-in with your password. You're signed in with an email code or Google.",
-      ar: "للأمان، أقسام الفريق بدّها دخول بكلمة السر. إنت داخل بكود عالإيميل أو بغوغل.",
+      en: "For security, staff areas need a sign-in with your password. This session started another way, such as an email link.",
+      ar: "للأمان، أقسام الفريق بدّها دخول بكلمة السر. هالدخول بلّش بطريقة تانية، متل رابط عالإيميل.",
     },
     passwordHint: {
       en: "No password yet? On the sign-in screen, use \"Forgot password?\" to set one by email.",

@@ -14,17 +14,16 @@ const INPUT =
 const LABEL = "font-display text-base font-extrabold text-navy";
 const LINK = "text-sm font-bold text-navy/70 underline underline-offset-4 hover:text-navy";
 const MIN_PASSWORD = 8;
-const GOOGLE_ENABLED = import.meta.env.VITE_AUTH_GOOGLE === "true";
 
 export type AuthMode = "signin" | "signup";
-type View = AuthMode | "forgot" | "code";
+type View = AuthMode | "forgot";
 /** A step that waits on an email the user must open. */
-type Pending = { kind: "confirm" | "reset" | "code"; email: string } | null;
+type Pending = { kind: "confirm" | "reset"; email: string } | null;
 
 /**
- * Sign in / create account with email + password, plus "forgot password" and a
- * passwordless email-code fallback. After success Supabase fires SIGNED_IN, which
- * refreshes the app's user; callers react to that (redirect, show submit, …).
+ * Sign in / create account, always with email and password (no email codes, no Google),
+ * plus "forgot password". After success Supabase fires SIGNED_IN, which refreshes the
+ * app's user; callers react to that (redirect, show submit, …).
  */
 export function AuthPanel({
   next,
@@ -32,7 +31,7 @@ export function AuthPanel({
   headingLevel = "h2",
   staff,
 }: {
-  /** Path to return to after email links (confirmation, code link, password reset). */
+  /** Path to return to after email links (confirmation, password reset). */
   next: string;
   initialMode?: AuthMode;
   headingLevel?: "h1" | "h2" | "h3";
@@ -48,7 +47,6 @@ export function AuthPanel({
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [agreed, setAgreed] = useState(false);
-  const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [unconfirmed, setUnconfirmed] = useState(false);
@@ -160,39 +158,6 @@ export function AuthPanel({
     });
   };
 
-  const onSendCode = (e: FormEvent) => {
-    e.preventDefault();
-    return run(async () => {
-      const { error } = await supabase.auth.signInWithOtp({
-        email: cleanEmail(),
-        options: { emailRedirectTo: returnUrl, shouldCreateUser: false },
-      });
-      if (error) setError(explain(error));
-      else setPending({ kind: "code", email: cleanEmail() });
-    });
-  };
-
-  const onVerifyCode = (e: FormEvent) => {
-    e.preventDefault();
-    return run(async () => {
-      const { error } = await supabase.auth.verifyOtp({
-        email: cleanEmail(),
-        token: code.trim(),
-        type: "email",
-      });
-      if (error) setError(explain(error));
-    });
-  };
-
-  const onGoogle = () =>
-    run(async () => {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: { redirectTo: returnUrl },
-      });
-      if (error) setError(explain(error));
-    });
-
   const submit = (label: string) => (
     <button type="submit" disabled={busy} className="btn-pill-primary w-full text-base">
       {busy && <Loader2 className="h-4 w-4 animate-spin" />}
@@ -254,11 +219,7 @@ export function AuthPanel({
   /* ---------- waiting on an email ---------- */
   if (pending) {
     const body =
-      pending.kind === "confirm"
-        ? fill(t.auth.confirmBody, pending.email)
-        : pending.kind === "reset"
-          ? fill(t.auth.resetSent, pending.email)
-          : fill(t.auth.codeSent, pending.email);
+      pending.kind === "confirm" ? fill(t.auth.confirmBody, pending.email) : fill(t.auth.resetSent, pending.email);
     return (
       <div className="space-y-4">
         <div className="flex flex-col items-center text-center">
@@ -266,35 +227,11 @@ export function AuthPanel({
             <Mail className="h-6 w-6" />
           </span>
           <Heading className="mt-3 font-display text-2xl font-black text-navy">
-            {pending.kind === "confirm"
-              ? p(t.auth.confirmTitle)
-              : pending.kind === "reset"
-                ? p(t.auth.forgotTitle)
-                : p(t.auth.codeTitle)}
+            {pending.kind === "confirm" ? p(t.auth.confirmTitle) : p(t.auth.forgotTitle)}
           </Heading>
           <p className="mt-2 text-sm leading-relaxed text-navy/70">{body}</p>
         </div>
 
-        {pending.kind === "code" && (
-          <form onSubmit={onVerifyCode} className="space-y-4">
-            <div>
-              <label htmlFor="auth-code" className={LABEL}>
-                {p(t.auth.code)}
-              </label>
-              <input
-                id="auth-code"
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                dir="ltr"
-                value={code}
-                onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 8))}
-                placeholder="123456"
-                className={`${INPUT} text-center tracking-[0.4em]`}
-              />
-            </div>
-            {submit(p(t.auth.signIn))}
-          </form>
-        )}
 
         {pending.kind === "confirm" && (
           <button type="button" onClick={onResendConfirmation} disabled={busy} className={`${LINK} block w-full`}>
@@ -317,9 +254,7 @@ export function AuthPanel({
             ? p(t.auth.signUpTitle)
             : view === "forgot"
               ? p(t.auth.forgotTitle)
-              : view === "code"
-                ? p(t.auth.codeTitle)
-                : (staff?.title ?? p(t.auth.signInTitle))}
+              : (staff?.title ?? p(t.auth.signInTitle))}
         </Heading>
         <p className="mt-1 text-sm leading-relaxed text-navy/70">
           {view === "signup"
@@ -343,12 +278,6 @@ export function AuthPanel({
           {unconfirmed && (
             <button type="button" onClick={onResendConfirmation} disabled={busy} className={`${LINK} block w-full`}>
               {p(t.auth.resend)}
-            </button>
-          )}
-          {/* Staff (admin) sign-in is password only: the admin area refuses code sign-ins. */}
-          {!staff && (
-            <button type="button" onClick={() => go("code")} className={`${LINK} block w-full`}>
-              {p(t.auth.useCode)}
             </button>
           )}
         </form>
@@ -402,22 +331,6 @@ export function AuthPanel({
             {p(t.auth.back)}
           </button>
         </form>
-      )}
-
-      {view === "code" && (
-        <form onSubmit={onSendCode} className="mt-5 space-y-4">
-          {emailField}
-          {submit(p(t.auth.sendCode))}
-          <button type="button" onClick={() => go("signin")} className={`${LINK} block w-full`}>
-            {p(t.auth.usePassword)}
-          </button>
-        </form>
-      )}
-
-      {GOOGLE_ENABLED && !staff && (view === "signin" || view === "signup") && (
-        <button type="button" onClick={onGoogle} disabled={busy} className="btn-pill-outline mt-3 w-full text-base">
-          {p(t.auth.google)}
-        </button>
       )}
 
       <Messages error={error} notice={notice} />
