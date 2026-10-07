@@ -566,6 +566,24 @@ export const t = {
     joinTitle: { en: "Are you a technician?", ar: "إنت معلّم؟" },
     joinSub: { en: "Steady local work matched to your trade.", ar: "شغل ثابت بمنطقتك حسب مصلحتك." },
     joinCta: { en: "Apply", ar: "قدّم" },
+    // Requests list and request screen
+    active: { en: "Active", ar: "شغّالة" },
+    past: { en: "Past", ar: "السابقة" },
+    noActive: { en: "Nothing in progress. Need something fixed?", ar: "ما في شي ماشي هلّق. بدك تصلّح شي؟" },
+    noPast: { en: "Finished and cancelled requests show up here.", ar: "الطلبات يلي خلصت أو تلغت بتطلع هون." },
+    reviewQuote: { en: "Quote ready: {amount}. Review", ar: "السعر جاهز: {amount}. راجعه" },
+    quoteTitle: { en: "Your quote", ar: "السعر" },
+    quoteHint: {
+      en: "Nothing is done or charged until you approve.",
+      ar: "ما منعمل شي وما بتدفع شي قبل ما توافق.",
+    },
+    approveAmount: { en: "Approve {amount}", ar: "وافق على {amount}" },
+    progress: { en: "Progress", ar: "المراحل" },
+    details: { en: "Details", ar: "التفاصيل" },
+    visit: { en: "Visit", ar: "الزيارة" },
+    address: { en: "Address", ar: "العنوان" },
+    cancelledNote: { en: "This request was cancelled.", ar: "هالطلب تلغى." },
+    notFound: { en: "We couldn't find this request.", ar: "ما لقينا هالطلب." },
   },
   /** The technician's before/after photos of a job, and how customers and specialists see them. */
   jobPhotos: {

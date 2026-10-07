@@ -41,7 +41,8 @@ export function AppTopBar() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const tabs = useTabs();
-  const isRoot = tabs.some((tab) => isActive(pathname, tab.to)) || pathname === "/login" || pathname === "/signup";
+  // Main screens show the logo; anything deeper (a request, a page) gets a back button.
+  const isRoot = tabs.some((tab) => pathname === tab.to) || pathname === "/login" || pathname === "/signup";
 
   return (
     <header className="fixed inset-x-0 top-0 z-50 border-b border-navy/10 bg-white/95 backdrop-blur-md">

@@ -20,6 +20,8 @@ const NotFound = lazy(() => import('./pages/NotFound'))
 // The phone app opens on its own home screen and has a services list (src/lib/native.ts).
 const AppHome = lazy(() => import('./pages/AppHome'))
 const AppServices = lazy(() => import('./pages/AppServices'))
+const AppRequests = lazy(() => import('./pages/AppRequests'))
+const AppRequest = lazy(() => import('./pages/AppRequest'))
 
 function PageFallback() {
   return (
@@ -42,7 +44,8 @@ export default function App() {
         <Route path="/" element={isAppUi ? <AppHome /> : <Home />} />
         {isAppUi && <Route path="/services" element={<AppServices />} />}
         <Route path="/book" element={<Book />} />
-        <Route path="/requests" element={<Requests />} />
+        <Route path="/requests" element={isAppUi ? <AppRequests /> : <Requests />} />
+        {isAppUi && <Route path="/requests/:id" element={<AppRequest />} />}
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/tech" element={<Tech />} />
         <Route path="/login" element={<Login />} />

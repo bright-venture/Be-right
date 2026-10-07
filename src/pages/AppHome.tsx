@@ -99,7 +99,7 @@ export default function AppHome() {
         {current && (
           <section>
             <Link
-              to={`/requests?open=${current.id}`}
+              to={`/requests/${current.id}`}
               className="block rounded-3xl bg-navy p-5 text-white shadow-[0_10px_24px_rgb(12_43_92/0.25)] active:scale-[0.99]"
             >
               <div className="flex items-center justify-between gap-3">
