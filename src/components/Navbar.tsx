@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router";
-import { Globe, Menu, X } from "lucide-react";
+import { ChevronDown, ClipboardList, Globe, LogOut, Menu, UserRound, X } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useI18n } from "@/i18n";
 import { HOME_BY_ROLE, isStaff, type Role } from "@contracts/roles";
@@ -16,6 +16,9 @@ function WebNavbar() {
   const { lang, setLang, t, p } = useI18n();
   const { user, isAuthenticated, logout } = useAuth();
   const [open, setOpen] = useState(false);
+  // PC: the profile button's account menu.
+  const [profileOpen, setProfileOpen] = useState(false);
+  const profileRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
   // Escape closes the phone menu.
@@ -25,6 +28,21 @@ function WebNavbar() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [open]);
+
+  // Escape or a click anywhere else closes the account menu.
+  useEffect(() => {
+    if (!profileOpen) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setProfileOpen(false);
+    const onDown = (e: MouseEvent) => {
+      if (!profileRef.current?.contains(e.target as Node)) setProfileOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    document.addEventListener("mousedown", onDown);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.removeEventListener("mousedown", onDown);
+    };
+  }, [profileOpen]);
 
   const role = user?.role as Role | undefined;
   const staff = !!role && isStaff(role);
@@ -46,6 +64,8 @@ function WebNavbar() {
     "rounded-full px-3 py-2 font-display text-[13px] font-semibold text-navy/80 transition-colors duration-200 hover:bg-navy hover:text-paper";
   const menuItem =
     "flex min-h-11 items-center rounded-2xl px-4 font-display text-sm font-bold uppercase tracking-wider text-navy hover:bg-white";
+  const accountItem =
+    "flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-start text-sm font-semibold text-navy transition-colors hover:bg-paper";
   const switchLang = () => setLang(lang === "en" ? "ar" : "en");
   const langButton = (className: string, onClick = switchLang) => (
     <button onClick={onClick} className={className} lang={lang === "en" ? "ar" : "en"}>
@@ -61,7 +81,7 @@ function WebNavbar() {
       <div
         aria-hidden
         onClick={() => setOpen(false)}
-        className={`fixed inset-0 z-40 bg-navy/40 backdrop-blur-[2px] ${isAuthenticated ? "" : "lg:hidden"}`}
+        className="fixed inset-0 z-40 bg-navy/40 backdrop-blur-[2px] lg:hidden"
       />
     )}
     <header className="glass fixed inset-x-0 top-0 z-50">
@@ -80,7 +100,7 @@ function WebNavbar() {
           </span>
         </Link>
 
-        <nav className={`hidden items-center gap-0.5 whitespace-nowrap ${isAuthenticated ? "" : "lg:flex"}`}>
+        <nav className="hidden items-center gap-0.5 whitespace-nowrap lg:flex">
           {links.map((l) =>
             l.route ? (
               <Link key={l.href} to={l.href} className={navLink}>
@@ -105,19 +125,20 @@ function WebNavbar() {
         <div className="flex items-center gap-2 whitespace-nowrap">
           {isAuthenticated ? (
             <>
-              {/* Signed in, the section links above are hidden: keep the language switch reachable. */}
-              {langButton("hidden min-h-11 items-center gap-1.5 rounded-full px-2.5 text-[13px] font-bold text-navy/70 transition-colors hover:text-flame sm:flex")}
+              {/* Tablets: the section links are in the menu, so keep these shortcuts here.
+                  PC: the language switch is in the nav, the rest in the account menu. */}
+              {langButton("hidden min-h-11 items-center gap-1.5 rounded-full px-2.5 text-[13px] font-bold text-navy/70 transition-colors hover:text-flame sm:flex lg:hidden")}
               {area && !staff && (
                 <Link
                   to={area.to}
-                  className="hidden min-h-11 items-center whitespace-nowrap rounded-full px-3 font-display text-sm font-semibold text-navy hover:bg-white sm:inline-flex"
+                  className="hidden min-h-11 items-center whitespace-nowrap rounded-full px-3 font-display text-sm font-semibold text-navy hover:bg-white sm:inline-flex lg:hidden"
                 >
                   {area.label}
                 </Link>
               )}
               <button
                 onClick={() => logout()}
-                className="hidden min-h-11 whitespace-nowrap rounded-full px-3 text-sm font-semibold text-navy/80 hover:text-navy sm:block"
+                className="hidden min-h-11 whitespace-nowrap rounded-full px-3 text-sm font-semibold text-navy/80 hover:text-navy sm:block lg:hidden"
               >
                 {p(t.nav.logout)}
               </button>
@@ -142,8 +163,54 @@ function WebNavbar() {
             </Link>
           )}
 
+          {isAuthenticated && (
+            <div ref={profileRef} className="relative hidden lg:block">
+              <button
+                type="button"
+                onClick={() => setProfileOpen(!profileOpen)}
+                aria-label={p(t.nav.account)}
+                aria-expanded={profileOpen}
+                aria-controls="account-menu"
+                className="inline-flex min-h-11 items-center gap-1 rounded-full border-[1.5px] border-navy bg-white ps-1 pe-2.5 text-navy shadow-[0_3px_0_rgb(12_43_92/1)] transition-transform active:translate-y-0.5"
+              >
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-navy text-paper">
+                  <UserRound className="h-4 w-4" aria-hidden />
+                </span>
+                <ChevronDown className={`h-4 w-4 transition-transform ${profileOpen ? "rotate-180" : ""}`} aria-hidden />
+              </button>
+              {profileOpen && (
+                <div
+                  id="account-menu"
+                  className="absolute end-0 top-[calc(100%+10px)] w-64 overflow-hidden rounded-2xl border-[1.5px] border-navy/15 bg-white shadow-[0_12px_32px_rgb(12_43_92/0.16)]"
+                >
+                  <div className="border-b border-navy/10 px-4 py-3">
+                    <p className="truncate font-display text-sm font-black text-navy">{user?.name || user?.email}</p>
+                    {user?.name && user.email && <p className="truncate text-xs text-navy/60">{user.email}</p>}
+                  </div>
+                  <div className="flex flex-col p-1.5">
+                    {area && (
+                      <Link to={area.to} onClick={() => setProfileOpen(false)} className={accountItem}>
+                        <ClipboardList className="h-4 w-4 text-navy/60" aria-hidden />
+                        {area.label}
+                      </Link>
+                    )}
+                    <Link to="/account" onClick={() => setProfileOpen(false)} className={accountItem}>
+                      <UserRound className="h-4 w-4 text-navy/60" aria-hidden />
+                      {p(t.nav.account)}
+                    </Link>
+                    <span aria-hidden className="mx-3 my-1 h-px bg-navy/10" />
+                    <button type="button" onClick={() => logout()} className={accountItem}>
+                      <LogOut className="h-4 w-4 text-navy/60 rtl:-scale-x-100" aria-hidden />
+                      {p(t.nav.logout)}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           <button
-            className={`inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-full border-[1.5px] border-navy bg-white text-navy shadow-[0_3px_0_rgb(12_43_92/1)] ${isAuthenticated ? "" : "lg:hidden"}`}
+            className="inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-full border-[1.5px] border-navy bg-white text-navy shadow-[0_3px_0_rgb(12_43_92/1)] lg:hidden"
             onClick={() => setOpen(!open)}
             aria-label={p(t.nav.menu)}
             aria-expanded={open}
@@ -157,7 +224,7 @@ function WebNavbar() {
       {open && (
         <nav
           id="mobile-navigation"
-          className={`max-h-[calc(100dvh-4rem)] overflow-y-auto overscroll-contain border-t-[1.5px] border-navy/15 bg-paper px-4 py-4 shadow-[0_12px_24px_rgb(12_43_92/0.15)] ${isAuthenticated ? "" : "lg:hidden"}`}
+          className="max-h-[calc(100dvh-4rem)] overflow-y-auto overscroll-contain border-t-[1.5px] border-navy/15 bg-paper px-4 py-4 shadow-[0_12px_24px_rgb(12_43_92/0.15)] lg:hidden"
         >
           <div className="flex flex-col gap-1">
             {area && (
