@@ -120,12 +120,13 @@ export default function AppHome() {
               <p className="text-sm text-white/90">{p(t.app.emergencySub)}</p>
             </div>
           </div>
-          <div className="-mx-5 mt-4 flex gap-2 overflow-x-auto px-5 pb-1 [scrollbar-width:none]">
+          {/* Every problem stays inside the card: the buttons wrap onto as many lines as they need. */}
+          <div className="mt-4 flex flex-wrap gap-2">
             {EMERGENCY_PROBLEMS.map((id) => (
               <Link
                 key={id}
                 to={bookingHref(id, { emergency: true })}
-                className="flex min-h-10 shrink-0 items-center rounded-full bg-white px-4 text-sm font-bold text-navy active:scale-95"
+                className="flex min-h-10 items-center rounded-full bg-white px-3.5 text-[13px] font-bold text-navy active:scale-95"
               >
                 {p(t.picker.problems[id])}
               </Link>
