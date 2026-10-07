@@ -24,8 +24,7 @@ import {
   CATEGORY_TINT,
   COVERAGE_AREAS,
   COVERAGE_NOTE,
-  MAIN_SERVICES,
-  OTHER_SERVICES,
+  SERVICES_IN_ORDER,
 } from "@contracts/services";
 import { INTRO_DONE_EVENT } from "@/lib/intro";
 import { AccountDeletedNotice } from "@/components/AccountDeletedNotice";
@@ -84,10 +83,9 @@ export default function Home() {
     return () => io.disconnect();
   }, []);
 
-  const mainCats = MAIN_SERVICES.map((id) => CATEGORY_MAP[id]).filter(Boolean);
-  const otherCats = OTHER_SERVICES.map((id) => CATEGORY_MAP[id]).filter(Boolean);
+  const services = SERVICES_IN_ORDER.map((id) => CATEGORY_MAP[id]).filter(Boolean);
 
-  const renderTile = (c: (typeof mainCats)[number], i: number) => {
+  const renderTile = (c: (typeof services)[number], i: number) => {
     const tint = CATEGORY_TINT[c.id] ?? { bg: "#ECEFF4", ink: "#0C2B5C" };
     return (
       <Link
@@ -244,18 +242,9 @@ export default function Home() {
             <p className="max-w-sm text-[13px] leading-relaxed text-navy/70">{p(t.services.sub)}</p>
           </div>
 
+          {/* All eleven services in one grid; the catch-all tile makes twelve, so every row is full. */}
           <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
-            {mainCats.map((c, i) => renderTile(c, i))}
-          </div>
-
-          {/* Other services — compact row */}
-          <div className="mt-8">
-            <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
-              <h3 className="font-display text-lg font-black text-navy">{p(t.coverage.other)}</h3>
-              <span className="text-xs font-semibold text-navy/70">{p(t.coverage.otherSub)}</span>
-            </div>
-            <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-              {otherCats.map((c, i) => renderTile(c, mainCats.length + i))}
+              {services.map((c, i) => renderTile(c, i))}
               {/* Catch-all CTA tile */}
               <Link
                 to="/book"
@@ -271,7 +260,6 @@ export default function Home() {
                   <ArrowRight className="h-3 w-3 rtl:-scale-x-100" />
                 </span>
               </Link>
-            </div>
           </div>
         </div>
       </section>

@@ -17,7 +17,7 @@ import {
   type RequestStatus,
   type UrgencyLevel,
 } from "@contracts/services";
-import { ACTIVE_JOB_STATUSES } from "@contracts/workflow";
+import { ACTIVE_JOB_STATUSES, VISIT_REPORTS } from "@contracts/workflow";
 
 /**
  * Watches GPS and reports position for the given active job. Stops by itself once
@@ -101,6 +101,9 @@ export default function Tech() {
   );
   const { sharingFor, geoError, start, stop } = useLocationSharing(activeJobIds);
   const [notes, setNotes] = useState<Record<number, string>>({});
+  // A visit without a repair goes to the specialist, who decides about the visit fee.
+  const reportVisit = trpc.tech.reportVisit.useMutation();
+  const [reported, setReported] = useState<Record<number, boolean>>({});
 
   if (authLoading || !isTech) {
     return (
@@ -345,7 +348,39 @@ export default function Tech() {
                         <p className="w-full text-xs font-semibold text-navy/70">{p(t.jobPhotos.needAfter)}</p>
                       )}
                     </div>
-                    {fieldEvent.isError && (
+                    {/* no repair at this visit: tell the specialist (guarantee visits never have a fee) */}
+                    {!r.guaranteeFor && (
+                      <div className="rounded-2xl border-2 border-dashed border-navy/20 p-4">
+                        <p className="text-sm font-bold text-navy">{p(t.visitFee.techTitle)}</p>
+                        <p className="text-xs text-navy/70">{p(t.visitFee.techHint)}</p>
+                        {reported[r.id] ? (
+                          <p role="status" className="mt-2 text-sm font-semibold text-green-800">
+                            {p(t.visitFee.techSent)}
+                          </p>
+                        ) : (
+                          <div className="mt-3 grid grid-cols-2 gap-2">
+                            {VISIT_REPORTS.map((reason) => (
+                              <button
+                                key={reason}
+                                type="button"
+                                disabled={reportVisit.isPending}
+                                onClick={() =>
+                                  reportVisit.mutate(
+                                    { requestId: r.id, reason, note: notes[r.id] || undefined },
+                                    { onSuccess: () => setReported((x) => ({ ...x, [r.id]: true })) },
+                                  )
+                                }
+                                className="btn-pill-outline !min-h-11 justify-center !px-3 text-sm"
+                              >
+                                {p(t.visitFee.reasons[reason])}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {(fieldEvent.isError || reportVisit.isError) && (
                       <p className="text-sm font-semibold text-destructive">
                         {p(t.misc.error)}
                       </p>

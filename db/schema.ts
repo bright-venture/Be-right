@@ -13,7 +13,7 @@ import {
   doublePrecision,
   type AnyPgColumn,
 } from "drizzle-orm/pg-core";
-import type { MediaKind } from "../contracts/workflow";
+import type { MediaKind, VisitFeeReason } from "../contracts/workflow";
 
 // Every table enables Row Level Security with no policies. The app server talks to
 // Postgres directly (bypassing RLS), while Supabase's public REST API — reachable with
@@ -108,6 +108,10 @@ export const serviceRequests = pgTable(
     /** The customer asked to cancel a scheduled visit; a specialist confirms it. */
     cancelRequestedAt: timestamp("cancel_requested_at", { withTimezone: true }),
     cancelReason: text("cancel_reason"),
+    /** Visit fee in USD, fixed when booked (null for guarantee visits and older requests). */
+    visitFee: varchar("visit_fee", { length: 16 }),
+    /** Set when a specialist closed the job charging only the visit fee, and why. */
+    visitFeeReason: varchar("visit_fee_reason", { length: 32 }).$type<VisitFeeReason>(),
     /** A return visit under the workmanship guarantee: the completed request it's about. */
     guaranteeFor: integer("guarantee_for").references((): AnyPgColumn => serviceRequests.id),
     ...timestamps,

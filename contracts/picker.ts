@@ -76,4 +76,3 @@ export function bookingHref(problem: string, { emergency = false } = {}) {
   return `/book?${params.toString()}`;
 }
 
-export const ROW_CATS =["plumbing", "electrical", "ac", "appliance", "carpentry", "painting", "cleaning", "landscaping"];

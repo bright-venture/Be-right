@@ -15,6 +15,8 @@ import {
   ASSIGNABLE_STATUSES,
   JOB_PHOTO_KINDS,
   MAX_JOB_PHOTOS,
+  VISIT_FEE_REASON_LABEL,
+  VISIT_REPORTS,
   type JobPhotoKind,
 } from "@contracts/workflow";
 import { applyTransition, findRequest, logEvent } from "./lib/workflow";
@@ -311,6 +313,27 @@ export const techRouter = createRouter({
         .returning({ key: requestMedia.key });
       if (!removed.length) throw new TRPCError({ code: "NOT_FOUND" });
       await deleteFiles("media", [input.key]);
+      return { ok: true };
+    }),
+
+  /** Technician: no repair at this visit (no work needed or declined, or nobody there). */
+  reportVisit: technicianQuery
+    .input(
+      z.object({
+        requestId: z.number().int(),
+        reason: z.enum(VISIT_REPORTS),
+        note: z.string().trim().max(2000).optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const db = getDb();
+      const job = await findRequest(db, input.requestId, { technicianId: ctx.user.id });
+      if (!ACTIVE_JOB_STATUSES.includes(job.status)) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Job is not active" });
+      }
+      const note = [VISIT_FEE_REASON_LABEL[input.reason], input.note].filter(Boolean).join(". ");
+      await logEvent(db, job.id, "visit_report", ctx.user.id, note);
+      await notify.visitReported(job.id, note);
       return { ok: true };
     }),
 

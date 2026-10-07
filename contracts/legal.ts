@@ -19,12 +19,15 @@ export const COMPANY = {
  * Bump when the Terms or Privacy Policy change materially; accounts record the
  * version they accepted, so you can ask for re-acceptance later.
  */
-export const LEGAL_VERSION = "2026-10-06";
+export const LEGAL_VERSION = "2026-10-07";
 
 /**
  * Days a customer has to report a problem with completed work ("we come back").
  * Also written out in index.html (social preview text), which can't read this setting.
  */
+/** The visit fee (minimum charge) in USD: rules in contracts/workflow.ts. */
+export const VISIT_FEE_USD = 10;
+
 export const WORKMANSHIP_GUARANTEE_DAYS = 7;
 
 /** Days after a rejected application before its documents are deleted. */

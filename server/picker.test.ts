@@ -1,18 +1,23 @@
 // The home page's service picker pre-fills the booking form. Every problem it offers
 // must land on real questions and options, or the pre-fill would silently be dropped.
 import { describe, expect, it } from "vitest";
-import { CATEGORY_MAP } from "@contracts/services";
-import { CATEGORY_PROBLEMS, EMERGENCY_PROBLEMS, PROBLEM_MAP, ROW_CATS } from "@contracts/picker";
+import { CATEGORIES, CATEGORY_MAP, SERVICES_IN_ORDER } from "@contracts/services";
+import { CATEGORY_PROBLEMS, EMERGENCY_PROBLEMS, PROBLEM_MAP } from "@contracts/picker";
 import { answersFromLink } from "@contracts/workflow";
 import { t } from "@contracts/i18n";
 
 describe("service picker", () => {
   it("only offers services and problems that exist", () => {
-    for (const id of ROW_CATS) expect(CATEGORY_MAP[id], id).toBeDefined();
+    for (const id of SERVICES_IN_ORDER) expect(CATEGORY_MAP[id], id).toBeDefined();
+    for (const id of Object.keys(CATEGORY_PROBLEMS)) expect(CATEGORY_MAP[id], id).toBeDefined();
     for (const id of [...EMERGENCY_PROBLEMS, ...Object.values(CATEGORY_PROBLEMS).flat()]) {
       expect(PROBLEM_MAP[id], id).toBeDefined();
       expect((t.picker.problems as Record<string, unknown>)[id], `wording for ${id}`).toBeDefined();
     }
+  });
+
+  it("shows every service exactly once, in one group", () => {
+    expect([...SERVICES_IN_ORDER].sort()).toEqual(CATEGORIES.map((c) => c.id).sort());
   });
 
   it("pre-fills only answers the booking form accepts", () => {

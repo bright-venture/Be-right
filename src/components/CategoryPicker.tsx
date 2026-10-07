@@ -11,12 +11,11 @@ import {
 } from "lucide-react";
 import { ServiceIcon } from "@/components/ServiceIcon";
 import { useI18n } from "@/i18n";
-import { CATEGORY_MAP, type LocalText } from "@contracts/services";
+import { CATEGORY_MAP, SERVICES_IN_ORDER, type LocalText } from "@contracts/services";
 import {
   CATEGORY_PROBLEMS,
   EMERGENCY_PROBLEMS,
   PROBLEM_MAP,
-  ROW_CATS,
 } from "@contracts/picker";
 
 /**
@@ -271,11 +270,15 @@ export function CategoryPicker() {
           </div>
 
           {/* Category pills — rounded white with Be Right icons */}
-          {ROW_CATS.map(id => (
+          {SERVICES_IN_ORDER.map(id => (
             <button
               key={id}
               type="button"
-              onClick={() => openWizard({ kind: "cat", catId: id })}
+              onClick={() =>
+                CATEGORY_PROBLEMS[id]?.length
+                  ? openWizard({ kind: "cat", catId: id })
+                  : navigate(`/book?cat=${id}`)
+              }
               className="flex shrink-0 snap-start items-center gap-2 rounded-full border-[1.5px] border-navy/15 bg-white px-4 py-2.5 text-sm font-bold text-navy shadow-[0_2px_0_rgb(12_43_92/0.12)] transition-all hover:-translate-y-0.5 hover:border-navy hover:shadow-[0_4px_0_rgb(12_43_92/0.25)] focus-visible:outline-2 focus-visible:outline-flame"
             >
               <ServiceIcon id={id} className="h-5 w-5 text-flame" />

@@ -22,6 +22,7 @@ import {
   TIME_SLOTS,
   todayInBeirut,
   validateAnswers,
+  VISIT_FEE_USD,
 } from "@contracts/workflow";
 import { profilePhotoUrl, userUploadPrefix } from "./lib/storage";
 import { isInLebanon } from "@contracts/geo";
@@ -127,6 +128,7 @@ export const requestsRouter = createRouter({
             lng: input.lng,
             phone: input.phone,
             notes: input.notes ?? null,
+            visitFee: String(VISIT_FEE_USD),
           })
           .returning({ id: serviceRequests.id });
         if (input.media.length) {

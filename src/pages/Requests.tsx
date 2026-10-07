@@ -138,6 +138,13 @@ export default function Requests() {
                         {p(t.requests.guaranteeFor).replace("{id}", String(detail.data.request.guaranteeFor))}
                       </p>
                     )}
+                    {detail.data.request.visitFeeReason && (
+                      <p className="mb-4 rounded-xl bg-navy/5 p-3 text-sm font-semibold text-navy">
+                        {p(t.app.visitFeeClosed)
+                          .replace("{fee}", `$${detail.data.request.visitFee}`)
+                          .replace("{reason}", p(t.visitFee.reasons[detail.data.request.visitFeeReason]))}
+                      </p>
+                    )}
                     {/* timeline */}
                     <p className="font-display text-xs font-bold uppercase tracking-[0.2em] text-navy/70">
                       {p(t.requests.timeline)}
@@ -186,9 +193,12 @@ export default function Requests() {
                       </div>
                       <div className="rounded-2xl border-2 border-navy/15 bg-paper p-4">
                         <p className="font-display text-xs font-bold uppercase tracking-[0.2em] text-navy/70">
-                          {p(t.requests.quote)}
+                          {p(detail.data.request.visitFeeReason ? t.book.visitFeeTitle : t.requests.quote)}
                         </p>
-                        {detail.data.request.quoteAmount ? (
+                        {/* closed with the visit fee: that is what the customer pays, not the quote */}
+                        {detail.data.request.visitFeeReason ? (
+                          <p className="mt-2 font-display text-lg font-extrabold text-navy">${detail.data.request.visitFee}</p>
+                        ) : detail.data.request.quoteAmount ? (
                           <>
                             <p className="mt-2 font-display text-lg font-extrabold text-navy">
                               {detail.data.request.guaranteeFor && detail.data.request.quoteAmount === "0"
@@ -198,6 +208,11 @@ export default function Requests() {
                             {detail.data.request.quoteNote && (
                               <p className="mt-1 text-xs text-navy/70">
                                 {detail.data.request.quoteNote}
+                              </p>
+                            )}
+                            {detail.data.request.visitFee && !detail.data.request.guaranteeFor && (
+                              <p className="mt-1 text-xs text-navy/70">
+                                {p(t.app.quoteIncludesFee).replace("{fee}", `$${detail.data.request.visitFee}`)}
                               </p>
                             )}
                           </>

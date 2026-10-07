@@ -621,7 +621,8 @@ export const COVERAGE_AREAS: { group: LocalText; areas: LocalText[] }[] = [
 
 // ---------- main vs other services (homepage grouping) ----------
 
-export const MAIN_SERVICES = [
+/** Every service, in the order shown everywhere (one group: no separate "other services"). */
+export const SERVICES_IN_ORDER = [
   "plumbing",
   "electrical",
   "ac",
@@ -630,8 +631,10 @@ export const MAIN_SERVICES = [
   "painting",
   "cleaning",
   "landscaping",
+  "porter",
+  "valet",
+  "security",
 ];
-export const OTHER_SERVICES = ["porter", "valet", "security"];
 
 // ---------- verified client list (owner-supplied) ----------
 // Owner-supplied clients; logos collected from official brand sources.

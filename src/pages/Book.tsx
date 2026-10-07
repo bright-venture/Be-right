@@ -7,6 +7,7 @@ import {
   ImagePlus,
   Loader2,
   X,
+  ReceiptText,
 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
@@ -29,7 +30,7 @@ import {
   saveDraftFiles,
 } from "@/lib/bookingDraft";
 import {
-  CATEGORIES,
+  SERVICES_IN_ORDER,
   CATEGORY_MAP,
   CATEGORY_TINT,
   computeUrgency,
@@ -350,8 +351,8 @@ export default function Book() {
               <h2 className="font-display text-xl font-extrabold text-navy">
                 {p(t.book.pickCategory)}
               </h2>
-              <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
-                {CATEGORIES.map((c) => {
+              <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 max-sm:[&>*:last-child:nth-child(odd)]:col-span-2 sm:[&>*:last-child:nth-child(3n+2)]:col-span-2">
+                {SERVICES_IN_ORDER.map((id) => CATEGORY_MAP[id]).filter(Boolean).map((c) => {
                   const tint = CATEGORY_TINT[c.id] ?? { bg: "#ECEFF4", ink: "#0C2B5C" };
                   const active = category === c.id;
                   return (
@@ -649,6 +650,17 @@ export default function Book() {
                 <p className="mt-3 text-xs leading-relaxed text-navy/70">
                   {p(t.book.urgencyDisclaimer)}
                 </p>
+              </div>
+
+              {/* The visit fee, agreed before booking (contracts/workflow.ts). */}
+              <div className="card-br flex items-start gap-3 p-5">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-flame/10 text-flame">
+                  <ReceiptText className="h-5 w-5" />
+                </span>
+                <div>
+                  <p className="font-display text-sm font-extrabold text-navy">{p(t.book.visitFeeTitle)}</p>
+                  <p className="mt-0.5 text-sm leading-relaxed text-navy/80">{p(t.book.visitFeeBody)}</p>
+                </div>
               </div>
 
               {!authLoading && !isAuthenticated && (

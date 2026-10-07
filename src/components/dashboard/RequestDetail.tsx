@@ -12,7 +12,13 @@ import { useI18n } from "@/i18n";
 import { trpc } from "@/providers/trpc";
 import { telLink, whatsappLink } from "@/lib/contact";
 import { CATEGORY_MAP, URGENCY_META, type RequestStatus, type UrgencyLevel } from "@contracts/services";
-import { ASSIGNABLE_STATUSES, QUOTE_AMOUNT_PATTERN, URGENCY_LEVELS } from "@contracts/workflow";
+import {
+  ASSIGNABLE_STATUSES,
+  QUOTE_AMOUNT_PATTERN,
+  URGENCY_LEVELS,
+  VISIT_FEE_REASONS,
+  type VisitFeeReason,
+} from "@contracts/workflow";
 import { cancelPending, URGENCY_BADGE } from "./queueMeta";
 
 type Outputs = inferRouterOutputs<AppRouter>;
@@ -255,6 +261,67 @@ export function Avatar({ name, photoUrl, size = "h-10 w-10" }: { name: string | 
 
 type RequestRow = Outputs["specialist"]["detail"]["request"];
 
+/**
+ * No repair happened at the visit (no work, nobody there, or cancelled once the technician
+ * set off): the specialist closes the job charging only the visit fee fixed at booking.
+ */
+function VisitFeeClose({ request: r, onDone }: { request: RequestRow; onDone: () => void }) {
+  const { t, p } = useI18n();
+  const [reason, setReason] = useState<VisitFeeReason | null>(null);
+  const [note, setNote] = useState("");
+  const close = trpc.specialist.closeWithVisitFee.useMutation({ onSuccess: onDone });
+  if (!r.visitFee) return <p className="mt-4 text-xs text-navy/60">{p(t.visitFee.staffNone)}</p>;
+  const fee = `$${r.visitFee}`;
+
+  return (
+    <div className="mt-4 rounded-2xl border-2 border-navy/15 bg-white p-3">
+      <p className="text-sm font-bold text-navy">{p(t.visitFee.staffTitle)}</p>
+      <p className="mt-0.5 text-xs text-navy/70">{p(t.visitFee.staffHint).replace("{fee}", fee)}</p>
+      <div role="radiogroup" aria-label={p(t.visitFee.staffTitle)} className="mt-3 grid auto-rows-fr grid-cols-3 gap-2">
+        {VISIT_FEE_REASONS.map((value) => (
+          <button
+            key={value}
+            type="button"
+            role="radio"
+            aria-checked={reason === value}
+            onClick={() => setReason(value)}
+            className={`min-h-10 rounded-xl border-2 px-2 text-xs font-bold leading-tight ${
+              reason === value ? "border-navy bg-navy text-paper" : "border-navy/30 bg-white text-navy"
+            }`}
+          >
+            {p(t.visitFee.reasons[value])}
+          </button>
+        ))}
+      </div>
+      <input
+        value={note}
+        onChange={(e) => setNote(e.target.value)}
+        placeholder={p(t.visitFee.notePh)}
+        aria-label={p(t.visitFee.notePh)}
+        className={`${INPUT} mt-2 w-full`}
+      />
+      <button
+        onClick={() => {
+          const label = p(t.visitFee.staffConfirm).replace("{fee}", fee);
+          if (reason && window.confirm(`${label}: #${r.id}?`)) {
+            close.mutate({ id: r.id, reason, note: note.trim() || undefined });
+          }
+        }}
+        disabled={!reason || close.isPending}
+        className="btn-pill-outline mt-2 !min-h-10 w-full justify-center !py-1.5 text-sm disabled:opacity-40"
+      >
+        {close.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+        {p(t.visitFee.staffConfirm).replace("{fee}", fee)}
+      </button>
+      {close.error && (
+        <p role="alert" className="mt-2 text-xs font-semibold text-destructive">
+          {close.error.message}
+        </p>
+      )}
+    </div>
+  );
+}
+
 /** The one action this request needs now, depending on its status. */
 function NextStep({
   request: r,
@@ -322,6 +389,13 @@ function NextStep({
       <p className="mt-1 text-sm font-semibold text-navy">
         {guaranteeReview ? p(t.dash4.stepGuarantee).replace("{id}", String(r.guaranteeFor)) : p(message)}
       </p>
+      {status === "cancelled" && r.visitFeeReason && (
+        <p className="mt-1 text-sm font-bold text-navy">
+          {p(t.app.visitFeeClosed)
+            .replace("{fee}", `$${r.visitFee}`)
+            .replace("{reason}", p(t.visitFee.reasons[r.visitFeeReason]))}
+        </p>
+      )}
 
       {askedToCancel && (
         <div role="alert" className="mt-3 rounded-xl border-2 border-red-700 bg-red-700/5 p-3 text-sm text-navy">
@@ -451,6 +525,10 @@ function NextStep({
         </div>
       )}
       {status === "approved" && !r.technicianId && <p className="mt-2 text-xs text-navy/70">{p(t.dash2.needTechToSchedule)}</p>}
+
+      {(status === "scheduled" || status === "in_progress") && !r.guaranteeFor && (
+        <VisitFeeClose request={r} onDone={onDone} />
+      )}
 
       {!closed &&
         (closing ? (

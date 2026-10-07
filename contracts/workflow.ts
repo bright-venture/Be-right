@@ -24,6 +24,8 @@ export const TRANSITIONS = {
   complete: { from: ["in_progress"], to: "completed", by: "specialist|technician" },
   // Once a visit is scheduled the customer asks to cancel (requestCancel) and a specialist confirms.
   cancel: { from: ["submitted", "in_review", "quote_ready", "approved"], to: "cancelled", by: "customer" },
+  // The technician went but no repair happened: a specialist closes the job charging the visit fee.
+  closeWithVisitFee: { from: ["scheduled", "in_progress"], to: "cancelled", by: "specialist" },
   // A specialist can close any open request (spam, out of area, customer asked), with a reason.
   close: {
     from: ["submitted", "in_review", "quote_ready", "approved", "scheduled", "in_progress"],
@@ -45,6 +47,24 @@ export function canTransition(name: TransitionName, status: RequestStatus) {
 export function guaranteeEndsAt(completedAt: Date) {
   return new Date(completedAt.getTime() + WORKMANSHIP_GUARANTEE_DAYS * 86_400_000);
 }
+
+/**
+ * The visit fee (minimum charge), in USD. Saved on each request when it's booked.
+ * - Repair goes ahead: it's included in the quote, nothing extra.
+ * - No repair: a specialist (only) closes the job charging it, for one of VISIT_FEE_REASONS.
+ * - Guarantee visits never have one.
+ */
+export { VISIT_FEE_USD } from "./legal";
+export const VISIT_FEE_REASONS = ["no_work", "no_access", "late_cancel"] as const;
+export type VisitFeeReason = (typeof VISIT_FEE_REASONS)[number];
+/** What a technician can report from the visit, for the specialist to act on. */
+/** How each reason reads in the request timeline and in emails. */
+export const VISIT_FEE_REASON_LABEL: Record<VisitFeeReason, string> = {
+  no_work: "No repair done",
+  no_access: "Nobody there at the agreed time",
+  late_cancel: "Cancelled after the technician set off",
+};
+export const VISIT_REPORTS = ["no_work", "no_access"] as const satisfies readonly VisitFeeReason[];
 
 /** Photos/videos a customer can add when reporting a problem. */
 export const MAX_PROBLEM_FILES = 4;

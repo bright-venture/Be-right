@@ -8,7 +8,7 @@ import { DocumentUpload } from "@/components/DocumentUpload";
 import { AgreeCheckbox } from "@/components/AgreeCheckbox";
 import { useI18n } from "@/i18n";
 import { trpc } from "@/providers/trpc";
-import { CATEGORY_MAP, MAIN_SERVICES, OTHER_SERVICES, type LocalText } from "@contracts/services";
+import { CATEGORY_MAP, SERVICES_IN_ORDER, type LocalText } from "@contracts/services";
 import { isValidPhone } from "@contracts/phone";
 import { APPLICATION_DOCUMENTS, DOCUMENT_FIELD, type ApplicationDocument } from "@contracts/applications";
 import { isRateLimited } from "@/lib/errors";
@@ -241,43 +241,31 @@ export default function Join() {
                     {p(t.join.trade)}
                     <Req />
                   </p>
-                  {/* The eight main trades as one complete grid, then the three for buildings and events. */}
-                  {[
-                    { ids: MAIN_SERVICES, cols: "grid-cols-2 sm:grid-cols-4", stacked: false },
-                    { ids: OTHER_SERVICES, cols: "grid-cols-3", stacked: true, title: p(t.app.otherServices) },
-                  ].map((group) => (
-                    <div key={group.cols}>
-                      {group.title && (
-                        <p className="mt-4 text-xs font-bold uppercase tracking-[0.14em] text-navy/60">{group.title}</p>
-                      )}
-                      <div className={`mt-3 grid auto-rows-fr gap-2 ${group.cols}`}>
-                        {group.ids
-                          .map((id) => CATEGORY_MAP[id])
-                          .filter(Boolean)
-                          .map((c) => (
-                            <button
-                              key={c.id}
-                              type="button"
-                              aria-pressed={trade === c.id}
-                              onClick={() => setTrade(c.id)}
-                              className={`flex min-h-12 items-center gap-2 rounded-2xl border-2 px-3 py-2 text-sm font-bold leading-tight transition-colors ${
-                                group.stacked ? "flex-col justify-center text-center" : "text-start"
-                              } ${
-                                trade === c.id
-                                  ? "border-navy bg-navy text-paper"
-                                  : "border-navy/30 bg-white text-navy hover:border-navy"
-                              }`}
-                            >
-                              <ServiceIcon
-                                id={c.id}
-                                className={`h-5 w-5 shrink-0 ${trade === c.id ? "text-flame-light" : "text-bird"}`}
-                              />
-                              {p(c.name)}
-                            </button>
-                          ))}
-                      </div>
-                    </div>
-                  ))}
+                  {/* Every trade in one grid. Rows stay full: an odd last trade spans two cells
+                      (2 columns on phones; on wide screens the 11th of 4 columns takes the last two). */}
+                  <div className="mt-3 grid auto-rows-fr grid-cols-2 gap-2 sm:grid-cols-4 max-sm:[&>*:last-child:nth-child(odd)]:col-span-2 sm:[&>*:last-child:nth-child(4n+3)]:col-span-2">
+                    {SERVICES_IN_ORDER.map((id) => CATEGORY_MAP[id])
+                      .filter(Boolean)
+                      .map((c) => (
+                        <button
+                          key={c.id}
+                          type="button"
+                          aria-pressed={trade === c.id}
+                          onClick={() => setTrade(c.id)}
+                          className={`flex min-h-12 items-center gap-2 rounded-2xl border-2 px-3 py-2 text-start text-sm font-bold leading-tight transition-colors ${
+                            trade === c.id
+                              ? "border-navy bg-navy text-paper"
+                              : "border-navy/30 bg-white text-navy hover:border-navy"
+                          }`}
+                        >
+                          <ServiceIcon
+                            id={c.id}
+                            className={`h-5 w-5 shrink-0 ${trade === c.id ? "text-flame-light" : "text-bird"}`}
+                          />
+                          {p(c.name)}
+                        </button>
+                      ))}
+                  </div>
                 </div>
 
                 <div>

@@ -3,6 +3,7 @@
 import {
   COMPANY,
   REJECTED_APPLICATION_RETENTION_DAYS as REJECT_DAYS,
+  VISIT_FEE_USD as FEE,
   WORKMANSHIP_GUARANTEE_DAYS as GUARANTEE_DAYS,
   arabicDays,
 } from "@contracts/legal";
@@ -63,8 +64,12 @@ export const TERMS: LegalDocument = {
       title: t("4. Cancelling", "٤. الإلغاء"),
       paragraphs: [
         t(
-          "You can cancel free of charge in the app until the visit is scheduled. After that, contact your specialist; if a technician is already on the way, a call-out fee stated in your quote may apply.",
-          "يمكنك الإلغاء مجاناً عبر التطبيق إلى أن يُحدَّد موعد الزيارة. بعد ذلك تواصل مع المختص؛ وإذا كان الفني في طريقه إليك، قد يُطبَّق رسم انتقال مذكور في عرضك.",
+          "You can cancel free of charge in the app until the visit is scheduled. After that, ask your specialist from the request page.",
+          "يمكنك الإلغاء مجاناً عبر التطبيق إلى أن يُحدَّد موعد الزيارة. بعد ذلك اطلب الإلغاء من المختص عبر صفحة الطلب.",
+        ),
+        t(
+          `A fixed visit fee of US$${FEE}, shown before you book, applies only if the technician comes and no repair goes ahead (no work is needed or you decide not to repair), if nobody is there to give access at the agreed time, or if you cancel after the technician has set off. Only a Be Right specialist can apply it, and you are told why. If the repair goes ahead, the visit fee is included in the approved price. Visits under the workmanship guarantee are always free.`,
+          `يُطبَّق رسم زيارة ثابت قدره ${FEE} دولار أميركي، يظهر لك قبل الحجز، فقط إذا حضر الفني ولم يتمّ أي تصليح (لا حاجة لعمل أو قرّرت عدم التصليح)، أو إذا لم يكن أحد موجوداً لتأمين الدخول في الموعد المتفق عليه، أو إذا ألغيت بعد انطلاق الفني. لا يطبّقه إلا مختص من بي رايت، ويُبلَّغ لك السبب. وإذا تمّ التصليح، يكون رسم الزيارة مشمولاً في السعر الموافق عليه. زيارات ضمانة جودة العمل مجانية دائماً.`,
         ),
       ],
     },

@@ -161,7 +161,10 @@ export default function AppRequest() {
             <p className={LABEL}>{p(t.app.quoteTitle)}</p>
             <p className="mt-1 font-display text-4xl font-black text-navy tabular-nums">{price ?? "-"}</p>
             {r.quoteNote && <p className="mt-2 text-sm text-navy/80">{r.quoteNote}</p>}
-            <p className="mt-2 text-xs text-navy/60">{p(t.app.quoteHint)}</p>
+            <p className="mt-2 text-xs text-navy/60">
+              {p(t.app.quoteHint)}
+              {r.visitFee && !r.guaranteeFor && ` ${p(t.app.quoteIncludesFee).replace("{fee}", `$${r.visitFee}`)}`}
+            </p>
             <div className="mt-4 grid grid-cols-2 gap-2">
               <button
                 onClick={() => cancel.mutate({ id: r.id })}
@@ -217,8 +220,12 @@ export default function AppRequest() {
           <p className={LABEL}>{p(t.app.progress)}</p>
           {status === "cancelled" ? (
             <p className="mt-3 flex items-center gap-2 text-sm font-semibold text-navy/70">
-              <XCircle className="h-5 w-5 text-navy/40" />
-              {p(t.app.cancelledNote)}
+              <XCircle className="h-5 w-5 shrink-0 text-navy/40" />
+              {r.visitFeeReason
+                ? p(t.app.visitFeeClosed)
+                    .replace("{fee}", `$${r.visitFee}`)
+                    .replace("{reason}", p(t.visitFee.reasons[r.visitFeeReason]))
+                : p(t.app.cancelledNote)}
             </p>
           ) : (
             <ol className="mt-3">
@@ -265,8 +272,11 @@ export default function AppRequest() {
               </p>
             </div>
             <div className="rounded-2xl bg-paper p-3">
-              <p className="text-xs text-navy/60">{p(t.requests.quote)}</p>
-              <p className="mt-0.5 text-sm font-bold text-navy tabular-nums">{price ?? "-"}</p>
+              {/* closed with the visit fee: that is what the customer pays, not the quote */}
+              <p className="text-xs text-navy/60">{p(r.visitFeeReason ? t.book.visitFeeTitle : t.requests.quote)}</p>
+              <p className="mt-0.5 text-sm font-bold text-navy tabular-nums">
+                {r.visitFeeReason ? `$${r.visitFee}` : (price ?? "-")}
+              </p>
             </div>
           </div>
           <div>

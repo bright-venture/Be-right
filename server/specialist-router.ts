@@ -5,7 +5,12 @@ import { getDb } from "./queries/connection";
 import { requestEvents, requestMedia, serviceRequests, technicianLocations, users } from "../db/schema";
 import { ACTIVE_JOB_STATUSES } from "@contracts/workflow";
 import type { RequestStatus, UrgencyLevel } from "@contracts/services";
-import { QUOTE_AMOUNT_PATTERN, URGENCY_LEVELS } from "@contracts/workflow";
+import {
+  QUOTE_AMOUNT_PATTERN,
+  URGENCY_LEVELS,
+  VISIT_FEE_REASON_LABEL,
+  VISIT_FEE_REASONS,
+} from "@contracts/workflow";
 import { applyTransition, findRequest, logEvent } from "./lib/workflow";
 import { profilePhotoUrl } from "./lib/storage";
 import { ratingFor, reviewOf } from "./queries/ratings";
@@ -151,6 +156,38 @@ export const specialistRouter = createRouter({
         note: input.reason,
       });
       await notify.closedByUs(input.id);
+      return { ok: true };
+    }),
+
+  /**
+   * The technician went but no repair happened (no work needed or declined, nobody there,
+   * or the customer cancelled once the technician was on the way): close the job charging
+   * only the visit fee fixed at booking. Never on guarantee visits.
+   */
+  closeWithVisitFee: specialistQuery
+    .input(
+      z.object({
+        id: z.number().int(),
+        reason: z.enum(VISIT_FEE_REASONS),
+        note: z.string().trim().max(2000).optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      await applyTransition({
+        id: input.id,
+        name: "closeWithVisitFee",
+        actorId: ctx.user.id,
+        scope: "any",
+        note: [`Visit fee (${VISIT_FEE_REASON_LABEL[input.reason]})`, input.note].filter(Boolean).join(". "),
+        patch: { visitFeeReason: input.reason },
+        guard: (row) =>
+          row.guaranteeFor
+            ? "Guarantee visits are free"
+            : !row.visitFee
+              ? "This request was booked before visit fees"
+              : null,
+      });
+      await notify.visitFeeCharged(input.id);
       return { ok: true };
     }),
 

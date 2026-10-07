@@ -354,6 +354,53 @@ export const notify = {
       if (job.technician) await send([job.technician.email], jobCancelled(d.id));
     }),
 
+  /** A specialist closed the job charging only the visit fee (no repair happened). */
+  visitFeeCharged: (id: number) =>
+    safely("visitFeeCharged", async () => {
+      const job = await loadJob(id);
+      const d = describe(job);
+      const fee = `$${job.request.visitFee}`;
+      const why = {
+        no_work: both("no repair was done at the visit", "ما صار تصليح بالزيارة"),
+        no_access: both("nobody was there at the agreed time", "ما كان في حدا بالموعد المتفق عليه"),
+        late_cancel: both("the visit was cancelled after the technician set off", "الزيارة تلغت بعد ما المعلّم طلع"),
+      }[job.request.visitFeeReason ?? "no_work"];
+      await send([job.customer?.email], {
+        subject: both(`Request #${d.id} closed with a ${fee} visit fee`, `تسكّر الطلب #${d.id} مع رسم زيارة ${fee}`),
+        title: both("Your request was closed", "تسكّر طلبك"),
+        lines: [
+          both(
+            `Our team closed your ${d.category.en} request #${d.id} because ${why.en}. Only the ${fee} visit fee applies.`,
+            `فريقنا سكّر طلب ${d.category.ar} #${d.id} لأنه ${why.ar}. بس رسم الزيارة ${fee} بيتطبّق.`,
+          ),
+          both("If something isn't right, reply to this email.", "إذا في شي مش مظبوط، رد على هالإيميل."),
+        ],
+        path: "/requests",
+        button: both("See my requests", "شوف طلباتي"),
+      });
+      if (job.technician) await send([job.technician.email], jobCancelled(d.id));
+    }),
+
+  /** The technician reported a visit without a repair: a specialist decides about the visit fee. */
+  visitReported: (id: number, note: string) =>
+    safely("visitReported", async () => {
+      const job = await loadJob(id);
+      const d = describe(job);
+      await send(await specialistEmails(), {
+        subject: both(`Job #${d.id}: the technician reported a visit without a repair`, `المهمة #${d.id}: المعلّم بلّغ عن زيارة بلا تصليح`),
+        title: both("A visit needs your decision", "في زيارة بدها قرارك"),
+        lines: [
+          both(`${job.technician?.name ?? "The technician"}: ${note}`, `${job.technician?.name ?? "المعلّم"}: ${note}`),
+          both(
+            "Open the job to close it with the visit fee, or keep it going.",
+            "افتح المهمة لتسكّرها مع رسم الزيارة، أو كمّل فيها.",
+          ),
+        ],
+        path: "/dashboard",
+        button: both("Open the dashboard", "افتح لوحة التحكم"),
+      });
+    }),
+
   /** Customer reported a problem with a completed job (workmanship guarantee). */
   guaranteeReported: (id: number) =>
     safely("guaranteeReported", async () => {

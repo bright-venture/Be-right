@@ -1,6 +1,6 @@
 // Bilingual UI strings (English / Arabic).
 import type { Lang, RequestStatus, UrgencyLevel, LocalText } from "./services";
-import { arabicDays, arabicDigits, WORKMANSHIP_GUARANTEE_DAYS as DAYS } from "./legal";
+import { arabicDays, arabicDigits, VISIT_FEE_USD as FEE, WORKMANSHIP_GUARANTEE_DAYS as DAYS } from "./legal";
 import { MAX_DOCUMENT_MB as MB } from "./applications";
 
 export const t = {
@@ -207,19 +207,14 @@ export const t = {
   coverage: {
     kicker: { en: "(Where we operate)", ar: "(وين منشتغل)" },
     title: { en: "Serving all of Lebanon.", ar: "منخدم كل لبنان." },
-    other: { en: "Other services", ar: "خدمات تانية" },
-    otherSub: {
-      en: "For buildings, offices and events.",
-      ar: "للمباني والمكاتب والمناسبات.",
-    },
   },
   pricing: {
     kicker: { en: "(Pricing & our guarantee)", ar: "(الأسعار والضمانة)" },
     title: { en: "Clear pricing. Real guarantee.", ar: "أسعار واضحة. ضمانة حقيقية." },
     feeTitle: { en: "Visit & inspection", ar: "الزيارة والكشف" },
     feeBody: {
-      en: "Booking a request is always free. You only ever pay for actual work. Any visit or inspection fee is confirmed with you before dispatch, and we tell you upfront whether it's deducted from the final repair cost.",
-      ar: "تقديم الطلب مجاني دايماً. بتدفع بس عالشغل الفعلي. أي رسوم زيارة أو كشف منأكدها معك قبل ما نبعت المعلّم لعندك، ومنخبّرك من الأول إذا بتنخصم من كلفة التصليح النهائية.",
+      en: `Booking a request is free. If the technician comes and no repair goes ahead, a fixed $${FEE} visit fee applies. If you go ahead, it's already included in your price. Guarantee visits are always free.`,
+      ar: `تقديم الطلب مجاني. إذا إجا المعلّم وما صار تصليح، في رسم زيارة ثابت $${FEE}. وإذا كمّلت بالتصليح، الرسم محسوب من ضمن السعر. زيارات الضمانة دايماً مجانية.`,
     },
     partsTitle: { en: "Labour, parts & priority", ar: "الشغل والقطع والاستعجال" },
     partsBody: {
@@ -255,8 +250,15 @@ export const t = {
       {
         q: { en: "Is booking really free?", ar: "الحجز فعلاً مجاني؟" },
         a: {
-          en: "Yes. Submitting a request costs nothing. You only pay for approved work, and any visit fee is confirmed with you before dispatch.",
-          ar: "أيه. تقديم الطلب ما بيكلف شي. بتدفع بس عالشغل الموافق عليه، وأي رسوم زيارة منأكدها معك قبل ما نبعت المعلّم لعندك.",
+          en: `Yes. Submitting a request costs nothing. You only pay for the work you approve, and the $${FEE} visit fee is included in that price.`,
+          ar: `أيه. تقديم الطلب ما بيكلف شي. بتدفع بس عالشغل يلي بتوافق عليه، ورسم الزيارة $${FEE} محسوب من ضمن هالسعر.`,
+        },
+      },
+      {
+        q: { en: "When is the visit fee charged on its own?", ar: "إيمتى بينحسب رسم الزيارة لحالو؟" },
+        a: {
+          en: `Only when the technician comes and no repair goes ahead: no work was needed or you decided not to repair, nobody was there at the agreed time, or you cancelled after the technician set off. Then you pay the fixed $${FEE} and nothing else. Guarantee visits are always free.`,
+          ar: `بس إذا إجا المعلّم وما صار تصليح: ما كان في شغل أو قررت ما تصلّح، ما كان في حدا بالموعد المتفق عليه، أو لغيت بعد ما المعلّم طلع. وقتها بتدفع رسم الزيارة الثابت $${FEE} وبس. زيارات الضمانة دايماً مجانية.`,
         },
       },
       {
@@ -344,6 +346,11 @@ export const t = {
     replayIntro: { en: "Replay intro", ar: "شوف المقدمة" },
   },
   book: {
+    visitFeeTitle: { en: "Visit fee", ar: "رسم الزيارة" },
+    visitFeeBody: {
+      en: `$${FEE}, only if the technician comes and no repair goes ahead. If you go ahead, it's included in your price.`,
+      ar: `$${FEE}، بس إذا إجا المعلّم وما صار تصليح. وإذا كمّلت بالتصليح، بيكون من ضمن السعر.`,
+    },
     title: { en: "Book a service", ar: "احجز خدمة" },
     stepCategory: { en: "Service", ar: "الخدمة" },
     stepQuestions: { en: "Questions", ar: "أسئلة" },
@@ -555,7 +562,6 @@ export const t = {
     },
     seeAll: { en: "See all", ar: "شوف الكل" },
     somethingElse: { en: "Something else", ar: "شي تاني" },
-    otherServices: { en: "For buildings and events", ar: "للمباني والمناسبات" },
     whyTitle: { en: "Why Be Right", ar: "ليش بي رايت" },
     whyChecked: { en: "Checked technicians", ar: "معلّمين مفحوصين" },
     whyCheckedSub: { en: "ID, record and trade verified", ar: "الهوية والسجل والمصلحة مفحوصين" },
@@ -572,6 +578,8 @@ export const t = {
     noActive: { en: "Nothing in progress. Need something fixed?", ar: "ما في شي ماشي هلّق. بدك تصلّح شي؟" },
     noPast: { en: "Finished and cancelled requests show up here.", ar: "الطلبات يلي خلصت أو تلغت بتطلع هون." },
     reviewQuote: { en: "Quote ready: {amount}. Review", ar: "السعر جاهز: {amount}. راجعه" },
+    quoteIncludesFee: { en: "Includes the {fee} visit fee.", ar: "بيشمل رسم الزيارة {fee}." },
+    visitFeeClosed: { en: "Closed with a {fee} visit fee: {reason}.", ar: "تسكّر مع رسم زيارة {fee}: {reason}." },
     quoteTitle: { en: "Your quote", ar: "السعر" },
     quoteHint: {
       en: "Nothing is done or charged until you approve.",
@@ -631,7 +639,27 @@ export const t = {
       ar: "المعلّم بعده ما شارك موقعه.",
     },
   },
+  /** The visit fee, as specialists and technicians handle it. */
+  visitFee: {
+    reasons: {
+      no_work: { en: "No repair done", ar: "ما صار تصليح" },
+      no_access: { en: "Nobody there", ar: "ما كان في حدا" },
+      late_cancel: { en: "Cancelled late", ar: "تلغى متأخر" },
+    },
+    staffTitle: { en: "No repair at this visit?", ar: "ما صار تصليح بهالزيارة؟" },
+    staffHint: {
+      en: "Close the job charging only the {fee} visit fee. The customer gets an email.",
+      ar: "سكّر المهمة مع رسم الزيارة {fee} بس. الزبون بيوصله إيميل.",
+    },
+    staffConfirm: { en: "Close and charge {fee}", ar: "سكّر واحسب {fee}" },
+    staffNone: { en: "No visit fee on this request.", ar: "ما في رسم زيارة على هالطلب." },
+    notePh: { en: "Note (optional)", ar: "ملاحظة (اختياري)" },
+    techTitle: { en: "No repair at this visit?", ar: "ما صار تصليح بهالزيارة؟" },
+    techHint: { en: "Tell your specialist. They decide about the visit fee.", ar: "خبّر المختص. هو بيقرر برسم الزيارة." },
+    techSent: { en: "Sent to your specialist.", ar: "انبعت للمختص." },
+  },
   events: {
+    visit_report: { en: "Technician reported a visit without a repair", ar: "المعلّم بلّغ عن زيارة بلا تصليح" },
     assigned: { en: "Technician assigned", ar: "تم تعيين المعلّم" },
     arrived: { en: "Technician arrived", ar: "المعلّم وصل" },
     in_progress: { en: "Work started", ar: "الشغل بدأ" },
