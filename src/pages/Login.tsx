@@ -6,6 +6,7 @@ import { AuthPanel, type AuthMode } from "@/components/AuthPanel";
 import { useI18n } from "@/i18n";
 import { useAuth } from "@/hooks/useAuth";
 import { safeNext } from "@/lib/navigation";
+import { isNetworkError } from "@/lib/errors";
 import { HOME_BY_ROLE, isStaff, type Role } from "@contracts/roles";
 
 /** Sign in (/login) and create account (/signup). */
@@ -38,7 +39,8 @@ export default function Login({ mode = "signin" }: { mode?: AuthMode }) {
           <AuthPanel key={mode} next={next} initialMode={mode} headingLevel="h1" />
           {accountError && (
             <p role="alert" className="mt-4 text-center text-sm font-semibold text-red-700">
-              {accountError.message}
+              {/* Never reached the server (offline, or it refused the app): say so plainly. */}
+              {isNetworkError(accountError) ? p(t.misc.offline) : accountError.message}
             </p>
           )}
           <div className="mt-6 text-center">
