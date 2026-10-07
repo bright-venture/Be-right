@@ -54,6 +54,7 @@ const application = {
   availability: "full_time" as const,
   hasTools: true,
   hasTransport: false,
+  notes: "Licensed electrician, 8 years with residential buildings",
   ...documentKeys(),
   consent: true as const,
 };
@@ -134,9 +135,13 @@ describe("technician applications (public)", () => {
     );
   });
 
-  it("rejects unknown trades", async () => {
+  it("rejects unknown trades and missing answers", async () => {
     await expect(
       (await callerFor()).join.submit({ ...application, trade: "hacking" }),
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    // Every field is required, what they tell us about their work included.
+    await expect(
+      (await callerFor()).join.submit({ ...application, notes: "  " }),
     ).rejects.toMatchObject({ code: "BAD_REQUEST" });
   });
 });

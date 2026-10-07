@@ -8,7 +8,7 @@ import { DocumentUpload } from "@/components/DocumentUpload";
 import { AgreeCheckbox } from "@/components/AgreeCheckbox";
 import { useI18n } from "@/i18n";
 import { trpc } from "@/providers/trpc";
-import { CATEGORIES, type LocalText } from "@contracts/services";
+import { CATEGORY_MAP, MAIN_SERVICES, OTHER_SERVICES, type LocalText } from "@contracts/services";
 import { isValidPhone } from "@contracts/phone";
 import { APPLICATION_DOCUMENTS, DOCUMENT_FIELD, type ApplicationDocument } from "@contracts/applications";
 import { isRateLimited } from "@/lib/errors";
@@ -26,20 +26,38 @@ const INPUT =
 const LABEL = "font-display text-base font-extrabold text-navy";
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-/** A row of pill buttons for picking one option. */
+/** Every field of the application is required (website and app): each label carries this mark. */
+function Req() {
+  return (
+    <span aria-hidden className="text-flame-ink">
+      {"\u00a0*"}
+    </span>
+  );
+}
+
+/**
+ * Pill buttons for picking one option, laid out as an even grid (`columns`): equal widths,
+ * equal heights, and an odd last button spans the whole row instead of leaving a gap.
+ */
 function Choice<T extends string>({
   options,
   value,
   onChange,
   label,
+  columns,
 }: {
   options: readonly { value: T; label: ReactNode }[];
   value: T | null;
   onChange: (v: T) => void;
   label: string;
+  columns: string;
 }) {
   return (
-    <div role="radiogroup" aria-label={label} className="mt-3 flex flex-wrap gap-2">
+    <div
+      role="radiogroup"
+      aria-label={label}
+      className={`mt-3 grid auto-rows-fr gap-2 ${columns}`}
+    >
       {options.map((o) => (
         <button
           key={o.value}
@@ -47,7 +65,7 @@ function Choice<T extends string>({
           role="radio"
           aria-checked={value === o.value}
           onClick={() => onChange(o.value)}
-          className={`min-h-11 rounded-full border-2 px-4 py-2 text-sm font-bold transition-colors ${
+          className={`min-h-11 rounded-full border-2 px-3 py-2 text-center text-sm font-bold leading-tight transition-colors ${
             value === o.value
               ? "border-navy bg-navy text-paper"
               : "border-navy/30 bg-white text-navy hover:border-navy"
@@ -98,6 +116,7 @@ export default function Join() {
     availability !== null &&
     hasTools !== null &&
     hasTransport !== null &&
+    notes.trim().length >= 3 &&
     APPLICATION_DOCUMENTS.every((kind) => !!documents[kind]) &&
     consent;
 
@@ -115,7 +134,7 @@ export default function Join() {
         availability: availability!,
         hasTools: hasTools === "yes",
         hasTransport: hasTransport === "yes",
-        notes: notes.trim() || undefined,
+        notes: notes.trim(),
         // `valid` above requires every document
         ...(Object.fromEntries(APPLICATION_DOCUMENTS.map((kind) => [DOCUMENT_FIELD[kind], documents[kind]!])) as Record<
           (typeof DOCUMENT_FIELD)[ApplicationDocument],
@@ -155,14 +174,19 @@ export default function Join() {
                 {p(t.join.title)}
               </h1>
               <p className="mt-4 max-w-lg leading-relaxed text-navy/70">{p(t.join.sub)}</p>
+              <p className="mt-2 text-sm font-semibold text-navy/70">
+                <span className="text-flame-ink">*</span> {p(t.join.allRequired)}
+              </p>
 
               <div className="card-br mt-8 flex flex-col gap-6 p-5 sm:p-8">
                 <div>
                   <label htmlFor="join-name" className={LABEL}>
                     {p(t.join.name)}
+                    <Req />
                   </label>
                   <input
                     id="join-name"
+                    required
                     autoComplete="name"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
@@ -175,9 +199,11 @@ export default function Join() {
                   <div>
                     <label htmlFor="join-phone" className={LABEL}>
                       {p(t.join.phone)}
+                      <Req />
                     </label>
                     <input
                       id="join-phone"
+                      required
                       type="tel"
                       autoComplete="tel"
                       value={phone}
@@ -194,9 +220,11 @@ export default function Join() {
                   <div>
                     <label htmlFor="join-email" className={LABEL}>
                       {p(t.join.email)}
+                      <Req />
                     </label>
                     <input
                       id="join-email"
+                      required
                       type="email"
                       autoComplete="email"
                       value={email}
@@ -209,36 +237,57 @@ export default function Join() {
                 </div>
 
                 <div>
-                  <p className={LABEL}>{p(t.join.trade)}</p>
-                  <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
-                    {CATEGORIES.map((c) => (
-                      <button
-                        key={c.id}
-                        type="button"
-                        aria-pressed={trade === c.id}
-                        onClick={() => setTrade(c.id)}
-                        className={`flex min-h-12 items-center gap-2 rounded-2xl border-2 px-3 py-2 text-start text-sm font-bold transition-colors ${
-                          trade === c.id
-                            ? "border-navy bg-navy text-paper"
-                            : "border-navy/30 bg-white text-navy hover:border-navy"
-                        }`}
-                      >
-                        <ServiceIcon
-                          id={c.id}
-                          className={`h-5 w-5 shrink-0 ${trade === c.id ? "text-flame-light" : "text-bird"}`}
-                        />
-                        {p(c.name)}
-                      </button>
-                    ))}
-                  </div>
+                  <p className={LABEL}>
+                    {p(t.join.trade)}
+                    <Req />
+                  </p>
+                  {/* The eight main trades as one complete grid, then the three for buildings and events. */}
+                  {[
+                    { ids: MAIN_SERVICES, cols: "grid-cols-2 sm:grid-cols-4", stacked: false },
+                    { ids: OTHER_SERVICES, cols: "grid-cols-3", stacked: true, title: p(t.app.otherServices) },
+                  ].map((group) => (
+                    <div key={group.cols}>
+                      {group.title && (
+                        <p className="mt-4 text-xs font-bold uppercase tracking-[0.14em] text-navy/60">{group.title}</p>
+                      )}
+                      <div className={`mt-3 grid auto-rows-fr gap-2 ${group.cols}`}>
+                        {group.ids
+                          .map((id) => CATEGORY_MAP[id])
+                          .filter(Boolean)
+                          .map((c) => (
+                            <button
+                              key={c.id}
+                              type="button"
+                              aria-pressed={trade === c.id}
+                              onClick={() => setTrade(c.id)}
+                              className={`flex min-h-12 items-center gap-2 rounded-2xl border-2 px-3 py-2 text-sm font-bold leading-tight transition-colors ${
+                                group.stacked ? "flex-col justify-center text-center" : "text-start"
+                              } ${
+                                trade === c.id
+                                  ? "border-navy bg-navy text-paper"
+                                  : "border-navy/30 bg-white text-navy hover:border-navy"
+                              }`}
+                            >
+                              <ServiceIcon
+                                id={c.id}
+                                className={`h-5 w-5 shrink-0 ${trade === c.id ? "text-flame-light" : "text-bird"}`}
+                              />
+                              {p(c.name)}
+                            </button>
+                          ))}
+                      </div>
+                    </div>
+                  ))}
                 </div>
 
                 <div>
                   <label htmlFor="join-area" className={LABEL}>
                     {p(t.join.area)}
+                    <Req />
                   </label>
                   <input
                     id="join-area"
+                    required
                     value={area}
                     onChange={(e) => setArea(e.target.value)}
                     placeholder={p(t.join.areaPh)}
@@ -247,43 +296,67 @@ export default function Join() {
                 </div>
 
                 <div>
-                  <p className={LABEL}>{p(t.join.experience)}</p>
+                  <p className={LABEL}>
+                    {p(t.join.experience)}
+                    <Req />
+                  </p>
                   <Choice
                     label={p(t.join.experience)}
                     options={labelled(EXPERIENCE_LEVELS, EXPERIENCE_LABELS)}
+                    columns="grid-cols-2 sm:grid-cols-5 [&>*:last-child:nth-child(odd)]:col-span-2 sm:[&>*:last-child:nth-child(odd)]:col-span-1"
                     value={experience}
                     onChange={setExperience}
                   />
                 </div>
 
                 <div>
-                  <p className={LABEL}>{p(t.join.availability)}</p>
+                  <p className={LABEL}>
+                    {p(t.join.availability)}
+                    <Req />
+                  </p>
                   <Choice
                     label={p(t.join.availability)}
                     options={labelled(AVAILABILITY, AVAILABILITY_LABELS)}
+                    columns="grid-cols-3"
                     value={availability}
                     onChange={setAvailability}
                   />
                 </div>
 
                 <div className="grid gap-6 sm:grid-cols-2">
-                  <div>
-                    <p className={LABEL}>{p(t.join.hasTools)}</p>
-                    <Choice label={p(t.join.hasTools)} options={yesNo} value={hasTools} onChange={setHasTools} />
+                  <div className="flex flex-col justify-between">
+                    <p className={LABEL}>
+                      {p(t.join.hasTools)}
+                      <Req />
+                    </p>
+                    <Choice
+                      label={p(t.join.hasTools)}
+                      options={yesNo}
+                      value={hasTools}
+                      onChange={setHasTools}
+                      columns="grid-cols-2"
+                    />
                   </div>
-                  <div>
-                    <p className={LABEL}>{p(t.join.hasTransport)}</p>
+                  <div className="flex flex-col justify-between">
+                    <p className={LABEL}>
+                      {p(t.join.hasTransport)}
+                      <Req />
+                    </p>
                     <Choice
                       label={p(t.join.hasTransport)}
                       options={yesNo}
                       value={hasTransport}
                       onChange={setHasTransport}
+                      columns="grid-cols-2"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <p className={LABEL}>{p(t.docs.title)}</p>
+                  <p className={LABEL}>
+                    {p(t.docs.title)}
+                    <Req />
+                  </p>
                   <p className="mt-1 text-xs leading-relaxed text-navy/70">{p(t.docs.privacy)}</p>
                   <div className="mt-3 flex flex-col gap-3">
                     {APPLICATION_DOCUMENTS.map((kind) => (
@@ -301,9 +374,11 @@ export default function Join() {
                 <div>
                   <label htmlFor="join-notes" className={LABEL}>
                     {p(t.join.notes)}
+                    <Req />
                   </label>
                   <textarea
                     id="join-notes"
+                    required
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                     placeholder={p(t.join.notesPh)}

@@ -54,7 +54,8 @@ export const joinRouter = createRouter({
         availability: z.enum(AVAILABILITY),
         hasTools: z.boolean(),
         hasTransport: z.boolean(),
-        notes: z.string().trim().max(2000).optional(),
+        // Every field is required, including what the applicant tells us about their work.
+        notes: z.string().trim().min(3).max(2000),
         // Mandatory documents, uploaded first via storage.createDocumentUpload.
         idDocumentKey: documentKey,
         criminalRecordKey: documentKey,

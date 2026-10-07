@@ -88,6 +88,7 @@ describe("rate limits", () => {
         availability: "full_time",
         hasTools: true,
         hasTransport: true,
+        notes: "Licensed, 8 years with residential buildings",
         ...documentKeys(),
         consent: true,
       });
