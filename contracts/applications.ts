@@ -21,6 +21,18 @@ export const AVAILABILITY_LABELS: Record<Availability, LocalText> = {
   weekends: { en: "Weekends only", ar: "بس ويك إند" },
 };
 
+/** How the technician gets to jobs (required on the application). */
+export const TRANSPORT = ["none", "motorcycle", "car", "van", "truck"] as const;
+export type Transport = (typeof TRANSPORT)[number];
+
+export const TRANSPORT_LABELS: Record<Transport, LocalText> = {
+  none: { en: "No transport", ar: "ما عندي" },
+  motorcycle: { en: "Motorcycle", ar: "موتو" },
+  car: { en: "Car", ar: "سيارة" },
+  van: { en: "Van / pick-up", ar: "فان / بيك آب" },
+  truck: { en: "Truck", ar: "كميون" },
+};
+
 /** Documents every technician applicant must upload, in the order the form shows them. */
 export const APPLICATION_DOCUMENTS = ["idDocument", "criminalRecord", "proofOfAddress", "photo"] as const;
 export type ApplicationDocument = (typeof APPLICATION_DOCUMENTS)[number];

@@ -195,7 +195,7 @@ describe("notification emails", () => {
       experience: "3-5",
       availability: "full_time",
       hasTools: true,
-      hasTransport: false,
+      transport: "van",
       notes: "Generators and inverters",
       ...documentKeys(),
       consent: true,

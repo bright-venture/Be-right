@@ -53,7 +53,7 @@ const application = {
   experience: "5-10" as const,
   availability: "full_time" as const,
   hasTools: true,
-  hasTransport: false,
+  transport: "car" as const,
   notes: "Licensed electrician, 8 years with residential buildings",
   ...documentKeys(),
   consent: true as const,
@@ -129,6 +129,8 @@ describe("technician applications (public)", () => {
     await expect((await callerFor(alice)).join.list()).rejects.toMatchObject({ code: "FORBIDDEN" });
     const list = await (await callerFor(admin)).join.list();
     expect(list.map((a) => a.id)).toContain(id);
+    // The transport type is kept, and "has transport" follows from it.
+    expect(list.find((a) => a.id === id)).toMatchObject({ transport: "car", hasTransport: true });
     await (await callerFor(admin)).join.setStatus({ id, status: "contacted" });
     expect((await (await callerFor(admin)).join.list()).find((a) => a.id === id)?.status).toBe(
       "contacted",
@@ -142,6 +144,15 @@ describe("technician applications (public)", () => {
     // Every field is required, what they tell us about their work included.
     await expect(
       (await callerFor()).join.submit({ ...application, notes: "  " }),
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    // Transport: one of the listed types, never left out.
+    await expect(
+      (await callerFor()).join.submit({ ...application, transport: "bicycle" as never }),
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    const withoutTransport: Partial<typeof application> = { ...application };
+    delete withoutTransport.transport;
+    await expect(
+      (await callerFor()).join.submit(withoutTransport as typeof application),
     ).rejects.toMatchObject({ code: "BAD_REQUEST" });
   });
 });

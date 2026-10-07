@@ -14,6 +14,7 @@ import {
   type AnyPgColumn,
 } from "drizzle-orm/pg-core";
 import type { MediaKind, VisitFeeReason } from "../contracts/workflow";
+import type { Transport } from "../contracts/applications";
 
 // Every table enables Row Level Security with no policies. The app server talks to
 // Postgres directly (bypassing RLS), while Supabase's public REST API — reachable with
@@ -173,6 +174,8 @@ export const technicianApplications = pgTable("technician_applications", {
   availability: varchar("availability", { length: 16 }),
   hasTools: boolean("has_tools"),
   hasTransport: boolean("has_transport"),
+  /** Motorcycle, car, van, truck, or none (applications from before this was asked: null). */
+  transport: varchar("transport", { length: 16 }).$type<Transport>(),
   /** Private storage keys (technician-docs bucket); required for new applications. */
   idDocumentKey: varchar("id_document_key", { length: 512 }),
   criminalRecordKey: varchar("criminal_record_key", { length: 512 }),

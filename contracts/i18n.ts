@@ -700,7 +700,7 @@ export const t = {
     experience: { en: "Years of experience", ar: "سنين الخبرة" },
     availability: { en: "Availability", ar: "أوقات الشغل" },
     hasTools: { en: "Do you have your own tools?", ar: "عندك عدّتك الخاصة؟" },
-    hasTransport: { en: "Do you have your own transport?", ar: "عندك وسيلة نقل؟" },
+    transport: { en: "What transport do you use for work?", ar: "شو وسيلة النقل يلي بتستعملها للشغل؟" },
     yes: { en: "Yes", ar: "إيه" },
     no: { en: "No", ar: "لا" },
     notes: { en: "Tell us about your work", ar: "خبّرنا عن شغلك" },
@@ -730,7 +730,7 @@ export const t = {
     whatsapp: { en: "WhatsApp", ar: "واتساب" },
     emailAction: { en: "Email", ar: "إيميل" },
     tools: { en: "Own tools", ar: "عدّة خاصة" },
-    transport: { en: "Own transport", ar: "نقل خاص" },
+    transport: { en: "Transport", ar: "وسيلة النقل" },
     notProvided: { en: "Not provided", ar: "مش محدد" },
     hire: { en: "Hire as technician", ar: "وظّف كمعلّم" },
     hireConfirm: {

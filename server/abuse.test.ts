@@ -87,7 +87,7 @@ describe("rate limits", () => {
         experience: "1-3",
         availability: "full_time",
         hasTools: true,
-        hasTransport: true,
+        transport: "motorcycle",
         notes: "Licensed, 8 years with residential buildings",
         ...documentKeys(),
         consent: true,

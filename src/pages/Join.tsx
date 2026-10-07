@@ -17,8 +17,11 @@ import {
   AVAILABILITY_LABELS,
   EXPERIENCE_LABELS,
   EXPERIENCE_LEVELS,
+  TRANSPORT,
+  TRANSPORT_LABELS,
   type Availability,
   type ExperienceLevel,
+  type Transport,
 } from "@contracts/applications";
 
 const INPUT =
@@ -88,7 +91,7 @@ export default function Join() {
   const [experience, setExperience] = useState<ExperienceLevel | null>(null);
   const [availability, setAvailability] = useState<Availability | null>(null);
   const [hasTools, setHasTools] = useState<"yes" | "no" | null>(null);
-  const [hasTransport, setHasTransport] = useState<"yes" | "no" | null>(null);
+  const [transport, setTransport] = useState<Transport | null>(null);
   const [notes, setNotes] = useState("");
   /** Storage key of each uploaded document (missing until uploaded). */
   const [documents, setDocuments] = useState<Partial<Record<ApplicationDocument, string>>>({});
@@ -115,7 +118,7 @@ export default function Join() {
     experience !== null &&
     availability !== null &&
     hasTools !== null &&
-    hasTransport !== null &&
+    transport !== null &&
     notes.trim().length >= 3 &&
     APPLICATION_DOCUMENTS.every((kind) => !!documents[kind]) &&
     consent;
@@ -133,7 +136,7 @@ export default function Join() {
         experience: experience!,
         availability: availability!,
         hasTools: hasTools === "yes",
-        hasTransport: hasTransport === "yes",
+        transport: transport!,
         notes: notes.trim(),
         // `valid` above requires every document
         ...(Object.fromEntries(APPLICATION_DOCUMENTS.map((kind) => [DOCUMENT_FIELD[kind], documents[kind]!])) as Record<
@@ -311,8 +314,8 @@ export default function Join() {
                   />
                 </div>
 
-                <div className="grid gap-6 sm:grid-cols-2">
-                  <div className="flex flex-col justify-between">
+                <div>
+                  <div>
                     <p className={LABEL}>
                       {p(t.join.hasTools)}
                       <Req />
@@ -325,19 +328,20 @@ export default function Join() {
                       columns="grid-cols-2"
                     />
                   </div>
-                  <div className="flex flex-col justify-between">
-                    <p className={LABEL}>
-                      {p(t.join.hasTransport)}
-                      <Req />
-                    </p>
-                    <Choice
-                      label={p(t.join.hasTransport)}
-                      options={yesNo}
-                      value={hasTransport}
-                      onChange={setHasTransport}
-                      columns="grid-cols-2"
-                    />
-                  </div>
+                </div>
+
+                <div>
+                  <p className={LABEL}>
+                    {p(t.join.transport)}
+                    <Req />
+                  </p>
+                  <Choice
+                    label={p(t.join.transport)}
+                    options={labelled(TRANSPORT, TRANSPORT_LABELS)}
+                    columns="grid-cols-2 sm:grid-cols-5 max-sm:[&>*:last-child:nth-child(odd)]:col-span-2"
+                    value={transport}
+                    onChange={setTransport}
+                  />
                 </div>
 
                 <div>

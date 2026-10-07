@@ -1,0 +1,1 @@
+ALTER TABLE "technician_applications" ADD COLUMN "transport" varchar(16);

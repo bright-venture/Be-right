@@ -11,6 +11,7 @@ import {
   DOCUMENT_FIELD,
   EXPERIENCE_LEVELS,
   MANUAL_APPLICATION_STATUSES,
+  TRANSPORT,
   type ApplicationDocument,
 } from "@contracts/applications";
 import { getSupabaseAdmin } from "./lib/supabase";
@@ -53,7 +54,7 @@ export const joinRouter = createRouter({
         experience: z.enum(EXPERIENCE_LEVELS),
         availability: z.enum(AVAILABILITY),
         hasTools: z.boolean(),
-        hasTransport: z.boolean(),
+        transport: z.enum(TRANSPORT),
         // Every field is required, including what the applicant tells us about their work.
         notes: z.string().trim().min(3).max(2000),
         // Mandatory documents, uploaded first via storage.createDocumentUpload.
@@ -87,7 +88,8 @@ export const joinRouter = createRouter({
           experience: input.experience,
           availability: input.availability,
           hasTools: input.hasTools,
-          hasTransport: input.hasTransport,
+          hasTransport: input.transport !== "none",
+          transport: input.transport,
           notes: input.notes ?? null,
           idDocumentKey: input.idDocumentKey,
           criminalRecordKey: input.criminalRecordKey,

@@ -11,6 +11,7 @@ import {
   DOCUMENT_FIELD,
   EXPERIENCE_LABELS,
   MANUAL_APPLICATION_STATUSES,
+  TRANSPORT_LABELS,
   type Availability,
   type ExperienceLevel,
 } from "@contracts/applications";
@@ -167,7 +168,10 @@ function ApplicationCard({
               app.availability ? p(AVAILABILITY_LABELS[app.availability as Availability]) : p(t.dash3.notProvided),
             )}
             {detail(p(t.dash3.tools), yesNo(app.hasTools))}
-            {detail(p(t.dash3.transport), yesNo(app.hasTransport))}
+            {detail(
+              p(t.dash3.transport),
+              app.transport ? p(TRANSPORT_LABELS[app.transport]) : yesNo(app.hasTransport),
+            )}
           </dl>
           {app.notes && <p className="mt-3 rounded-xl bg-navy/5 p-3 text-sm text-navy/80">{app.notes}</p>}
 
