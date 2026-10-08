@@ -11,6 +11,7 @@ import {
   UserCog,
   UserMinus,
   UserPlus,
+  ShieldAlert,
   type LucideIcon,
 } from "lucide-react";
 import { ServiceIcon } from "@/components/ServiceIcon";
@@ -491,6 +492,7 @@ const AUDIT_ICON: Record<AuditAction, LucideIcon> = {
   application_status: ClipboardCheck,
   technician_hired: UserCheck,
   technician_removed: UserMinus,
+  staff_access_refused: ShieldAlert,
 };
 
 /** Staff actions and document views, newest first. */
@@ -528,7 +530,11 @@ function StaffActivity() {
               : t.admin.audit.staff_added
             : e.action === "staff_role_changed" && d.to === "customer"
               ? t.admin.audit.staff_removed
-              : t.admin.audit[e.action];
+              : e.action === "staff_access_refused"
+                ? d.reason === "role"
+                  ? t.admin.audit.refused_role
+                  : t.admin.audit.refused_password
+                : t.admin.audit[e.action];
         const sentence = p(text)
           .replace("{target}", target)
           .replace("{applicant}", applicant)
@@ -538,7 +544,11 @@ function StaffActivity() {
         const Icon = AUDIT_ICON[e.action] ?? FileText;
         return (
           <li key={e.id} className="grid grid-cols-[auto_1fr] gap-x-3 rounded-2xl border border-navy/10 bg-white p-4">
-            <span className="mt-0.5 flex h-9 w-9 items-center justify-center rounded-xl bg-navy/5 text-bird">
+            <span
+              className={`mt-0.5 flex h-9 w-9 items-center justify-center rounded-xl ${
+                e.action === "staff_access_refused" ? "bg-destructive/10 text-destructive" : "bg-navy/5 text-bird"
+              }`}
+            >
               <Icon className="h-4 w-4" />
             </span>
             <div className="min-w-0">

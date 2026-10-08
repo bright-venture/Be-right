@@ -16,6 +16,12 @@ export const AUDIT_ACTIONS = [
   "technician_hired",
   /** A technician went back to a regular account (details: unassigned). */
   "technician_removed",
+  /**
+   * A staff area refused someone (details: reason, path): "password" when the session didn't
+   * start with a password, "role" when the account isn't staff. Not recorded: sessions still
+   * waiting for their two-step code, which is a normal step of every staff sign-in.
+   */
+  "staff_access_refused",
 ] as const;
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];

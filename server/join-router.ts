@@ -22,6 +22,7 @@ import { clientIp, LIMITS, rateLimit } from "./lib/rateLimit";
 import { notify } from "./notify";
 import { createDocumentUrls, documentKeyMatches, documentsExist } from "./lib/storage";
 import { audit, auditDocumentsViewed } from "./lib/audit";
+import { saveInvitedAccount } from "./lib/invites";
 
 const TRADE_IDS = CATEGORIES.map((c) => c.id) as [string, ...string[]];
 const documentKey = z.string().max(512);
@@ -34,6 +35,7 @@ function documentKeysOf(app: Record<(typeof DOCUMENT_FIELD)[ApplicationDocument]
   >;
 }
 const email = z.string().trim().toLowerCase().email().max(320);
+type Tx = Parameters<Parameters<ReturnType<typeof getDb>["transaction"]>[0]>[0];
 
 /** Where the invitation link lands: set a password, then the technician's jobs page. */
 function inviteRedirect(req: Request) {
@@ -203,23 +205,45 @@ export const joinRouter = createRouter({
         throw new TRPCError({ code: "BAD_REQUEST", message: "Add the applicant's email to hire them" });
       }
 
-      let userId: number;
-      let invited = false;
       const existing = await db.query.users.findFirst({ where: eq(users.email, address) });
+      if (existing?.role === "specialist" || existing?.role === "admin") {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "This email belongs to a Be Right staff member" });
+      }
+
+      /** The technician account, the application and the audit line: saved together or not at all. */
+      const hireAs = (invited: boolean, saveAccount: (tx: Tx) => Promise<number>) =>
+        db.transaction(async (tx) => {
+          const userId = await saveAccount(tx);
+          await tx
+            .update(technicianApplications)
+            .set({ status: "hired", hiredUserId: userId, email: address })
+            .where(eq(technicianApplications.id, app.id));
+          await audit(
+            {
+              actorId: ctx.user.id,
+              action: "technician_hired",
+              targetUserId: userId,
+              applicationId: app.id,
+              details: { email: address, invited },
+            },
+            tx,
+          );
+        });
+
       if (existing) {
-        if (existing.role === "specialist" || existing.role === "admin") {
-          throw new TRPCError({ code: "BAD_REQUEST", message: "This email belongs to a Be Right staff member" });
-        }
-        await db
-          .update(users)
-          .set({
-            role: "technician",
-            phone: existing.phone ?? app.phone,
-            name: existing.name ?? app.name,
-            avatar: app.photoKey,
-          })
-          .where(eq(users.id, existing.id));
-        userId = existing.id;
+        await hireAs(false, async (tx) => {
+          await tx
+            .update(users)
+            .set({
+              role: "technician",
+              phone: existing.phone ?? app.phone,
+              name: existing.name ?? app.name,
+              avatar: app.photoKey,
+            })
+            .where(eq(users.id, existing.id));
+          return existing.id;
+        });
+        return { ok: true, invited: false, email: address };
       } else {
         const { data, error } = await getSupabaseAdmin().auth.admin.inviteUserByEmail(address, {
           data: { full_name: app.name, phone: app.phone },
@@ -234,33 +258,25 @@ export const joinRouter = createRouter({
               : `Could not send the invitation: ${error?.message ?? "unknown error"}`,
           });
         }
-        const [created] = await db
-          .insert(users)
-          .values({
-            authId: data.user.id,
-            email: address,
-            name: app.name,
-            phone: app.phone,
-            role: "technician",
-            avatar: app.photoKey,
-          })
-          .onConflictDoUpdate({ target: users.authId, set: { role: "technician", avatar: app.photoKey } })
-          .returning({ id: users.id });
-        userId = created.id;
-        invited = true;
+        const invitedId = data.user.id;
+        await saveInvitedAccount(invitedId, () =>
+          hireAs(true, async (tx) => {
+            const [created] = await tx
+              .insert(users)
+              .values({
+                authId: invitedId,
+                email: address,
+                name: app.name,
+                phone: app.phone,
+                role: "technician",
+                avatar: app.photoKey,
+              })
+              .onConflictDoUpdate({ target: users.authId, set: { role: "technician", avatar: app.photoKey } })
+              .returning({ id: users.id });
+            return created.id;
+          }),
+        );
+        return { ok: true, invited: true, email: address };
       }
-
-      await db
-        .update(technicianApplications)
-        .set({ status: "hired", hiredUserId: userId, email: address })
-        .where(eq(technicianApplications.id, app.id));
-      await audit({
-        actorId: ctx.user.id,
-        action: "technician_hired",
-        targetUserId: userId,
-        applicationId: app.id,
-        details: { email: address, invited },
-      });
-      return { ok: true, invited, email: address };
     }),
 });

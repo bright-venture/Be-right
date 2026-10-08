@@ -26,6 +26,8 @@ export const LIMITS = {
   requestPerUser: { limit: 20, windowSeconds: HOUR },
   /** "Nothing repaired" reports by a technician on one job: each one emails every specialist. */
   visitReportPerJob: { limit: 3, windowSeconds: DAY },
+  /** Emails to the admins about server errors (the details are in the logs). */
+  serverErrorAlert: { limit: 1, windowSeconds: HOUR },
   /** Crash reports from one browser's IP (a page sends at most 5). */
   clientErrorPerIp: { limit: 20, windowSeconds: HOUR },
 } satisfies Record<string, Limit>;

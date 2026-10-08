@@ -738,6 +738,14 @@ export const t = {
       technician_hired: { en: "Hired {applicant} as a technician", ar: "وظّف {applicant} كمعلّم" },
       technician_removed: { en: "Removed {target} from the technicians", ar: "شال {target} من المعلّمين" },
       unassigned: { en: "{n} jobs went back to the queue", ar: "{n} شغلات رجعوا عالطابور" },
+      refused_password: {
+        en: "Was refused a staff area: not signed in with a password",
+        ar: "انرفض دخوله عقسم الفريق: ما دخل بكلمة السر",
+      },
+      refused_role: {
+        en: "Was refused a staff area: not a staff account",
+        ar: "انرفض دخوله عقسم الفريق: حسابه مش من الفريق",
+      },
       someone: { en: "someone", ar: "حدا" },
     },
     // two-step login (authenticator app)

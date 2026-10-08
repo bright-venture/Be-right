@@ -43,3 +43,27 @@ export async function auditDocumentsViewed(actorId: number, applicationId: numbe
   });
   if (!recent) await audit({ actorId, action: "documents_viewed", applicationId }, db);
 }
+
+/**
+ * Records that a staff area refused someone (once per visit and reason), in Admin → Activity
+ * and in the server logs. Never fails the request: it's refused either way.
+ */
+export async function auditStaffRefusal(actorId: number, reason: "password" | "role", path: string) {
+  console.warn("[staff-access-refused]", JSON.stringify({ userId: actorId, reason, path }));
+  try {
+    const db = getDb();
+    const recent = await db.query.auditLog.findFirst({
+      columns: { id: true, details: true },
+      where: and(
+        eq(auditLog.actorId, actorId),
+        eq(auditLog.action, "staff_access_refused"),
+        gt(auditLog.createdAt, new Date(Date.now() - SAME_VISIT_MS)),
+      ),
+      orderBy: (log, { desc }) => [desc(log.createdAt)],
+    });
+    if (recent?.details?.reason === reason) return;
+    await audit({ actorId, action: "staff_access_refused", details: { reason, path } }, db);
+  } catch (error) {
+    console.error("[audit] staff refusal not recorded", error);
+  }
+}

@@ -6,6 +6,7 @@ import { adminQuery, createRouter } from "./middleware";
 import { getDb } from "./queries/connection";
 import { auditLog, requestEvents, reviews, serviceRequests, technicianApplications, users } from "../db/schema";
 import { audit } from "./lib/audit";
+import { saveInvitedAccount } from "./lib/invites";
 import { getSupabaseAdmin } from "./lib/supabase";
 import { env } from "./lib/env";
 
@@ -212,17 +213,26 @@ export const adminRouter = createRouter({
             : `Could not send the invitation: ${error?.message ?? "unknown error"}`,
         });
       }
-      const [created] = await db
-        .insert(users)
-        .values({ authId: data.user.id, email: input.email, role: input.role })
-        .onConflictDoUpdate({ target: users.authId, set: { role: input.role } })
-        .returning({ id: users.id });
-      await audit({
-        actorId: ctx.user.id,
-        action: "staff_added",
-        targetUserId: created.id,
-        details: { email: input.email, role: input.role, invited: true },
-      });
+      const invitedId = data.user.id;
+      // The role is saved with the record, or the invitation is withdrawn: never a half-made account.
+      await saveInvitedAccount(invitedId, () =>
+        db.transaction(async (tx) => {
+          const [created] = await tx
+            .insert(users)
+            .values({ authId: invitedId, email: input.email, role: input.role })
+            .onConflictDoUpdate({ target: users.authId, set: { role: input.role } })
+            .returning({ id: users.id });
+          await audit(
+            {
+              actorId: ctx.user.id,
+              action: "staff_added",
+              targetUserId: created.id,
+              details: { email: input.email, role: input.role, invited: true },
+            },
+            tx,
+          );
+        }),
+      );
       return { ok: true, invited: true };
     }),
 
@@ -244,19 +254,37 @@ export const adminRouter = createRouter({
           message: "This admin is set in the server settings (ADMIN_EMAILS). Change it there.",
         });
       }
-      if (target.role === "admin" && input.role !== "admin") {
-        const [{ admins }] = await db
-          .select({ admins: count() })
-          .from(users)
-          .where(and(eq(users.role, "admin"), isNull(users.deletedAt)));
-        if (admins <= 1) throw new TRPCError({ code: "BAD_REQUEST", message: "Be Right needs at least one admin" });
-      }
-      await db.update(users).set({ role: input.role }).where(eq(users.id, target.id));
-      await audit({
-        actorId: ctx.user.id,
-        action: "staff_role_changed",
-        targetUserId: target.id,
-        details: { from: target.role, to: input.role },
+      await db.transaction(async (tx) => {
+        if (target.role === "admin" && input.role !== "admin") {
+          // Lock every admin row: two admins removing each other at once wait for one another,
+          // and the second one then sees a single admin left.
+          const admins = await tx
+            .select({ id: users.id })
+            .from(users)
+            .where(and(eq(users.role, "admin"), isNull(users.deletedAt)))
+            .for("update");
+          if (admins.length <= 1 || !admins.some((a) => a.id === target.id)) {
+            throw new TRPCError({ code: "BAD_REQUEST", message: "Be Right needs at least one admin" });
+          }
+        }
+        // Only if nobody changed their role meanwhile.
+        const changed = await tx
+          .update(users)
+          .set({ role: input.role })
+          .where(and(eq(users.id, target.id), eq(users.role, target.role)))
+          .returning({ id: users.id });
+        if (!changed.length) {
+          throw new TRPCError({ code: "CONFLICT", message: "Their role just changed. Reload and try again." });
+        }
+        await audit(
+          {
+            actorId: ctx.user.id,
+            action: "staff_role_changed",
+            targetUserId: target.id,
+            details: { from: target.role, to: input.role },
+          },
+          tx,
+        );
       });
       return { ok: true };
     }),

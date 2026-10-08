@@ -3,6 +3,8 @@ import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import type { TrpcContext } from "./context";
 import { STAFF_PASSWORD_REQUIRED, STAFF_TWO_STEP_REQUIRED, type Role } from "@contracts/roles";
+import { auditStaffRefusal } from "./lib/audit";
+import { alertServerError } from "./lib/alerts";
 
 /**
  * Stack traces only on a developer's machine. Opt-in rather than "not production":
@@ -25,7 +27,17 @@ const t = initTRPC.context<TrpcContext>().create({
 });
 
 export const createRouter = t.router;
-export const publicQuery = t.procedure;
+
+/** Unexpected errors (not ones thrown on purpose, like "not found") alert the admins. */
+const watchErrors = t.middleware(async ({ path, next }) => {
+  const result = await next();
+  if (!result.ok && result.error.code === "INTERNAL_SERVER_ERROR") {
+    await alertServerError(path).catch((error) => console.error("[alerts] failed", error));
+  }
+  return result;
+});
+
+export const publicQuery = t.procedure.use(watchErrors);
 
 const requireAuth = t.middleware(async (opts) => {
   const { ctx, next } = opts;
@@ -55,7 +67,7 @@ function requireRole(...roles: Role[]) {
   });
 }
 
-export const authedQuery = t.procedure.use(requireAuth);
+export const authedQuery = publicQuery.use(requireAuth);
 /** Customers: book, follow and approve their own requests. */
 export const customerQuery = authedQuery.use(requireRole("customer"));
 /** Technicians: work the jobs assigned to them. */
@@ -71,13 +83,28 @@ export function staffSessionProblem(ctx: Pick<TrpcContext, "signInMethods" | "as
   return null;
 }
 
-const requireSecureStaffSession = t.middleware(({ ctx, next }) => {
-  const problem = staffSessionProblem(ctx);
-  if (problem) throw new TRPCError({ code: "FORBIDDEN", message: problem });
-  return next();
-});
+/**
+ * Staff endpoints: the right role, then a password sign-in with two-step login. Refusals for a
+ * missing role or password are recorded (Admin → Activity → Staff actions, and the logs).
+ */
+function requireStaff(...roles: Role[]) {
+  return t.middleware(async ({ ctx, path, next }) => {
+    if (!ctx.user) throw new TRPCError({ code: "UNAUTHORIZED", message: ErrorMessages.unauthenticated });
+    if (!roles.includes(ctx.user.role)) {
+      await auditStaffRefusal(ctx.user.id, "role", path);
+      throw new TRPCError({ code: "FORBIDDEN", message: ErrorMessages.insufficientRole });
+    }
+    const problem = staffSessionProblem(ctx);
+    if (problem) {
+      // Waiting for the two-step code is a normal step of every staff sign-in: not recorded.
+      if (problem === STAFF_PASSWORD_REQUIRED) await auditStaffRefusal(ctx.user.id, "password", path);
+      throw new TRPCError({ code: "FORBIDDEN", message: problem });
+    }
+    return next({ ctx: { ...ctx, user: ctx.user } });
+  });
+}
 
 /** Specialists: office staff running the dashboard. Admins can do all of it too. */
-export const specialistQuery = authedQuery.use(requireRole("specialist", "admin")).use(requireSecureStaffSession);
+export const specialistQuery = authedQuery.use(requireStaff("specialist", "admin"));
 /** Admins: the admin area (customers, team, activity, figures). */
-export const adminQuery = authedQuery.use(requireRole("admin")).use(requireSecureStaffSession);
+export const adminQuery = authedQuery.use(requireStaff("admin"));

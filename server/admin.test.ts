@@ -1,14 +1,18 @@
 // The admin area: owners become admins, admins see everything and run the team;
 // nobody else gets in.
 import { beforeAll, describe, expect, it, vi } from "vitest";
-import type { User } from "@db/schema";
+import { rateLimits, type User } from "@db/schema";
 import { STAFF_PASSWORD_REQUIRED, STAFF_TWO_STEP_REQUIRED } from "@contracts/roles";
-import { BEIRUT_PIN, callerFor, documentKeys, futureDate, makeSpecialist, makeTechnician, makeUser } from "./test/harness";
+import { BEIRUT_PIN, callerFor, documentKeys, futureDate, makeSpecialist, makeTechnician, makeUser, type TestDb } from "./test/harness";
 
 const state = vi.hoisted(() => ({
   db: undefined as unknown,
   invites: [] as string[],
+  /** Login ids handed out by invitations, and the ones withdrawn again. */
+  invitedIds: [] as string[],
+  deletedAuthUsers: [] as string[],
   deletedFactors: [] as { id: string; userId: string }[],
+  emails: [] as { to: string[]; subject: string; text: string }[],
 }));
 
 vi.mock("./queries/connection", () => ({ getDb: () => state.db }));
@@ -23,6 +27,11 @@ vi.mock("./lib/env", () => ({
     adminEmails: ["owner@example.com"],
   },
 }));
+vi.mock("./lib/email", () => ({
+  sendEmail: async (email: { to: string[]; subject: string; text: string }) => {
+    state.emails.push(email);
+  },
+}));
 vi.mock("./lib/storage", async (importOriginal) =>
   (await import("./test/harness")).storageStub(importOriginal),
 );
@@ -32,7 +41,13 @@ vi.mock("./lib/supabase", () => ({
       admin: {
         inviteUserByEmail: async (email: string) => {
           state.invites.push(email);
-          return { data: { user: { id: crypto.randomUUID() } }, error: null };
+          const id = crypto.randomUUID();
+          state.invitedIds.push(id);
+          return { data: { user: { id } }, error: null };
+        },
+        deleteUser: async (id: string) => {
+          state.deletedAuthUsers.push(id);
+          return { data: { user: null }, error: null };
         },
         // Every staff account has one verified authenticator app.
         mfa: {
@@ -275,5 +290,107 @@ describe("audit trail", () => {
   it("returns real dates for a customer's last request (Safari can't read Postgres' text dates)", async () => {
     const maya = (await (await callerFor(owner)).admin.customers()).find((c) => c.email === "maya@example.com")!;
     expect(maya.lastRequestAt).toBeInstanceOf(Date);
+  });
+});
+
+/** Makes the next database calls of one kind fail, as if the database went down. */
+async function withDatabaseDown(method: "select" | "transaction", run: () => Promise<void>) {
+  const db = state.db as Record<string, unknown>;
+  const real = db[method];
+  db[method] = () => {
+    throw new Error("database is down");
+  };
+  try {
+    await run();
+  } finally {
+    db[method] = real;
+  }
+}
+
+describe("safety nets", () => {
+  it("withdraws a staff invitation when the account can't be saved", async () => {
+    const o = await callerFor(owner);
+    await withDatabaseDown("transaction", async () => {
+      await expect(o.admin.addStaff({ email: "lina.desk@example.com", role: "specialist" })).rejects.toBeDefined();
+    });
+    // The invitation's login was deleted, so its link no longer works; nobody was added.
+    expect(state.deletedAuthUsers).toEqual([state.invitedIds.at(-1)]);
+    expect((await o.admin.team()).some((m) => m.email === "lina.desk@example.com")).toBe(false);
+    // Once it works again, the invitation simply goes out again.
+    await expect(o.admin.addStaff({ email: "lina.desk@example.com", role: "specialist" })).resolves.toMatchObject({
+      invited: true,
+    });
+  });
+
+  it("withdraws a technician's invitation when hiring can't be saved, and the application stays open", async () => {
+    const d = await callerFor(desk);
+    const { id } = await (await callerFor()).join.submit({
+      name: "Sami",
+      phone: "+961 76 444 555",
+      email: "sami@example.com",
+      trade: "pest",
+      area: "Tyre",
+      experience: "1-3",
+      availability: "part_time",
+      hasTools: true,
+      transport: "car",
+      notes: "Pest control for restaurants",
+      ...documentKeys(),
+      consent: true,
+    });
+    const withdrawnBefore = state.deletedAuthUsers.length;
+    await withDatabaseDown("transaction", async () => {
+      await expect(d.join.hire({ id })).rejects.toBeDefined();
+    });
+    expect(state.deletedAuthUsers.slice(withdrawnBefore)).toEqual([state.invitedIds.at(-1)]);
+    expect((await d.join.list()).find((a) => a.id === id)).toMatchObject({ status: "new", hiredUserId: null });
+  });
+
+  it("records staff areas refused for a missing role or password, once per visit", async () => {
+    const o = await callerFor(owner);
+    const c = await callerFor(customer);
+    await expect(c.specialist.queue()).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(c.join.list()).rejects.toMatchObject({ code: "FORBIDDEN" });
+    // An admin session that didn't start with a password.
+    await expect((await callerFor(owner, { signInMethods: ["otp"], assuranceLevel: "aal1" })).admin.team()).rejects
+      .toMatchObject({ code: "FORBIDDEN" });
+    // Waiting for the two-step code is a normal step, not recorded.
+    const deskRefusals = async () =>
+      (await o.admin.auditLog()).filter((e) => e.action === "staff_access_refused" && e.actorEmail === "desk@example.com").length;
+    const deskBefore = await deskRefusals();
+    await expect(
+      (await callerFor(desk, { signInMethods: ["password"], assuranceLevel: "aal1" })).specialist.queue(),
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+
+    const refused = (await o.admin.auditLog()).filter((e) => e.action === "staff_access_refused");
+    const byCustomer = refused.filter((e) => e.actorEmail === "maya@example.com");
+    expect(byCustomer).toHaveLength(1);
+    expect(byCustomer[0].details).toMatchObject({ reason: "role" }); // one line per visit, however many tries
+    expect(refused.filter((e) => e.actorEmail === "owner@example.com")[0].details).toMatchObject({ reason: "password" });
+    expect(await deskRefusals()).toBe(deskBefore);
+  });
+
+  it("emails the admins about server errors, at most once an hour", async () => {
+    const o = await callerFor(owner);
+    // The outages simulated above already sent this hour's alert: start a new hour.
+    await (state.db as TestDb).delete(rateLimits);
+    const before = state.emails.length;
+    await withDatabaseDown("select", async () => {
+      await expect(o.admin.customers()).rejects.toMatchObject({ code: "INTERNAL_SERVER_ERROR" });
+      await expect(o.admin.customers()).rejects.toMatchObject({ code: "INTERNAL_SERVER_ERROR" });
+    });
+    const alerts = state.emails.slice(before).filter((e) => e.subject.startsWith("Server errors"));
+    expect(alerts).toHaveLength(1);
+    // Sent to the ADMIN_EMAILS setting even though the database (and its admin list) was down.
+    expect(alerts[0].to).toEqual(["owner@example.com"]);
+    expect(alerts[0].text).toContain("admin.customers");
+  });
+
+  it("keeps errors thrown on purpose (not found, refused) out of the alerts", async () => {
+    const before = state.emails.length;
+    await expect((await callerFor(owner)).admin.setStaffRole({ userId: 999_999, role: "admin" })).rejects.toMatchObject({
+      code: "NOT_FOUND",
+    });
+    expect(state.emails.slice(before).some((e) => e.subject.startsWith("Server errors"))).toBe(false);
   });
 });

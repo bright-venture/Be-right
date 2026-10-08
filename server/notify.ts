@@ -448,6 +448,37 @@ export const notify = {
       });
     }),
 
+  /**
+   * Server errors happened: tell the admins (at most hourly, see lib/alerts.ts). Sent to the
+   * ADMIN_EMAILS setting too, in case the database itself is what's failing.
+   */
+  serverError: (path: string) =>
+    safely("serverError", async () => {
+      let admins: (string | null)[] = [];
+      try {
+        const rows = await getDb().select({ email: users.email }).from(users).where(eq(users.role, "admin"));
+        admins = rows.map((r) => r.email);
+      } catch {
+        // The database may be the problem: the ADMIN_EMAILS setting still gets the email.
+      }
+      await send([...(env.adminEmails ?? []), ...admins], {
+        subject: both("Server errors on Be Right", "أخطاء عالسيرفر ببي رايت"),
+        title: both("Something went wrong on the server", "صار خطأ عالسيرفر"),
+        lines: [
+          both(
+            `An unexpected error happened while handling "${path}". There may be more: you get at most one of these emails an hour.`,
+            `صار خطأ مش متوقع وقت معالجة "${path}". ممكن يكون في غيره: بيوصلك إيميل واحد متل هيدا بالساعة كحد أقصى.`,
+          ),
+          both(
+            "The details are in Netlify: Logs, Functions, api.",
+            "التفاصيل بـNetlify: Logs، Functions، api.",
+          ),
+        ],
+        path: "/admin",
+        button: both("Open the admin area", "افتح الإدارة"),
+      });
+    }),
+
   /** Someone applied to work as a technician. */
   applicationSubmitted: (applicationId: number) =>
     safely("applicationSubmitted", async () => {

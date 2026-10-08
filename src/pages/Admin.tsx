@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { Loader2, ShieldCheck } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
@@ -9,6 +8,7 @@ import { TechniciansTab } from "@/components/dashboard/TechniciansTab";
 import { ActivityTab, CustomersTab, OverviewTab, TeamTab } from "@/components/admin/AdminTabs";
 import { useI18n } from "@/i18n";
 import { useAuth } from "@/hooks/useAuth";
+import { useTabParam } from "@/hooks/useTabParam";
 import { AuthPanel } from "@/components/AuthPanel";
 import { HOME_BY_ROLE, type Role } from "@contracts/roles";
 import { StaffGate } from "@/components/admin/StaffGate";
@@ -34,7 +34,8 @@ export default function Admin() {
   };
   const role = user?.role as Role | undefined;
   const isAdmin = role === "admin";
-  const [tab, setTab] = useState<Tab>("overview");
+  // The tab is in the address (?tab=team), so reloading and Back keep it.
+  const [tab, setTab] = useTabParam<Tab>(TABS);
   // The server decides whether this session may use the admin area: a password sign-in,
   // then two-step login (authenticator app). Nothing else loads until it says yes.
   const access = trpc.admin.access.useQuery(undefined, { enabled: isAdmin, retry: false });

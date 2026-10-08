@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useNavigate } from "react-router";
 import { Loader2 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
@@ -10,11 +9,13 @@ import { inView } from "@/components/dashboard/queueMeta";
 import { useI18n } from "@/i18n";
 import { useRoleGate } from "@/hooks/useRoleGate";
 import { useAuth } from "@/hooks/useAuth";
+import { useTabParam } from "@/hooks/useTabParam";
 import { StaffGate } from "@/components/admin/StaffGate";
 import { trpc } from "@/providers/trpc";
 import { canDispatch } from "@contracts/roles";
 
-type Tab = "queue" | "applications" | "technicians";
+const TABS = ["queue", "applications", "technicians"] as const;
+type Tab = (typeof TABS)[number];
 
 /** Specialist control center: requests queue, technician applications, technicians. */
 export default function Dashboard() {
@@ -22,7 +23,8 @@ export default function Dashboard() {
   // Admins run the dashboard too.
   const { role, isLoading: authLoading } = useRoleGate(["specialist", "admin"], { requireSignIn: true });
   const isSpecialist = canDispatch(role);
-  const [tab, setTab] = useState<Tab>("queue");
+  // The tab is in the address (?tab=applications), so reloading and Back keep it.
+  const [tab, setTab] = useTabParam<Tab>(TABS);
   const { logout } = useAuth();
   const navigate = useNavigate();
   // Signing in again (with a password) comes back here.
@@ -67,7 +69,7 @@ export default function Dashboard() {
           <h1 className="font-display text-3xl font-black text-navy sm:text-4xl">{p(t.dash.title)}</h1>
 
           <div role="tablist" className="mt-6 inline-flex flex-wrap gap-1 rounded-3xl border-2 border-navy bg-white p-1">
-            {(["queue", "applications", "technicians"] as const).map((k) => (
+            {TABS.map((k) => (
               <button
                 key={k}
                 role="tab"
