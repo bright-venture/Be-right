@@ -3,7 +3,17 @@
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import { rateLimits, type User } from "@db/schema";
 import { STAFF_PASSWORD_REQUIRED, STAFF_TWO_STEP_REQUIRED } from "@contracts/roles";
-import { BEIRUT_PIN, callerFor, documentKeys, futureDate, makeSpecialist, makeTechnician, makeUser, type TestDb } from "./test/harness";
+import {
+  BEIRUT_PIN,
+  callerFor,
+  documentKeys,
+  futureDate,
+  makeSpecialist,
+  makeTechnician,
+  makeUser,
+  meetingSlot,
+  type TestDb,
+} from "./test/harness";
 
 const state = vi.hoisted(() => ({
   db: undefined as unknown,
@@ -166,7 +176,7 @@ describe("admin area", () => {
       consent: true,
     });
     await makeUser("rawad@example.com", "Rawad");
-    await o.join.approve({ id });
+    await o.join.bookMeeting({ id, ...meetingSlot() });
     await o.join.hire({ id });
     for (const status of ["rejected", "contacted", "new"] as const) {
       await expect(o.join.setStatus({ id, status })).rejects.toMatchObject({ code: "BAD_REQUEST" });
@@ -238,8 +248,7 @@ describe("audit trail", () => {
     await o.admin.setStaffRole({ userId: nour.id, role: "admin" });
     await o.admin.setStaffRole({ userId: nour.id, role: "customer" });
 
-    // An application: documents opened twice in one visit, contacted, hired, then removed.
-    const d = await callerFor(desk);
+    // An application: documents opened twice in one visit, a meeting, approved, then removed.
     const { id } = await (await callerFor()).join.submit({
       name: "Hadi",
       phone: "+961 71 222 333",
@@ -254,16 +263,12 @@ describe("audit trail", () => {
       ...documentKeys(),
       consent: true,
     });
-    // Step 1: the admin opens the papers (twice, one visit) and approves.
     await o.join.documents({ id });
     await o.join.documents({ id });
-    await o.join.approve({ id });
-    // Step 2: the specialist (who only gets the photo, not recorded as opening papers).
-    await d.join.documents({ id });
-    await d.join.setStatus({ id, status: "contacted" });
-    await d.join.hire({ id });
-    const hadi = (await d.tech.list()).find((x) => x.email === "hadi@example.com")!;
-    await d.tech.remove({ technicianId: hadi.id });
+    await o.join.bookMeeting({ id, ...meetingSlot() });
+    await o.join.hire({ id });
+    const hadi = (await o.tech.list()).find((x) => x.email === "hadi@example.com")!;
+    await o.tech.remove({ technicianId: hadi.id });
 
     const log = (await o.admin.auditLog({})).items;
     const mine = log.filter((e) => e.applicationId === id || e.targetEmail === "nour.desk@example.com");
@@ -271,19 +276,17 @@ describe("audit trail", () => {
     expect(mine.map((e) => e.action)).toEqual([
       "technician_removed",
       "technician_hired",
-      "application_status",
-      "application_approved",
-      "documents_viewed", // once, not once per reload, and only the admin's
+      "meeting_booked",
+      "documents_viewed", // once, not once per reload
       "staff_role_changed",
       "staff_role_changed",
       "staff_added",
     ]);
-    expect(mine[0]).toMatchObject({ actorEmail: "desk@example.com", targetEmail: "hadi@example.com", applicantName: "Hadi" });
-    expect(mine[2].details).toEqual({ from: "new", to: "contacted" });
+    expect(mine[0]).toMatchObject({ actorEmail: "owner@example.com", targetEmail: "hadi@example.com", applicantName: "Hadi" });
+    expect(mine[2]).toMatchObject({ actorEmail: "owner@example.com", details: { place: "Be Right office, Hamra", rescheduled: false } });
     expect(mine[3]).toMatchObject({ actorEmail: "owner@example.com", applicantName: "Hadi" });
-    expect(mine[4]).toMatchObject({ actorEmail: "owner@example.com", applicantName: "Hadi" });
-    expect(mine[5].details).toEqual({ from: "admin", to: "customer" });
-    expect(mine[7]).toMatchObject({ actorEmail: "owner@example.com", details: { email: "nour.desk@example.com", role: "specialist", invited: true } });
+    expect(mine[4].details).toEqual({ from: "admin", to: "customer" });
+    expect(mine[6]).toMatchObject({ actorEmail: "owner@example.com", details: { email: "nour.desk@example.com", role: "specialist", invited: true } });
     // The two-step reset earlier in this file is there too.
     expect(log.some((e) => e.action === "two_step_reset" && e.targetEmail === "desk@example.com")).toBe(true);
   });
@@ -294,7 +297,7 @@ describe("audit trail", () => {
     }
   });
 
-  it("lets only admins approve applications (step 1), and specialists only see approved ones", async () => {
+  it("keeps applications and removing technicians for admins; specialists see technicians", async () => {
     const { id } = await (await callerFor()).join.submit({
       name: "Wael",
       phone: "+961 70 321 654",
@@ -310,19 +313,26 @@ describe("audit trail", () => {
       consent: true,
     });
     const d = await callerFor(desk);
-    await expect(d.join.approve({ id })).rejects.toMatchObject({ code: "FORBIDDEN" });
-    expect((await d.join.list()).some((a) => a.id === id)).toBe(false);
-    await expect(d.join.setStatus({ id, status: "rejected" })).rejects.toMatchObject({ code: "NOT_FOUND" });
+    for (const call of [
+      () => d.join.list(),
+      () => d.join.documents({ id }),
+      () => d.join.bookMeeting({ id, ...meetingSlot() }),
+      () => d.join.setStatus({ id, status: "rejected" }),
+      () => d.join.hire({ id }),
+    ]) {
+      await expect(call()).rejects.toMatchObject({ code: "FORBIDDEN" });
+    }
 
-    await (await callerFor(owner)).join.approve({ id });
-    // Approving twice changes nothing.
-    await (await callerFor(owner)).join.approve({ id });
-    const row = (await d.join.list()).find((a) => a.id === id)!;
-    expect(row.approvedAt).toBeInstanceOf(Date);
-    expect(row.approvedBy).toBe(owner.id);
-    // Step 2: the specialist can still reject.
-    await d.join.setStatus({ id, status: "rejected" });
-    await expect((await callerFor(owner)).join.approve({ id })).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    const o = await callerFor(owner);
+    await o.join.bookMeeting({ id, ...meetingSlot() });
+    await o.join.hire({ id });
+    const wael = (await d.tech.list()).find((x) => x.email === "wael@example.com")!;
+    expect(wael).toMatchObject({ trade: "cameras", area: "Byblos" });
+    await expect(d.tech.remove({ technicianId: wael.id })).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(o.tech.remove({ technicianId: wael.id })).resolves.toMatchObject({ ok: true });
+    // A closed application can't get a meeting.
+    await o.join.setStatus({ id, status: "rejected" });
+    await expect(o.join.bookMeeting({ id, ...meetingSlot() })).rejects.toMatchObject({ code: "BAD_REQUEST" });
   });
 
   it("returns real dates for a customer's last request (Safari can't read Postgres' text dates)", async () => {
@@ -361,7 +371,7 @@ describe("safety nets", () => {
   });
 
   it("withdraws a technician's invitation when hiring can't be saved, and the application stays open", async () => {
-    const d = await callerFor(desk);
+    const o = await callerFor(owner);
     const { id } = await (await callerFor()).join.submit({
       name: "Sami",
       phone: "+961 76 444 555",
@@ -376,13 +386,13 @@ describe("safety nets", () => {
       ...documentKeys(),
       consent: true,
     });
-    await (await callerFor(owner)).join.approve({ id });
+    await o.join.bookMeeting({ id, ...meetingSlot() });
     const withdrawnBefore = state.deletedAuthUsers.length;
     await withDatabaseDown("transaction", async () => {
-      await expect(d.join.hire({ id })).rejects.toBeDefined();
+      await expect(o.join.hire({ id })).rejects.toBeDefined();
     });
     expect(state.deletedAuthUsers.slice(withdrawnBefore)).toEqual([state.invitedIds.at(-1)]);
-    expect((await d.join.list()).find((a) => a.id === id)).toMatchObject({ status: "new", hiredUserId: null });
+    expect((await o.join.list()).find((a) => a.id === id)).toMatchObject({ status: "contacted", hiredUserId: null });
   });
 
   it("records staff areas refused for a missing role or password, once per visit", async () => {

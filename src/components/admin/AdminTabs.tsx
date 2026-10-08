@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { keepPreviousData } from "@tanstack/react-query";
 import {
   BadgeCheck,
+  CalendarClock,
   ChevronDown,
   ClipboardCheck,
   FileText,
@@ -20,7 +21,7 @@ import { ServiceIcon } from "@/components/ServiceIcon";
 import { StatusBadge } from "@/components/requests/RequestParts";
 import { useI18n } from "@/i18n";
 import { trpc } from "@/providers/trpc";
-import { formatMoment } from "@/lib/time";
+import { formatMoment, meetingDate } from "@/lib/time";
 import { CATEGORY_MAP, STATUS_ORDER, type RequestStatus } from "@contracts/services";
 import type { AuditAction } from "@contracts/audit";
 import { arabicDigits } from "@contracts/legal";
@@ -517,6 +518,7 @@ const AUDIT_ICON: Record<AuditAction, LucideIcon> = {
   two_step_reset: KeyRound,
   documents_viewed: FileText,
   application_approved: BadgeCheck,
+  meeting_booked: CalendarClock,
   application_status: ClipboardCheck,
   technician_hired: UserCheck,
   technician_removed: UserMinus,
@@ -563,10 +565,17 @@ function StaffActivity() {
                 ? d.reason === "role"
                   ? t.admin.audit.refused_role
                   : t.admin.audit.refused_password
-                : t.admin.audit[e.action];
+                : e.action === "meeting_booked"
+                  ? d.rescheduled
+                    ? t.admin.audit.meeting_moved
+                    : t.admin.audit.meeting_booked
+                  : e.action === "technician_hired"
+                    ? t.admin.audit.technician_approved
+                    : t.admin.audit[e.action];
         const sentence = p(text)
           .replace("{target}", target)
           .replace("{applicant}", applicant)
+          .replace("{date}", typeof d.at === "string" ? meetingDate(d.at, lang) : "")
           .replace("{role}", word(roles, d.role))
           .replace("{from}", word(e.action === "application_status" ? statuses : roles, d.from))
           .replace("{to}", word(e.action === "application_status" ? statuses : roles, d.to));

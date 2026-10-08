@@ -82,15 +82,23 @@ export async function makeAdmin(email: string, name = email.split("@")[0]) {
   return updated;
 }
 
+/** A meeting two days from now at the office (the input of join.bookMeeting). */
+export function meetingSlot() {
+  return { at: new Date(Date.now() + 2 * 86_400_000), place: "Be Right office, Hamra" };
+}
+
 /**
- * Step 1 of the review, for tests about what comes after: marks an application as approved
- * by an admin (the approval itself is tested through join.approve).
+ * For tests about what comes after: records that an admin met the applicant (booking the
+ * meeting itself is tested through join.bookMeeting).
  */
-export async function approveApplication(id: number) {
+export async function meetApplicant(id: number) {
   const { getDb } = await import("../queries/connection");
   const { technicianApplications } = await import("@db/schema");
   const { eq } = await import("drizzle-orm");
-  await getDb().update(technicianApplications).set({ approvedAt: new Date() }).where(eq(technicianApplications.id, id));
+  await getDb()
+    .update(technicianApplications)
+    .set({ meetingAt: new Date(), meetingPlace: "Be Right office" })
+    .where(eq(technicianApplications.id, id));
 }
 
 /** A pin in Achrafieh, Beirut. */

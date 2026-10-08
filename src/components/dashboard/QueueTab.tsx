@@ -12,7 +12,7 @@ import { cancelPending, inView, NEEDS_SPECIALIST, URGENCY_DOT, urgencyOf, waitin
 const SELECT =
   "min-h-11 rounded-2xl border-2 border-navy/30 bg-white px-3 text-sm font-semibold text-navy focus:border-flame focus:outline-none";
 
-export function QueueTab({ onGoToApplications }: { onGoToApplications: () => void }) {
+export function QueueTab({ onGoToApplications }: { onGoToApplications?: () => void }) {
   const { t, p } = useI18n();
   const queue = useLiveQueue();
   const technicians = trpc.tech.list.useQuery();

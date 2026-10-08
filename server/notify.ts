@@ -84,6 +84,20 @@ async function safely(name: string, fn: () => Promise<void>) {
 
 /* ---------- data ---------- */
 
+/** A meeting's date and time as people in Lebanon read it, in each language. */
+function meetingTime(at: Date): Text {
+  const format = (locale: string) =>
+    new Intl.DateTimeFormat(locale, {
+      timeZone: "Asia/Beirut",
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(at);
+  return { en: format("en-GB"), ar: format("ar-LB") };
+}
+
 /** Everyone with one role (admins, or specialists only). */
 async function emailsOf(role: "admin" | "specialist") {
   const rows = await getDb().select({ email: users.email }).from(users).where(eq(users.role, role));
@@ -508,23 +522,57 @@ export const notify = {
       });
     }),
 
-  /** An admin approved an application: the specialists make the final decision (step 2 of 2). */
-  applicationApproved: (applicationId: number) =>
-    safely("applicationApproved", async () => {
+  /** The applicant's in-person meeting at the office: when and where (or its new time). */
+  meetingBooked: (applicationId: number, rescheduled: boolean) =>
+    safely("meetingBooked", async () => {
+      const app = await getDb().query.technicianApplications.findFirst({
+        where: eq(technicianApplications.id, applicationId),
+      });
+      if (!app?.email || !app.meetingAt || !app.meetingPlace) return;
+      const trade = local(CATEGORY_MAP[app.trade]?.name, app.trade);
+      const when = meetingTime(app.meetingAt);
+      await send([app.email], {
+        subject: rescheduled
+          ? both("New time for your meeting with Be Right", "موعد جديد لمقابلتك مع بي رايت")
+          : both("Your meeting with Be Right", "مقابلتك مع بي رايت"),
+        title: rescheduled
+          ? both("Your meeting has a new time", "مقابلتك صار إلها موعد جديد")
+          : both("Let's meet in person", "خلّينا نلتقي شخصياً"),
+        lines: [
+          both(
+            `Thanks for applying to work with Be Right (${trade.en}). We'd like to meet you in person.`,
+            `شكراً على طلبك لتشتغل مع بي رايت (${trade.ar}). حابين نلتقي فيك شخصياً.`,
+          ),
+          both(`When: ${when.en} (Beirut time)`, `الموعد: ${when.ar} (بتوقيت بيروت)`),
+          both(`Where: ${app.meetingPlace}`, `المكان: ${app.meetingPlace}`),
+          ...(app.meetingNote ? [both(app.meetingNote, app.meetingNote)] : []),
+          both(
+            "If this time doesn't work for you, reply to this email and we'll find another one.",
+            "إذا هالموعد ما بيناسبك، ردّ على هالإيميل ومنلاقي موعد تاني.",
+          ),
+        ],
+        path: "/",
+        button: both("Visit Be Right", "زور بي رايت"),
+      });
+    }),
+
+  /** An admin approved an applicant: the specialists have a new technician to assign jobs to. */
+  technicianJoined: (applicationId: number) =>
+    safely("technicianJoined", async () => {
       const app = await getDb().query.technicianApplications.findFirst({
         where: eq(technicianApplications.id, applicationId),
       });
       if (!app) return;
       const trade = local(CATEGORY_MAP[app.trade]?.name, app.trade);
       await send(await emailsOf("specialist"), {
-        subject: both(`Approved applicant to contact: ${app.name}`, `متقدّم موافق عليه للتواصل: ${app.name}`),
-        title: both("An applicant is ready for you", "في متقدّم جاهز إلك"),
+        subject: both(`New technician on the team: ${app.name}`, `معلّم جديد بالفريق: ${app.name}`),
+        title: both("A new technician joined", "انضمّ معلّم جديد"),
         lines: [
           both(`${app.name}: ${trade.en}, ${app.area}.`, `${app.name}: ${trade.ar}، ${app.area}.`),
-          both("An admin checked the documents. Contact them, then hire or reject.", "الإدارة راجعت المستندات. تواصل معهم، وبعدين وظّف أو ارفض."),
+          both("An admin met them and approved them. You can now assign them jobs.", "الإدارة قابلتهم ووافقت عليهم. فيك هلّق تعطيهم شغل."),
         ],
-        path: "/dashboard?tab=applications",
-        button: both("Open the application", "افتح الطلب"),
+        path: "/dashboard?tab=technicians",
+        button: both("See the technicians", "شوف المعلّمين"),
       });
     }),
 };

@@ -36,7 +36,7 @@ export function RequestDetail({
 }: {
   id: number;
   technicians: Technician[];
-  onGoToApplications: () => void;
+  onGoToApplications?: () => void;
 }) {
   const { t, p, lang } = useI18n();
   const utils = trpc.useUtils();
@@ -332,7 +332,7 @@ function NextStep({
   request: RequestRow;
   technicians: Technician[];
   onDone: () => void;
-  onGoToApplications: () => void;
+  onGoToApplications?: () => void;
 }) {
   const { t, p } = useI18n();
   const status = r.status as RequestStatus;
@@ -473,9 +473,11 @@ function NextStep({
           {technicians.length === 0 ? (
             <p className="text-xs text-navy/70">
               {p(t.dash2.noTechToAssign)}{" "}
-              <button type="button" onClick={onGoToApplications} className="font-bold text-navy underline underline-offset-4">
-                {p(t.dash4.goToApplications)}
-              </button>
+              {onGoToApplications && (
+                <button type="button" onClick={onGoToApplications} className="font-bold text-navy underline underline-offset-4">
+                  {p(t.dash4.goToApplications)}
+                </button>
+              )}
             </p>
           ) : (
             <div className="flex flex-wrap gap-2">

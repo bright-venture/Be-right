@@ -1,8 +1,7 @@
-import { useState } from "react";
-import { BadgeCheck, ChevronDown, FileText, Loader2, Lock, Mail, MessageCircle, Phone, UserCheck } from "lucide-react";
+import { useState, type FormEvent } from "react";
+import { BadgeCheck, CalendarClock, ChevronDown, FileText, Loader2, Mail, MessageCircle, Phone, UserCheck } from "lucide-react";
 import type { inferRouterOutputs } from "@trpc/server";
 import type { AppRouter } from "../../../server/router";
-import { useAuth } from "@/hooks/useAuth";
 import { ServiceIcon } from "@/components/ServiceIcon";
 import { useI18n } from "@/i18n";
 import { trpc } from "@/providers/trpc";
@@ -18,6 +17,7 @@ import {
   type ExperienceLevel,
 } from "@contracts/applications";
 import { REJECTED_APPLICATION_RETENTION_DAYS } from "@contracts/legal";
+import { meetingDate } from "@/lib/time";
 
 type Application = inferRouterOutputs<AppRouter>["join"]["list"][number];
 
@@ -29,6 +29,8 @@ export function ApplicationsTab() {
   const applications = trpc.join.list.useQuery();
   const [openId, setOpenId] = useState<number | null>(null);
   const rows = applications.data ?? [];
+  // The place of the last meeting booked, to fill in the next one.
+  const lastPlace = rows.find((a) => a.meetingPlace)?.meetingPlace ?? "";
 
   if (!applications.isLoading && rows.length === 0) {
     return (
@@ -45,6 +47,7 @@ export function ApplicationsTab() {
           key={a.id}
           app={a}
           open={openId === a.id}
+          lastPlace={lastPlace}
           onToggle={() => setOpenId(openId === a.id ? null : a.id)}
           onChanged={() => {
             void utils.join.list.invalidate();
@@ -60,11 +63,13 @@ export function ApplicationsTab() {
 function ApplicationCard({
   app,
   open,
+  lastPlace,
   onToggle,
   onChanged,
 }: {
   app: Application;
   open: boolean;
+  lastPlace: string;
   onToggle: () => void;
   onChanged: () => void;
 }) {
@@ -72,10 +77,6 @@ function ApplicationCard({
   const [email, setEmail] = useState("");
   const [result, setResult] = useState<string | null>(null);
   const utils = trpc.useUtils();
-  // Two-step review: admins approve (and see the papers); specialists then hire or reject.
-  const { user } = useAuth();
-  const isAdmin = user?.role === "admin";
-  const approve = trpc.join.approve.useMutation({ onSuccess: onChanged });
   const setStatus = trpc.join.setStatus.useMutation({ onSuccess: onChanged });
   const hire = trpc.join.hire.useMutation({
     onSuccess: (res) => {
@@ -89,12 +90,12 @@ function ApplicationCard({
   // "hired" by hand without an account ever being created.
   const hired = app.status === "hired" && app.hiredUserId != null;
   const hireEmail = app.email ?? email.trim();
-  // Specialists only get the photo: the papers are for admins.
-  const needed = requiredDocuments(app.transport).filter((kind) => isAdmin || kind === "photo");
+  const needed = requiredDocuments(app.transport);
   const hasDocuments = app.documentsOnFile;
-  const approved = !!app.approvedAt;
   const stillOpen = app.status !== "hired" && app.status !== "rejected";
-  const canHire = !hired && approved && hasDocuments && EMAIL_PATTERN.test(hireEmail);
+  // Approving (which adds them to the technicians) comes after meeting them in person.
+  const met = !!app.meetingAt;
+  const canHire = !hired && met && hasDocuments && EMAIL_PATTERN.test(hireEmail);
   // Short-lived links, fetched only when the card is open.
   const docs = trpc.join.documents.useQuery({ id: app.id }, { enabled: open, staleTime: 60_000 });
   const formatDate = (d: Date | string) =>
@@ -140,14 +141,10 @@ function ApplicationCard({
             {app.area} · {p(t.dash3.applied)} {new Date(app.createdAt).toLocaleDateString(lang === "ar" ? "ar-LB" : "en-GB")}
           </span>
         </span>
-        {isAdmin && stillOpen && (
-          <span
-            className={`hidden shrink-0 items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-bold sm:inline-flex ${
-              approved ? "bg-bird/10 text-bird" : "bg-flame/10 text-flame-ink"
-            }`}
-          >
-            {approved && <BadgeCheck className="h-3.5 w-3.5" />}
-            {p(approved ? t.dash3.approvedBadge : t.dash3.awaitingApproval)}
+        {stillOpen && app.meetingAt && (
+          <span className="hidden shrink-0 items-center gap-1 rounded-full bg-bird/10 px-2.5 py-0.5 text-[11px] font-bold text-bird sm:inline-flex">
+            <CalendarClock className="h-3.5 w-3.5" />
+            {p(t.dash3.meetingBadge).replace("{date}", meetingDate(app.meetingAt, lang))}
           </span>
         )}
         <span
@@ -201,10 +198,8 @@ function ApplicationCard({
             <p className="font-display text-xs font-bold uppercase tracking-[0.2em] text-navy/70">{p(t.docs.title)}</p>
             {/* photo first, then the papers; an odd last one fills its row on phones */}
             <div
-              className={`mt-2 grid gap-2 ${
-                needed.length === 1
-                  ? "w-32 grid-cols-1"
-                  : `grid-cols-2 max-sm:[&>*:last-child:nth-child(odd)]:col-span-2 ${needed.length === 5 ? "sm:grid-cols-5" : "sm:grid-cols-4"}`
+              className={`mt-2 grid grid-cols-2 gap-2 max-sm:[&>*:last-child:nth-child(odd)]:col-span-2 ${
+                needed.length === 5 ? "sm:grid-cols-5" : "sm:grid-cols-4"
               }`}
             >
               {needed.map((kind) => {
@@ -257,37 +252,10 @@ function ApplicationCard({
               !hasDocuments &&
               !hired && <p className="mt-2 text-xs font-semibold text-destructive">{p(t.docs.missingAll)}</p>
             )}
-            {!isAdmin && (
-              <p className="mt-2 flex items-start gap-1.5 text-xs text-navy/70">
-                <Lock className="mt-px h-3.5 w-3.5 shrink-0" /> {p(t.dash3.privateDocs)}
-              </p>
-            )}
           </div>
 
-          {/* step 1 of 2: the admin approves for the specialists */}
-          {isAdmin && stillOpen && (
-            <div className="mt-5 rounded-2xl border-2 border-navy/10 bg-paper p-4">
-              {approved ? (
-                <p className="flex items-center gap-2 text-sm font-bold text-navy">
-                  <BadgeCheck className="h-5 w-5 text-bird" />
-                  {p(t.dash3.approvedOn).replace("{date}", formatDate(app.approvedAt!))}
-                </p>
-              ) : (
-                <>
-                  <p className="text-sm text-navy/80">{p(t.dash3.approveHint)}</p>
-                  <button
-                    type="button"
-                    onClick={() => approve.mutate({ id: app.id })}
-                    disabled={approve.isPending || !hasDocuments}
-                    className="btn-pill-primary mt-3 !min-h-11 !py-2 disabled:opacity-40"
-                  >
-                    {approve.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <BadgeCheck className="h-4 w-4" />}
-                    {p(t.dash3.approve)}
-                  </button>
-                </>
-              )}
-            </div>
-          )}
+          {/* step 1: meet them at the office */}
+          {stillOpen && <MeetingBox app={app} lastPlace={lastPlace} onChanged={onChanged} />}
 
           {/* status + hire */}
           <div className="mt-5 flex flex-wrap items-center gap-2 border-t-2 border-navy/10 pt-4">
@@ -315,8 +283,12 @@ function ApplicationCard({
             )}
           </div>
 
-          {!hired && approved && (
-            <div className="mt-4 flex flex-wrap items-end gap-2">
+          {/* step 2: after the meeting, approve (adds them to the technicians) */}
+          {!hired && stillOpen && (
+            <div className="mt-4 rounded-2xl border-2 border-navy/10 p-4">
+              <p className="font-display text-sm font-extrabold text-navy">{p(t.dash3.approveTitle)}</p>
+              <p className="mt-1 text-xs text-navy/70">{met ? p(t.dash3.approveHint) : p(t.dash3.needsMeeting)}</p>
+            <div className="mt-3 flex flex-wrap items-end gap-2">
               {!app.email && (
                 <label className="flex min-w-60 flex-1 flex-col text-xs font-bold text-navy">
                   {p(t.dash3.hireEmail)}
@@ -335,21 +307,134 @@ function ApplicationCard({
                 disabled={!canHire || hire.isPending}
                 className="btn-pill-primary !min-h-11 !py-2 disabled:opacity-40"
               >
-                {hire.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserCheck className="h-4 w-4" />}
-                {p(t.dash3.hire)}
+                {hire.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <BadgeCheck className="h-4 w-4" />}
+                {p(t.dash3.approveHire)}
               </button>
+            </div>
             </div>
           )}
 
-          {(result || hire.error || setStatus.error || approve.error) && (
+          {(result || hire.error || setStatus.error) && (
             <p
               role={result ? "status" : "alert"}
               className={`mt-3 text-sm font-semibold ${result ? "text-navy" : "text-destructive"}`}
             >
-              {result ?? hire.error?.message ?? setStatus.error?.message ?? approve.error?.message}
+              {result ?? hire.error?.message ?? setStatus.error?.message}
             </p>
           )}
         </div>
+      )}
+    </div>
+  );
+}
+
+/** "2026-10-12T10:00" for a date-time input, in the browser's own time (Lebanon for the team). */
+function toLocalInput(d: Date) {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+/** Book, show or move the in-person meeting at the office. */
+function MeetingBox({ app, lastPlace, onChanged }: { app: Application; lastPlace: string; onChanged: () => void }) {
+  const { t, p, lang } = useI18n();
+  const [editing, setEditing] = useState(!app.meetingAt);
+  const [when, setWhen] = useState(app.meetingAt ? toLocalInput(new Date(app.meetingAt)) : "");
+  const [place, setPlace] = useState(app.meetingPlace ?? lastPlace);
+  const [note, setNote] = useState(app.meetingNote ?? "");
+  const [sent, setSent] = useState<boolean | null>(null);
+  const book = trpc.join.bookMeeting.useMutation({
+    onSuccess: (res) => {
+      setSent(res.emailed);
+      setEditing(false);
+      onChanged();
+    },
+  });
+  const field =
+    "mt-1 min-h-11 w-full rounded-2xl border-2 border-navy/30 bg-white px-4 text-sm font-semibold text-navy focus:border-flame focus:outline-none";
+
+  function submit(e: FormEvent) {
+    e.preventDefault();
+    if (!when || place.trim().length < 3) return;
+    book.mutate({ id: app.id, at: new Date(when), place: place.trim(), note: note.trim() || undefined });
+  }
+
+  return (
+    <div className="mt-5 rounded-2xl border-2 border-navy/10 bg-paper p-4">
+      <p className="flex items-center gap-2 font-display text-sm font-extrabold text-navy">
+        <CalendarClock className="h-4 w-4 text-bird" /> {p(t.dash3.meetingTitle)}
+      </p>
+      {!editing && app.meetingAt ? (
+        <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+          <p className="text-sm font-semibold text-navy">
+            {p(t.dash3.meetingSet)
+              .replace("{date}", meetingDate(app.meetingAt, lang))
+              .replace("{place}", app.meetingPlace ?? "")}
+          </p>
+          <button type="button" onClick={() => setEditing(true)} className="text-sm font-bold text-navy underline underline-offset-4">
+            {p(t.dash3.changeMeeting)}
+          </button>
+          {sent !== null && (
+            <p role="status" className="w-full text-xs text-navy/70">
+              {p(sent ? t.dash3.meetingEmailed : t.dash3.meetingNoEmail)}
+            </p>
+          )}
+        </div>
+      ) : (
+        <form onSubmit={submit} className="mt-2">
+          <p className="text-xs text-navy/70">{p(t.dash3.meetingHint)}</p>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <label className="text-xs font-bold text-navy">
+              {p(t.dash3.meetingWhen)}
+              <input
+                type="datetime-local"
+                required
+                value={when}
+                min={toLocalInput(new Date())}
+                onChange={(e) => setWhen(e.target.value)}
+                dir="ltr"
+                className={field}
+              />
+            </label>
+            <label className="text-xs font-bold text-navy">
+              {p(t.dash3.meetingWhere)}
+              <input
+                required
+                minLength={3}
+                maxLength={200}
+                value={place}
+                onChange={(e) => setPlace(e.target.value)}
+                placeholder={p(t.dash3.meetingWherePh)}
+                className={field}
+              />
+            </label>
+            <label className="text-xs font-bold text-navy sm:col-span-2">
+              {p(t.dash3.meetingNote)}
+              <input
+                maxLength={500}
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                placeholder={p(t.dash3.meetingNotePh)}
+                className={field}
+              />
+            </label>
+          </div>
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <button type="submit" disabled={book.isPending} className="btn-pill-primary !min-h-11 !py-2 disabled:opacity-40">
+              {book.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <CalendarClock className="h-4 w-4" />}
+              {p(app.meetingAt ? t.dash3.moveMeeting : t.dash3.bookMeeting)}
+            </button>
+            {app.meetingAt && (
+              <button type="button" onClick={() => setEditing(false)} className="text-sm font-bold text-navy/70 underline underline-offset-4">
+                {p(t.dash3.keepMeeting)}
+              </button>
+            )}
+          </div>
+          {book.error && (
+            <p role="alert" className="mt-2 text-sm font-semibold text-destructive">
+              {book.error.message}
+            </p>
+          )}
+        </form>
       )}
     </div>
   );

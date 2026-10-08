@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { and, desc, eq, isNotNull, isNull, ne } from "drizzle-orm";
-import { adminQuery, createRouter, publicQuery, specialistQuery } from "./middleware";
+import { and, desc, eq, ne } from "drizzle-orm";
+import { adminQuery, createRouter, publicQuery } from "./middleware";
 import { getDb } from "./queries/connection";
 import { serviceRequests, technicianApplications, users } from "../db/schema";
 import { CATEGORIES } from "../contracts/services";
@@ -11,7 +11,6 @@ import {
   DOCUMENT_FIELD,
   EXPERIENCE_LEVELS,
   MANUAL_APPLICATION_STATUSES,
-  PRIVATE_DOCUMENTS,
   TRANSPORT,
   requiredDocuments,
   type ApplicationDocument,
@@ -37,18 +36,16 @@ function documentKeysOf(app: Record<(typeof DOCUMENT_FIELD)[ApplicationDocument]
 }
 const email = z.string().trim().toLowerCase().email().max(320);
 type Tx = Parameters<Parameters<ReturnType<typeof getDb>["transaction"]>[0]>[0];
-type Staff = { id: number; role: string };
-const isAdmin = (user: Staff) => user.role === "admin";
-
 /**
- * An application this staff member may work on. The review has two steps: an admin approves
- * first (seeing everything); only approved applications exist for specialists.
+ * An application. Only admins review applications: they meet the applicant in person, then
+ * approve (which adds them to the technicians) or reject. Specialists only see technicians.
  */
-async function applicationFor(user: Staff, id: number) {
+async function findApplication(id: number) {
   const app = await getDb().query.technicianApplications.findFirst({ where: eq(technicianApplications.id, id) });
-  if (!app || (!isAdmin(user) && !app.approvedAt)) throw new TRPCError({ code: "NOT_FOUND" });
+  if (!app) throw new TRPCError({ code: "NOT_FOUND" });
   return app;
 }
+const isOpen = (status: string) => status !== "hired" && status !== "rejected";
 
 /** Whether every document the application needs was uploaded. */
 function documentsOnFile(app: Parameters<typeof documentKeysOf>[0] & { transport: (typeof TRANSPORT)[number] | null }) {
@@ -130,45 +127,55 @@ export const joinRouter = createRouter({
       return { id: res.id };
     }),
 
+  /** Every application, newest first (admins only). */
+  list: adminQuery.query(async () => {
+    const rows = await getDb().select().from(technicianApplications).orderBy(desc(technicianApplications.createdAt));
+    return rows.map((app) => ({ ...app, documentsOnFile: documentsOnFile(app) }));
+  }),
+
   /**
-   * Admins: every application. Specialists: those an admin approved, without the private
-   * papers (not even their storage keys).
+   * Book (or move) the in-person meeting at the office. The applicant gets the date, time and
+   * place by email. After meeting them, an admin approves or rejects.
    */
-  list: specialistQuery.query(async ({ ctx }) => {
-    const admin = isAdmin(ctx.user);
-    const rows = await getDb()
-      .select()
-      .from(technicianApplications)
-      .where(admin ? undefined : isNotNull(technicianApplications.approvedAt))
-      .orderBy(desc(technicianApplications.createdAt));
-    const hidden = Object.fromEntries(PRIVATE_DOCUMENTS.map((kind) => [DOCUMENT_FIELD[kind], null]));
-    return rows.map((app) => ({ ...app, ...(admin ? {} : hidden), documentsOnFile: documentsOnFile(app) }));
-  }),
+  bookMeeting: adminQuery
+    .input(
+      z.object({
+        id: z.number().int().positive(),
+        at: z.date(),
+        place: z.string().trim().min(3).max(200),
+        note: z.string().trim().max(500).optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const app = await findApplication(input.id);
+      if (!isOpen(app.status)) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Only an open application can have a meeting" });
+      }
+      if (input.at.getTime() < Date.now() - 60 * 60_000) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Pick a date and time that hasn't passed" });
+      }
+      const rescheduled = !!app.meetingAt;
+      await getDb()
+        .update(technicianApplications)
+        .set({
+          meetingAt: input.at,
+          meetingPlace: input.place,
+          meetingNote: input.note || null,
+          // Booking a meeting means they were contacted.
+          status: app.status === "new" ? "contacted" : app.status,
+        })
+        .where(eq(technicianApplications.id, app.id));
+      await audit({
+        actorId: ctx.user.id,
+        action: "meeting_booked",
+        applicationId: app.id,
+        details: { at: input.at.toISOString(), place: input.place, rescheduled },
+      });
+      await notify.meetingBooked(app.id, rescheduled);
+      return { ok: true, emailed: !!app.email };
+    }),
 
-  /** Step 1: an admin checked the application and its papers; specialists can now hire or reject. */
-  approve: adminQuery.input(z.object({ id: z.number().int().positive() })).mutation(async ({ ctx, input }) => {
-    const db = getDb();
-    const app = await applicationFor(ctx.user, input.id);
-    if (app.status === "hired" || app.status === "rejected") {
-      throw new TRPCError({ code: "BAD_REQUEST", message: "Only an open application can be approved" });
-    }
-    if (!documentsOnFile(app)) {
-      throw new TRPCError({ code: "BAD_REQUEST", message: "Every required document is needed before approving" });
-    }
-    if (app.approvedAt) return { ok: true };
-    const [approved] = await db
-      .update(technicianApplications)
-      .set({ approvedAt: new Date(), approvedBy: ctx.user.id })
-      .where(and(eq(technicianApplications.id, app.id), isNull(technicianApplications.approvedAt)))
-      .returning({ id: technicianApplications.id });
-    if (approved) {
-      await audit({ actorId: ctx.user.id, action: "application_approved", applicationId: app.id });
-      await notify.applicationApproved(app.id);
-    }
-    return { ok: true };
-  }),
-
-  setStatus: specialistQuery
+  setStatus: adminQuery
     .input(
       z.object({
         id: z.number().int().positive(),
@@ -177,7 +184,7 @@ export const joinRouter = createRouter({
     )
     .mutation(async ({ ctx, input }) => {
       const db = getDb();
-      const app = await applicationFor(ctx.user, input.id);
+      const app = await findApplication(input.id);
       // A hired technician's application stays hired: "rejected" would start the deletion of
       // the documents of someone who's working (and "Hire" would show again).
       if (app.status === "hired") {
@@ -203,16 +210,12 @@ export const joinRouter = createRouter({
       return { ok: true };
     }),
 
-  /**
-   * Short-lived links to an applicant's documents. Admins get every paper (and each visit is
-   * recorded); specialists get only the profile photo.
-   */
-  documents: specialistQuery.input(z.object({ id: z.number().int().positive() })).query(async ({ ctx, input }) => {
-    const app = await applicationFor(ctx.user, input.id);
-    const admin = isAdmin(ctx.user);
-    // Recorded before any link to a private paper is handed out: no record, no documents.
-    if (admin) await auditDocumentsViewed(ctx.user.id, app.id);
-    const kinds = requiredDocuments(app.transport).filter((kind) => admin || kind === "photo");
+  /** Short-lived links to an applicant's documents (admins only). Every visit is recorded. */
+  documents: adminQuery.input(z.object({ id: z.number().int().positive() })).query(async ({ ctx, input }) => {
+    const app = await findApplication(input.id);
+    // Recorded before any link is handed out: no record, no documents.
+    await auditDocumentsViewed(ctx.user.id, app.id);
+    const kinds = requiredDocuments(app.transport);
     const keys = documentKeysOf(app);
     const urls = await createDocumentUrls(kinds.map((kind) => keys[kind]).filter((k): k is string => !!k));
     const link = (key: string | null) =>
@@ -223,7 +226,7 @@ export const joinRouter = createRouter({
   }),
 
   /** Before hiring: does this email already belong to an account? (shown in the confirmation) */
-  hireCheck: specialistQuery.input(z.object({ email })).query(async ({ input }) => {
+  hireCheck: adminQuery.input(z.object({ email })).query(async ({ input }) => {
     const db = getDb();
     const existing = await db.query.users.findFirst({ where: eq(users.email, input.email) });
     if (!existing) return { existing: null };
@@ -232,17 +235,17 @@ export const joinRouter = createRouter({
   }),
 
   /**
-   * Hire an applicant: an existing account becomes a technician right away;
-   * otherwise they're invited by email and their technician account is created now,
-   * so they can be assigned jobs immediately.
+   * Approve an applicant after meeting them (admins only): they join the technicians, so the
+   * specialists can assign them jobs. An existing account becomes a technician right away;
+   * otherwise they're invited by email and their technician account is created now.
    */
-  hire: specialistQuery
+  hire: adminQuery
     .input(z.object({ id: z.number().int().positive(), email: email.optional() }))
     .mutation(async ({ ctx, input }) => {
       const db = getDb();
-      const app = await applicationFor(ctx.user, input.id);
-      if (!app.approvedAt) {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "An admin has to approve this application first" });
+      const app = await findApplication(input.id);
+      if (!app.meetingAt) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Book a meeting with the applicant before approving" });
       }
       const keysOnFile = documentKeysOf(app);
       if (requiredDocuments(app.transport).some((kind) => !keysOnFile[kind])) {
@@ -267,7 +270,7 @@ export const joinRouter = createRouter({
           const userId = await saveAccount(tx);
           await tx
             .update(technicianApplications)
-            .set({ status: "hired", hiredUserId: userId, email: address })
+            .set({ status: "hired", hiredUserId: userId, email: address, approvedAt: new Date(), approvedBy: ctx.user.id })
             .where(eq(technicianApplications.id, app.id));
           await audit(
             {
@@ -294,6 +297,7 @@ export const joinRouter = createRouter({
             .where(eq(users.id, existing.id));
           return existing.id;
         });
+        await notify.technicianJoined(app.id);
         return { ok: true, invited: false, email: address };
       } else {
         const { data, error } = await getSupabaseAdmin().auth.admin.inviteUserByEmail(address, {
@@ -327,6 +331,7 @@ export const joinRouter = createRouter({
             return created.id;
           }),
         );
+        await notify.technicianJoined(app.id);
         return { ok: true, invited: true, email: address };
       }
     }),

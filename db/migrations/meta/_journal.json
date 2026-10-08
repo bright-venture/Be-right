@@ -148,6 +148,13 @@
       "when": 1791440423682,
       "tag": "0020_application_admin_approval",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1791441087926,
+      "tag": "0021_application_meeting",
+      "breakpoints": true
     }
   ]
 }

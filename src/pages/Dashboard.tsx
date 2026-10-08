@@ -2,7 +2,6 @@ import { useNavigate } from "react-router";
 import { Loader2 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { ApplicationsTab } from "@/components/dashboard/ApplicationsTab";
 import { QueueTab } from "@/components/dashboard/QueueTab";
 import { TechniciansTab } from "@/components/dashboard/TechniciansTab";
 import { inView } from "@/components/dashboard/queueMeta";
@@ -15,7 +14,8 @@ import { useLiveQueue } from "@/components/dashboard/useLiveQueue";
 import { trpc } from "@/providers/trpc";
 import { canDispatch } from "@contracts/roles";
 
-const TABS = ["queue", "applications", "technicians"] as const;
+// Applications are reviewed by admins only (in /admin); specialists see the technicians.
+const TABS = ["queue", "technicians"] as const;
 type Tab = (typeof TABS)[number];
 
 /** Specialist control center: requests queue, technician applications, technicians. */
@@ -39,7 +39,6 @@ export default function Dashboard() {
 
   // Badge counts (same queries the tabs use, so they share the cache).
   const queue = useLiveQueue(allowed);
-  const applications = trpc.join.list.useQuery(undefined, { enabled: allowed });
   const technicians = trpc.tech.list.useQuery(undefined, { enabled: allowed });
 
   if (authLoading || !isSpecialist) {
@@ -52,15 +51,12 @@ export default function Dashboard() {
 
   const badges: Record<Tab, number> = {
     queue: (queue.data ?? []).filter((x) => inView("needsAction", x.request)).length,
-    applications: (applications.data ?? []).filter((a) => a.status === "new").length,
     technicians: technicians.data?.length ?? 0,
   };
   const labels = {
     queue: t.dash3.tabQueue,
-    applications: t.dash3.tabApplications,
     technicians: t.dash3.tabTechnicians,
   };
-  const goToApplications = () => setTab("applications");
 
   return (
     <StaffGate access={access} onSignOut={() => void otherAccount()}>
@@ -94,9 +90,8 @@ export default function Dashboard() {
             ))}
           </div>
 
-          {tab === "queue" && <QueueTab onGoToApplications={goToApplications} />}
-          {tab === "applications" && <ApplicationsTab />}
-          {tab === "technicians" && <TechniciansTab onGoToApplications={goToApplications} />}
+          {tab === "queue" && <QueueTab />}
+          {tab === "technicians" && <TechniciansTab />}
         </main>
         <Footer />
       </div>

@@ -14,7 +14,8 @@ import { useAuth } from "@/hooks/useAuth";
 type Technician = inferRouterOutputs<AppRouter>["tech"]["list"][number];
 const SMALL_BTN = "btn-pill-outline !min-h-9 !px-3 !py-1 text-xs";
 
-export function TechniciansTab({ onGoToApplications }: { onGoToApplications: () => void }) {
+/** `onGoToApplications`: only in the admin area (specialists don't handle applications). */
+export function TechniciansTab({ onGoToApplications }: { onGoToApplications?: () => void }) {
   const { t, p } = useI18n();
   const list = trpc.tech.list.useQuery();
   const techs = list.data ?? [];
@@ -24,9 +25,11 @@ export function TechniciansTab({ onGoToApplications }: { onGoToApplications: () 
     return (
       <div className="card-br mt-8 p-10 text-center">
         <p className="font-semibold text-navy/70">{p(t.dash4.noTechnicians)}</p>
-        <button onClick={onGoToApplications} className="btn-pill-primary mt-5">
-          {p(t.dash4.goToApplications)}
-        </button>
+        {onGoToApplications && (
+          <button onClick={onGoToApplications} className="btn-pill-primary mt-5">
+            {p(t.dash4.goToApplications)}
+          </button>
+        )}
       </div>
     );
   }
@@ -161,6 +164,7 @@ function TechnicianCard({ tech: x }: { tech: Technician }) {
         </ul>
       )}
 
+      {isAdmin && (
       <div className="mt-auto pt-4">
         <button
           onClick={() => {
@@ -175,6 +179,7 @@ function TechnicianCard({ tech: x }: { tech: Technician }) {
         </button>
         {remove.error && <p className="mt-1 text-xs font-semibold text-destructive">{remove.error.message}</p>}
       </div>
+      )}
     </div>
   );
 }

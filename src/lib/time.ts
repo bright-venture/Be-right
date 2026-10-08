@@ -21,3 +21,15 @@ export function formatMoment(when: Date | string, lang: string) {
     minute: "2-digit",
   });
 }
+
+/** A meeting's date and time in Lebanon's time, as shown to admins. */
+export function meetingDate(at: Date | string, lang: string) {
+  return new Date(at).toLocaleString(lang === "ar" ? "ar-LB" : "en-GB", {
+    timeZone: "Asia/Beirut",
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}

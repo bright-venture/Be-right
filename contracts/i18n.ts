@@ -739,6 +739,9 @@ export const t = {
       technician_hired: { en: "Hired {applicant} as a technician", ar: "وظّف {applicant} كمعلّم" },
       technician_removed: { en: "Removed {target} from the technicians", ar: "شال {target} من المعلّمين" },
       application_approved: { en: "Approved {applicant}'s application", ar: "وافق على طلب {applicant}" },
+      meeting_booked: { en: "Booked a meeting with {applicant}: {date}", ar: "حجز مقابلة مع {applicant}: {date}" },
+      meeting_moved: { en: "Moved the meeting with {applicant} to {date}", ar: "غيّر موعد المقابلة مع {applicant} لـ{date}" },
+      technician_approved: { en: "Approved {applicant} and added them to the technicians", ar: "وافق على {applicant} وزاده عالمعلّمين" },
       unassigned: { en: "{n} jobs went back to the queue", ar: "{n} شغلات رجعوا عالطابور" },
       refused_password: {
         en: "Was refused a staff area: not signed in with a password",
@@ -880,19 +883,35 @@ export const t = {
     transport: { en: "Transport", ar: "وسيلة النقل" },
     notProvided: { en: "Not provided", ar: "مش محدد" },
     hire: { en: "Hire as technician", ar: "وظّف كمعلّم" },
-    // two-step review: an admin approves, then a specialist hires or rejects
-    approve: { en: "Approve for the specialists", ar: "وافق وابعتو للمختصين" },
-    awaitingApproval: { en: "Waiting for admin approval", ar: "بانتظار موافقة الإدارة" },
-    approvedBadge: { en: "Approved", ar: "موافق عليه" },
+    // admins meet each applicant in person, then approve (adds them to the technicians) or reject
+    meetingTitle: { en: "Meeting at the office", ar: "مقابلة بالمكتب" },
+    meetingHint: {
+      en: "Meet the applicant in person before approving. They get the date, time and place by email.",
+      ar: "قابل المتقدّم شخصياً قبل الموافقة. بيوصله الموعد والمكان بالإيميل.",
+    },
+    meetingWhen: { en: "Date and time", ar: "التاريخ والوقت" },
+    meetingWhere: { en: "Place", ar: "المكان" },
+    meetingWherePh: { en: "Office address", ar: "عنوان المكتب" },
+    meetingNote: { en: "Note for the applicant (optional)", ar: "ملاحظة للمتقدّم (اختياري)" },
+    meetingNotePh: { en: "For example: ask for Rami at reception", ar: "مثلاً: اسأل عن رامي عالاستقبال" },
+    bookMeeting: { en: "Book the meeting", ar: "احجز المقابلة" },
+    moveMeeting: { en: "Save the new time", ar: "احفظ الموعد الجديد" },
+    changeMeeting: { en: "Change", ar: "غيّر" },
+    keepMeeting: { en: "Keep the current time", ar: "خلّي الموعد الحالي" },
+    meetingSet: { en: "{date}, at {place}", ar: "{date}، بـ{place}" },
+    meetingEmailed: { en: "The applicant got the details by email.", ar: "وصلت التفاصيل للمتقدّم بالإيميل." },
+    meetingNoEmail: {
+      en: "This applicant has no email: tell them the date and place by phone.",
+      ar: "ما في إيميل لهالمتقدّم: خبّره الموعد والمكان عالتلفون.",
+    },
+    meetingBadge: { en: "Meeting {date}", ar: "مقابلة {date}" },
+    approveTitle: { en: "Approve after the meeting", ar: "الموافقة بعد المقابلة" },
     approveHint: {
-      en: "Step 1 of 2: check the details and documents. Once approved, the specialists contact the applicant, then hire or reject.",
-      ar: "الخطوة ١ من ٢: راجع التفاصيل والمستندات. بعد الموافقة، المختصين بيتواصلوا مع المتقدّم وبيوظّفوه أو بيرفضوه.",
+      en: "Approving adds them to the technicians: the specialists can assign them jobs, and they get an email to set their password.",
+      ar: "الموافقة بتزيده عالمعلّمين: المختصين فيهم يعطوه شغل، وبيوصله إيميل ليعمل كلمة سر.",
     },
-    approvedOn: { en: "Approved by an admin on {date}", ar: "وافقت عليه الإدارة بتاريخ {date}" },
-    privateDocs: {
-      en: "ID, proof of address, criminal record and vehicle papers were checked by an admin and are seen by admins only.",
-      ar: "الهوية وإثبات السكن والسجل العدلي وأوراق السيارة راجعتها الإدارة وبتشوفها الإدارة بس.",
-    },
+    approveHire: { en: "Approve and add to the technicians", ar: "وافق وزيده عالمعلّمين" },
+    needsMeeting: { en: "Book the meeting first.", ar: "احجز المقابلة أول." },
     hireConfirm: {
       en: "Create a technician account for {email}? If they don't have an account yet, they'll get an email to set their password.",
       ar: "نعمل حساب معلّم لـ {email}؟ إذا ما عندو حساب، رح يوصلو إيميل ليختار كلمة سر.",
@@ -923,8 +942,8 @@ export const t = {
     },
     remove: { en: "Remove", ar: "شيل" },
     noTechToAssign: {
-      en: "No technicians yet. Hire one from Technician applications (open the application → Hire as technician).",
-      ar: "ما في معلّمين بعد. وظّف واحد من طلبات المعلّمين (افتح الطلب ← وظّف كمعلّم).",
+      en: "No technicians yet. They appear here once an admin approves them.",
+      ar: "ما في معلّمين بعد. بيبيّنوا هون بس توافق عليهم الإدارة.",
     },
   },
   dash4: {
@@ -1022,8 +1041,8 @@ export const t = {
       ar: "تشيل {name} من المعلّمين؟ حسابه بيرجع حساب زبون، والمهام يلي ناطرة موعد بترجع لـ«بحاجتك». فيك توظّفه مرة تانية بعدين.",
     },
     noTechnicians: {
-      en: "No technicians yet. Technicians join by applying, then you hire them.",
-      ar: "ما في معلّمين بعد. المعلّمين بينضمّوا بتقديم طلب، وإنت بتوظّفهم.",
+      en: "No technicians yet. They join by applying; an admin meets each one, then approves them.",
+      ar: "ما في معلّمين بعد. بينضمّوا بتقديم طلب، والإدارة بتقابل كل واحد وبعدين بتوافق عليه.",
     },
     goToApplications: { en: "Open technician applications", ar: "افتح طلبات المعلّمين" },
     formerTechnician: { en: "No longer a technician", ar: "ما عاد معلّم" },

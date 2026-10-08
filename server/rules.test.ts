@@ -1,7 +1,7 @@
 // Business rules and input validation that the happy-path workflow test doesn't cover.
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import type { User } from "@db/schema";
-import { BEIRUT_PIN, addJobPhoto, callerFor, createTestDb, futureDate, makeTechnician, makeUser, makeSpecialist } from "./test/harness";
+import { BEIRUT_PIN, addJobPhoto, callerFor, createTestDb, futureDate, makeAdmin, makeTechnician, makeUser, makeSpecialist } from "./test/harness";
 
 const state = vi.hoisted(() => ({ db: undefined as unknown }));
 vi.mock("./queries/connection", () => ({ getDb: () => state.db }));
@@ -273,8 +273,9 @@ describe("technician accounts", () => {
     expect(Array.isArray(jobs[0].media)).toBe(true);
   });
 
-  it("can't be removed while they have an active job, then can", async () => {
-    const s = await callerFor(admin);
+  it("can't be removed while they have an active job, then can (by an admin only)", async () => {
+    const s = await callerFor(await makeAdmin("boss@example.com", "Boss"));
+    await expect((await callerFor(admin)).tech.remove({ technicianId: tech.id })).rejects.toMatchObject({ code: "FORBIDDEN" });
     await rejected(s.tech.remove({ technicianId: tech.id }));
     // Finish every active job, then removal works.
     const t = await callerFor(tech);
@@ -298,7 +299,8 @@ describe("technician accounts", () => {
     const waiting = await approvedRequest();
     await s.tech.assign({ requestId: waiting, technicianId: leaving.id });
 
-    const { unassigned } = await s.tech.remove({ technicianId: leaving.id });
+    const boss = await callerFor(await makeAdmin("boss2@example.com", "Boss Two"));
+    const { unassigned } = await boss.tech.remove({ technicianId: leaving.id });
     expect(unassigned).toEqual([waiting]);
     const { request, events } = await s.specialist.detail({ id: waiting });
     expect(request.technicianId).toBeNull();

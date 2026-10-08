@@ -202,10 +202,11 @@ export const technicianApplications = pgTable("technician_applications", {
   status: applicationStatus("status").default("new").notNull(),
   /** The technician account created or promoted when the applicant was hired. */
   hiredUserId: integer("hired_user_id").references(() => users.id),
-  /**
-   * Step 1 of 2: an admin checked the application and its documents and approved it. Only then
-   * do specialists see it (without the private documents) and can hire or reject (step 2).
-   */
+  /** The in-person meeting at the office an admin booked with the applicant (before approving). */
+  meetingAt: timestamp("meeting_at", { withTimezone: true }),
+  meetingPlace: varchar("meeting_place", { length: 200 }),
+  meetingNote: text("meeting_note"),
+  /** When and by which admin the applicant was approved, which adds them to the technicians. */
   approvedAt: timestamp("approved_at", { withTimezone: true }),
   approvedBy: integer("approved_by").references(() => users.id, { onDelete: "set null" }),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),

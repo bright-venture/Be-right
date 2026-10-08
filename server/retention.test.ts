@@ -1,15 +1,14 @@
 // Privacy Policy: rejected applicants' documents are deleted after the retention period.
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import { eq } from "drizzle-orm";
-import { technicianApplications, type User } from "@db/schema";
+import { technicianApplications } from "@db/schema";
 import { REJECTED_APPLICATION_RETENTION_DAYS as DAYS } from "@contracts/legal";
 import {
   callerFor,
   createTestDb,
   deletedDocuments,
   documentKeys,
-  makeSpecialist,
-  approveApplication,
+  makeAdmin,
   type TestDb,
 } from "./test/harness";
 
@@ -31,12 +30,10 @@ vi.mock("./lib/storage", async (importOriginal) =>
 
 const DAY = 86_400_000;
 let db: TestDb;
-let admin: User;
 
 beforeAll(async () => {
   db = await createTestDb();
   state.db = db;
-  admin = await makeSpecialist();
 }, 60_000);
 
 /** Inserts an application with documents, in a given status, rejected/created `daysAgo`. */
@@ -112,8 +109,7 @@ describe("rejected-applicant document clean-up", () => {
 
   it("starts the clock when a specialist rejects, and stops it if they change their mind", async () => {
     const { id } = await application("contacted", DAYS + 30);
-    await approveApplication(id);
-    const s = await callerFor(admin);
+    const s = await callerFor(await makeAdmin("boss@example.com", "Boss"));
     await s.join.setStatus({ id, status: "rejected" });
     expect((await load(id)).rejectedAt).toBeInstanceOf(Date);
     await s.join.setStatus({ id, status: "contacted" });

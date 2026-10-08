@@ -186,7 +186,7 @@ describe("notification emails", () => {
     expect(emailTo("ali@example.com").text).toContain("No need to go");
   });
 
-  it("tells the admins about new applications, and the specialists once an admin approved", async () => {
+  it("tells the admins about applications, the applicant about their meeting, and the specialists about new technicians", async () => {
     const boss = await makeAdmin("boss@example.com", "Boss");
     const { id } = await (await callerFor()).join.submit({
       name: "Samir",
@@ -203,10 +203,27 @@ describe("notification emails", () => {
       consent: true,
     });
     expect(emailTo("boss@example.com").subject).toContain("Samir");
-    // Specialists hear about it only after the admin's approval.
+    // Specialists don't handle applications.
     expect(state.sent.filter((m) => m.to.includes(SPECIALIST_EMAIL) && m.subject.includes("Samir"))).toHaveLength(0);
-    await (await callerFor(boss)).join.approve({ id });
-    expect(emailTo(SPECIALIST_EMAIL).subject).toContain("Approved applicant to contact: Samir");
+
+    // The meeting: date, time (Beirut) and place go to the applicant, in both languages.
+    const b = await callerFor(boss);
+    await b.join.bookMeeting({ id, at: new Date("2026-11-03T08:30:00Z"), place: "Be Right office, Hamra", note: "Ask for Rami" });
+    const invite = emailTo("samir@example.com");
+    expect(invite.subject).toContain("Your meeting with Be Right");
+    expect(invite.text).toContain("Tuesday 3 November at 10:30");
+    expect(invite.text).toContain("Be Right office, Hamra");
+    expect(invite.text).toContain("Ask for Rami");
+    // Moving it sends the new time.
+    await b.join.bookMeeting({ id, at: new Date("2026-11-04T09:00:00Z"), place: "Be Right office, Hamra" });
+    const mails = state.sent.filter((m) => m.to.includes("samir@example.com"));
+    expect(mails).toHaveLength(2);
+    expect(mails[1].subject).toContain("New time for your meeting");
+
+    // Approved: the specialists hear about their new technician (an existing account: no invitation).
+    await makeUser("samir@example.com", "Samir");
+    await b.join.hire({ id });
+    expect(emailTo(SPECIALIST_EMAIL).subject).toContain("New technician on the team: Samir");
   });
 
   it("never fails the action when an email can't be sent", async () => {

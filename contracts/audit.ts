@@ -10,7 +10,9 @@ export const AUDIT_ACTIONS = [
   "two_step_reset",
   /** An applicant's documents (ID, criminal record, …) were opened. */
   "documents_viewed",
-  /** An admin approved an application (step 1 of 2), so specialists can now hire or reject it. */
+  /** An admin booked (or moved) the in-person meeting with an applicant (details: at, place, rescheduled). */
+  "meeting_booked",
+  /** Older entries, from when approving and hiring were two separate steps. */
   "application_approved",
   /** An application's status was changed by hand (details: from, to). */
   "application_status",

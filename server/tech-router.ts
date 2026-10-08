@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { and, desc, eq, inArray, sql } from "drizzle-orm";
-import { createRouter, technicianQuery, specialistQuery } from "./middleware";
+import { adminQuery, createRouter, technicianQuery, specialistQuery } from "./middleware";
 import { getDb } from "./queries/connection";
 import {
   requestMedia,
@@ -110,7 +110,7 @@ export const techRouter = createRouter({
    * jobs must be reassigned first; approved jobs not yet scheduled go back to
    * "needs a technician" (otherwise they could be scheduled with someone who can't see them).
    */
-  remove: specialistQuery
+  remove: adminQuery
     .input(z.object({ technicianId: z.number().int() }))
     .mutation(async ({ ctx, input }) => {
       const unassigned = await getDb().transaction(async (tx) => {
