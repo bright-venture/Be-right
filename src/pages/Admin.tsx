@@ -101,8 +101,25 @@ export default function Admin() {
           <h1 className="font-display text-3xl font-black text-navy sm:text-4xl">{p(t.admin.title)}</h1>
           <p className="mt-1 text-sm text-navy/60">{p(t.admin.sub)}</p>
 
-          {/* tabs: one row that scrolls sideways on phones */}
-          <div className="-mx-4 mt-6 overflow-x-auto px-4 [scrollbar-width:none] sm:mx-0 sm:px-0">
+          {/* Phones and tablets: the 7 sections don't fit in a row, so one clear menu. */}
+          <label className="mt-6 flex items-center gap-3 lg:hidden">
+            <span className="shrink-0 text-sm font-bold text-navy/70">{p(t.admin.sectionLabel)}</span>
+            <select
+              value={tab}
+              onChange={(e) => setTab(e.target.value as Tab)}
+              className="min-h-12 w-full rounded-2xl border-2 border-navy bg-white px-4 font-display text-base font-extrabold text-navy focus:border-flame focus:outline-none"
+            >
+              {TABS.map((k) => (
+                <option key={k} value={k}>
+                  {p(t.admin.tabs[k])}
+                  {k === "applications" && newApplications > 0 ? ` (${newApplications})` : ""}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          {/* PC: every section as a tab, in one row. */}
+          <div className="mt-6 hidden lg:block">
             <div role="tablist" className="inline-flex gap-1 rounded-3xl border-2 border-navy bg-white p-1">
               {TABS.map((k) => (
                 <button
@@ -125,7 +142,7 @@ export default function Admin() {
             </div>
           </div>
 
-          {tab === "overview" && <OverviewTab />}
+          {tab === "overview" && <OverviewTab onOpen={setTab} />}
           {tab === "requests" && <QueueTab onGoToApplications={() => setTab("applications")} />}
           {tab === "customers" && <CustomersTab />}
           {tab === "applications" && <ApplicationsTab />}

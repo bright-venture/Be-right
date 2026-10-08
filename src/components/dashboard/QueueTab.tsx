@@ -86,7 +86,7 @@ export function QueueTab({ onGoToApplications }: { onGoToApplications?: () => vo
             key={c.view}
             onClick={() => setView(view === c.view ? "open" : c.view)}
             aria-pressed={view === c.view}
-            className={`card-br p-4 text-start transition-all hover:-translate-y-0.5 ${
+            className={`card-br flex h-full flex-col items-start justify-start p-4 text-start transition-all hover:-translate-y-0.5 ${
               view === c.view ? "!border-flame !bg-flame/5" : ""
             }`}
           >
