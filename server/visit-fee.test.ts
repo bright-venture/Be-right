@@ -117,3 +117,14 @@ describe("visit fee", () => {
     ).rejects.toMatchObject({ code: "BAD_REQUEST" });
   });
 });
+
+describe("visit reports", () => {
+  it("are limited to a few per job, since each one emails every specialist", async () => {
+    const id = await scheduledJob();
+    const t = await callerFor(tech);
+    for (let i = 0; i < 3; i++) await t.tech.reportVisit({ requestId: id, reason: "no_access" });
+    await expect(t.tech.reportVisit({ requestId: id, reason: "no_access" })).rejects.toMatchObject({
+      code: "TOO_MANY_REQUESTS",
+    });
+  });
+});

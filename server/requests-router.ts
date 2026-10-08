@@ -32,6 +32,7 @@ import { notify } from "./notify";
 import { ratingFor, reviewOf } from "./queries/ratings";
 import { LIMITS, rateLimit } from "./lib/rateLimit";
 import { WORKMANSHIP_GUARANTEE_DAYS } from "@contracts/legal";
+import { isMediaType } from "@contracts/uploads";
 
 const mediaItem = z.object({
   key: z.string().max(512),
@@ -63,7 +64,7 @@ async function guaranteeStatus(db: Db, requestId: number) {
 /** Uploaded files must be the customer's own, with at most a couple of (unshrinkable) videos. */
 function checkMedia(authId: string, media: { key: string; contentType?: string }[]) {
   const prefix = userUploadPrefix(authId);
-  if (media.some((m) => !m.key.startsWith(prefix))) {
+  if (media.some((m) => !m.key.startsWith(prefix) || (m.contentType && !isMediaType(m.contentType)))) {
     throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid media" });
   }
   if (media.filter((m) => m.contentType?.startsWith("video/")).length > MAX_BOOKING_VIDEOS) {

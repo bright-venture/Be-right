@@ -723,6 +723,23 @@ export const t = {
     noActivity: { en: "No activity yet.", ar: "ما في نشاط بعد." },
     request: { en: "Request #{id}", ar: "الطلب #{id}" },
     retry: { en: "Try again", ar: "جرّب مرة تانية" },
+    // activity: request history, and the staff audit trail
+    activityRequests: { en: "Requests", ar: "الطلبات" },
+    activityStaff: { en: "Staff actions", ar: "أعمال الفريق" },
+    noStaffActivity: { en: "No staff actions yet.", ar: "ما في أعمال للفريق بعد." },
+    audit: {
+      staff_added: { en: "Added {target} to the team as {role}", ar: "زاد {target} عالفريق كـ{role}" },
+      staff_invited: { en: "Invited {target} to the team as {role}", ar: "بعت دعوة لـ{target} ينضم عالفريق كـ{role}" },
+      staff_role_changed: { en: "Changed {target}'s role from {from} to {to}", ar: "غيّر دور {target} من {from} لـ{to}" },
+      staff_removed: { en: "Removed {target} from the team", ar: "شال {target} من الفريق" },
+      two_step_reset: { en: "Reset {target}'s two-step login", ar: "أعاد ضبط الدخول بخطوتين لـ{target}" },
+      documents_viewed: { en: "Opened {applicant}'s documents", ar: "فتح مستندات {applicant}" },
+      application_status: { en: "Marked {applicant}'s application as {to}", ar: "حط طلب {applicant} على {to}" },
+      technician_hired: { en: "Hired {applicant} as a technician", ar: "وظّف {applicant} كمعلّم" },
+      technician_removed: { en: "Removed {target} from the technicians", ar: "شال {target} من المعلّمين" },
+      unassigned: { en: "{n} jobs went back to the queue", ar: "{n} شغلات رجعوا عالطابور" },
+      someone: { en: "someone", ar: "حدا" },
+    },
     // two-step login (authenticator app)
     twoStepTitle: { en: "Two-step login", ar: "الدخول بخطوتين" },
     twoStepSetupSub: {

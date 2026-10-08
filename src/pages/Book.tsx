@@ -47,6 +47,7 @@ import {
   type TimeSlot,
 } from "@contracts/workflow";
 import { shrinkImage } from "@/lib/shrinkImage";
+import { MEDIA_ACCEPT } from "@contracts/uploads";
 
 /** A photo/video kept on the device until the request is submitted. */
 type MediaDraft = {
@@ -445,7 +446,7 @@ export default function Book() {
                 <input
                   ref={fileRef}
                   type="file"
-                  accept="image/*,video/*"
+                  accept={MEDIA_ACCEPT}
                   multiple
                   className="hidden"
                   onChange={(e) => onFiles(e.target.files)}

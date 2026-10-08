@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { sql } from "drizzle-orm";
 import { MAX_DOCUMENT_BYTES, type ApplicationDocument } from "@contracts/applications";
+import { PHOTO_TYPES } from "@contracts/uploads";
 import { env } from "./env";
 import { getSupabaseAdmin } from "./supabase";
 import { getDb } from "../queries/connection";
@@ -10,10 +11,13 @@ const SIGNED_URL_TTL_SECONDS = 60 * 30;
 /** Identity documents get shorter-lived links than job photos. */
 const DOCUMENT_URL_TTL_SECONDS = 60 * 5;
 
-/** Private buckets, created on first use. */
+/**
+ * Private buckets, created on first use. The bucket itself refuses other file types, whatever
+ * the browser claimed when asking for the upload link (photos are a list: no SVG).
+ */
 const BUCKETS = {
-  media: { name: () => env.storageBucket, fileSizeLimit: MAX_UPLOAD_BYTES, mime: ["image/*", "video/*"] },
-  docs: { name: () => env.docsBucket, fileSizeLimit: MAX_DOCUMENT_BYTES, mime: ["image/*", "application/pdf"] },
+  media: { name: () => env.storageBucket, fileSizeLimit: MAX_UPLOAD_BYTES, mime: [...PHOTO_TYPES, "video/*"] },
+  docs: { name: () => env.docsBucket, fileSizeLimit: MAX_DOCUMENT_BYTES, mime: [...PHOTO_TYPES, "application/pdf"] },
 } as const;
 export type BucketId = keyof typeof BUCKETS;
 
@@ -25,7 +29,19 @@ function ensureBucket(id: BucketId) {
     bucketReady[id] = (async () => {
       const storage = getSupabaseAdmin().storage;
       const { data } = await storage.getBucket(spec.name());
-      if (data) return;
+      if (data) {
+        // Buckets made before the file types changed get the current list.
+        const current = [...(data.allowed_mime_types ?? [])].sort().join(",");
+        if (current !== [...spec.mime].sort().join(",")) {
+          const { error } = await storage.updateBucket(spec.name(), {
+            public: false,
+            fileSizeLimit: spec.fileSizeLimit,
+            allowedMimeTypes: [...spec.mime],
+          });
+          if (error) throw error;
+        }
+        return;
+      }
       const { error } = await storage.createBucket(spec.name(), {
         public: false,
         fileSizeLimit: spec.fileSizeLimit,

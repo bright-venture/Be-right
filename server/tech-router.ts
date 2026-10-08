@@ -23,6 +23,9 @@ import { applyTransition, findRequest, logEvent } from "./lib/workflow";
 import { deleteFiles, mediaExists, profilePhotoUrl, userUploadPrefix } from "./lib/storage";
 import { ratingsFor } from "./queries/ratings";
 import { notify } from "./notify";
+import { audit } from "./lib/audit";
+import { isPhotoType } from "@contracts/uploads";
+import { LIMITS, rateLimit } from "./lib/rateLimit";
 
 type Db = Parameters<typeof findRequest>[0];
 
@@ -142,10 +145,23 @@ export const techRouter = createRouter({
           .set({ role: "customer" })
           .where(and(eq(users.id, input.technicianId), eq(users.role, "technician")));
         // Reopen any application this account was hired from, so it can be hired again.
-        await tx
+        const [reopened] = await tx
           .update(technicianApplications)
           .set({ status: "contacted", hiredUserId: null })
-          .where(eq(technicianApplications.hiredUserId, input.technicianId));
+          .where(eq(technicianApplications.hiredUserId, input.technicianId))
+          .returning({ id: technicianApplications.id });
+        if (tech?.role === "technician") {
+          await audit(
+            {
+              actorId: ctx.user.id,
+              action: "technician_removed",
+              targetUserId: tech.id,
+              applicationId: reopened?.id ?? null,
+              details: { unassigned: released.length },
+            },
+            tx,
+          );
+        }
         return released;
       });
       return { ok: true, unassigned };
@@ -258,7 +274,7 @@ export const techRouter = createRouter({
     )
     .mutation(async ({ ctx, input }) => {
       const prefix = userUploadPrefix(ctx.user.authId);
-      if (input.photos.some((m) => !m.key.startsWith(prefix) || !m.contentType.startsWith("image/"))) {
+      if (input.photos.some((m) => !m.key.startsWith(prefix) || !isPhotoType(m.contentType))) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid photo" });
       }
       if (!(await mediaExists(input.photos.map((m) => m.key)))) {
@@ -331,6 +347,8 @@ export const techRouter = createRouter({
       if (!ACTIVE_JOB_STATUSES.includes(job.status)) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "Job is not active" });
       }
+      // Each report emails every specialist: a few per job is plenty.
+      await rateLimit(`visit-report:${ctx.user.id}:${job.id}`, LIMITS.visitReportPerJob);
       const note = [VISIT_FEE_REASON_LABEL[input.reason], input.note].filter(Boolean).join(". ");
       await logEvent(db, job.id, "visit_report", ctx.user.id, note);
       await notify.visitReported(job.id, note);

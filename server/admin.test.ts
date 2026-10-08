@@ -212,3 +212,68 @@ describe("admin area", () => {
     expect((await o.admin.team()).some((m) => m.id === customer.id)).toBe(false);
   });
 });
+
+describe("audit trail", () => {
+  it("records staff changes, hires, removals and document views, for admins to read", async () => {
+    const o = await callerFor(owner);
+    // Staff: added by invitation, made admin, then taken off the team.
+    await o.admin.addStaff({ email: "nour.desk@example.com", role: "specialist" });
+    const nour = (await o.admin.team()).find((m) => m.email === "nour.desk@example.com")!;
+    await o.admin.setStaffRole({ userId: nour.id, role: "admin" });
+    await o.admin.setStaffRole({ userId: nour.id, role: "customer" });
+
+    // An application: documents opened twice in one visit, contacted, hired, then removed.
+    const d = await callerFor(desk);
+    const { id } = await (await callerFor()).join.submit({
+      name: "Hadi",
+      phone: "+961 71 222 333",
+      email: "hadi@example.com",
+      trade: "locksmith",
+      area: "Jounieh",
+      experience: "3-5",
+      availability: "full_time",
+      hasTools: true,
+      transport: "motorcycle",
+      notes: "Locks and car keys for eight years",
+      ...documentKeys(),
+      consent: true,
+    });
+    await d.join.documents({ id });
+    await d.join.documents({ id });
+    await d.join.setStatus({ id, status: "contacted" });
+    await d.join.hire({ id });
+    const hadi = (await d.tech.list()).find((x) => x.email === "hadi@example.com")!;
+    await d.tech.remove({ technicianId: hadi.id });
+
+    const log = await o.admin.auditLog();
+    const mine = log.filter((e) => e.applicationId === id || e.targetEmail === "nour.desk@example.com");
+    // Newest first.
+    expect(mine.map((e) => e.action)).toEqual([
+      "technician_removed",
+      "technician_hired",
+      "application_status",
+      "documents_viewed", // once, not once per reload
+      "staff_role_changed",
+      "staff_role_changed",
+      "staff_added",
+    ]);
+    expect(mine[0]).toMatchObject({ actorEmail: "desk@example.com", targetEmail: "hadi@example.com", applicantName: "Hadi" });
+    expect(mine[2].details).toEqual({ from: "new", to: "contacted" });
+    expect(mine[3]).toMatchObject({ actorEmail: "desk@example.com", applicantName: "Hadi" });
+    expect(mine[4].details).toEqual({ from: "admin", to: "customer" });
+    expect(mine[6]).toMatchObject({ actorEmail: "owner@example.com", details: { email: "nour.desk@example.com", role: "specialist", invited: true } });
+    // The two-step reset earlier in this file is there too.
+    expect(log.some((e) => e.action === "two_step_reset" && e.targetEmail === "desk@example.com")).toBe(true);
+  });
+
+  it("is for admins only", async () => {
+    for (const user of [desk, customer, tech]) {
+      await expect((await callerFor(user)).admin.auditLog()).rejects.toMatchObject({ code: "FORBIDDEN" });
+    }
+  });
+
+  it("returns real dates for a customer's last request (Safari can't read Postgres' text dates)", async () => {
+    const maya = (await (await callerFor(owner)).admin.customers()).find((c) => c.email === "maya@example.com")!;
+    expect(maya.lastRequestAt).toBeInstanceOf(Date);
+  });
+});

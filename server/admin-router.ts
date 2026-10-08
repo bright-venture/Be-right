@@ -4,7 +4,8 @@ import { and, count, desc, eq, inArray, isNotNull, isNull, sql } from "drizzle-o
 import { alias } from "drizzle-orm/pg-core";
 import { adminQuery, createRouter } from "./middleware";
 import { getDb } from "./queries/connection";
-import { requestEvents, reviews, serviceRequests, technicianApplications, users } from "../db/schema";
+import { auditLog, requestEvents, reviews, serviceRequests, technicianApplications, users } from "../db/schema";
+import { audit } from "./lib/audit";
 import { getSupabaseAdmin } from "./lib/supabase";
 import { env } from "./lib/env";
 
@@ -116,7 +117,8 @@ export const adminRouter = createRouter({
         lastSignInAt: users.lastSignInAt,
         deletedAt: users.deletedAt,
         requests: sql<number>`count(${serviceRequests.id})::int`,
-        lastRequestAt: sql<string | null>`max(${serviceRequests.createdAt})::text`,
+        // A real date: Postgres' text format ("2026-10-07 11:33:35+00") is invalid on Safari and iPhone.
+        lastRequestAt: sql<Date | null>`max(${serviceRequests.createdAt})`.mapWith(serviceRequests.createdAt),
       })
       .from(users)
       .leftJoin(serviceRequests, eq(serviceRequests.userId, users.id))
@@ -190,6 +192,12 @@ export const adminRouter = createRouter({
       }
       if (existing) {
         await db.update(users).set({ role: input.role }).where(eq(users.id, existing.id));
+        await audit({
+          actorId: ctx.user.id,
+          action: "staff_added",
+          targetUserId: existing.id,
+          details: { email: input.email, role: input.role, from: existing.role, invited: false },
+        });
         return { ok: true, invited: false };
       }
       const { data, error } = await getSupabaseAdmin().auth.admin.inviteUserByEmail(input.email, {
@@ -204,10 +212,17 @@ export const adminRouter = createRouter({
             : `Could not send the invitation: ${error?.message ?? "unknown error"}`,
         });
       }
-      await db
+      const [created] = await db
         .insert(users)
         .values({ authId: data.user.id, email: input.email, role: input.role })
-        .onConflictDoUpdate({ target: users.authId, set: { role: input.role } });
+        .onConflictDoUpdate({ target: users.authId, set: { role: input.role } })
+        .returning({ id: users.id });
+      await audit({
+        actorId: ctx.user.id,
+        action: "staff_added",
+        targetUserId: created.id,
+        details: { email: input.email, role: input.role, invited: true },
+      });
       return { ok: true, invited: true };
     }),
 
@@ -237,6 +252,12 @@ export const adminRouter = createRouter({
         if (admins <= 1) throw new TRPCError({ code: "BAD_REQUEST", message: "Be Right needs at least one admin" });
       }
       await db.update(users).set({ role: input.role }).where(eq(users.id, target.id));
+      await audit({
+        actorId: ctx.user.id,
+        action: "staff_role_changed",
+        targetUserId: target.id,
+        details: { from: target.role, to: input.role },
+      });
       return { ok: true };
     }),
 
@@ -257,7 +278,39 @@ export const adminRouter = createRouter({
       const { error: deleteError } = await mfa.deleteFactor({ id: factor.id, userId: target.authId });
       if (deleteError) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: deleteError.message });
     }
+    await audit({
+      actorId: ctx.user.id,
+      action: "two_step_reset",
+      targetUserId: target.id,
+      details: { removed: data.factors.length },
+    });
     return { ok: true, removed: data.factors.length };
+  }),
+
+  /** Staff actions and document views, newest first (the audit trail). */
+  auditLog: adminQuery.query(async () => {
+    const actor = alias(users, "actor");
+    const target = alias(users, "target");
+    return getDb()
+      .select({
+        id: auditLog.id,
+        action: auditLog.action,
+        details: auditLog.details,
+        createdAt: auditLog.createdAt,
+        actorName: actor.name,
+        actorEmail: actor.email,
+        actorRole: actor.role,
+        targetName: target.name,
+        targetEmail: target.email,
+        applicationId: auditLog.applicationId,
+        applicantName: technicianApplications.name,
+      })
+      .from(auditLog)
+      .leftJoin(actor, eq(actor.id, auditLog.actorId))
+      .leftJoin(target, eq(target.id, auditLog.targetUserId))
+      .leftJoin(technicianApplications, eq(technicianApplications.id, auditLog.applicationId))
+      .orderBy(desc(auditLog.createdAt), desc(auditLog.id))
+      .limit(300);
   }),
 
   /** What happened on requests, newest first, and who did it. */

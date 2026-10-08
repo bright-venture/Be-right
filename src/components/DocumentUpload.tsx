@@ -33,7 +33,7 @@ export function DocumentUpload({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const createUpload = trpc.storage.createDocumentUpload.useMutation();
-  const accept = DOCUMENT_TYPES[kind].map((t) => (t.endsWith("/") ? `${t}*` : t)).join(",");
+  const accept = DOCUMENT_TYPES[kind].join(",");
 
   async function onPick(picked: File | undefined) {
     if (!picked) return;

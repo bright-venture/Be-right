@@ -19,6 +19,7 @@ import { requestMedia, serviceRequests } from "../db/schema";
 import { ACTIVE_JOB_STATUSES } from "@contracts/workflow";
 import { findRequest } from "./lib/workflow";
 import { canDispatch } from "@contracts/roles";
+import { isMediaType, isPhotoType } from "@contracts/uploads";
 
 export const storageRouter = createRouter({
   // Returns a one-time signed URL token; the browser uploads the file directly to storage.
@@ -34,7 +35,7 @@ export const storageRouter = createRouter({
       if (input.size > MAX_UPLOAD_BYTES) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "File too large (max 20 MB)" });
       }
-      if (!/^(image|video)\//.test(input.contentType)) {
+      if (!isMediaType(input.contentType)) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "Only photos and videos are allowed" });
       }
       await rateLimit(`media-upload:user:${ctx.user.id}`, LIMITS.mediaUploadPerUser);
@@ -55,7 +56,7 @@ export const storageRouter = createRouter({
       if (input.size > MAX_UPLOAD_BYTES) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "File too large (max 20 MB)" });
       }
-      if (!input.contentType.startsWith("image/")) {
+      if (!isPhotoType(input.contentType)) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "Only photos are allowed" });
       }
       const job = await findRequest(getDb(), input.requestId, { technicianId: ctx.user.id });

@@ -189,3 +189,24 @@ describe("unused upload clean-up", () => {
     for (const kept of [...Object.values(submitted), avatar, freshDoc]) expect(deletedDocuments).not.toContain(kept);
   });
 });
+
+describe("upload types", () => {
+  it("accepts photos, PDFs for papers and videos for bookings, but never SVG", async () => {
+    const anyone = await callerFor();
+    const svg = { fileName: "x.svg", size: 1000, contentType: "image/svg+xml" };
+    for (const kind of ["photo", "idDocument"] as const) {
+      await expect(anyone.storage.createDocumentUpload({ kind, ...svg })).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    }
+    await expect(
+      anyone.storage.createDocumentUpload({ kind: "idDocument", fileName: "id.pdf", size: 1000, contentType: "application/pdf" }),
+    ).resolves.toBeTruthy();
+    await expect(
+      anyone.storage.createDocumentUpload({ kind: "photo", fileName: "me.heic", size: 1000, contentType: "image/heic" }),
+    ).resolves.toBeTruthy();
+
+    const c = await callerFor(customer);
+    await expect(c.storage.createUpload(svg)).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    await expect(c.storage.createUpload({ fileName: "leak.mp4", size: 1000, contentType: "video/mp4" })).resolves.toBeTruthy();
+    await expect(c.storage.createUpload({ fileName: "leak.png", size: 1000, contentType: "image/png" })).resolves.toBeTruthy();
+  });
+});

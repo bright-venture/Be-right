@@ -11,9 +11,11 @@ import {
   index,
   boolean,
   doublePrecision,
+  jsonb,
   type AnyPgColumn,
 } from "drizzle-orm/pg-core";
 import type { MediaKind, VisitFeeReason } from "../contracts/workflow";
+import type { AuditAction, AuditDetails } from "../contracts/audit";
 import type { Transport } from "../contracts/applications";
 
 // Every table enables Row Level Security with no policies. The app server talks to
@@ -120,6 +122,8 @@ export const serviceRequests = pgTable(
   (t) => [
     index("service_requests_user_idx").on(t.userId),
     index("service_requests_technician_idx").on(t.technicianId),
+    // The dashboard queue and the admin lists sort by newest first.
+    index("service_requests_created_idx").on(t.createdAt),
   ],
 ).enableRLS();
 
@@ -156,7 +160,11 @@ export const requestEvents = pgTable(
     actorId: integer("actor_id").references(() => users.id),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   },
-  (t) => [index("request_events_request_idx").on(t.requestId)],
+  (t) => [
+    index("request_events_request_idx").on(t.requestId),
+    // Admin → Activity sorts every event by time.
+    index("request_events_created_idx").on(t.createdAt),
+  ],
 ).enableRLS();
 
 /** Public "apply as a technician" submissions (no login required). */
@@ -247,3 +255,23 @@ export const technicianLocations = pgTable("technician_locations", {
     .notNull()
     .$onUpdate(() => new Date()),
 }).enableRLS();
+
+/**
+ * Staff actions and access to applicants' documents: who did what, to whom, and when
+ * (see contracts/audit.ts). Rows are only ever added, never changed.
+ */
+export const auditLog = pgTable(
+  "audit_log",
+  {
+    id: serial("id").primaryKey(),
+    actorId: integer("actor_id").references(() => users.id, { onDelete: "set null" }),
+    action: varchar("action", { length: 48 }).$type<AuditAction>().notNull(),
+    /** The account it was done to (a staff member, a hired or removed technician). */
+    targetUserId: integer("target_user_id").references(() => users.id, { onDelete: "set null" }),
+    /** The technician application it was about. */
+    applicationId: integer("application_id").references(() => technicianApplications.id, { onDelete: "set null" }),
+    details: jsonb("details").$type<AuditDetails>(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [index("audit_log_created_idx").on(t.createdAt)],
+).enableRLS();

@@ -1,11 +1,26 @@
 import { useMemo, useState, type FormEvent, type ReactNode } from "react";
-import { ChevronDown, Loader2, Search, Star } from "lucide-react";
+import {
+  ChevronDown,
+  ClipboardCheck,
+  FileText,
+  KeyRound,
+  Loader2,
+  Search,
+  Star,
+  UserCheck,
+  UserCog,
+  UserMinus,
+  UserPlus,
+  type LucideIcon,
+} from "lucide-react";
 import { ServiceIcon } from "@/components/ServiceIcon";
 import { StatusBadge } from "@/components/requests/RequestParts";
 import { useI18n } from "@/i18n";
 import { trpc } from "@/providers/trpc";
 import { formatMoment } from "@/lib/time";
 import { CATEGORY_MAP, STATUS_ORDER, type RequestStatus } from "@contracts/services";
+import type { AuditAction } from "@contracts/audit";
+import { arabicDigits } from "@contracts/legal";
 
 const CARD = "rounded-3xl border border-navy/10 bg-white p-5";
 const H2 = "font-display text-lg font-extrabold text-navy";
@@ -441,18 +456,121 @@ export function TeamTab() {
   );
 }
 
-/** What happened on requests, newest first, and who did it. */
+/** What happened, newest first, and who did it: on requests, or staff actions (the audit trail). */
 export function ActivityTab() {
+  const { t, p } = useI18n();
+  const [view, setView] = useState<"requests" | "staff">("requests");
+  return (
+    <div className="mt-8">
+      <div role="tablist" className="grid w-full max-w-sm grid-cols-2 gap-1 rounded-full border border-navy/15 bg-white p-1">
+        {(["requests", "staff"] as const).map((k) => (
+          <button
+            key={k}
+            type="button"
+            role="tab"
+            aria-selected={view === k}
+            onClick={() => setView(k)}
+            className={`min-h-10 rounded-full px-4 text-sm font-bold transition-colors ${
+              view === k ? "bg-navy text-paper" : "text-navy/70 hover:text-navy"
+            }`}
+          >
+            {p(k === "requests" ? t.admin.activityRequests : t.admin.activityStaff)}
+          </button>
+        ))}
+      </div>
+      {view === "requests" ? <RequestActivity /> : <StaffActivity />}
+    </div>
+  );
+}
+
+const AUDIT_ICON: Record<AuditAction, LucideIcon> = {
+  staff_added: UserPlus,
+  staff_role_changed: UserCog,
+  two_step_reset: KeyRound,
+  documents_viewed: FileText,
+  application_status: ClipboardCheck,
+  technician_hired: UserCheck,
+  technician_removed: UserMinus,
+};
+
+/** Staff actions and document views, newest first. */
+function StaffActivity() {
+  const { t, p, lang } = useI18n();
+  const { data, error, refetch } = trpc.admin.auditLog.useQuery(undefined, { refetchInterval: 60_000 });
+  if (!data) return <Pending error={error} retry={() => void refetch()} />;
+  if (data.length === 0) return <p className="mt-6 text-sm text-navy/60">{p(t.admin.noStaffActivity)}</p>;
+
+  const roles: Record<string, { en: string; ar: string }> = {
+    customer: t.app.roleCustomer,
+    technician: t.app.roleTechnician,
+    specialist: t.admin.roleSpecialist,
+    admin: t.admin.roleAdmin,
+  };
+  const statuses: Record<string, { en: string; ar: string }> = {
+    new: t.dash3.new,
+    contacted: t.dash3.contacted,
+    rejected: t.dash3.rejected,
+    hired: t.dash3.hired,
+  };
+  const word = (labels: Record<string, { en: string; ar: string }>, value: unknown) =>
+    typeof value === "string" ? (labels[value] ? p(labels[value]) : value) : "";
+
+  return (
+    <ol className="mt-6 flex flex-col gap-2">
+      {data.map((e) => {
+        const d = e.details ?? {};
+        const target = e.targetName || e.targetEmail || (typeof d.email === "string" ? d.email : p(t.admin.audit.someone));
+        const applicant = e.applicantName || p(t.admin.audit.someone);
+        const text =
+          e.action === "staff_added"
+            ? d.invited
+              ? t.admin.audit.staff_invited
+              : t.admin.audit.staff_added
+            : e.action === "staff_role_changed" && d.to === "customer"
+              ? t.admin.audit.staff_removed
+              : t.admin.audit[e.action];
+        const sentence = p(text)
+          .replace("{target}", target)
+          .replace("{applicant}", applicant)
+          .replace("{role}", word(roles, d.role))
+          .replace("{from}", word(e.action === "application_status" ? statuses : roles, d.from))
+          .replace("{to}", word(e.action === "application_status" ? statuses : roles, d.to));
+        const Icon = AUDIT_ICON[e.action] ?? FileText;
+        return (
+          <li key={e.id} className="grid grid-cols-[auto_1fr] gap-x-3 rounded-2xl border border-navy/10 bg-white p-4">
+            <span className="mt-0.5 flex h-9 w-9 items-center justify-center rounded-xl bg-navy/5 text-bird">
+              <Icon className="h-4 w-4" />
+            </span>
+            <div className="min-w-0">
+              <p className="text-sm font-bold text-navy">{sentence}</p>
+              {typeof d.unassigned === "number" && d.unassigned > 0 && (
+                <p className="mt-0.5 text-sm text-navy/80">{p(t.admin.audit.unassigned).replace("{n}", lang === "ar" ? arabicDigits(d.unassigned) : String(d.unassigned))}</p>
+              )}
+              <p className="mt-1 text-xs text-navy/50">
+                {formatMoment(e.createdAt, lang)} ·{" "}
+                {p(t.admin.by).replace("{name}", e.actorName || e.actorEmail || p(t.admin.audit.someone))}
+                {e.actorRole && roles[e.actorRole] ? ` (${p(roles[e.actorRole])})` : ""}
+              </p>
+            </div>
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
+/** What happened on requests, newest first, and who did it. */
+function RequestActivity() {
   const { t, p, lang } = useI18n();
   const { data, error, refetch } = trpc.admin.activity.useQuery(undefined, { refetchInterval: 60_000 });
   if (!data) return <Pending error={error} retry={() => void refetch()} />;
-  if (data.length === 0) return <p className="mt-8 text-sm text-navy/60">{p(t.admin.noActivity)}</p>;
+  if (data.length === 0) return <p className="mt-6 text-sm text-navy/60">{p(t.admin.noActivity)}</p>;
 
   const labels = { ...t.status, ...t.events } as Record<string, { en: string; ar: string }>;
   const roles = { customer: t.app.roleCustomer, technician: t.app.roleTechnician, specialist: t.app.roleSpecialist, admin: t.app.roleAdmin };
 
   return (
-    <ol className="mt-8 flex flex-col gap-2">
+    <ol className="mt-6 flex flex-col gap-2">
       {data.map((e) => (
         <li key={e.id} className="grid grid-cols-[auto_1fr] gap-x-3 rounded-2xl border border-navy/10 bg-white p-4">
           <span className="mt-0.5 flex h-9 w-9 items-center justify-center rounded-xl bg-navy/5 text-bird">

@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabase";
 import { shrinkImage } from "@/lib/shrinkImage";
 import { isRateLimited } from "@/lib/errors";
 import { MAX_JOB_PHOTOS, type JobPhotoKind } from "@contracts/workflow";
+import { PHOTO_ACCEPT, isPhotoType } from "@contracts/uploads";
 
 type Media = { key: string; contentType: string | null; kind: string };
 
@@ -65,7 +66,7 @@ export function JobPhotoUpload({
   const fill = (s: string) => s.replace("{n}", String(items.length)).replace("{max}", String(MAX_JOB_PHOTOS));
 
   async function onPick(files: FileList | null) {
-    const picked = Array.from(files ?? []).filter((f) => f.type.startsWith("image/"));
+    const picked = Array.from(files ?? []).filter((f) => isPhotoType(f.type));
     if (input.current) input.current.value = "";
     if (!picked.length) return;
     setError(picked.length > room ? fill(p(t.jobPhotos.tooMany)) : null);
@@ -111,7 +112,7 @@ export function JobPhotoUpload({
           <input
             ref={input}
             type="file"
-            accept="image/*"
+            accept={PHOTO_ACCEPT}
             multiple
             className="hidden"
             aria-label={`${p(t.jobPhotos[kind])}: ${p(t.jobPhotos.add)}`}

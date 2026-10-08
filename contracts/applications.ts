@@ -1,5 +1,6 @@
 // Technician application options, shared by the public form and the dashboard.
 import type { LocalText } from "./services";
+import { PHOTO_TYPES } from "./uploads";
 
 export const EXPERIENCE_LEVELS = ["lt1", "1-3", "3-5", "5-10", "10+"] as const;
 export type ExperienceLevel = (typeof EXPERIENCE_LEVELS)[number];
@@ -48,12 +49,14 @@ export const DOCUMENT_FIELD = {
 export type DocumentField = (typeof DOCUMENT_FIELD)[ApplicationDocument];
 
 /** The photo must be an image; the others may be a photo or a PDF scan. */
+/** A photo (never SVG, see contracts/uploads.ts) or, for papers, a PDF. */
+const PAPER_TYPES = [...PHOTO_TYPES, "application/pdf"] as const;
 export const DOCUMENT_TYPES: Record<ApplicationDocument, readonly string[]> = {
-  idDocument: ["image/", "application/pdf"],
-  criminalRecord: ["image/", "application/pdf"],
-  proofOfAddress: ["image/", "application/pdf"],
-  vehicleRegistration: ["image/", "application/pdf"],
-  photo: ["image/"],
+  idDocument: PAPER_TYPES,
+  criminalRecord: PAPER_TYPES,
+  proofOfAddress: PAPER_TYPES,
+  vehicleRegistration: PAPER_TYPES,
+  photo: PHOTO_TYPES,
 };
 
 /**
@@ -68,7 +71,7 @@ export const MAX_DOCUMENT_MB = 10;
 export const MAX_DOCUMENT_BYTES = MAX_DOCUMENT_MB * 1024 * 1024;
 
 export function isAllowedDocumentType(kind: ApplicationDocument, contentType: string) {
-  return DOCUMENT_TYPES[kind].some((t) => (t.endsWith("/") ? contentType.startsWith(t) : contentType === t));
+  return DOCUMENT_TYPES[kind].includes(contentType.toLowerCase());
 }
 
 /** Statuses a specialist sets by hand; "hired" only comes from the Hire action. */

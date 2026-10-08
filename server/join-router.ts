@@ -21,6 +21,7 @@ import { isValidPhone } from "@contracts/phone";
 import { clientIp, LIMITS, rateLimit } from "./lib/rateLimit";
 import { notify } from "./notify";
 import { createDocumentUrls, documentKeyMatches, documentsExist } from "./lib/storage";
+import { audit, auditDocumentsViewed } from "./lib/audit";
 
 const TRADE_IDS = CATEGORIES.map((c) => c.id) as [string, ...string[]];
 const documentKey = z.string().max(512);
@@ -122,7 +123,7 @@ export const joinRouter = createRouter({
         status: z.enum(MANUAL_APPLICATION_STATUSES),
       }),
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       const db = getDb();
       const app = await db.query.technicianApplications.findFirst({ where: eq(technicianApplications.id, input.id) });
       if (!app) throw new TRPCError({ code: "NOT_FOUND" });
@@ -140,15 +141,25 @@ export const joinRouter = createRouter({
         .set({ status: input.status, rejectedAt: input.status === "rejected" ? new Date() : null })
         // Checked again here, in case it was hired in the meantime.
         .where(and(eq(technicianApplications.id, input.id), ne(technicianApplications.status, "hired")));
+      if (app.status !== input.status) {
+        await audit({
+          actorId: ctx.user.id,
+          action: "application_status",
+          applicationId: app.id,
+          details: { from: app.status, to: input.status },
+        });
+      }
       return { ok: true };
     }),
 
-  /** Short-lived links to an applicant's documents (specialists only). */
-  documents: specialistQuery.input(z.object({ id: z.number().int().positive() })).query(async ({ input }) => {
+  /** Short-lived links to an applicant's documents (specialists only). Every visit is recorded. */
+  documents: specialistQuery.input(z.object({ id: z.number().int().positive() })).query(async ({ ctx, input }) => {
     const app = await getDb().query.technicianApplications.findFirst({
       where: eq(technicianApplications.id, input.id),
     });
     if (!app) throw new TRPCError({ code: "NOT_FOUND" });
+    // Recorded before any link is handed out: no record, no documents.
+    await auditDocumentsViewed(ctx.user.id, app.id);
     const keys = documentKeysOf(app);
     const urls = await createDocumentUrls(Object.values(keys).filter((k): k is string => !!k));
     const link = (key: string | null) =>
@@ -243,6 +254,13 @@ export const joinRouter = createRouter({
         .update(technicianApplications)
         .set({ status: "hired", hiredUserId: userId, email: address })
         .where(eq(technicianApplications.id, app.id));
+      await audit({
+        actorId: ctx.user.id,
+        action: "technician_hired",
+        targetUserId: userId,
+        applicationId: app.id,
+        details: { email: address, invited },
+      });
       return { ok: true, invited, email: address };
     }),
 });

@@ -7,6 +7,7 @@ import { shrinkImage } from "@/lib/shrinkImage";
 import { isNetworkError, isRateLimited, refusalMessage } from "@/lib/errors";
 import { arabicDays, WORKMANSHIP_GUARANTEE_DAYS } from "@contracts/legal";
 import { isValidVisitDate, MAX_BOOKING_VIDEOS, MAX_PROBLEM_FILES, TIME_SLOTS, todayInBeirut, type TimeSlot } from "@contracts/workflow";
+import { MEDIA_ACCEPT } from "@contracts/uploads";
 
 const MAX_FILE_BYTES = 20 * 1024 * 1024;
 const FIELD =
@@ -156,7 +157,7 @@ export function ReportProblem({
             <input
               ref={fileRef}
               type="file"
-              accept="image/*,video/*"
+              accept={MEDIA_ACCEPT}
               multiple
               className="hidden"
               onChange={(e) => addFiles(e.target.files)}
