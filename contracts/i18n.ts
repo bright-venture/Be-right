@@ -724,6 +724,7 @@ export const t = {
     request: { en: "Request #{id}", ar: "الطلب #{id}" },
     retry: { en: "Try again", ar: "جرّب مرة تانية" },
     // activity: request history, and the staff audit trail
+    loadMore: { en: "Show more", ar: "شوف أكتر" },
     activityRequests: { en: "Requests", ar: "الطلبات" },
     activityStaff: { en: "Staff actions", ar: "أعمال الفريق" },
     noStaffActivity: { en: "No staff actions yet.", ar: "ما في أعمال للفريق بعد." },
@@ -928,6 +929,7 @@ export const t = {
     anyUrgency: { en: "Any urgency", ar: "أي استعجال" },
     anyService: { en: "Any service", ar: "أي خدمة" },
     noMatches: { en: "No requests match these filters.", ar: "ما في طلبات مطابقة لهالفلاتر." },
+    showOlder: { en: "Show requests closed over 30 days ago", ar: "شوف الطلبات المسكّرة من أكتر من ٣٠ يوم" },
     clearFilters: { en: "Clear filters", ar: "امسح الفلاتر" },
     waiting: { en: "Waiting {time}", ar: "ناطر {time}" },
     selectRequest: { en: "Select a request to see its details.", ar: "اختار طلب لتشوف تفاصيله." },

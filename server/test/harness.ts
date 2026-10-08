@@ -111,6 +111,8 @@ export async function storageStub(importOriginal: () => Promise<unknown>) {
     mediaExists: async (keys: string[]) => keys.every((k) => !k.includes("missing")),
     createDocumentUrls: async (keys: string[]) => Object.fromEntries(keys.map((k) => [k, `https://signed/${k}`])),
     profilePhotoUrl: async (key: string | null | undefined) => (key ? `https://signed/${key}` : null),
+    profilePhotoUrls: async (keys: (string | null | undefined)[]) =>
+      Object.fromEntries(keys.filter((k): k is string => !!k).map((k) => [k, `https://signed/${k}`])),
     deleteDocuments: async (keys: string[]) => {
       deletedDocuments.push(...keys);
     },

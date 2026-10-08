@@ -1,0 +1,1 @@
+CREATE INDEX "service_requests_updated_idx" ON "service_requests" USING btree ("updated_at");

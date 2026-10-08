@@ -1,12 +1,13 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { and, count, desc, eq, inArray, isNotNull, isNull, sql } from "drizzle-orm";
+import { and, count, desc, eq, ilike, inArray, isNotNull, isNull, lt, or, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { adminQuery, createRouter } from "./middleware";
 import { getDb } from "./queries/connection";
 import { auditLog, requestEvents, reviews, serviceRequests, technicianApplications, users } from "../db/schema";
 import { audit } from "./lib/audit";
 import { saveInvitedAccount } from "./lib/invites";
+import { likeTerm, pageInput, PAGE_SIZE, toPage } from "./lib/paging";
 import { getSupabaseAdmin } from "./lib/supabase";
 import { env } from "./lib/env";
 
@@ -106,9 +107,21 @@ export const adminRouter = createRouter({
     };
   }),
 
-  /** Every customer account, newest first, with how much they've booked. */
-  customers: adminQuery.query(async () => {
-    return getDb()
+  /**
+   * Customer accounts, newest first, with how much they've booked: a page at a time, searched
+   * by name, email or phone on the server. The first page also says how many match in all.
+   */
+  customers: adminQuery
+    .input(pageInput.extend({ search: z.string().trim().max(100).nullish() }))
+    .query(async ({ input }) => {
+    const db = getDb();
+    const matches = and(
+      eq(users.role, "customer"),
+      input.search
+        ? or(...[users.name, users.email, users.phone].map((column) => ilike(column, likeTerm(input.search!))))
+        : undefined,
+    );
+    const rows = await db
       .select({
         id: users.id,
         name: users.name,
@@ -123,10 +136,12 @@ export const adminRouter = createRouter({
       })
       .from(users)
       .leftJoin(serviceRequests, eq(serviceRequests.userId, users.id))
-      .where(eq(users.role, "customer"))
+      .where(and(matches, input.cursor ? lt(users.id, input.cursor) : undefined))
       .groupBy(users.id)
-      .orderBy(desc(users.createdAt))
-      .limit(5000);
+      .orderBy(desc(users.id))
+      .limit(PAGE_SIZE + 1);
+    const total = input.cursor ? null : await db.$count(users, matches);
+    return { ...toPage(rows), total };
   }),
 
   /** One customer's requests (open one in the dashboard for the details). */
@@ -315,11 +330,11 @@ export const adminRouter = createRouter({
     return { ok: true, removed: data.factors.length };
   }),
 
-  /** Staff actions and document views, newest first (the audit trail). */
-  auditLog: adminQuery.query(async () => {
+  /** Staff actions and document views, newest first (the audit trail), a page at a time. */
+  auditLog: adminQuery.input(pageInput).query(async ({ input }) => {
     const actor = alias(users, "actor");
     const target = alias(users, "target");
-    return getDb()
+    const rows = await getDb()
       .select({
         id: auditLog.id,
         action: auditLog.action,
@@ -337,14 +352,16 @@ export const adminRouter = createRouter({
       .leftJoin(actor, eq(actor.id, auditLog.actorId))
       .leftJoin(target, eq(target.id, auditLog.targetUserId))
       .leftJoin(technicianApplications, eq(technicianApplications.id, auditLog.applicationId))
-      .orderBy(desc(auditLog.createdAt), desc(auditLog.id))
-      .limit(300);
+      .where(input.cursor ? lt(auditLog.id, input.cursor) : undefined)
+      .orderBy(desc(auditLog.id))
+      .limit(PAGE_SIZE + 1);
+    return toPage(rows);
   }),
 
-  /** What happened on requests, newest first, and who did it. */
-  activity: adminQuery.query(async () => {
+  /** What happened on requests, newest first, and who did it: a page at a time. */
+  activity: adminQuery.input(pageInput).query(async ({ input }) => {
     const actor = alias(users, "actor");
-    return getDb()
+    const rows = await getDb()
       .select({
         id: requestEvents.id,
         requestId: requestEvents.requestId,
@@ -359,8 +376,9 @@ export const adminRouter = createRouter({
       .from(requestEvents)
       .leftJoin(serviceRequests, eq(serviceRequests.id, requestEvents.requestId))
       .leftJoin(actor, eq(actor.id, requestEvents.actorId))
-      .where(isNotNull(requestEvents.createdAt))
-      .orderBy(desc(requestEvents.createdAt))
-      .limit(300);
+      .where(and(isNotNull(requestEvents.createdAt), input.cursor ? lt(requestEvents.id, input.cursor) : undefined))
+      .orderBy(desc(requestEvents.id))
+      .limit(PAGE_SIZE + 1);
+    return toPage(rows);
   }),
 });

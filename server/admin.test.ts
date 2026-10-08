@@ -99,7 +99,7 @@ describe("admin area", () => {
     for (const user of [desk, customer, tech]) {
       await expect((await callerFor(user)).admin.overview()).rejects.toMatchObject({ code: "FORBIDDEN" });
     }
-    await expect((await callerFor()).admin.customers()).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+    await expect((await callerFor()).admin.customers({})).rejects.toMatchObject({ code: "UNAUTHORIZED" });
   });
 
   it("needs a password sign-in: an emailed code or Google isn't enough", async () => {
@@ -188,11 +188,11 @@ describe("admin area", () => {
     expect(overview.people.admin).toBe(1);
     expect(overview.topServices[0]).toMatchObject({ category: "plumbing", n: 1 });
 
-    const customers = await o.admin.customers();
+    const customers = (await o.admin.customers({})).items;
     expect(customers.find((c) => c.id === customer.id)).toMatchObject({ requests: 1 });
     expect(await o.admin.customerRequests({ id: customer.id })).toHaveLength(1);
 
-    const activity = await o.admin.activity();
+    const activity = (await o.admin.activity({})).items;
     expect(activity[0]).toMatchObject({ status: "submitted", actorName: "Maya" });
   });
 
@@ -260,7 +260,7 @@ describe("audit trail", () => {
     const hadi = (await d.tech.list()).find((x) => x.email === "hadi@example.com")!;
     await d.tech.remove({ technicianId: hadi.id });
 
-    const log = await o.admin.auditLog();
+    const log = (await o.admin.auditLog({})).items;
     const mine = log.filter((e) => e.applicationId === id || e.targetEmail === "nour.desk@example.com");
     // Newest first.
     expect(mine.map((e) => e.action)).toEqual([
@@ -283,12 +283,12 @@ describe("audit trail", () => {
 
   it("is for admins only", async () => {
     for (const user of [desk, customer, tech]) {
-      await expect((await callerFor(user)).admin.auditLog()).rejects.toMatchObject({ code: "FORBIDDEN" });
+      await expect((await callerFor(user)).admin.auditLog({})).rejects.toMatchObject({ code: "FORBIDDEN" });
     }
   });
 
   it("returns real dates for a customer's last request (Safari can't read Postgres' text dates)", async () => {
-    const maya = (await (await callerFor(owner)).admin.customers()).find((c) => c.email === "maya@example.com")!;
+    const maya = (await (await callerFor(owner)).admin.customers({})).items.find((c) => c.email === "maya@example.com")!;
     expect(maya.lastRequestAt).toBeInstanceOf(Date);
   });
 });
@@ -356,13 +356,13 @@ describe("safety nets", () => {
       .toMatchObject({ code: "FORBIDDEN" });
     // Waiting for the two-step code is a normal step, not recorded.
     const deskRefusals = async () =>
-      (await o.admin.auditLog()).filter((e) => e.action === "staff_access_refused" && e.actorEmail === "desk@example.com").length;
+      ((await o.admin.auditLog({})).items).filter((e) => e.action === "staff_access_refused" && e.actorEmail === "desk@example.com").length;
     const deskBefore = await deskRefusals();
     await expect(
       (await callerFor(desk, { signInMethods: ["password"], assuranceLevel: "aal1" })).specialist.queue(),
     ).rejects.toMatchObject({ code: "FORBIDDEN" });
 
-    const refused = (await o.admin.auditLog()).filter((e) => e.action === "staff_access_refused");
+    const refused = ((await o.admin.auditLog({})).items).filter((e) => e.action === "staff_access_refused");
     const byCustomer = refused.filter((e) => e.actorEmail === "maya@example.com");
     expect(byCustomer).toHaveLength(1);
     expect(byCustomer[0].details).toMatchObject({ reason: "role" }); // one line per visit, however many tries
@@ -376,8 +376,8 @@ describe("safety nets", () => {
     await (state.db as TestDb).delete(rateLimits);
     const before = state.emails.length;
     await withDatabaseDown("select", async () => {
-      await expect(o.admin.customers()).rejects.toMatchObject({ code: "INTERNAL_SERVER_ERROR" });
-      await expect(o.admin.customers()).rejects.toMatchObject({ code: "INTERNAL_SERVER_ERROR" });
+      await expect(o.admin.customers({})).rejects.toMatchObject({ code: "INTERNAL_SERVER_ERROR" });
+      await expect(o.admin.customers({})).rejects.toMatchObject({ code: "INTERNAL_SERVER_ERROR" });
     });
     const alerts = state.emails.slice(before).filter((e) => e.subject.startsWith("Server errors"));
     expect(alerts).toHaveLength(1);

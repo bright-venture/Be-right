@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq, gt, ilike, inArray, lt, lte, max, notInArray, or, sql } from "drizzle-orm";
 import { createRouter, specialistQuery } from "./middleware";
 import { getDb } from "./queries/connection";
 import { requestEvents, requestMedia, serviceRequests, technicianLocations, users } from "../db/schema";
@@ -16,6 +16,7 @@ import { profilePhotoUrl } from "./lib/storage";
 import { ratingFor, reviewOf } from "./queries/ratings";
 import { TRPCError } from "@trpc/server";
 import { notify } from "./notify";
+import { likeTerm, pageInput, PAGE_SIZE } from "./lib/paging";
 
 const byId = z.object({ id: z.number().int() });
 
@@ -23,10 +24,20 @@ const byId = z.object({ id: z.number().int() });
 const CLOSED: readonly RequestStatus[] = ["completed", "cancelled"];
 const URGENCY_RANK: Record<UrgencyLevel, number> = { critical: 0, urgent: 1, priority: 2, normal: 3 };
 
+/** Closed requests stay in the live queue this long; older ones load on demand (`history`). */
+const RECENT_CLOSED_DAYS = 30;
+const closedCutoff = () => new Date(Date.now() - RECENT_CLOSED_DAYS * 86_400_000);
+/** Safety cap on the live queue (open requests are naturally few; this only guards a flood). */
+const LIVE_QUEUE_LIMIT = 2000;
+
 export const specialistRouter = createRouter({
   /** Can this session use the staff dashboard? (Refused without a password and two-step login.) */
   access: specialistQuery.query(() => ({ ok: true })),
 
+  /**
+   * The live queue: every open request, plus those closed in the last ${RECENT_CLOSED_DAYS} days.
+   * Older closed requests come from `history`, a page at a time.
+   */
   queue: specialistQuery.query(async () => {
     const rows = await getDb()
       .select({
@@ -36,8 +47,9 @@ export const specialistRouter = createRouter({
       })
       .from(serviceRequests)
       .leftJoin(users, eq(serviceRequests.userId, users.id))
+      .where(or(notInArray(serviceRequests.status, [...CLOSED]), gt(serviceRequests.updatedAt, closedCutoff())))
       .orderBy(desc(serviceRequests.createdAt))
-      .limit(500);
+      .limit(LIVE_QUEUE_LIMIT);
     const rank = (r: (typeof rows)[number]["request"]) => [
       CLOSED.includes(r.status) ? 1 : 0,
       URGENCY_RANK[r.urgencyFinal ?? r.urgencySuggested],
@@ -48,6 +60,58 @@ export const specialistRouter = createRouter({
       return x[0] - y[0] || x[1] - y[1] || x[2] - y[2];
     });
   }),
+
+  /**
+   * Did anything change since the queue was loaded? The dashboard asks this every 30 seconds
+   * (two numbers from an index) and reloads the whole queue only when the answer changes.
+   */
+  queueVersion: specialistQuery.query(async () => {
+    const [row] = await getDb()
+      .select({ updatedAt: max(serviceRequests.updatedAt), latestId: max(serviceRequests.id) })
+      .from(serviceRequests);
+    return { updatedAt: row?.updatedAt ?? null, latestId: row?.latestId ?? null };
+  }),
+
+  /** Closed requests older than the live queue, newest first, a page at a time. */
+  history: specialistQuery
+    .input(
+      pageInput.extend({
+        status: z.enum(["completed", "cancelled"]).nullish(),
+        category: z.string().max(64).nullish(),
+        search: z.string().trim().max(100).nullish(),
+      }),
+    )
+    .query(async ({ input }) => {
+      const term = input.search?.replace(/^#/, "");
+      const rows = await getDb()
+        .select({
+          request: serviceRequests,
+          customerName: users.name,
+          customerEmail: users.email,
+        })
+        .from(serviceRequests)
+        .leftJoin(users, eq(serviceRequests.userId, users.id))
+        .where(
+          and(
+            inArray(serviceRequests.status, input.status ? [input.status] : [...CLOSED]),
+            lte(serviceRequests.updatedAt, closedCutoff()),
+            input.cursor ? lt(serviceRequests.id, input.cursor) : undefined,
+            input.category ? eq(serviceRequests.category, input.category) : undefined,
+            term
+              ? or(
+                  /^\d+$/.test(term) ? eq(serviceRequests.id, Number(term)) : sql`false`,
+                  ...[users.name, users.email, serviceRequests.phone, serviceRequests.area, serviceRequests.address].map(
+                    (column) => ilike(column, likeTerm(term)),
+                  ),
+                )
+              : undefined,
+          ),
+        )
+        .orderBy(desc(serviceRequests.id))
+        .limit(PAGE_SIZE + 1);
+      const items = rows.slice(0, PAGE_SIZE);
+      return { items, nextCursor: rows.length > PAGE_SIZE ? items[items.length - 1].request.id : null };
+    }),
 
   detail: specialistQuery.input(byId).query(async ({ input }) => {
     const db = getDb();

@@ -142,6 +142,12 @@ export async function profilePhotoUrl(avatarKey: string | null | undefined) {
   return urls[avatarKey] ?? null;
 }
 
+/** Several people's profile photos in one storage call (for lists), by avatar key. */
+export async function profilePhotoUrls(avatarKeys: (string | null | undefined)[]) {
+  const keys = [...new Set(avatarKeys.filter((k): k is string => !!k?.startsWith(DOCUMENT_PREFIX)))];
+  return keys.length ? signedUrls("docs", keys, SIGNED_URL_TTL_SECONDS) : ({} as Record<string, string>);
+}
+
 /* ---------- clean-up ---------- */
 
 /**

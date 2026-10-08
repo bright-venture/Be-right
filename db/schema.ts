@@ -124,6 +124,8 @@ export const serviceRequests = pgTable(
     index("service_requests_technician_idx").on(t.technicianId),
     // The dashboard queue and the admin lists sort by newest first.
     index("service_requests_created_idx").on(t.createdAt),
+    // The dashboard asks every 30 seconds whether anything changed (latest update).
+    index("service_requests_updated_idx").on(t.updatedAt),
   ],
 ).enableRLS();
 

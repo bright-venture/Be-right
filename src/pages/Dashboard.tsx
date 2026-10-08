@@ -11,6 +11,7 @@ import { useRoleGate } from "@/hooks/useRoleGate";
 import { useAuth } from "@/hooks/useAuth";
 import { useTabParam } from "@/hooks/useTabParam";
 import { StaffGate } from "@/components/admin/StaffGate";
+import { useLiveQueue } from "@/components/dashboard/useLiveQueue";
 import { trpc } from "@/providers/trpc";
 import { canDispatch } from "@contracts/roles";
 
@@ -37,7 +38,7 @@ export default function Dashboard() {
   const allowed = !!access.data;
 
   // Badge counts (same queries the tabs use, so they share the cache).
-  const queue = trpc.specialist.queue.useQuery(undefined, { enabled: allowed, refetchInterval: 30_000 });
+  const queue = useLiveQueue(allowed);
   const applications = trpc.join.list.useQuery(undefined, { enabled: allowed });
   const technicians = trpc.tech.list.useQuery(undefined, { enabled: allowed });
 

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Clock, Loader2, Search } from "lucide-react";
 import { ServiceIcon } from "@/components/ServiceIcon";
 import { useI18n } from "@/i18n";
@@ -6,6 +6,7 @@ import { trpc } from "@/providers/trpc";
 import { CATEGORIES, CATEGORY_MAP, URGENCY_META, type RequestStatus, type UrgencyLevel } from "@contracts/services";
 import { URGENCY_LEVELS } from "@contracts/workflow";
 import { RequestDetail } from "./RequestDetail";
+import { useLiveQueue } from "./useLiveQueue";
 import { cancelPending, inView, NEEDS_SPECIALIST, URGENCY_DOT, urgencyOf, waitingFor, type QueueView } from "./queueMeta";
 
 const SELECT =
@@ -13,7 +14,7 @@ const SELECT =
 
 export function QueueTab({ onGoToApplications }: { onGoToApplications: () => void }) {
   const { t, p } = useI18n();
-  const queue = trpc.specialist.queue.useQuery(undefined, { refetchInterval: 30_000 });
+  const queue = useLiveQueue();
   const technicians = trpc.tech.list.useQuery();
   const [view, setView] = useState<QueueView>("open");
   const [search, setSearch] = useState("");
@@ -44,6 +45,28 @@ export function QueueTab({ onGoToApplications }: { onGoToApplications: () => voi
     return haystack.includes(term) || haystack.replace(/\s/g, "").includes(term.replace(/\s/g, ""));
   });
   const filtersActive = view !== "open" || !!urgency || !!service || !!term;
+
+  // Requests closed over 30 days ago aren't in the live queue: they load on demand, a page at a time.
+  const showsClosed = view === "completed" || view === "cancelled" || view === "all";
+  const [older, setOlder] = useState(false);
+  const [olderTerm, setOlderTerm] = useState("");
+  useEffect(() => {
+    const id = setTimeout(() => setOlderTerm(term), 300);
+    return () => clearTimeout(id);
+  }, [term]);
+  const history = trpc.specialist.history.useInfiniteQuery(
+    {
+      status: view === "completed" || view === "cancelled" ? view : null,
+      category: service || null,
+      search: olderTerm || null,
+    },
+    { enabled: older && showsClosed, getNextPageParam: (last) => last.nextCursor },
+  );
+  const olderRows =
+    older && showsClosed
+      ? (history.data?.pages.flatMap((page) => page.items) ?? []).filter((x) => !urgency || urgencyOf(x.request) === urgency)
+      : [];
+  const listed = [...filtered, ...olderRows];
 
   const counterLabel = {
     needsAction: t.dash4.needsAction,
@@ -137,12 +160,12 @@ export function QueueTab({ onGoToApplications }: { onGoToApplications: () => voi
         {/* p-1: room for borders and focus outlines inside the scroll box */}
         <div className="flex flex-col gap-2 p-1 lg:max-h-[calc(100vh-9rem)] lg:overflow-y-auto">
           {queue.isLoading && <Loader2 className="mx-auto mt-6 h-6 w-6 animate-spin text-navy" />}
-          {!queue.isLoading && filtered.length === 0 && (
+          {!queue.isLoading && listed.length === 0 && !(older && history.isLoading) && (
             <div className="card-br p-8 text-center text-sm font-semibold text-navy/70">
               {rows.length === 0 ? p(t.dash.empty) : p(t.dash4.noMatches)}
             </div>
           )}
-          {filtered.map(({ request: r, customerName, customerEmail }) => {
+          {listed.map(({ request: r, customerName, customerEmail }) => {
             const level = urgencyOf(r);
             const status = r.status as RequestStatus;
             const wait = NEEDS_SPECIALIST.includes(status) ? waitingFor(r.updatedAt) : null;
@@ -203,6 +226,17 @@ export function QueueTab({ onGoToApplications }: { onGoToApplications: () => voi
               </button>
             );
           })}
+          {showsClosed && !queue.isLoading && (!older || history.hasNextPage || history.isFetching) && (
+            <button
+              type="button"
+              onClick={() => (older ? void history.fetchNextPage() : setOlder(true))}
+              disabled={history.isFetching}
+              className="btn-pill-outline mt-2 !min-h-10 justify-center text-sm disabled:opacity-50"
+            >
+              {history.isFetching && <Loader2 className="h-4 w-4 animate-spin" />}
+              {p(older ? t.admin.loadMore : t.dash4.showOlder)}
+            </button>
+          )}
         </div>
 
         {/* detail */}

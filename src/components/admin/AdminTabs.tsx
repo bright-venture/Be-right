@@ -1,4 +1,5 @@
-import { useMemo, useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useState, type FormEvent, type ReactNode } from "react";
+import { keepPreviousData } from "@tanstack/react-query";
 import {
   ChevronDown,
   ClipboardCheck,
@@ -47,6 +48,23 @@ function Pending({ error, retry }: { error?: { message: string } | null; retry?:
     <div className="flex justify-center py-16">
       <Loader2 className="h-7 w-7 animate-spin text-navy" />
     </div>
+  );
+}
+
+/** "Show more" under a list loaded a page at a time. */
+function LoadMore({ list }: { list: { hasNextPage: boolean; isFetchingNextPage: boolean; fetchNextPage: () => unknown } }) {
+  const { t, p } = useI18n();
+  if (!list.hasNextPage) return null;
+  return (
+    <button
+      type="button"
+      onClick={() => void list.fetchNextPage()}
+      disabled={list.isFetchingNextPage}
+      className="btn-pill-outline mx-auto mt-4 !min-h-10 !px-6 text-sm disabled:opacity-50"
+    >
+      {list.isFetchingNextPage && <Loader2 className="h-4 w-4 animate-spin" />}
+      {p(t.admin.loadMore)}
+    </button>
   );
 }
 
@@ -181,19 +199,24 @@ export function OverviewTab() {
 /** Every customer account: search, and open one to see their requests. */
 export function CustomersTab() {
   const { t, p, lang } = useI18n();
-  const { data, error, refetch } = trpc.admin.customers.useQuery();
   const [query, setQuery] = useState("");
+  // Searched on the server (there may be thousands): a moment after typing stops.
+  const [search, setSearch] = useState("");
+  useEffect(() => {
+    const id = setTimeout(() => setSearch(query.trim()), 250);
+    return () => clearTimeout(id);
+  }, [query]);
+  const list = trpc.admin.customers.useInfiniteQuery(
+    { search: search || null },
+    { getNextPageParam: (last) => last.nextCursor, placeholderData: keepPreviousData },
+  );
   const [open, setOpen] = useState<number | null>(null);
   const day = (d: Date | string | null) =>
     d ? new Date(d).toLocaleDateString(lang === "ar" ? "ar-LB" : "en-GB", { day: "numeric", month: "short", year: "numeric" }) : "-";
 
-  const shown = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return data ?? [];
-    return (data ?? []).filter((c) => [c.name, c.email, c.phone].some((v) => v?.toLowerCase().includes(q)));
-  }, [data, query]);
-
-  if (!data) return <Pending error={error} retry={() => void refetch()} />;
+  if (!list.data) return <Pending error={list.error} retry={() => void list.refetch()} />;
+  const shown = list.data.pages.flatMap((page) => page.items);
+  const total = list.data.pages[0]?.total ?? shown.length;
   return (
     <div className="mt-8">
       <div className="flex flex-wrap items-center gap-3">
@@ -207,7 +230,7 @@ export function CustomersTab() {
             className="min-h-11 w-full rounded-2xl border-2 border-navy/20 bg-white pe-4 ps-10 text-sm font-semibold text-navy placeholder:font-normal placeholder:text-navy/40 focus:border-flame focus:outline-none"
           />
         </label>
-        <span className="text-sm font-semibold text-navy/60">{p(t.admin.customerCount).replace("{n}", String(shown.length))}</span>
+        <span className="text-sm font-semibold text-navy/60">{p(t.admin.customerCount).replace("{n}", String(total))}</span>
       </div>
 
       {shown.length === 0 ? (
@@ -248,6 +271,9 @@ export function CustomersTab() {
           ))}
         </ul>
       )}
+      <div className="flex justify-center">
+        <LoadMore list={list} />
+      </div>
     </div>
   );
 }
@@ -498,8 +524,9 @@ const AUDIT_ICON: Record<AuditAction, LucideIcon> = {
 /** Staff actions and document views, newest first. */
 function StaffActivity() {
   const { t, p, lang } = useI18n();
-  const { data, error, refetch } = trpc.admin.auditLog.useQuery(undefined, { refetchInterval: 60_000 });
-  if (!data) return <Pending error={error} retry={() => void refetch()} />;
+  const list = trpc.admin.auditLog.useInfiniteQuery({}, { getNextPageParam: (last) => last.nextCursor, refetchInterval: 60_000 });
+  if (!list.data) return <Pending error={list.error} retry={() => void list.refetch()} />;
+  const data = list.data.pages.flatMap((page) => page.items);
   if (data.length === 0) return <p className="mt-6 text-sm text-navy/60">{p(t.admin.noStaffActivity)}</p>;
 
   const roles: Record<string, { en: string; ar: string }> = {
@@ -565,6 +592,9 @@ function StaffActivity() {
           </li>
         );
       })}
+      <li className="flex justify-center">
+        <LoadMore list={list} />
+      </li>
     </ol>
   );
 }
@@ -572,8 +602,9 @@ function StaffActivity() {
 /** What happened on requests, newest first, and who did it. */
 function RequestActivity() {
   const { t, p, lang } = useI18n();
-  const { data, error, refetch } = trpc.admin.activity.useQuery(undefined, { refetchInterval: 60_000 });
-  if (!data) return <Pending error={error} retry={() => void refetch()} />;
+  const list = trpc.admin.activity.useInfiniteQuery({}, { getNextPageParam: (last) => last.nextCursor, refetchInterval: 60_000 });
+  if (!list.data) return <Pending error={list.error} retry={() => void list.refetch()} />;
+  const data = list.data.pages.flatMap((page) => page.items);
   if (data.length === 0) return <p className="mt-6 text-sm text-navy/60">{p(t.admin.noActivity)}</p>;
 
   const labels = { ...t.status, ...t.events } as Record<string, { en: string; ar: string }>;
@@ -606,6 +637,9 @@ function RequestActivity() {
           </div>
         </li>
       ))}
+      <li className="flex justify-center">
+        <LoadMore list={list} />
+      </li>
     </ol>
   );
 }

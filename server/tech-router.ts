@@ -20,7 +20,7 @@ import {
   type JobPhotoKind,
 } from "@contracts/workflow";
 import { applyTransition, findRequest, logEvent } from "./lib/workflow";
-import { deleteFiles, mediaExists, profilePhotoUrl, userUploadPrefix } from "./lib/storage";
+import { deleteFiles, mediaExists, profilePhotoUrls, userUploadPrefix } from "./lib/storage";
 import { ratingsFor } from "./queries/ratings";
 import { notify } from "./notify";
 import { audit } from "./lib/audit";
@@ -57,7 +57,7 @@ export const techRouter = createRouter({
       .where(eq(users.role, "technician"));
     if (!techs.length) return [];
     const ids = techs.map((x) => x.id);
-    const [apps, counts, ratings] = await Promise.all([
+    const [apps, counts, ratings, photos] = await Promise.all([
       db
         .select({
           id: technicianApplications.id,
@@ -79,9 +79,10 @@ export const techRouter = createRouter({
         .where(inArray(serviceRequests.technicianId, ids))
         .groupBy(serviceRequests.technicianId, serviceRequests.status),
       ratingsFor(ids),
+      // Every photo link in one storage call, not one per technician.
+      profilePhotoUrls(techs.map((x) => x.avatar)),
     ]);
-    return Promise.all(
-      techs.map(async (x) => {
+    return techs.map((x) => {
         const app = apps.find((a) => a.hiredUserId === x.id);
         const mine = counts.filter((c) => c.technicianId === x.id);
         const sum = (statuses: readonly string[]) =>
@@ -91,7 +92,7 @@ export const techRouter = createRouter({
           name: x.name,
           email: x.email,
           phone: x.phone,
-          photoUrl: await profilePhotoUrl(x.avatar),
+          photoUrl: (x.avatar && photos[x.avatar]) || null,
           applicationId: app?.id ?? null,
           trade: app?.trade ?? null,
           area: app?.area ?? null,
@@ -101,8 +102,7 @@ export const techRouter = createRouter({
           completedJobs: sum(["completed"]),
           rating: ratings.get(x.id) ?? { average: null, count: 0 },
         };
-      }),
-    );
+      });
   }),
 
   /**
