@@ -79,7 +79,8 @@ export function QueueTab({ onGoToApplications }: { onGoToApplications?: () => vo
   return (
     <div className="mt-8">
       {/* overview: each counter is also a quick filter */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+      {/* Five counters: one row on wide screens; two per row below, the fifth across the full width. */}
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-5 max-lg:[&>*:last-child:nth-child(odd)]:col-span-2">
         {counters.map((c) => (
           <button
             key={c.view}
@@ -102,8 +103,9 @@ export function QueueTab({ onGoToApplications }: { onGoToApplications?: () => vo
       </div>
 
       {/* filters */}
-      <div className="mt-5 flex flex-wrap items-center gap-2">
-        <label className="relative min-w-60 flex-1">
+      {/* Phones: search and status across the width, urgency and service side by side. */}
+      <div className="mt-5 grid grid-cols-2 items-center gap-2 sm:flex sm:flex-wrap">
+        <label className="relative col-span-2 min-w-60 flex-1">
           <Search className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-navy/50" />
           <input
             value={search}
@@ -113,7 +115,7 @@ export function QueueTab({ onGoToApplications }: { onGoToApplications?: () => vo
             className={`${SELECT} w-full ps-9`}
           />
         </label>
-        <select value={view} onChange={(e) => setView(e.target.value as QueueView)} aria-label={p(t.requests.status)} className={SELECT}>
+        <select value={view} onChange={(e) => setView(e.target.value as QueueView)} aria-label={p(t.requests.status)} className={`${SELECT} col-span-2`}>
           <option value="open">{p(t.dash4.viewOpen)}</option>
           <option value="needsAction">{p(t.dash4.needsAction)}</option>
           <option value="waitingCustomer">{p(t.dash4.waitingCustomer)}</option>
@@ -124,7 +126,7 @@ export function QueueTab({ onGoToApplications }: { onGoToApplications?: () => vo
           <option value="cancelled">{p(t.dash4.viewCancelled)}</option>
           <option value="all">{p(t.dash4.viewAll)}</option>
         </select>
-        <select value={urgency} onChange={(e) => setUrgency(e.target.value as UrgencyLevel | "")} aria-label={p(t.requests.urgency)} className={SELECT}>
+        <select value={urgency} onChange={(e) => setUrgency(e.target.value as UrgencyLevel | "")} aria-label={p(t.requests.urgency)} className={`${SELECT} min-w-0`}>
           <option value="">{p(t.dash4.anyUrgency)}</option>
           {URGENCY_LEVELS.map((u) => (
             <option key={u} value={u}>
@@ -132,7 +134,7 @@ export function QueueTab({ onGoToApplications }: { onGoToApplications?: () => vo
             </option>
           ))}
         </select>
-        <select value={service} onChange={(e) => setService(e.target.value)} aria-label={p(t.book.stepCategory)} className={SELECT}>
+        <select value={service} onChange={(e) => setService(e.target.value)} aria-label={p(t.book.stepCategory)} className={`${SELECT} min-w-0`}>
           <option value="">{p(t.dash4.anyService)}</option>
           {CATEGORIES.map((c) => (
             <option key={c.id} value={c.id}>
@@ -148,7 +150,7 @@ export function QueueTab({ onGoToApplications }: { onGoToApplications?: () => vo
               setService("");
               setSearch("");
             }}
-            className="text-sm font-bold text-navy underline underline-offset-4"
+            className="col-span-2 justify-self-start text-sm font-bold text-navy underline underline-offset-4"
           >
             {p(t.dash4.clearFilters)}
           </button>
