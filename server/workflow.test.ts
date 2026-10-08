@@ -12,6 +12,8 @@ import {
   makeTechnician,
   makeUser,
   makeSpecialist,
+  makeAdmin,
+  approveApplication,
   type TestDb,
 } from "./test/harness";
 
@@ -87,6 +89,7 @@ let admin: User;
 let alice: User; // customer
 let bob: User; // another customer
 let tina: User; // technician
+let boss: User; // an admin: approves applications first
 
 beforeAll(async () => {
   db = await createTestDb();
@@ -95,6 +98,7 @@ beforeAll(async () => {
   alice = await makeUser("alice@example.com", "Alice");
   bob = await makeUser("bob@example.com", "Bob");
   tina = await makeUser("tina@example.com", "Tina");
+  boss = await makeAdmin("boss@example.com", "Boss");
 }, 60_000);
 
 describe("accounts", () => {
@@ -124,9 +128,13 @@ describe("accounts", () => {
 });
 
 describe("technician applications (public)", () => {
-  it("lets visitors apply and only specialists review", async () => {
+  it("lets visitors apply; an admin reviews first, then the specialists", async () => {
     const { id } = await (await callerFor()).join.submit(application);
     await expect((await callerFor(alice)).join.list()).rejects.toMatchObject({ code: "FORBIDDEN" });
+    // Not for specialists until an admin approved it.
+    expect((await (await callerFor(admin)).join.list()).map((a) => a.id)).not.toContain(id);
+    expect((await (await callerFor(boss)).join.list()).map((a) => a.id)).toContain(id);
+    await (await callerFor(boss)).join.approve({ id });
     const list = await (await callerFor(admin)).join.list();
     expect(list.map((a) => a.id)).toContain(id);
     // The transport type is kept, and "has transport" follows from it.
@@ -177,7 +185,7 @@ describe("terms and consent", () => {
       (await callerFor()).join.submit({ ...application, consent: false as unknown as true }),
     ).rejects.toMatchObject({ code: "BAD_REQUEST" });
     const { id } = await (await callerFor()).join.submit({ ...application, email: "consent@example.com" });
-    const row = (await (await callerFor(admin)).join.list()).find((a) => a.id === id);
+    const row = (await (await callerFor(boss)).join.list()).find((a) => a.id === id);
     expect(row?.consentAt).toBeInstanceOf(Date);
   });
 });
@@ -206,9 +214,10 @@ describe("technician documents", () => {
     await expect(c.join.submit(noPapers as typeof application)).rejects.toMatchObject({ code: "BAD_REQUEST" });
     // No transport: no papers needed, and none kept even if sent.
     const { id } = await c.join.submit({ ...application, ...docs, transport: "none", email: "walker@example.com" });
-    const row = (await (await callerFor(admin)).join.list()).find((a) => a.id === id);
+    const row = (await (await callerFor(boss)).join.list()).find((a) => a.id === id);
     expect(row).toMatchObject({ transport: "none", hasTransport: false, vehicleRegistrationKey: null });
-    const links = await (await callerFor(admin)).join.documents({ id });
+    const links = await (await callerFor(boss)).join.documents({ id });
+    expect(Object.keys(links)).toContain("idDocument");
     expect(Object.keys(links)).not.toContain("vehicleRegistration");
   });
 
@@ -224,12 +233,29 @@ describe("technician documents", () => {
     expect(ok.key).toMatch(/^applications\/.+\/idDocument-id\.pdf$/);
   });
 
-  it("lets only specialists open an applicant's documents", async () => {
+  it("keeps the private papers for admins; specialists see the details and the photo", async () => {
     const { id } = await (await callerFor()).join.submit({ ...application, email: "docs@example.com" });
     await expect((await callerFor(alice)).join.documents({ id })).rejects.toMatchObject({ code: "FORBIDDEN" });
-    const docs = await (await callerFor(admin)).join.documents({ id });
-    expect(docs.idDocument?.url).toContain("idDocument");
-    expect(docs.photo?.url).toContain("photo");
+    // Before the admin's approval, the application doesn't exist for specialists.
+    await expect((await callerFor(admin)).join.documents({ id })).rejects.toMatchObject({ code: "NOT_FOUND" });
+    const all = await (await callerFor(boss)).join.documents({ id });
+    expect(all.idDocument?.url).toContain("idDocument");
+    expect(all.criminalRecord?.url).toContain("criminalRecord");
+    expect(all.photo?.url).toContain("photo");
+
+    await (await callerFor(boss)).join.approve({ id });
+    const s = await callerFor(admin);
+    expect(await s.join.documents({ id })).toEqual({ photo: { url: expect.stringContaining("photo"), isPdf: false } });
+    // Not even the papers' storage keys reach a specialist.
+    const row = (await s.join.list()).find((a) => a.id === id)!;
+    expect(row).toMatchObject({
+      idDocumentKey: null,
+      criminalRecordKey: null,
+      proofOfAddressKey: null,
+      vehicleRegistrationKey: null,
+      documentsOnFile: true,
+      name: "Hassan Khalil",
+    });
   });
 
   it("refuses to hire an application without documents", async () => {
@@ -238,6 +264,9 @@ describe("technician documents", () => {
       .insert(technicianApplications)
       .values({ name: "No Docs", phone: "+961 1 111 111", trade: "plumbing", area: "Jbeil", email: "nodocs@example.com" })
       .returning({ id: technicianApplications.id });
+    // It can't even be approved without them.
+    await expect((await callerFor(boss)).join.approve({ id: old.id })).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    await approveApplication(old.id);
     await expect((await callerFor(admin)).join.hire({ id: old.id })).rejects.toMatchObject({ code: "BAD_REQUEST" });
   });
 });
@@ -246,6 +275,10 @@ describe("hiring technicians from applications", () => {
   it("invites a new applicant and creates their technician account right away", async () => {
     const { id } = await (await callerFor()).join.submit({ ...application, email: "New.Tech@Example.com" });
     const s = await callerFor(admin);
+    // Step 2 needs step 1: the admin's approval.
+    await expect(s.join.hire({ id })).rejects.toMatchObject({ code: "NOT_FOUND" });
+    await expect((await callerFor(boss)).join.hire({ id })).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    await (await callerFor(boss)).join.approve({ id });
     const res = await s.join.hire({ id });
     expect(res).toMatchObject({ invited: true, email: "new.tech@example.com" });
     expect(state.invites).toContain("new.tech@example.com");
@@ -259,6 +292,7 @@ describe("hiring technicians from applications", () => {
   it("promotes an applicant who already has an account, without inviting", async () => {
     const existing = await makeUser("already@example.com", "Already");
     const { id } = await (await callerFor()).join.submit({ ...application, email: "already@example.com" });
+    await approveApplication(id);
     const before = state.invites.length;
     const res = await (await callerFor(admin)).join.hire({ id });
     expect(res.invited).toBe(false);
@@ -269,6 +303,7 @@ describe("hiring technicians from applications", () => {
   it("refuses to hire a specialist's email or an application without email", async () => {
     const s = await callerFor(admin);
     const { id } = await (await callerFor()).join.submit({ ...application, email: SPECIALIST_EMAIL });
+    await approveApplication(id);
     await expect(s.join.hire({ id })).rejects.toMatchObject({ code: "BAD_REQUEST" });
     // Older applications had no email: the specialist supplies one when hiring.
     const { technicianApplications } = await import("@db/schema");
@@ -276,6 +311,7 @@ describe("hiring technicians from applications", () => {
       .insert(technicianApplications)
       .values({ name: "Old Applicant", phone: "+961 1 000 000", trade: "plumbing", area: "Saida", ...documentKeys() })
       .returning({ id: technicianApplications.id });
+    await approveApplication(old.id);
     await expect(s.join.hire({ id: old.id })).rejects.toMatchObject({ code: "BAD_REQUEST" });
     const res = await s.join.hire({ id: old.id, email: "old.applicant@example.com" });
     expect(res.invited).toBe(true);
@@ -291,6 +327,7 @@ describe("hiring technicians from applications", () => {
     });
 
     const { id } = await (await callerFor()).join.submit({ ...application, email: "david@example.com" });
+    await approveApplication(id);
     await s.join.hire({ id });
     await s.tech.remove({ technicianId: customer.id });
     const reopened = (await s.join.list()).find((a) => a.id === id);

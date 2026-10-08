@@ -9,6 +9,7 @@ import {
   deletedDocuments,
   documentKeys,
   makeSpecialist,
+  approveApplication,
   type TestDb,
 } from "./test/harness";
 
@@ -111,6 +112,7 @@ describe("rejected-applicant document clean-up", () => {
 
   it("starts the clock when a specialist rejects, and stops it if they change their mind", async () => {
     const { id } = await application("contacted", DAYS + 30);
+    await approveApplication(id);
     const s = await callerFor(admin);
     await s.join.setStatus({ id, status: "rejected" });
     expect((await load(id)).rejectedAt).toBeInstanceOf(Date);

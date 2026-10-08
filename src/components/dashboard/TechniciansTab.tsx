@@ -9,6 +9,7 @@ import { telLink, whatsappLink } from "@/lib/contact";
 import { CATEGORY_MAP } from "@contracts/services";
 import { APPLICATION_DOCUMENTS, EXPERIENCE_LABELS, type ExperienceLevel } from "@contracts/applications";
 import { Avatar } from "./RequestDetail";
+import { useAuth } from "@/hooks/useAuth";
 
 type Technician = inferRouterOutputs<AppRouter>["tech"]["list"][number];
 const SMALL_BTN = "btn-pill-outline !min-h-9 !px-3 !py-1 text-xs";
@@ -42,6 +43,8 @@ function TechnicianCard({ tech: x }: { tech: Technician }) {
   const { t, p } = useI18n();
   const utils = trpc.useUtils();
   const [showDocs, setShowDocs] = useState(false);
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
   const remove = trpc.tech.remove.useMutation({
     onSuccess: () => {
       void utils.tech.list.invalidate();
@@ -127,7 +130,7 @@ function TechnicianCard({ tech: x }: { tech: Technician }) {
             <Mail className="h-4 w-4" /> {p(t.dash3.emailAction)}
           </a>
         )}
-        {x.applicationId && (
+        {x.applicationId && isAdmin && (
           <button onClick={() => setShowDocs((v) => !v)} className={SMALL_BTN} aria-expanded={showDocs}>
             <FileText className="h-4 w-4" /> {showDocs ? p(t.dash4.hideDocuments) : p(t.dash4.documents)}
           </button>

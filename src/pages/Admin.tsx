@@ -88,7 +88,10 @@ export default function Admin() {
     );
   }
 
-  const newApplications = (applications.data ?? []).filter((a) => a.status === "new").length;
+  // Waiting for an admin's approval (step 1 of the review).
+  const newApplications = (applications.data ?? []).filter(
+    (a) => !a.approvedAt && (a.status === "new" || a.status === "contacted"),
+  ).length;
 
   return (
     <StaffGate access={access} onSignOut={() => void otherAccount()}>

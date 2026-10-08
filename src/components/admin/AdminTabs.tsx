@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { keepPreviousData } from "@tanstack/react-query";
 import {
+  BadgeCheck,
   ChevronDown,
   ClipboardCheck,
   FileText,
@@ -515,6 +516,7 @@ const AUDIT_ICON: Record<AuditAction, LucideIcon> = {
   staff_role_changed: UserCog,
   two_step_reset: KeyRound,
   documents_viewed: FileText,
+  application_approved: BadgeCheck,
   application_status: ClipboardCheck,
   technician_hired: UserCheck,
   technician_removed: UserMinus,

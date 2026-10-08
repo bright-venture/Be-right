@@ -141,6 +141,13 @@
       "when": 1791439465405,
       "tag": "0019_queue_updated_index",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1791440423682,
+      "tag": "0020_application_admin_approval",
+      "breakpoints": true
     }
   ]
 }

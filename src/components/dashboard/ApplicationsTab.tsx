@@ -1,5 +1,8 @@
 import { useState } from "react";
-import { ChevronDown, FileText, Loader2, Mail, MessageCircle, Phone, UserCheck } from "lucide-react";
+import { BadgeCheck, ChevronDown, FileText, Loader2, Lock, Mail, MessageCircle, Phone, UserCheck } from "lucide-react";
+import type { inferRouterOutputs } from "@trpc/server";
+import type { AppRouter } from "../../../server/router";
+import { useAuth } from "@/hooks/useAuth";
 import { ServiceIcon } from "@/components/ServiceIcon";
 import { useI18n } from "@/i18n";
 import { trpc } from "@/providers/trpc";
@@ -7,7 +10,6 @@ import { telLink, whatsappLink } from "@/lib/contact";
 import { CATEGORY_MAP } from "@contracts/services";
 import {
   AVAILABILITY_LABELS,
-  DOCUMENT_FIELD,
   EXPERIENCE_LABELS,
   MANUAL_APPLICATION_STATUSES,
   TRANSPORT_LABELS,
@@ -15,8 +17,9 @@ import {
   type Availability,
   type ExperienceLevel,
 } from "@contracts/applications";
-import type { TechnicianApplication } from "@db/schema";
 import { REJECTED_APPLICATION_RETENTION_DAYS } from "@contracts/legal";
+
+type Application = inferRouterOutputs<AppRouter>["join"]["list"][number];
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -60,7 +63,7 @@ function ApplicationCard({
   onToggle,
   onChanged,
 }: {
-  app: TechnicianApplication;
+  app: Application;
   open: boolean;
   onToggle: () => void;
   onChanged: () => void;
@@ -69,6 +72,10 @@ function ApplicationCard({
   const [email, setEmail] = useState("");
   const [result, setResult] = useState<string | null>(null);
   const utils = trpc.useUtils();
+  // Two-step review: admins approve (and see the papers); specialists then hire or reject.
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
+  const approve = trpc.join.approve.useMutation({ onSuccess: onChanged });
   const setStatus = trpc.join.setStatus.useMutation({ onSuccess: onChanged });
   const hire = trpc.join.hire.useMutation({
     onSuccess: (res) => {
@@ -82,9 +89,12 @@ function ApplicationCard({
   // "hired" by hand without an account ever being created.
   const hired = app.status === "hired" && app.hiredUserId != null;
   const hireEmail = app.email ?? email.trim();
-  const needed = requiredDocuments(app.transport);
-  const hasDocuments = needed.every((kind) => !!app[DOCUMENT_FIELD[kind]]);
-  const canHire = !hired && hasDocuments && EMAIL_PATTERN.test(hireEmail);
+  // Specialists only get the photo: the papers are for admins.
+  const needed = requiredDocuments(app.transport).filter((kind) => isAdmin || kind === "photo");
+  const hasDocuments = app.documentsOnFile;
+  const approved = !!app.approvedAt;
+  const stillOpen = app.status !== "hired" && app.status !== "rejected";
+  const canHire = !hired && approved && hasDocuments && EMAIL_PATTERN.test(hireEmail);
   // Short-lived links, fetched only when the card is open.
   const docs = trpc.join.documents.useQuery({ id: app.id }, { enabled: open, staleTime: 60_000 });
   const formatDate = (d: Date | string) =>
@@ -130,6 +140,16 @@ function ApplicationCard({
             {app.area} · {p(t.dash3.applied)} {new Date(app.createdAt).toLocaleDateString(lang === "ar" ? "ar-LB" : "en-GB")}
           </span>
         </span>
+        {isAdmin && stillOpen && (
+          <span
+            className={`hidden shrink-0 items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-bold sm:inline-flex ${
+              approved ? "bg-bird/10 text-bird" : "bg-flame/10 text-flame-ink"
+            }`}
+          >
+            {approved && <BadgeCheck className="h-3.5 w-3.5" />}
+            {p(approved ? t.dash3.approvedBadge : t.dash3.awaitingApproval)}
+          </span>
+        )}
         <span
           className={`shrink-0 rounded-full border-2 px-2.5 py-0.5 text-[11px] font-bold ${
             hired ? "border-navy bg-navy text-paper" : "border-navy/25 text-navy"
@@ -181,8 +201,10 @@ function ApplicationCard({
             <p className="font-display text-xs font-bold uppercase tracking-[0.2em] text-navy/70">{p(t.docs.title)}</p>
             {/* photo first, then the papers; an odd last one fills its row on phones */}
             <div
-              className={`mt-2 grid grid-cols-2 gap-2 max-sm:[&>*:last-child:nth-child(odd)]:col-span-2 ${
-                needed.length === 5 ? "sm:grid-cols-5" : "sm:grid-cols-4"
+              className={`mt-2 grid gap-2 ${
+                needed.length === 1
+                  ? "w-32 grid-cols-1"
+                  : `grid-cols-2 max-sm:[&>*:last-child:nth-child(odd)]:col-span-2 ${needed.length === 5 ? "sm:grid-cols-5" : "sm:grid-cols-4"}`
               }`}
             >
               {needed.map((kind) => {
@@ -235,7 +257,37 @@ function ApplicationCard({
               !hasDocuments &&
               !hired && <p className="mt-2 text-xs font-semibold text-destructive">{p(t.docs.missingAll)}</p>
             )}
+            {!isAdmin && (
+              <p className="mt-2 flex items-start gap-1.5 text-xs text-navy/70">
+                <Lock className="mt-px h-3.5 w-3.5 shrink-0" /> {p(t.dash3.privateDocs)}
+              </p>
+            )}
           </div>
+
+          {/* step 1 of 2: the admin approves for the specialists */}
+          {isAdmin && stillOpen && (
+            <div className="mt-5 rounded-2xl border-2 border-navy/10 bg-paper p-4">
+              {approved ? (
+                <p className="flex items-center gap-2 text-sm font-bold text-navy">
+                  <BadgeCheck className="h-5 w-5 text-bird" />
+                  {p(t.dash3.approvedOn).replace("{date}", formatDate(app.approvedAt!))}
+                </p>
+              ) : (
+                <>
+                  <p className="text-sm text-navy/80">{p(t.dash3.approveHint)}</p>
+                  <button
+                    type="button"
+                    onClick={() => approve.mutate({ id: app.id })}
+                    disabled={approve.isPending || !hasDocuments}
+                    className="btn-pill-primary mt-3 !min-h-11 !py-2 disabled:opacity-40"
+                  >
+                    {approve.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <BadgeCheck className="h-4 w-4" />}
+                    {p(t.dash3.approve)}
+                  </button>
+                </>
+              )}
+            </div>
+          )}
 
           {/* status + hire */}
           <div className="mt-5 flex flex-wrap items-center gap-2 border-t-2 border-navy/10 pt-4">
@@ -263,7 +315,7 @@ function ApplicationCard({
             )}
           </div>
 
-          {!hired && (
+          {!hired && approved && (
             <div className="mt-4 flex flex-wrap items-end gap-2">
               {!app.email && (
                 <label className="flex min-w-60 flex-1 flex-col text-xs font-bold text-navy">
@@ -289,12 +341,12 @@ function ApplicationCard({
             </div>
           )}
 
-          {(result || hire.error || setStatus.error) && (
+          {(result || hire.error || setStatus.error || approve.error) && (
             <p
               role={result ? "status" : "alert"}
               className={`mt-3 text-sm font-semibold ${result ? "text-navy" : "text-destructive"}`}
             >
-              {result ?? hire.error?.message ?? setStatus.error?.message}
+              {result ?? hire.error?.message ?? setStatus.error?.message ?? approve.error?.message}
             </p>
           )}
         </div>

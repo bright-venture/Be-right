@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { and, desc, eq, ne } from "drizzle-orm";
-import { createRouter, publicQuery, specialistQuery } from "./middleware";
+import { and, desc, eq, isNotNull, isNull, ne } from "drizzle-orm";
+import { adminQuery, createRouter, publicQuery, specialistQuery } from "./middleware";
 import { getDb } from "./queries/connection";
 import { serviceRequests, technicianApplications, users } from "../db/schema";
 import { CATEGORIES } from "../contracts/services";
@@ -11,6 +11,7 @@ import {
   DOCUMENT_FIELD,
   EXPERIENCE_LEVELS,
   MANUAL_APPLICATION_STATUSES,
+  PRIVATE_DOCUMENTS,
   TRANSPORT,
   requiredDocuments,
   type ApplicationDocument,
@@ -36,6 +37,24 @@ function documentKeysOf(app: Record<(typeof DOCUMENT_FIELD)[ApplicationDocument]
 }
 const email = z.string().trim().toLowerCase().email().max(320);
 type Tx = Parameters<Parameters<ReturnType<typeof getDb>["transaction"]>[0]>[0];
+type Staff = { id: number; role: string };
+const isAdmin = (user: Staff) => user.role === "admin";
+
+/**
+ * An application this staff member may work on. The review has two steps: an admin approves
+ * first (seeing everything); only approved applications exist for specialists.
+ */
+async function applicationFor(user: Staff, id: number) {
+  const app = await getDb().query.technicianApplications.findFirst({ where: eq(technicianApplications.id, id) });
+  if (!app || (!isAdmin(user) && !app.approvedAt)) throw new TRPCError({ code: "NOT_FOUND" });
+  return app;
+}
+
+/** Whether every document the application needs was uploaded. */
+function documentsOnFile(app: Parameters<typeof documentKeysOf>[0] & { transport: (typeof TRANSPORT)[number] | null }) {
+  const keys = documentKeysOf(app);
+  return requiredDocuments(app.transport).every((kind) => !!keys[kind]);
+}
 
 /** Where the invitation link lands: set a password, then the technician's jobs page. */
 function inviteRedirect(req: Request) {
@@ -111,11 +130,42 @@ export const joinRouter = createRouter({
       return { id: res.id };
     }),
 
-  list: specialistQuery.query(async () => {
-    return getDb()
+  /**
+   * Admins: every application. Specialists: those an admin approved, without the private
+   * papers (not even their storage keys).
+   */
+  list: specialistQuery.query(async ({ ctx }) => {
+    const admin = isAdmin(ctx.user);
+    const rows = await getDb()
       .select()
       .from(technicianApplications)
+      .where(admin ? undefined : isNotNull(technicianApplications.approvedAt))
       .orderBy(desc(technicianApplications.createdAt));
+    const hidden = Object.fromEntries(PRIVATE_DOCUMENTS.map((kind) => [DOCUMENT_FIELD[kind], null]));
+    return rows.map((app) => ({ ...app, ...(admin ? {} : hidden), documentsOnFile: documentsOnFile(app) }));
+  }),
+
+  /** Step 1: an admin checked the application and its papers; specialists can now hire or reject. */
+  approve: adminQuery.input(z.object({ id: z.number().int().positive() })).mutation(async ({ ctx, input }) => {
+    const db = getDb();
+    const app = await applicationFor(ctx.user, input.id);
+    if (app.status === "hired" || app.status === "rejected") {
+      throw new TRPCError({ code: "BAD_REQUEST", message: "Only an open application can be approved" });
+    }
+    if (!documentsOnFile(app)) {
+      throw new TRPCError({ code: "BAD_REQUEST", message: "Every required document is needed before approving" });
+    }
+    if (app.approvedAt) return { ok: true };
+    const [approved] = await db
+      .update(technicianApplications)
+      .set({ approvedAt: new Date(), approvedBy: ctx.user.id })
+      .where(and(eq(technicianApplications.id, app.id), isNull(technicianApplications.approvedAt)))
+      .returning({ id: technicianApplications.id });
+    if (approved) {
+      await audit({ actorId: ctx.user.id, action: "application_approved", applicationId: app.id });
+      await notify.applicationApproved(app.id);
+    }
+    return { ok: true };
   }),
 
   setStatus: specialistQuery
@@ -127,8 +177,7 @@ export const joinRouter = createRouter({
     )
     .mutation(async ({ ctx, input }) => {
       const db = getDb();
-      const app = await db.query.technicianApplications.findFirst({ where: eq(technicianApplications.id, input.id) });
-      if (!app) throw new TRPCError({ code: "NOT_FOUND" });
+      const app = await applicationFor(ctx.user, input.id);
       // A hired technician's application stays hired: "rejected" would start the deletion of
       // the documents of someone who's working (and "Hire" would show again).
       if (app.status === "hired") {
@@ -154,19 +203,21 @@ export const joinRouter = createRouter({
       return { ok: true };
     }),
 
-  /** Short-lived links to an applicant's documents (specialists only). Every visit is recorded. */
+  /**
+   * Short-lived links to an applicant's documents. Admins get every paper (and each visit is
+   * recorded); specialists get only the profile photo.
+   */
   documents: specialistQuery.input(z.object({ id: z.number().int().positive() })).query(async ({ ctx, input }) => {
-    const app = await getDb().query.technicianApplications.findFirst({
-      where: eq(technicianApplications.id, input.id),
-    });
-    if (!app) throw new TRPCError({ code: "NOT_FOUND" });
-    // Recorded before any link is handed out: no record, no documents.
-    await auditDocumentsViewed(ctx.user.id, app.id);
+    const app = await applicationFor(ctx.user, input.id);
+    const admin = isAdmin(ctx.user);
+    // Recorded before any link to a private paper is handed out: no record, no documents.
+    if (admin) await auditDocumentsViewed(ctx.user.id, app.id);
+    const kinds = requiredDocuments(app.transport).filter((kind) => admin || kind === "photo");
     const keys = documentKeysOf(app);
-    const urls = await createDocumentUrls(Object.values(keys).filter((k): k is string => !!k));
+    const urls = await createDocumentUrls(kinds.map((kind) => keys[kind]).filter((k): k is string => !!k));
     const link = (key: string | null) =>
       key && urls[key] ? { url: urls[key], isPdf: key.toLowerCase().endsWith(".pdf") } : null;
-    return Object.fromEntries(requiredDocuments(app.transport).map((kind) => [kind, link(keys[kind])])) as Partial<
+    return Object.fromEntries(kinds.map((kind) => [kind, link(keys[kind])])) as Partial<
       Record<ApplicationDocument, { url: string; isPdf: boolean } | null>
     >;
   }),
@@ -189,10 +240,10 @@ export const joinRouter = createRouter({
     .input(z.object({ id: z.number().int().positive(), email: email.optional() }))
     .mutation(async ({ ctx, input }) => {
       const db = getDb();
-      const app = await db.query.technicianApplications.findFirst({
-        where: eq(technicianApplications.id, input.id),
-      });
-      if (!app) throw new TRPCError({ code: "NOT_FOUND" });
+      const app = await applicationFor(ctx.user, input.id);
+      if (!app.approvedAt) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "An admin has to approve this application first" });
+      }
       const keysOnFile = documentKeysOf(app);
       if (requiredDocuments(app.transport).some((kind) => !keysOnFile[kind])) {
         throw new TRPCError({

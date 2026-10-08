@@ -84,6 +84,12 @@ async function safely(name: string, fn: () => Promise<void>) {
 
 /* ---------- data ---------- */
 
+/** Everyone with one role (admins, or specialists only). */
+async function emailsOf(role: "admin" | "specialist") {
+  const rows = await getDb().select({ email: users.email }).from(users).where(eq(users.role, role));
+  return rows.map((r) => r.email);
+}
+
 async function specialistEmails() {
   const rows = await getDb()
     .select({ email: users.email })
@@ -479,7 +485,7 @@ export const notify = {
       });
     }),
 
-  /** Someone applied to work as a technician. */
+  /** Someone applied to work as a technician: the admins review it first (step 1 of 2). */
   applicationSubmitted: (applicationId: number) =>
     safely("applicationSubmitted", async () => {
       const app = await getDb().query.technicianApplications.findFirst({
@@ -487,12 +493,38 @@ export const notify = {
       });
       if (!app) return;
       const trade = local(CATEGORY_MAP[app.trade]?.name, app.trade);
-      await send(await specialistEmails(), {
+      await send(await emailsOf("admin"), {
         subject: both(`New technician application: ${app.name}`, `طلب توظيف فني جديد: ${app.name}`),
         title: both("Someone applied to work with us", "في حدا قدّم ليشتغل معنا"),
-        lines: [both(`${app.name}: ${trade.en}, ${app.area}.`, `${app.name}: ${trade.ar}، ${app.area}.`)],
-        path: "/dashboard",
+        lines: [
+          both(`${app.name}: ${trade.en}, ${app.area}.`, `${app.name}: ${trade.ar}، ${app.area}.`),
+          both(
+            "Check the application and its documents, then approve it for the specialists.",
+            "راجع الطلب ومستنداته، وبعدين وافق عليه للمختصين.",
+          ),
+        ],
+        path: "/admin?tab=applications",
         button: both("Review the application", "راجع الطلب"),
+      });
+    }),
+
+  /** An admin approved an application: the specialists make the final decision (step 2 of 2). */
+  applicationApproved: (applicationId: number) =>
+    safely("applicationApproved", async () => {
+      const app = await getDb().query.technicianApplications.findFirst({
+        where: eq(technicianApplications.id, applicationId),
+      });
+      if (!app) return;
+      const trade = local(CATEGORY_MAP[app.trade]?.name, app.trade);
+      await send(await emailsOf("specialist"), {
+        subject: both(`Approved applicant to contact: ${app.name}`, `متقدّم موافق عليه للتواصل: ${app.name}`),
+        title: both("An applicant is ready for you", "في متقدّم جاهز إلك"),
+        lines: [
+          both(`${app.name}: ${trade.en}, ${app.area}.`, `${app.name}: ${trade.ar}، ${app.area}.`),
+          both("An admin checked the documents. Contact them, then hire or reject.", "الإدارة راجعت المستندات. تواصل معهم، وبعدين وظّف أو ارفض."),
+        ],
+        path: "/dashboard?tab=applications",
+        button: both("Open the application", "افتح الطلب"),
       });
     }),
 };

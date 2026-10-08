@@ -72,6 +72,27 @@ export async function makeSpecialist(email = SPECIALIST_EMAIL, name = "Specialis
   return updated;
 }
 
+/** An admin account (in the app, ADMIN_EMAILS or another admin gives the role). */
+export async function makeAdmin(email: string, name = email.split("@")[0]) {
+  const user = await makeUser(email, name);
+  const { getDb } = await import("../queries/connection");
+  const { users } = await import("@db/schema");
+  const { eq } = await import("drizzle-orm");
+  const [updated] = await getDb().update(users).set({ role: "admin" }).where(eq(users.id, user.id)).returning();
+  return updated;
+}
+
+/**
+ * Step 1 of the review, for tests about what comes after: marks an application as approved
+ * by an admin (the approval itself is tested through join.approve).
+ */
+export async function approveApplication(id: number) {
+  const { getDb } = await import("../queries/connection");
+  const { technicianApplications } = await import("@db/schema");
+  const { eq } = await import("drizzle-orm");
+  await getDb().update(technicianApplications).set({ approvedAt: new Date() }).where(eq(technicianApplications.id, id));
+}
+
 /** A pin in Achrafieh, Beirut. */
 export const BEIRUT_PIN = { lat: 33.8886, lng: 35.5195 };
 

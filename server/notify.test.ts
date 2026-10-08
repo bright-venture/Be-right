@@ -15,6 +15,7 @@ import {
   makeTechnician,
   makeUser,
   makeSpecialist,
+  makeAdmin,
   type TestDb,
 } from "./test/harness";
 
@@ -185,8 +186,9 @@ describe("notification emails", () => {
     expect(emailTo("ali@example.com").text).toContain("No need to go");
   });
 
-  it("tells specialists about technician applications", async () => {
-    await (await callerFor()).join.submit({
+  it("tells the admins about new applications, and the specialists once an admin approved", async () => {
+    const boss = await makeAdmin("boss@example.com", "Boss");
+    const { id } = await (await callerFor()).join.submit({
       name: "Samir",
       phone: "+961 71 222 333",
       email: "samir@example.com",
@@ -200,7 +202,11 @@ describe("notification emails", () => {
       ...documentKeys(),
       consent: true,
     });
-    expect(emailTo(SPECIALIST_EMAIL).subject).toContain("Samir");
+    expect(emailTo("boss@example.com").subject).toContain("Samir");
+    // Specialists hear about it only after the admin's approval.
+    expect(state.sent.filter((m) => m.to.includes(SPECIALIST_EMAIL) && m.subject.includes("Samir"))).toHaveLength(0);
+    await (await callerFor(boss)).join.approve({ id });
+    expect(emailTo(SPECIALIST_EMAIL).subject).toContain("Approved applicant to contact: Samir");
   });
 
   it("never fails the action when an email can't be sent", async () => {

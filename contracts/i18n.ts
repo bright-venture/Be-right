@@ -738,6 +738,7 @@ export const t = {
       application_status: { en: "Marked {applicant}'s application as {to}", ar: "حط طلب {applicant} على {to}" },
       technician_hired: { en: "Hired {applicant} as a technician", ar: "وظّف {applicant} كمعلّم" },
       technician_removed: { en: "Removed {target} from the technicians", ar: "شال {target} من المعلّمين" },
+      application_approved: { en: "Approved {applicant}'s application", ar: "وافق على طلب {applicant}" },
       unassigned: { en: "{n} jobs went back to the queue", ar: "{n} شغلات رجعوا عالطابور" },
       refused_password: {
         en: "Was refused a staff area: not signed in with a password",
@@ -879,6 +880,19 @@ export const t = {
     transport: { en: "Transport", ar: "وسيلة النقل" },
     notProvided: { en: "Not provided", ar: "مش محدد" },
     hire: { en: "Hire as technician", ar: "وظّف كمعلّم" },
+    // two-step review: an admin approves, then a specialist hires or rejects
+    approve: { en: "Approve for the specialists", ar: "وافق وابعتو للمختصين" },
+    awaitingApproval: { en: "Waiting for admin approval", ar: "بانتظار موافقة الإدارة" },
+    approvedBadge: { en: "Approved", ar: "موافق عليه" },
+    approveHint: {
+      en: "Step 1 of 2: check the details and documents. Once approved, the specialists contact the applicant, then hire or reject.",
+      ar: "الخطوة ١ من ٢: راجع التفاصيل والمستندات. بعد الموافقة، المختصين بيتواصلوا مع المتقدّم وبيوظّفوه أو بيرفضوه.",
+    },
+    approvedOn: { en: "Approved by an admin on {date}", ar: "وافقت عليه الإدارة بتاريخ {date}" },
+    privateDocs: {
+      en: "ID, proof of address, criminal record and vehicle papers were checked by an admin and are seen by admins only.",
+      ar: "الهوية وإثبات السكن والسجل العدلي وأوراق السيارة راجعتها الإدارة وبتشوفها الإدارة بس.",
+    },
     hireConfirm: {
       en: "Create a technician account for {email}? If they don't have an account yet, they'll get an email to set their password.",
       ar: "نعمل حساب معلّم لـ {email}؟ إذا ما عندو حساب، رح يوصلو إيميل ليختار كلمة سر.",

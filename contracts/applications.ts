@@ -38,6 +38,12 @@ export const TRANSPORT_LABELS: Record<Transport, LocalText> = {
 export const APPLICATION_DOCUMENTS = ["photo", "idDocument", "proofOfAddress", "criminalRecord", "vehicleRegistration"] as const;
 export type ApplicationDocument = (typeof APPLICATION_DOCUMENTS)[number];
 
+/**
+ * Private papers: only admins see them (step 1 of the review). Specialists, who make the
+ * final decision (step 2), see the application's details and the profile photo.
+ */
+export const PRIVATE_DOCUMENTS = ["idDocument", "proofOfAddress", "criminalRecord", "vehicleRegistration"] as const;
+
 /** Where each document's storage key is kept on an application (db/schema.ts). */
 export const DOCUMENT_FIELD = {
   idDocument: "idDocumentKey",
