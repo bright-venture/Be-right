@@ -15,6 +15,9 @@ import { isRateLimited } from "@/lib/errors";
 import {
   AVAILABILITY,
   AVAILABILITY_LABELS,
+  WORK_MODES,
+  WORK_MODE_LABELS,
+  type WorkMode,
   EXPERIENCE_LABELS,
   EXPERIENCE_LEVELS,
   TRANSPORT,
@@ -91,6 +94,8 @@ export default function Join() {
   const [experience, setExperience] = useState<ExperienceLevel | null>(null);
   const [availability, setAvailability] = useState<Availability | null>(null);
   const [hasTools, setHasTools] = useState<"yes" | "no" | null>(null);
+  const [workMode, setWorkMode] = useState<WorkMode | null>(null);
+  const [companyName, setCompanyName] = useState("");
   const [transport, setTransport] = useState<Transport | null>(null);
   const [notes, setNotes] = useState("");
   /** Storage key of each uploaded document (missing until uploaded). */
@@ -121,6 +126,8 @@ export default function Join() {
     experience !== null &&
     availability !== null &&
     hasTools !== null &&
+    workMode !== null &&
+    (workMode !== "company" || companyName.trim().length >= 2) &&
     transport !== null &&
     notes.trim().length >= 3 &&
     required.every((kind) => !!documents[kind]) &&
@@ -139,6 +146,8 @@ export default function Join() {
         experience: experience!,
         availability: availability!,
         hasTools: hasTools === "yes",
+        workMode: workMode!,
+        companyName: workMode === "company" ? companyName.trim() : undefined,
         transport: transport!,
         notes: notes.trim(),
         // `valid` above requires every document
@@ -334,6 +343,39 @@ export default function Join() {
                       columns="grid-cols-2"
                     />
                   </div>
+                </div>
+
+                <div>
+                  <p className={LABEL}>
+                    {p(t.join.workMode)}
+                    <Req />
+                  </p>
+                  <Choice
+                    label={p(t.join.workMode)}
+                    options={labelled(WORK_MODES, WORK_MODE_LABELS)}
+                    value={workMode}
+                    onChange={setWorkMode}
+                    columns="grid-cols-2"
+                  />
+                  {workMode === "company" && (
+                    <div className="mt-3">
+                      <label htmlFor="join-company" className={LABEL}>
+                        {p(t.join.companyName)}
+                        <Req />
+                      </label>
+                      <input
+                        id="join-company"
+                        required
+                        minLength={2}
+                        maxLength={255}
+                        autoComplete="organization"
+                        value={companyName}
+                        onChange={(e) => setCompanyName(e.target.value)}
+                        placeholder={p(t.join.companyNamePh)}
+                        className={INPUT}
+                      />
+                    </div>
+                  )}
                 </div>
 
                 <div>

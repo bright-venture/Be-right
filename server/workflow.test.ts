@@ -57,6 +57,7 @@ const application = {
   availability: "full_time" as const,
   hasTools: true,
   transport: "car" as const,
+  workMode: "independent" as const,
   notes: "Licensed electrician, 8 years with residential buildings",
   ...documentKeys(),
   consent: true as const,
@@ -156,6 +157,26 @@ describe("technician applications (public)", () => {
     await expect(
       (await callerFor()).join.submit({ ...application, transport: "bicycle" as never }),
     ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    // Working with a company: its name is required, and kept.
+    await expect(
+      (await callerFor()).join.submit({ ...application, workMode: "company" }),
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    const { id } = await (await callerFor()).join.submit({
+      ...application,
+      email: "company.tech@example.com",
+      workMode: "company",
+      companyName: "Haddad Electric SARL",
+    });
+    expect((await (await callerFor(boss)).join.list()).find((a) => a.id === id)).toMatchObject({
+      workMode: "company",
+      companyName: "Haddad Electric SARL",
+    });
+    // On your own: no company name kept, even if one was sent.
+    const solo = await (await callerFor()).join.submit({ ...application, email: "solo@example.com", companyName: "Ignored" });
+    expect((await (await callerFor(boss)).join.list()).find((a) => a.id === solo.id)).toMatchObject({
+      workMode: "independent",
+      companyName: null,
+    });
     const withoutTransport: Partial<typeof application> = { ...application };
     delete withoutTransport.transport;
     await expect(

@@ -16,7 +16,7 @@ import {
 } from "drizzle-orm/pg-core";
 import type { MediaKind, VisitFeeReason } from "../contracts/workflow";
 import type { AuditAction, AuditDetails } from "../contracts/audit";
-import type { Transport } from "../contracts/applications";
+import type { Transport, WorkMode } from "../contracts/applications";
 
 // Every table enables Row Level Security with no policies. The app server talks to
 // Postgres directly (bypassing RLS), while Supabase's public REST API — reachable with
@@ -202,6 +202,10 @@ export const technicianApplications = pgTable("technician_applications", {
   status: applicationStatus("status").default("new").notNull(),
   /** The technician account created or promoted when the applicant was hired. */
   hiredUserId: integer("hired_user_id").references(() => users.id),
+  /** "independent" or "company" (null on applications from before the question). */
+  workMode: varchar("work_mode", { length: 16 }).$type<WorkMode>(),
+  /** The company's name, when they work with one. */
+  companyName: varchar("company_name", { length: 255 }),
   /** The in-person meeting at the office an admin booked with the applicant (before approving). */
   meetingAt: timestamp("meeting_at", { withTimezone: true }),
   meetingPlace: varchar("meeting_place", { length: 200 }),

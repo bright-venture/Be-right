@@ -22,6 +22,21 @@ export const AVAILABILITY_LABELS: Record<Availability, LocalText> = {
   weekends: { en: "Weekends only", ar: "بس ويك إند" },
 };
 
+/** Whether the technician works on their own or for a company (required; a company needs its name). */
+export const WORK_MODES = ["independent", "company"] as const;
+export type WorkMode = (typeof WORK_MODES)[number];
+
+export const WORK_MODE_LABELS: Record<WorkMode, LocalText> = {
+  independent: { en: "On my own", ar: "لحالي" },
+  company: { en: "With a company", ar: "مع شركة" },
+};
+
+/** The same, as staff read it about someone else. */
+export const WORK_MODE_STAFF_LABELS: Record<WorkMode, LocalText> = {
+  independent: { en: "On their own", ar: "لحاله" },
+  company: { en: "With a company", ar: "مع شركة" },
+};
+
 /** How the technician gets to jobs (required on the application). */
 export const TRANSPORT = ["none", "motorcycle", "car", "van", "truck"] as const;
 export type Transport = (typeof TRANSPORT)[number];

@@ -7,7 +7,12 @@ import { useI18n } from "@/i18n";
 import { trpc } from "@/providers/trpc";
 import { telLink, whatsappLink } from "@/lib/contact";
 import { CATEGORY_MAP } from "@contracts/services";
-import { APPLICATION_DOCUMENTS, EXPERIENCE_LABELS, type ExperienceLevel } from "@contracts/applications";
+import {
+  APPLICATION_DOCUMENTS,
+  EXPERIENCE_LABELS,
+  WORK_MODE_STAFF_LABELS,
+  type ExperienceLevel,
+} from "@contracts/applications";
 import { Avatar } from "./RequestDetail";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -107,6 +112,14 @@ function TechnicianCard({ tech: x }: { tech: Technician }) {
           <div className="flex justify-between gap-3">
             <dt className="text-navy/70">{p(t.dash4.techExperience)}</dt>
             <dd className="text-end font-semibold text-navy">{p(EXPERIENCE_LABELS[x.experience as ExperienceLevel])}</dd>
+          </div>
+        )}
+        {x.workMode && (
+          <div className="flex justify-between gap-3">
+            <dt className="text-navy/70">{p(t.dash3.workMode)}</dt>
+            <dd className="min-w-0 truncate text-end font-semibold text-navy">
+              {x.workMode === "company" && x.companyName ? x.companyName : p(WORK_MODE_STAFF_LABELS[x.workMode])}
+            </dd>
           </div>
         )}
         {x.email && <p className="truncate text-navy/70">{x.email}</p>}

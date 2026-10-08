@@ -62,6 +62,7 @@ describe("API errors in production", () => {
         availability: "full_time",
         hasTools: true,
         transport: "car",
+        workMode: "independent",
         notes: "Licensed, 8 years with residential buildings",
         idDocumentKey: key("idDocument"),
         criminalRecordKey: key("criminalRecord"),

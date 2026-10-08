@@ -12,6 +12,7 @@ import {
   EXPERIENCE_LEVELS,
   MANUAL_APPLICATION_STATUSES,
   TRANSPORT,
+  WORK_MODES,
   requiredDocuments,
   type ApplicationDocument,
 } from "@contracts/applications";
@@ -75,6 +76,9 @@ export const joinRouter = createRouter({
         availability: z.enum(AVAILABILITY),
         hasTools: z.boolean(),
         transport: z.enum(TRANSPORT),
+        workMode: z.enum(WORK_MODES),
+        // Required when they work with a company.
+        companyName: z.string().trim().max(255).optional(),
         // Every field is required, including what the applicant tells us about their work.
         notes: z.string().trim().min(3).max(2000),
         // Mandatory documents, uploaded first via storage.createDocumentUpload.
@@ -89,6 +93,9 @@ export const joinRouter = createRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
+      if (input.workMode === "company" && (input.companyName ?? "").length < 2) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Please give the company's name" });
+      }
       await rateLimit(`apply:ip:${clientIp(ctx.req)}`, LIMITS.applicationPerIp);
       // Each required key must be a real upload of the right kind (not, say, the photo sent as the ID).
       const required = requiredDocuments(input.transport);
@@ -113,6 +120,8 @@ export const joinRouter = createRouter({
           hasTools: input.hasTools,
           hasTransport: input.transport !== "none",
           transport: input.transport,
+          workMode: input.workMode,
+          companyName: input.workMode === "company" ? input.companyName : null,
           notes: input.notes ?? null,
           idDocumentKey: input.idDocumentKey,
           criminalRecordKey: input.criminalRecordKey,

@@ -198,6 +198,7 @@ describe("notification emails", () => {
       availability: "full_time",
       hasTools: true,
       transport: "van",
+      workMode: "independent",
       notes: "Generators and inverters",
       ...documentKeys(),
       consent: true,

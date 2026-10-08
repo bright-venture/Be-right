@@ -66,6 +66,8 @@ export const techRouter = createRouter({
           area: technicianApplications.area,
           experience: technicianApplications.experience,
           availability: technicianApplications.availability,
+          workMode: technicianApplications.workMode,
+          companyName: technicianApplications.companyName,
         })
         .from(technicianApplications)
         .where(inArray(technicianApplications.hiredUserId, ids)),
@@ -98,6 +100,8 @@ export const techRouter = createRouter({
           area: app?.area ?? null,
           experience: app?.experience ?? null,
           availability: app?.availability ?? null,
+          workMode: app?.workMode ?? null,
+          companyName: app?.companyName ?? null,
           activeJobs: sum(ACTIVE_JOB_STATUSES),
           completedJobs: sum(["completed"]),
           rating: ratings.get(x.id) ?? { average: null, count: 0 },

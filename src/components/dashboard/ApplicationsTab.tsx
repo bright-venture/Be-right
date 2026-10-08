@@ -12,6 +12,7 @@ import {
   EXPERIENCE_LABELS,
   MANUAL_APPLICATION_STATUSES,
   TRANSPORT_LABELS,
+  WORK_MODE_STAFF_LABELS,
   requiredDocuments,
   type Availability,
   type ExperienceLevel,
@@ -186,6 +187,11 @@ function ApplicationCard({
               app.availability ? p(AVAILABILITY_LABELS[app.availability as Availability]) : p(t.dash3.notProvided),
             )}
             {detail(p(t.dash3.tools), yesNo(app.hasTools))}
+            {detail(
+              p(t.dash3.workMode),
+              app.workMode ? p(WORK_MODE_STAFF_LABELS[app.workMode]) : p(t.dash3.notProvided),
+            )}
+            {app.workMode === "company" && detail(p(t.dash3.company), app.companyName ?? p(t.dash3.notProvided))}
             {detail(
               p(t.dash3.transport),
               app.transport ? p(TRANSPORT_LABELS[app.transport]) : yesNo(app.hasTransport),
