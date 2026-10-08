@@ -256,9 +256,10 @@ export default function Join() {
                     {p(t.join.trade)}
                     <Req />
                   </p>
-                  {/* Every trade as an equal tile, icon above a one-line name: 2 per row on phones,
-                      4 on wide screens. The last row is centred, so nothing stretches or sits alone. */}
-                  <div className="mt-3 flex flex-wrap justify-center gap-2">
+                  {/* Every trade as an equal tile, icon above its name, in a fixed grid: 2 per row on
+                      phones, 4 from tablets up. Sixteen trades make full rows either way, and a long name
+                      can never widen its tile and push the others out of line. */}
+                  <div className="mt-3 grid auto-rows-fr grid-cols-2 gap-2 md:grid-cols-4">
                     {SERVICES_IN_ORDER.map((id) => CATEGORY_MAP[id])
                       .filter(Boolean)
                       .map((c) => (
@@ -267,7 +268,9 @@ export default function Join() {
                           type="button"
                           aria-pressed={trade === c.id}
                           onClick={() => setTrade(c.id)}
-                          className={`flex min-h-[84px] basis-[calc((100%-0.5rem)/2)] flex-col items-center justify-center gap-2 rounded-2xl border-2 px-1.5 py-3 text-center transition-colors sm:basis-[calc((100%-1.5rem)/4)] ${
+                          // The tile is the size the name is measured against (below).
+                          style={{ containerType: "inline-size" }}
+                          className={`flex min-h-[84px] min-w-0 flex-col items-center justify-center gap-2 rounded-2xl border-2 px-1.5 py-3 text-center transition-colors ${
                             trade === c.id
                               ? "border-navy bg-navy text-paper"
                               : "border-navy/20 bg-white text-navy hover:border-navy"
@@ -280,7 +283,11 @@ export default function Join() {
                           >
                             <ServiceIcon id={c.id} className="h-5 w-5" />
                           </span>
-                          <span className="whitespace-nowrap text-[13px] font-bold leading-none">{p(c.name)}</span>
+                          {/* One line, always: every name gets the same size, small enough for the longest one
+                              ("Installation & assembly", about 12 times its font size) to fit its tile. */}
+                          <span className="whitespace-nowrap font-bold leading-tight" style={{ fontSize: "min(13px, 100cqi / 12)" }}>
+                            {p(c.name)}
+                          </span>
                         </button>
                       ))}
                   </div>

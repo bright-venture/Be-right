@@ -40,10 +40,7 @@ Technician applications from `/join` need no account and appear in the dashboard
 4. **Configure Supabase Auth** (*Authentication → URL Configuration*):
    - Site URL: your production URL (e.g. `https://be-rightbright.com`)
    - Redirect URLs: `http://localhost:3000/**` and `https://be-rightbright.com/**`
-   - Optional: in *Email Templates → Magic Link*, add `{{ .Token }}` so users can type the code
-     instead of clicking the link (useful when the email opens in a different browser).
    - For production volume, set up custom SMTP (*Authentication → SMTP*); the built-in sender is rate-limited.
-   - Optional Google sign-in: enable the provider, then set `VITE_AUTH_GOOGLE=true`.
 5. **Run locally:** `npm run dev` → http://localhost:3000
 
 The storage bucket (`request-media`, private, 20 MB, images/videos only) is created automatically on first upload.
