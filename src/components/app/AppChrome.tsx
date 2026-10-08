@@ -25,13 +25,8 @@ function useTabs(): Tab[] {
   const account: Tab = { to: isAuthenticated ? "/account" : "/login", label: t.app.account, icon: UserRound };
   if (user?.role === "technician") return [{ to: "/tech", label: t.nav.jobs, icon: Wrench }, account];
   if (user?.role === "specialist") return [{ to: "/dashboard", label: t.nav.dashboard, icon: LayoutDashboard }, account];
-  if (user?.role === "admin") {
-    return [
-      { to: "/admin", label: t.nav.admin, icon: ShieldCheck },
-      { to: "/dashboard", label: t.nav.dashboard, icon: LayoutDashboard },
-      account,
-    ];
-  }
+  // Admins: requests and technicians are tabs inside Admin, so no separate Dashboard.
+  if (user?.role === "admin") return [{ to: "/admin", label: t.nav.admin, icon: ShieldCheck }, account];
   return [
     { to: "/", label: t.app.home, icon: House },
     { to: "/services", label: t.app.services, icon: LayoutGrid },

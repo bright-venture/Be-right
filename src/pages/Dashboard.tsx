@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router";
+import { Navigate, useNavigate } from "react-router";
 import { Loader2 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
@@ -12,7 +12,6 @@ import { useTabParam } from "@/hooks/useTabParam";
 import { StaffGate } from "@/components/admin/StaffGate";
 import { useLiveQueue } from "@/components/dashboard/useLiveQueue";
 import { trpc } from "@/providers/trpc";
-import { canDispatch } from "@contracts/roles";
 
 // Applications are reviewed by admins only (in /admin); specialists see the technicians.
 const TABS = ["queue", "technicians"] as const;
@@ -23,7 +22,8 @@ export default function Dashboard() {
   const { t, p } = useI18n();
   // Admins run the dashboard too.
   const { role, isLoading: authLoading } = useRoleGate(["specialist", "admin"], { requireSignIn: true });
-  const isSpecialist = canDispatch(role);
+  // Specialists only: admins have the same requests and technicians in their own area.
+  const isSpecialist = role === "specialist";
   // The tab is in the address (?tab=applications), so reloading and Back keep it.
   const [tab, setTab] = useTabParam<Tab>(TABS);
   const { logout } = useAuth();
@@ -40,6 +40,9 @@ export default function Dashboard() {
   // Badge counts (same queries the tabs use, so they share the cache).
   const queue = useLiveQueue(allowed);
   const technicians = trpc.tech.list.useQuery(undefined, { enabled: allowed });
+
+  // An admin who lands here (old link, bookmark, an email) sees the same thing in /admin.
+  if (role === "admin") return <Navigate to={`/admin?tab=${tab === "technicians" ? "technicians" : "requests"}`} replace />;
 
   if (authLoading || !isSpecialist) {
     return (
