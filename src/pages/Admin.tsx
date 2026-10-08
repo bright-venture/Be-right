@@ -12,6 +12,7 @@ import { useTabParam } from "@/hooks/useTabParam";
 import { AuthPanel } from "@/components/AuthPanel";
 import { HOME_BY_ROLE, type Role } from "@contracts/roles";
 import { StaffGate } from "@/components/admin/StaffGate";
+import { SectionMenu } from "@/components/admin/SectionMenu";
 import { trpc } from "@/providers/trpc";
 
 const TABS = ["overview", "requests", "customers", "applications", "technicians", "team", "activity"] as const;
@@ -102,21 +103,18 @@ export default function Admin() {
           <p className="mt-1 text-sm text-navy/60">{p(t.admin.sub)}</p>
 
           {/* Phones and tablets: the 7 sections don't fit in a row, so one clear menu. */}
-          <label className="mt-6 flex items-center gap-3 lg:hidden">
-            <span className="shrink-0 text-sm font-bold text-navy/70">{p(t.admin.sectionLabel)}</span>
-            <select
+          <div className="mt-6 lg:hidden">
+            <SectionMenu
+              label={p(t.admin.sectionLabel)}
               value={tab}
-              onChange={(e) => setTab(e.target.value as Tab)}
-              className="min-h-12 w-full rounded-2xl border-2 border-navy bg-white px-4 font-display text-base font-extrabold text-navy focus:border-flame focus:outline-none"
-            >
-              {TABS.map((k) => (
-                <option key={k} value={k}>
-                  {p(t.admin.tabs[k])}
-                  {k === "applications" && newApplications > 0 ? ` (${newApplications})` : ""}
-                </option>
-              ))}
-            </select>
-          </label>
+              onChange={setTab}
+              options={TABS.map((k) => ({
+                value: k,
+                label: p(t.admin.tabs[k]),
+                badge: k === "applications" ? newApplications : undefined,
+              }))}
+            />
+          </div>
 
           {/* PC: every section as a tab, in one row. */}
           <div className="mt-6 hidden lg:block">
