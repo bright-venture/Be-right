@@ -1,4 +1,4 @@
-import { Link } from "react-router";
+import { Link, Navigate } from "react-router";
 import {
   ArrowRight,
   BadgeCheck,
@@ -34,6 +34,7 @@ import {
 } from "@contracts/services";
 import { EMERGENCY_PROBLEMS, bookingHref } from "@contracts/picker";
 import { WORKMANSHIP_GUARANTEE_DAYS, arabicDigits } from "@contracts/legal";
+import { HOME_BY_ROLE, type Role } from "@contracts/roles";
 
 /** An icon for each emergency problem on the home screen. */
 const EMERGENCY_ICONS: Record<(typeof EMERGENCY_PROBLEMS)[number], LucideIcon> = {
@@ -65,6 +66,9 @@ export default function AppHome() {
   const isCustomer = user?.role === "customer";
   const mine = trpc.requests.mine.useQuery(undefined, { enabled: isCustomer });
   const current = mine.data?.find((r) => OPEN.includes(r.status as RequestStatus));
+
+  // This home is the customers' tab: technicians and staff open on their own first tab.
+  if (user && !isCustomer) return <Navigate to={HOME_BY_ROLE[user.role as Role]} replace />;
 
   const firstName = user?.name?.trim().split(/\s+/)[0];
   const hello = p(t.app[greeting(new Date().getHours())]);

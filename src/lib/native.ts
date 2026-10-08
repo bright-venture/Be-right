@@ -36,12 +36,12 @@ export const apiUrl = (path: string) => (isNativeApp ? SITE_ORIGIN : "") + path;
 /** App-only setup: Android back button, and the page kept clear of the status bar. */
 export async function startNativeApp() {
   if (!isNativeApp) return;
+  // The page draws edge to edge (viewport-fit=cover, as on the website) and leaves room for
+  // the status bar and the home indicator itself, with env(safe-area-inset-*): see index.css
+  // (.native-app) and the app's top and bottom bars. Capacitor reads viewport-fit to decide:
+  // on newer Android web views it hands the bar sizes to the page; on older ones it pads the
+  // web view and the page sees 0, so nothing is ever doubled.
   document.documentElement.classList.add("native-app");
-  // The website draws under the notch (viewport-fit=cover); in the app the page starts
-  // below the system bars instead, so nothing hides under the clock or the camera.
-  document
-    .querySelector('meta[name="viewport"]')
-    ?.setAttribute("content", "width=device-width, initial-scale=1.0, viewport-fit=auto");
   const { App } = await import("@capacitor/app");
   await App.addListener("backButton", ({ canGoBack }) => {
     if (canGoBack) window.history.back();

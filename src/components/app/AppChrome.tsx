@@ -50,10 +50,12 @@ export function AppTopBar() {
   const navigate = useNavigate();
   const tabs = useTabs();
   // Main screens show the logo; anything deeper (a request, a page) gets a back button.
-  const isRoot = tabs.some((tab) => pathname === tab.to) || pathname === "/login" || pathname === "/signup";
+  const isRoot =
+    tabs.some((tab) => pathname === tab.to) || ["/", "/login", "/signup"].includes(pathname);
 
   return (
-    <header className="fixed inset-x-0 top-0 z-50 border-b border-navy/10 bg-white/95 backdrop-blur-md">
+    // pt: the status bar's height (0 on the web and where the system already makes room).
+    <header className="fixed inset-x-0 top-0 z-50 border-b border-navy/10 bg-white/95 pt-[env(safe-area-inset-top)] backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-lg items-center justify-between gap-3 px-4">
         {isRoot ? (
           <Link to="/" className="flex min-h-11 items-center" aria-label="Be Right">
