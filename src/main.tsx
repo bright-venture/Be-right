@@ -10,7 +10,8 @@ import { installErrorReporting, reloadForNewBuild } from "./lib/reportError"
 import { startAnalytics } from "./lib/analytics"
 import { INTRO_REPLAY_EVENT, markIntroSeen, shouldPlayIntro } from "./lib/intro"
 import App from './App.tsx'
-import { startNativeApp } from "./lib/native"
+import { framesAppPreview, startNativeApp } from "./lib/native"
+import { AppPreviewFrame } from "./components/app/AppPreviewFrame"
 
 installErrorReporting()
 startAnalytics()
@@ -66,6 +67,10 @@ function Root() {
 }
 
 createRoot(document.getElementById('root')!).render(
+  // Development: ?app on a computer shows the app in a phone-sized frame.
+  framesAppPreview ? (
+    <AppPreviewFrame />
+  ) : (
   <StrictMode>
     <BrowserRouter>
       <TRPCProvider>
@@ -76,5 +81,6 @@ createRoot(document.getElementById('root')!).render(
         </I18nProvider>
       </TRPCProvider>
     </BrowserRouter>
-  </StrictMode>,
+  </StrictMode>
+  ),
 )

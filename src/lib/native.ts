@@ -24,6 +24,13 @@ function appPreview() {
   }
 }
 
+/**
+ * Development only: the app preview on a computer window wider than a phone shows the app in
+ * a phone-sized frame (components/app/AppPreviewFrame.tsx); inside that frame, the app itself.
+ */
+export const framesAppPreview =
+  import.meta.env.DEV && isAppUi && !isNativeApp && window.self === window.top && window.innerWidth >= 600;
+
 /** The live website. The app talks to its API and sends email links to it. */
 export const SITE_ORIGIN = "https://be-rightbright.com";
 
