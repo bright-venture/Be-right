@@ -3,13 +3,18 @@
 
 export const COMPANY = {
   brand: "Be Right by Bright",
-  legalName: "[Company legal name, as registered in Lebanon]",
-  address: "[Registered address], Lebanon",
+  legalName: "[Company legal name, as registered]",
+  address: "[Registered address, country]",
+  /** The law the Terms follow and the courts for disputes: for the lawyer to set. */
+  governingLaw: { en: "[the law of the country of registration]", ar: "[قانون بلد التسجيل]" },
+  courts: { en: "[the competent courts]", ar: "[المحاكم المختصة]" },
+  /** The data protection law Be Right follows: for the lawyer to set. */
+  dataProtectionLaw: { en: "[the applicable data protection law]", ar: "[قانون حماية البيانات المعمول به]" },
   email: "hello@be-rightbright.com",
   privacyEmail: "privacy@be-rightbright.com",
   website: "be-rightbright.com",
   /**
-   * Business WhatsApp in international digits, e.g. "96170123456". Empty: every
+   * Business WhatsApp in international digits, e.g. "12025550123". Empty: every
    * "WhatsApp us" button on the site stays hidden.
    */
   whatsapp: "",

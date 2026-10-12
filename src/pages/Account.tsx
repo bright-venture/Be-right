@@ -95,7 +95,7 @@ export function Details({ name: initialName, phone: initialPhone }: { name: stri
             dir="ltr"
             value={phone}
             onChange={(e) => { setPhone(e.target.value); save.reset(); }}
-            placeholder="+961 70 000 000"
+            placeholder="+1 202 555 0123"
             aria-invalid={phone.trim() !== "" && !phoneOk ? true : undefined}
             className={INPUT}
           />

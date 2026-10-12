@@ -24,8 +24,8 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, { crashed:
         <div className="card-br w-full max-w-md p-8 text-center">
           <h1 className="font-display text-2xl font-black text-navy">Something went wrong on this page</h1>
           <p className="mt-2 text-navy/70">We've been told about it. Reloading usually fixes it.</p>
-          <h2 dir="rtl" className="mt-6 font-display text-xl font-black text-navy">صار خطأ بهالصفحة</h2>
-          <p dir="rtl" className="mt-2 text-navy/70">وصلنا خبر فيه. إعادة التحميل بتصلّحه عادةً.</p>
+          <h2 dir="rtl" className="mt-6 font-display text-xl font-black text-navy">حدث خطأ في هذه الصفحة</h2>
+          <p dir="rtl" className="mt-2 text-navy/70">تم إبلاغنا بذلك. عادةً ما تحلّ إعادة التحميل المشكلة.</p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             <button onClick={() => window.location.reload()} className="btn-pill-primary">
               Reload · إعادة التحميل

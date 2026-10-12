@@ -9,7 +9,7 @@ import { LEGAL_VERSION } from "@contracts/legal";
 export default function Legal({ doc }: { doc: "terms" | "privacy" }) {
   const { t, p, lang } = useI18n();
   const content = doc === "terms" ? TERMS : PRIVACY;
-  const updated = new Date(`${LEGAL_VERSION}T00:00:00Z`).toLocaleDateString(lang === "ar" ? "ar-LB" : "en-GB", {
+  const updated = new Date(`${LEGAL_VERSION}T00:00:00Z`).toLocaleDateString(lang === "ar" ? "ar" : "en-GB", {
     day: "numeric",
     month: "long",
     year: "numeric",

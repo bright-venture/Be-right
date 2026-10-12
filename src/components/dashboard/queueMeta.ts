@@ -1,5 +1,5 @@
 import type { RequestStatus, UrgencyLevel } from "@contracts/services";
-import { todayInBeirut } from "@contracts/workflow";
+import { todayHere } from "@contracts/workflow";
 
 export const URGENCY_DOT: Record<UrgencyLevel, string> = {
   normal: "bg-navy/30",
@@ -43,7 +43,8 @@ export const cancelPending = (r: Row) => !!r.cancelRequestedAt && !OPEN_EXCLUDED
 
 export const urgencyOf = (r: Row) => (r.urgencyFinal ?? r.urgencySuggested) as UrgencyLevel;
 
-const beirutDay = (d: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Beirut" }).format(d);
+/** A moment's date on this device, as YYYY-MM-DD. */
+const localDay = (d: Date) => new Intl.DateTimeFormat("en-CA").format(d);
 
 export function inView(view: QueueView, r: Row) {
   const status = r.status as RequestStatus;
@@ -59,7 +60,7 @@ export function inView(view: QueueView, r: Row) {
     case "urgent":
       return !OPEN_EXCLUDED.includes(status) && ["urgent", "critical"].includes(urgencyOf(r));
     case "doneToday":
-      return status === "completed" && beirutDay(new Date(r.updatedAt)) === todayInBeirut();
+      return status === "completed" && localDay(new Date(r.updatedAt)) === todayHere();
     case "completed":
     case "cancelled":
       return status === view;

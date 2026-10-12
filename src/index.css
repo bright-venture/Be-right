@@ -446,11 +446,6 @@
   .home-hero h1 { font-size: 38px; }
 }
 
-/* Keep the coastal cities visible beside the mascot in both languages. */
-.hero-coastal-map { transform: translateX(-70px); }
-.hero-bird-offset { transform: translateX(83px); }
-[dir="rtl"] .hero-coastal-map { transform: translateX(-55px); }
-[dir="rtl"] .hero-bird-offset { transform: translateX(86px); }
 
 /* Small-screen layout: one clear action and room for the mascot and copy. */
 @media (max-width: 639px) {

@@ -223,7 +223,7 @@ export default function Join() {
                       autoComplete="tel"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
-                      placeholder="+961 70 000 000"
+                      placeholder="+1 202 555 0123"
                       dir="ltr"
                       aria-invalid={phone.trim() !== "" && !isValidPhone(phone) ? true : undefined}
                       className={INPUT}

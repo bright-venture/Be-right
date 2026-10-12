@@ -100,7 +100,7 @@ function ApplicationCard({
   // Short-lived links, fetched only when the card is open.
   const docs = trpc.join.documents.useQuery({ id: app.id }, { enabled: open, staleTime: 60_000 });
   const formatDate = (d: Date | string) =>
-    new Date(d).toLocaleDateString(lang === "ar" ? "ar-LB" : "en-GB", { day: "numeric", month: "long", year: "numeric" });
+    new Date(d).toLocaleDateString(lang === "ar" ? "ar" : "en-GB", { day: "numeric", month: "long", year: "numeric" });
   const yesNo = (v: boolean | null) => (v === null ? p(t.dash3.notProvided) : v ? p(t.join.yes) : p(t.join.no));
   const detail = (label: string, value: string) => (
     <div className="flex justify-between gap-4">
@@ -139,7 +139,7 @@ function ApplicationCard({
             {app.name} <span className="font-normal text-navy/70">· {trade ? p(trade.name) : app.trade}</span>
           </span>
           <span className="block truncate text-xs text-navy/70">
-            {app.area} · {p(t.dash3.applied)} {new Date(app.createdAt).toLocaleDateString(lang === "ar" ? "ar-LB" : "en-GB")}
+            {app.area} · {p(t.dash3.applied)} {new Date(app.createdAt).toLocaleDateString(lang === "ar" ? "ar" : "en-GB")}
           </span>
         </span>
         {stillOpen && app.meetingAt && (
@@ -334,7 +334,7 @@ function ApplicationCard({
   );
 }
 
-/** "2026-10-12T10:00" for a date-time input, in the browser's own time (Lebanon for the team). */
+/** "2026-10-12T10:00" for a date-time input, in the browser's own time zone. */
 function toLocalInput(d: Date) {
   const pad = (n: number) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
@@ -361,7 +361,13 @@ function MeetingBox({ app, lastPlace, onChanged }: { app: Application; lastPlace
   function submit(e: FormEvent) {
     e.preventDefault();
     if (!when || place.trim().length < 3) return;
-    book.mutate({ id: app.id, at: new Date(when), place: place.trim(), note: note.trim() || undefined });
+    book.mutate({
+      id: app.id,
+      at: new Date(when),
+      place: place.trim(),
+      note: note.trim() || undefined,
+      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    });
   }
 
   return (

@@ -312,7 +312,7 @@ export function AuthPanel({
               dir="ltr"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              placeholder="+961 70 000 000"
+              placeholder="+1 202 555 0123"
               className={INPUT}
             />
             <p className="mt-1 text-xs text-navy/70">{p(t.auth.phoneHint)}</p>

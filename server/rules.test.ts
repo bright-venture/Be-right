@@ -75,11 +75,14 @@ describe("booking validation", () => {
     ).resolves.toMatchObject({ id: expect.any(Number) });
   });
 
-  it("requires a full phone number", async () => {
+  it("requires a full phone number with its country code", async () => {
     const c = await callerFor(customer);
     await rejected(c.requests.create({ ...base, phone: "3432" }));
     await rejected(c.requests.create({ ...base, phone: "call me maybe" }));
-    await expect(c.requests.create({ ...base, phone: "03 123 456" })).resolves.toMatchObject({ id: expect.any(Number) });
+    // Without the country code it can't be called or opened in WhatsApp from another country.
+    await rejected(c.requests.create({ ...base, phone: "03 123 456" }));
+    await expect(c.requests.create({ ...base, phone: "+33 6 12 34 56 78" })).resolves.toMatchObject({ id: expect.any(Number) });
+    await expect(c.requests.create({ ...base, phone: "0044 20 7946 0958" })).resolves.toMatchObject({ id: expect.any(Number) });
   });
 
   it("only accepts answers to the category's own questions", async () => {

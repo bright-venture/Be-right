@@ -19,7 +19,7 @@ import { useRoleGate } from "@/hooks/useRoleGate";
 import { trpc } from "@/providers/trpc";
 import { supabase } from "@/lib/supabase";
 import LocationPicker, { type Pin } from "@/components/map/LocationPicker";
-import { isInLebanon } from "@contracts/geo";
+import { isValidPin } from "@contracts/geo";
 import { isValidPhone } from "@contracts/phone";
 import { isNetworkError, isRateLimited, refusalMessage } from "@/lib/errors";
 import {
@@ -43,7 +43,7 @@ import {
   MAX_BOOKING_FILES,
   MAX_BOOKING_VIDEOS,
   TIME_SLOTS,
-  todayInBeirut,
+  todayHere,
   type TimeSlot,
 } from "@contracts/workflow";
 import { shrinkImage } from "@/lib/shrinkImage";
@@ -147,9 +147,9 @@ export default function Book() {
   // Only complain once something is typed (or carried over from the account).
   const phoneInvalid = contactPhone.trim() !== "" && !isValidPhone(contactPhone);
   // A draft saved yesterday can carry yesterday's date.
-  const dateInvalid = date !== "" && !isValidVisitDate(date, todayInBeirut());
+  const dateInvalid = date !== "" && !isValidVisitDate(date, todayHere());
   const detailsReady =
-    !!date && !dateInvalid && !!slot && !!area.trim() && !!address.trim() && isValidPhone(contactPhone) && !!pin && isInLebanon(pin.lat, pin.lng);
+    !!date && !dateInvalid && !!slot && !!area.trim() && !!address.trim() && isValidPhone(contactPhone) && !!pin && isValidPin(pin.lat, pin.lng);
 
   /* ---------- draft persistence ---------- */
   const filesRestored = useRef(false);
@@ -509,7 +509,7 @@ export default function Book() {
                 <input
                   type="date"
                   value={date}
-                  min={todayInBeirut()}
+                  min={todayHere()}
                   onChange={(e) => setDate(e.target.value)}
                   aria-invalid={dateInvalid || undefined}
                   className="mt-2 min-h-12 w-full rounded-2xl border-2 border-navy/30 bg-white px-4 font-semibold text-navy focus:border-flame focus:outline-none"

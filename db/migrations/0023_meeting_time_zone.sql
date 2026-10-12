@@ -1,0 +1,1 @@
+ALTER TABLE "technician_applications" ADD COLUMN "meeting_time_zone" varchar(64);

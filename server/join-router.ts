@@ -48,6 +48,17 @@ async function findApplication(id: number) {
 }
 const isOpen = (status: string) => status !== "hired" && status !== "rejected";
 
+/** A real IANA time zone name, or null (then emails show the time in UTC). */
+function validTimeZone(zone: string | undefined) {
+  if (!zone) return null;
+  try {
+    new Intl.DateTimeFormat("en", { timeZone: zone });
+    return zone;
+  } catch {
+    return null;
+  }
+}
+
 /** Whether every document the application needs was uploaded. */
 function documentsOnFile(app: Parameters<typeof documentKeysOf>[0] & { transport: (typeof TRANSPORT)[number] | null }) {
   const keys = documentKeysOf(app);
@@ -153,6 +164,8 @@ export const joinRouter = createRouter({
         at: z.date(),
         place: z.string().trim().min(3).max(200),
         note: z.string().trim().max(500).optional(),
+        // The admin's time zone (their browser's), e.g. "Europe/Paris".
+        timeZone: z.string().max(64).optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -170,6 +183,7 @@ export const joinRouter = createRouter({
           meetingAt: input.at,
           meetingPlace: input.place,
           meetingNote: input.note || null,
+          meetingTimeZone: validTimeZone(input.timeZone),
           // Booking a meeting means they were contacted.
           status: app.status === "new" ? "contacted" : app.status,
         })

@@ -207,12 +207,18 @@ describe("notification emails", () => {
     // Specialists don't handle applications.
     expect(state.sent.filter((m) => m.to.includes(SPECIALIST_EMAIL) && m.subject.includes("Samir"))).toHaveLength(0);
 
-    // The meeting: date, time (Beirut) and place go to the applicant, in both languages.
+    // The meeting: date, time (in the admin's time zone, shown) and place go to the applicant.
     const b = await callerFor(boss);
-    await b.join.bookMeeting({ id, at: new Date("2026-11-03T08:30:00Z"), place: "Be Right office, Hamra", note: "Ask for Rami" });
+    await b.join.bookMeeting({
+      id,
+      at: new Date("2026-11-03T08:30:00Z"),
+      place: "Be Right office, Hamra",
+      note: "Ask for Rami",
+      timeZone: "Europe/Paris",
+    });
     const invite = emailTo("samir@example.com");
     expect(invite.subject).toContain("Your meeting with Be Right");
-    expect(invite.text).toContain("Tuesday 3 November at 10:30");
+    expect(invite.text).toContain("Tuesday 3 November at 09:30 CET");
     expect(invite.text).toContain("Be Right office, Hamra");
     expect(invite.text).toContain("Ask for Rami");
     // Moving it sends the new time.

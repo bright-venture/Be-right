@@ -157,7 +157,16 @@ export function isValidVisitDate(value: string, today: string) {
   return value >= today;
 }
 
-/** Today's date in Lebanon (the service area), as YYYY-MM-DD. */
-export function todayInBeirut(now = new Date()) {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Beirut" }).format(now);
+/** Today's date where this device is, as YYYY-MM-DD (the forms' earliest visit day). */
+export function todayHere(now = new Date()) {
+  return new Intl.DateTimeFormat("en-CA").format(now);
+}
+
+/**
+ * The earliest date that is still "today" somewhere on Earth (UTC-12), as YYYY-MM-DD. The
+ * server accepts visit days from then on, so a customer's own today is never refused,
+ * whatever their time zone.
+ */
+export function earliestTodayAnywhere(now = new Date()) {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Etc/GMT+12" }).format(now);
 }

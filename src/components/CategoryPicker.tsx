@@ -21,10 +21,10 @@ import {
 /**
  * Checkatrade-inspired category pill row in Be Right branding:
  * - Emergency pill first (flame, siren, chevron) opening a dropdown of urgent
- *   problems, then a Lebanon city/area step.
+ *   problems, then a city/area step.
  * - Other pills are rounded white with the Be Right service icons.
  * - A pill click opens a centered white modal over a blurred/dimmed backdrop:
- *   problem -> Lebanon location -> the existing booking flow.
+ *   problem -> location -> the existing booking flow.
  *   Back / Close / Escape, focus trap, and choices are preserved on Back.
  */
 
@@ -212,8 +212,8 @@ export function CategoryPicker() {
         ? step === 0
           ? dir === "rtl"
             ? wizard.catId === "plumbing"
-              ? "شو بدك السنّكري يصلّح؟"
-              : `بشو بدك مساعدة بال${p(CATEGORY_MAP[wizard.catId].name)}؟`
+              ? "ما الذي تريد من السبّاك إصلاحه؟"
+              : `ما الذي تحتاجه في خدمة ${p(CATEGORY_MAP[wizard.catId].name)}؟`
             : `What do you need a ${p((t.picker.trades as Record<string, LocalText>)[wizard.catId] ?? CATEGORY_MAP[wizard.catId].name).toLowerCase()} to help with?`
           : p(t.picker.locationQ)
         : "";

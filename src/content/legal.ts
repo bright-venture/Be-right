@@ -1,5 +1,6 @@
 // Terms of Service and Privacy Policy text (English + Arabic).
-// Drafted for how Be Right works; have a Lebanese lawyer review before launch.
+// Drafted for how Be Right works; have a lawyer review it for each country before launch.
+// The country-specific parts (law, courts, data protection) are placeholders in COMPANY.
 import {
   COMPANY,
   REJECTED_APPLICATION_RETENTION_DAYS as REJECT_DAYS,
@@ -25,12 +26,12 @@ export const TERMS: LegalDocument = {
       title: t("1. What Be Right does", "١. ما تقدّمه بي رايت"),
       paragraphs: [
         t(
-          "Be Right is a managed home-maintenance service in Lebanon. You describe the problem through guided questions and photos; a Be Right specialist reviews it, confirms urgency, prepares a quote and assigns a qualified, contracted technician who carries out the work.",
-          "بي رايت خدمة صيانة منزلية مُدارة في لبنان. تصف المشكلة عبر أسئلة موجّهة وصور؛ يراجعها مختص من بي رايت، ويؤكّد درجة الاستعجال، ويعدّ عرض سعر، ويعيّن فنياً مؤهلاً متعاقداً يتولّى تنفيذ العمل.",
+          "Be Right is a managed home-maintenance service. You describe the problem through guided questions and photos; a Be Right specialist reviews it, confirms urgency, prepares a quote and assigns a qualified, contracted technician who carries out the work.",
+          "بي رايت خدمة صيانة منزلية مُدارة. تصف المشكلة عبر أسئلة موجّهة وصور؛ يراجعها مختص من بي رايت، ويؤكّد درجة الاستعجال، ويعدّ عرض سعر، ويعيّن فنياً مؤهلاً متعاقداً يتولّى تنفيذ العمل.",
         ),
         t(
-          "Be Right is not an emergency service. If there is fire, a gas smell, sparks or any immediate danger, leave the area and call Civil Defense on 125 (Red Cross 140, Internal Security Forces 112) before contacting us.",
-          "بي رايت ليست خدمة طوارئ. في حال وجود حريق أو رائحة غاز أو شرر أو أي خطر فوري، ابتعد عن المكان واتصل بالدفاع المدني على ١٢٥ (الصليب الأحمر ١٤٠، قوى الأمن الداخلي ١١٢) قبل التواصل معنا.",
+          "Be Right is not an emergency service. If there is fire, a gas smell, sparks or any immediate danger, leave the area and call your local emergency number before contacting us.",
+          "بي رايت ليست خدمة طوارئ. في حال وجود حريق أو رائحة غاز أو شرر أو أي خطر فوري، ابتعد عن المكان واتصل برقم الطوارئ المحلي قبل التواصل معنا.",
         ),
       ],
     },
@@ -113,8 +114,8 @@ export const TERMS: LegalDocument = {
       title: t("9. Liability", "٩. المسؤولية"),
       paragraphs: [
         t(
-          "We are responsible for doing the work with reasonable care and skill. To the extent Lebanese law allows, we are not liable for indirect losses, and our liability for a job is limited to the amount paid for it. Nothing here limits rights you have as a consumer under Lebanese law.",
-          "نحن مسؤولون عن تنفيذ العمل بعناية ومهارة معقولتين. وبالقدر الذي يسمح به القانون اللبناني، لا نتحمّل مسؤولية الخسائر غير المباشرة، وتقتصر مسؤوليتنا عن أي مهمة على المبلغ المدفوع لها. ولا يحدّ أي من ذلك من حقوقك كمستهلك بموجب القانون اللبناني.",
+          `We are responsible for doing the work with reasonable care and skill. To the extent ${COMPANY.governingLaw.en} allows, we are not liable for indirect losses, and our liability for a job is limited to the amount paid for it. Nothing here limits rights you have as a consumer under the law that applies to you.`,
+          `نحن مسؤولون عن تنفيذ العمل بعناية ومهارة معقولتين. وبالقدر الذي يسمح به ${COMPANY.governingLaw.ar}، لا نتحمّل مسؤولية الخسائر غير المباشرة، وتقتصر مسؤوليتنا عن أي مهمة على المبلغ المدفوع لها. ولا يحدّ أي من ذلك من حقوقك كمستهلك بموجب القانون الذي يسري عليك.`,
         ),
       ],
     },
@@ -122,8 +123,8 @@ export const TERMS: LegalDocument = {
       title: t("10. Changes, law and contact", "١٠. التعديلات والقانون والتواصل"),
       paragraphs: [
         t(
-          "We may update these terms; we'll show the new date here and ask you to accept material changes. These terms are governed by Lebanese law, and the courts of Beirut have jurisdiction.",
-          "قد نحدّث هذه الشروط؛ وسنعرض التاريخ الجديد هنا ونطلب موافقتك على التعديلات الجوهرية. تخضع هذه الشروط للقانون اللبناني، وتختص محاكم بيروت بالنظر في أي نزاع.",
+          `We may update these terms; we'll show the new date here and ask you to accept material changes. These terms are governed by ${COMPANY.governingLaw.en}, and ${COMPANY.courts.en} have jurisdiction.`,
+          `قد نحدّث هذه الشروط؛ وسنعرض التاريخ الجديد هنا ونطلب موافقتك على التعديلات الجوهرية. تخضع هذه الشروط لـ${COMPANY.governingLaw.ar}، وتختص ${COMPANY.courts.ar} بالنظر في أي نزاع.`,
         ),
         t(
           `${COMPANY.legalName}, ${COMPANY.address}. Email: ${COMPANY.email}`,
@@ -137,8 +138,8 @@ export const TERMS: LegalDocument = {
 export const PRIVACY: LegalDocument = {
   title: t("Privacy Policy", "سياسة الخصوصية"),
   intro: t(
-    `This policy explains what personal data ${COMPANY.legalName} ("Be Right", "we") collects through ${COMPANY.website}, why, who sees it and your rights. We process personal data in line with Lebanese Law No. 81/2018 on Electronic Transactions and Personal Data.`,
-    `توضح هذه السياسة البيانات الشخصية التي تجمعها ${COMPANY.legalName} ("بي رايت"، "نحن") عبر ${COMPANY.website}، وسبب جمعها، ومن يطّلع عليها، وحقوقك. نعالج البيانات الشخصية وفقاً للقانون اللبناني رقم ٨١/٢٠١٨ المتعلق بالمعاملات الإلكترونية والبيانات ذات الطابع الشخصي.`,
+    `This policy explains what personal data ${COMPANY.legalName} ("Be Right", "we") collects through ${COMPANY.website}, why, who sees it and your rights. We process personal data in line with ${COMPANY.dataProtectionLaw.en}.`,
+    `توضح هذه السياسة البيانات الشخصية التي تجمعها ${COMPANY.legalName} ("بي رايت"، "نحن") عبر ${COMPANY.website}، وسبب جمعها، ومن يطّلع عليها، وحقوقك. نعالج البيانات الشخصية وفقاً لـ${COMPANY.dataProtectionLaw.ar}.`,
   ),
   sections: [
     {
@@ -187,8 +188,8 @@ export const PRIVACY: LegalDocument = {
           "نستعين بمزوّدين موثوقين لتشغيل الخدمة: Supabase (قاعدة البيانات وتسجيل الدخول وتخزين الملفات، مستضافة في الاتحاد الأوروبي – فرانكفورت)، وNetlify (استضافة الموقع)، وResend (رسائل الحساب وتحديثات الطلبات، الاتحاد الأوروبي)، وCloudflare (نطاق الموقع، وإحصاءات الزيارات بدون ملفات تعريف ارتباط أو ملفات شخصية)، ومزوّد خرائط هو OpenStreetMap أو MapTiler (صور الخرائط، ويتلقى عنوان IP الخاص بك عند تحميل الخريطة). يعالج هؤلاء البيانات بناءً على تعليماتنا فقط. ولا نبيع بياناتك أبداً.",
         ),
         t(
-          "Because some providers are outside Lebanon, your data may be transferred abroad; we choose providers with appropriate security and contractual safeguards.",
-          "بما أن بعض المزوّدين خارج لبنان، قد تُنقل بياناتك إلى الخارج؛ ونختار مزوّدين يوفّرون ضمانات أمنية وتعاقدية مناسبة.",
+          "Because some providers are in other countries, your data may be transferred abroad; we choose providers with appropriate security and contractual safeguards.",
+          "بما أن بعض المزوّدين في بلدان أخرى، قد تُنقل بياناتك إلى الخارج؛ ونختار مزوّدين يوفّرون ضمانات أمنية وتعاقدية مناسبة.",
         ),
       ],
     },

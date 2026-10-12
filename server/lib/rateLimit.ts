@@ -10,7 +10,7 @@ const DAY = 24 * HOUR;
 /**
  * Caps on endpoints that write files or rows for anonymous visitors. Generous for real
  * people (an applicant uploads 2 documents, maybe replacing one), tight for scripts.
- * Lebanese mobile carriers put many phones behind one IP, so per-IP caps stay loose and
+ * Mobile carriers often put many phones behind one IP, so per-IP caps stay loose and
  * the daily total is what actually protects storage.
  */
 export const LIMITS = {

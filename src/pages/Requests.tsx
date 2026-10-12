@@ -336,7 +336,7 @@ export default function Requests() {
                         <p className="mt-6 rounded-xl bg-navy/5 p-3 text-sm font-semibold text-navy">
                           {p(t.requests.cancelAsked).replace(
                             "{date}",
-                            new Date(detail.data.request.cancelRequestedAt).toLocaleDateString(lang === "ar" ? "ar-LB" : "en-GB", {
+                            new Date(detail.data.request.cancelRequestedAt).toLocaleDateString(lang === "ar" ? "ar" : "en-GB", {
                               day: "numeric",
                               month: "long",
                             }),

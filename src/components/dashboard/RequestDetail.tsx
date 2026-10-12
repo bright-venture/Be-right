@@ -62,7 +62,7 @@ export function RequestDetail({
   const cat = CATEGORY_MAP[r.category];
   const tech = d.technician;
   const dateTime = (v: Date | string) =>
-    new Date(v).toLocaleString(lang === "ar" ? "ar-LB" : "en-GB", { dateStyle: "medium", timeStyle: "short" });
+    new Date(v).toLocaleString(lang === "ar" ? "ar" : "en-GB", { dateStyle: "medium", timeStyle: "short" });
 
   return (
     // key on the request: switching requests resets every form below
@@ -626,7 +626,7 @@ function Preparation({ request: r, onSaved }: { request: RequestRow; onSaved: ()
             <span className="text-xs text-navy/70">
               {p(t.dash4.prepSaved).replace(
                 "{time}",
-                new Date(r.preparedAt).toLocaleString(lang === "ar" ? "ar-LB" : "en-GB", { dateStyle: "short", timeStyle: "short" }),
+                new Date(r.preparedAt).toLocaleString(lang === "ar" ? "ar" : "en-GB", { dateStyle: "short", timeStyle: "short" }),
               )}
             </span>
           )}

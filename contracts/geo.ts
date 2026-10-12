@@ -1,21 +1,23 @@
-// Service area and map defaults.
+// Map pins and directions. Be Right takes bookings anywhere: the team confirms per request
+// that someone can come.
 
-/** Generous box around Lebanon; a pin outside it is almost certainly a mistake. */
-export const LEBANON_BOUNDS = { minLat: 32.9, maxLat: 34.8, minLng: 34.9, maxLng: 36.8 } as const;
-
-/** Map starts over Beirut until the customer moves the pin. */
-export const BEIRUT = { lat: 33.8938, lng: 35.5018 } as const;
-
-export function isInLebanon(lat: number, lng: number) {
+/** A real point on the map (0, 0 in the ocean means "never set"). */
+export function isValidPin(lat: number, lng: number) {
   return (
-    lat >= LEBANON_BOUNDS.minLat &&
-    lat <= LEBANON_BOUNDS.maxLat &&
-    lng >= LEBANON_BOUNDS.minLng &&
-    lng <= LEBANON_BOUNDS.maxLng
+    Number.isFinite(lat) &&
+    Number.isFinite(lng) &&
+    lat >= -90 &&
+    lat <= 90 &&
+    lng >= -180 &&
+    lng <= 180 &&
+    !(lat === 0 && lng === 0)
   );
 }
 
-/** Turn-by-turn directions in the apps technicians in Lebanon use. */
+/** Before the customer's location is known, the map shows the whole world. */
+export const WORLD_VIEW = { lat: 20, lng: 0, zoom: 2 } as const;
+
+/** Turn-by-turn directions in the apps technicians use. */
 export function directionsLinks(lat: number, lng: number) {
   return {
     google: `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`,

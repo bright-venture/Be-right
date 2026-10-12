@@ -7,10 +7,10 @@ export type ExperienceLevel = (typeof EXPERIENCE_LEVELS)[number];
 
 export const EXPERIENCE_LABELS: Record<ExperienceLevel, LocalText> = {
   lt1: { en: "Under 1 year", ar: "أقل من سنة" },
-  "1-3": { en: "1–3 years", ar: "١–٣ سنين" },
-  "3-5": { en: "3–5 years", ar: "٣–٥ سنين" },
-  "5-10": { en: "5–10 years", ar: "٥–١٠ سنين" },
-  "10+": { en: "10+ years", ar: "+١٠ سنين" },
+  "1-3": { en: "1–3 years", ar: "١–٣ سنوات" },
+  "3-5": { en: "3–5 years", ar: "٣–٥ سنوات" },
+  "5-10": { en: "5–10 years", ar: "٥–١٠ سنوات" },
+  "10+": { en: "10+ years", ar: "+١٠ سنوات" },
 };
 
 export const AVAILABILITY = ["full_time", "part_time", "weekends"] as const;
@@ -19,7 +19,7 @@ export type Availability = (typeof AVAILABILITY)[number];
 export const AVAILABILITY_LABELS: Record<Availability, LocalText> = {
   full_time: { en: "Full time", ar: "دوام كامل" },
   part_time: { en: "Part time", ar: "دوام جزئي" },
-  weekends: { en: "Weekends only", ar: "بس ويك إند" },
+  weekends: { en: "Weekends only", ar: "عطلة نهاية الأسبوع فقط" },
 };
 
 /** Whether the technician works on their own or for a company (required; a company needs its name). */
@@ -27,13 +27,13 @@ export const WORK_MODES = ["independent", "company"] as const;
 export type WorkMode = (typeof WORK_MODES)[number];
 
 export const WORK_MODE_LABELS: Record<WorkMode, LocalText> = {
-  independent: { en: "On my own", ar: "لحالي" },
+  independent: { en: "On my own", ar: "بمفردي" },
   company: { en: "With a company", ar: "مع شركة" },
 };
 
 /** The same, as staff read it about someone else. */
 export const WORK_MODE_STAFF_LABELS: Record<WorkMode, LocalText> = {
-  independent: { en: "On their own", ar: "لحاله" },
+  independent: { en: "On their own", ar: "بمفرده" },
   company: { en: "With a company", ar: "مع شركة" },
 };
 
@@ -42,11 +42,11 @@ export const TRANSPORT = ["none", "motorcycle", "car", "van", "truck"] as const;
 export type Transport = (typeof TRANSPORT)[number];
 
 export const TRANSPORT_LABELS: Record<Transport, LocalText> = {
-  none: { en: "No transport", ar: "ما عندي" },
-  motorcycle: { en: "Motorcycle", ar: "موتو" },
+  none: { en: "No transport", ar: "لا توجد وسيلة نقل" },
+  motorcycle: { en: "Motorcycle", ar: "دراجة نارية" },
   car: { en: "Car", ar: "سيارة" },
-  van: { en: "Van / pick-up", ar: "فان / بيك آب" },
-  truck: { en: "Truck", ar: "كميون" },
+  van: { en: "Van / pick-up", ar: "شاحنة صغيرة / بيك آب" },
+  truck: { en: "Truck", ar: "شاحنة" },
 };
 
 /** Documents a technician applicant uploads, in the order the form shows them. */

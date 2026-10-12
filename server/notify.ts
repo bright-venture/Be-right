@@ -84,18 +84,19 @@ async function safely(name: string, fn: () => Promise<void>) {
 
 /* ---------- data ---------- */
 
-/** A meeting's date and time as people in Lebanon read it, in each language. */
-function meetingTime(at: Date): Text {
+/** A meeting's date and time in the time zone it was booked in, with that zone shown. */
+function meetingTime(at: Date, timeZone: string | null): Text {
   const format = (locale: string) =>
     new Intl.DateTimeFormat(locale, {
-      timeZone: "Asia/Beirut",
+      timeZone: timeZone ?? "UTC",
       weekday: "long",
       day: "numeric",
       month: "long",
       hour: "2-digit",
       minute: "2-digit",
+      timeZoneName: "short",
     }).format(at);
-  return { en: format("en-GB"), ar: format("ar-LB") };
+  return { en: format("en-GB"), ar: format("ar") };
 }
 
 /** Everyone with one role (admins, or specialists only). */
@@ -131,7 +132,7 @@ const local = (text: LocalText | undefined, fallback: string): Text => text ?? {
 function describe(job: Job) {
   const r = job.request;
   const day = (lang: Lang) =>
-    new Intl.DateTimeFormat(lang === "ar" ? "ar-LB" : "en-GB", {
+    new Intl.DateTimeFormat(lang === "ar" ? "ar" : "en-GB", {
       weekday: "long",
       day: "numeric",
       month: "long",
@@ -162,16 +163,16 @@ export const notify = {
       const d = describe(job);
       await send(await specialistEmails(), {
         subject: both(`New request #${d.id}: ${d.category.en}, ${d.area}`, `طلب جديد #${d.id}: ${d.category.ar}، ${d.area}`),
-        title: both("A new request needs review", "في طلب جديد بحاجة مراجعة"),
+        title: both("A new request needs review", "يوجد طلب جديد بحاجة إلى مراجعة"),
         lines: [
           both(
             `${job.customer?.name ?? "A customer"} booked ${d.category.en} in ${d.area} for ${d.when.en}.`,
-            `${job.customer?.name ?? "عميل"} حجز ${d.category.ar} ب${d.area} ليوم ${d.when.ar}.`,
+            `حجز ${job.customer?.name ?? "عميل"} خدمة ${d.category.ar} في ${d.area} ليوم ${d.when.ar}.`,
           ),
           both(`Suggested urgency: ${d.urgency.en}.`, `الاستعجال المقترح: ${d.urgency.ar}.`),
         ],
         path: "/dashboard",
-        button: both("Open the dashboard", "افتح لوحة التحكم"),
+        button: both("Open the dashboard", "فتح لوحة التحكم"),
       });
     }),
 
@@ -190,20 +191,20 @@ export const notify = {
         subject: revised
           ? both(`Updated price for request #${d.id}`, `سعر محدّث للطلب #${d.id}`)
           : both(`Your price for request #${d.id} is ready`, `سعر طلبك #${d.id} جاهز`),
-        title: revised ? both("Your price was updated", "تحدّث السعر") : both("Your price is ready", "السعر جاهز"),
+        title: revised ? both("Your price was updated", "تم تحديث السعر") : both("Your price is ready", "السعر جاهز"),
         lines: [
           both(
             `Our specialist reviewed your ${d.category.en} request. Price: ${amount}.`,
-            `المختص راجع طلب ${d.category.ar} تبعك. السعر: ${amount}.`,
+            `راجع المختص طلب ${d.category.ar} الخاص بك. السعر: ${amount}.`,
           ),
           ...(job.request.quoteNote ? [both(job.request.quoteNote, job.request.quoteNote)] : []),
           both(
             "Approve it to book the visit. Nothing is charged without your approval.",
-            "وافق عليه لنحجز الزيارة. ما في شي بينحسب بلا موافقتك.",
+            "وافق عليه لنحجز الزيارة. لا يُحتسب أي شيء دون موافقتك.",
           ),
         ],
         path: "/requests",
-        button: both("See and approve", "شوف ووافق"),
+        button: both("See and approve", "مراجعة وموافقة"),
       });
     }),
 
@@ -214,16 +215,16 @@ export const notify = {
       const d = describe(job);
       const amount = `$${job.request.quoteAmount}`;
       await send(await specialistEmails(), {
-        subject: both(`Price approved for #${d.id}: assign a technician`, `انوافق على سعر #${d.id}: عيّن فني`),
-        title: both("The customer approved the price", "العميل وافق عالسعر"),
+        subject: both(`Price approved for #${d.id}: assign a technician`, `تمت الموافقة على سعر الطلب #${d.id}: أسند فنّياً`),
+        title: both("The customer approved the price", "وافق العميل على السعر"),
         lines: [
           both(
             `Request #${d.id} (${d.category.en}, ${d.area}) was approved at ${amount}. Assign a technician and schedule the visit for ${d.when.en}.`,
-            `الطلب #${d.id} (${d.category.ar}، ${d.area}) انوافق عليه بـ ${amount}. عيّن فني وحدّد الزيارة ليوم ${d.when.ar}.`,
+            `تمت الموافقة على الطلب #${d.id} (${d.category.ar}، ${d.area}) بمبلغ ${amount}. أسند فنّياً وحدّد موعد الزيارة ليوم ${d.when.ar}.`,
           ),
         ],
         path: "/dashboard",
-        button: both("Open the dashboard", "افتح لوحة التحكم"),
+        button: both("Open the dashboard", "فتح لوحة التحكم"),
       });
     }),
 
@@ -234,14 +235,14 @@ export const notify = {
       const d = describe(job);
       const line = both(
         `The customer cancelled request #${d.id} (${d.category.en}, ${d.area}).`,
-        `العميل لغى الطلب #${d.id} (${d.category.ar}، ${d.area}).`,
+        `ألغى العميل الطلب #${d.id} (${d.category.ar}، ${d.area}).`,
       );
       await send(await specialistEmails(), {
-        subject: both(`Request #${d.id} cancelled by the customer`, `العميل لغى الطلب #${d.id}`),
-        title: both("A request was cancelled", "انلغى طلب"),
+        subject: both(`Request #${d.id} cancelled by the customer`, `ألغى العميل الطلب #${d.id}`),
+        title: both("A request was cancelled", "تم إلغاء طلب"),
         lines: [line],
         path: "/dashboard",
-        button: both("Open the dashboard", "افتح لوحة التحكم"),
+        button: both("Open the dashboard", "فتح لوحة التحكم"),
       });
       if (job.technician) await send([job.technician.email], jobCancelled(d.id));
     }),
@@ -253,8 +254,8 @@ export const notify = {
       const d = describe(job);
       const reason = job.request.cancelReason;
       await send(await specialistEmails(), {
-        subject: both(`Customer asked to cancel #${d.id}`, `العميل طلب يلغي #${d.id}`),
-        title: both("A customer asked to cancel their visit", "عميل طلب يلغي زيارته"),
+        subject: both(`Customer asked to cancel #${d.id}`, `طلب العميل إلغاء #${d.id}`),
+        title: both("A customer asked to cancel their visit", "طلب عميل إلغاء زيارته"),
         lines: [
           both(
             `Request #${d.id} (${d.category.en}, ${d.area}) is scheduled for ${d.when.en}.`,
@@ -263,11 +264,11 @@ export const notify = {
           ...(reason ? [both(`Their reason: ${reason}`, `السبب: ${reason}`)] : []),
           both(
             "Confirm with them and the technician, then cancel it on the dashboard.",
-            "أكّد معه ومع الفني، وبعدين الغيه من لوحة التحكم.",
+            "تأكّد منه ومن الفنّي، ثم ألغِه من لوحة التحكم.",
           ),
         ],
         path: "/dashboard",
-        button: both("Open the dashboard", "افتح لوحة التحكم"),
+        button: both("Open the dashboard", "فتح لوحة التحكم"),
       });
     }),
 
@@ -279,31 +280,31 @@ export const notify = {
       if (job.technician && previousTechnicianId !== job.technician.id) {
         await send([job.technician.email], {
           subject: both(`New job #${d.id}: ${d.category.en}, ${d.area}`, `مهمة جديدة #${d.id}: ${d.category.ar}، ${d.area}`),
-          title: both("You have a new job", "عندك مهمة جديدة"),
+          title: both("You have a new job", "لديك مهمة جديدة"),
           lines: [
-            both(`${d.category.en} in ${d.area}, ${d.when.en}.`, `${d.category.ar} ب${d.area}، ${d.when.ar}.`),
+            both(`${d.category.en} in ${d.area}, ${d.when.en}.`, `${d.category.ar} في ${d.area}، ${d.when.ar}.`),
             both(
               "The address, photos and the specialist's notes are in your jobs.",
-              "العنوان والصور وملاحظات المختص موجودين بمهامك.",
+              "العنوان والصور وملاحظات المختص موجودة في مهامك.",
             ),
           ],
           path: "/tech",
-          button: both("Open my jobs", "افتح مهامي"),
+          button: both("Open my jobs", "فتح مهامي"),
         });
       }
       if (previousTechnicianId && previousTechnicianId !== job.technician?.id) {
         const previous = await getDb().query.users.findFirst({ where: eq(users.id, previousTechnicianId) });
         await send([previous?.email], {
-          subject: both(`Job #${d.id} was reassigned`, `المهمة #${d.id} انعطت لفني تاني`),
-          title: both("A job was given to another technician", "مهمة انعطت لفني تاني"),
+          subject: both(`Job #${d.id} was reassigned`, `أُسندت المهمة #${d.id} إلى فنّي آخر`),
+          title: both("A job was given to another technician", "أُسندت مهمة إلى فنّي آخر"),
           lines: [
             both(
               `Job #${d.id} (${d.category.en}, ${d.area}) is no longer in your jobs. No need to go.`,
-              `المهمة #${d.id} (${d.category.ar}، ${d.area}) ما عادت بمهامك. ما في داعي تروح.`,
+              `لم تعد المهمة #${d.id} (${d.category.ar}، ${d.area}) ضمن مهامك. لا داعي للذهاب.`,
             ),
           ],
           path: "/tech",
-          button: both("Open my jobs", "افتح مهامي"),
+          button: both("Open my jobs", "فتح مهامي"),
         });
       }
     }),
@@ -319,21 +320,21 @@ export const notify = {
         title: both("Your visit is booked", "زيارتك محجوزة"),
         lines: [
           both(`${d.category.en}, ${d.when.en}.`, `${d.category.ar}، ${d.when.ar}.`),
-          ...(techName ? [both(`Your technician: ${techName}.`, `الفني تبعك: ${techName}.`)] : []),
+          ...(techName ? [both(`Your technician: ${techName}.`, `الفنّي المكلّف: ${techName}.`)] : []),
           both(
             "When they're on the way, you can follow them on the map in your requests.",
-            "لما يكون بالطريق، فيك تتابعه عالخريطة بطلباتك.",
+            "عندما يكون في الطريق، يمكنك متابعته على الخريطة في صفحة طلباتك.",
           ),
         ],
         path: "/requests",
-        button: both("See my request", "شوف طلبي"),
+        button: both("See my request", "عرض طلبي"),
       });
       await send([job.technician?.email], {
         subject: both(`Job #${d.id} scheduled: ${d.when.en}`, `المهمة #${d.id} محدّدة: ${d.when.ar}`),
         title: both("Your job is scheduled", "مهمتك محدّدة"),
-        lines: [both(`${d.category.en} in ${d.area}, ${d.when.en}.`, `${d.category.ar} ب${d.area}، ${d.when.ar}.`)],
+        lines: [both(`${d.category.en} in ${d.area}, ${d.when.en}.`, `${d.category.ar} في ${d.area}، ${d.when.ar}.`)],
         path: "/tech",
-        button: both("Open my jobs", "افتح مهامي"),
+        button: both("Open my jobs", "فتح مهامي"),
       });
     }),
 
@@ -343,17 +344,17 @@ export const notify = {
       const job = await loadJob(id);
       const d = describe(job);
       await send([job.customer?.email], {
-        subject: both(`Job #${d.id} is done`, `المهمة #${d.id} خلصت`),
-        title: both("Your job is done", "شغلك خلص"),
+        subject: both(`Job #${d.id} is done`, `اكتملت المهمة #${d.id}`),
+        title: both("Your job is done", "اكتمل العمل"),
         lines: [
-          both(`Your ${d.category.en} job is complete. Thank you for choosing Be Right.`, `شغل ${d.category.ar} خلص. شكراً لأنك اخترت بي رايت.`),
+          both(`Your ${d.category.en} job is complete. Thank you for choosing Be Right.`, `اكتمل عمل ${d.category.ar}. شكراً لاختيارك بي رايت.`),
           both(
             `If anything isn't right within ${WORKMANSHIP_GUARANTEE_DAYS} days, reply to this email and we'll come back to make it right.`,
-            `إذا في شي مش مزبوط خلال ${arabicDays(WORKMANSHIP_GUARANTEE_DAYS)}، رد على هالإيميل ومنرجع منصلّحه.`,
+            `إذا لم يكن شيء ما على ما يرام خلال ${arabicDays(WORKMANSHIP_GUARANTEE_DAYS)}، ردّ على هذا البريد وسنعود لإصلاحه.`,
           ),
         ],
         path: "/requests",
-        button: both("See my request", "شوف طلبي"),
+        button: both("See my request", "عرض طلبي"),
       });
     }),
 
@@ -363,16 +364,16 @@ export const notify = {
       const job = await loadJob(id);
       const d = describe(job);
       await send([job.customer?.email], {
-        subject: both(`Request #${d.id} was cancelled`, `انلغى الطلب #${d.id}`),
-        title: both("Your request was cancelled", "انلغى طلبك"),
+        subject: both(`Request #${d.id} was cancelled`, `أُلغي الطلب #${d.id}`),
+        title: both("Your request was cancelled", "أُلغي طلبك"),
         lines: [
           both(
             `Our team cancelled your ${d.category.en} request #${d.id}. If you didn't expect this, reply to this email.`,
-            `فريقنا لغى طلب ${d.category.ar} #${d.id}. إذا ما كنت متوقّع هالشي، رد على هالإيميل.`,
+            `ألغى فريقنا طلب ${d.category.ar} #${d.id}. إذا لم تكن تتوقع ذلك، ردّ على هذا البريد.`,
           ),
         ],
         path: "/requests",
-        button: both("See my requests", "شوف طلباتي"),
+        button: both("See my requests", "عرض طلباتي"),
       });
       if (job.technician) await send([job.technician.email], jobCancelled(d.id));
     }),
@@ -384,22 +385,22 @@ export const notify = {
       const d = describe(job);
       const fee = `$${job.request.visitFee}`;
       const why = {
-        no_work: both("no repair was done at the visit", "ما صار تصليح بالزيارة"),
-        no_access: both("nobody was there at the agreed time", "ما كان في حدا بالموعد المتفق عليه"),
-        late_cancel: both("the visit was cancelled after the technician set off", "الزيارة تلغت بعد ما المعلّم طلع"),
+        no_work: both("no repair was done at the visit", "لم يتم إصلاح خلال الزيارة"),
+        no_access: both("nobody was there at the agreed time", "لم يكن أحد موجوداً في الموعد المتفق عليه"),
+        late_cancel: both("the visit was cancelled after the technician set off", "أُلغيت الزيارة بعد انطلاق الفنّي"),
       }[job.request.visitFeeReason ?? "no_work"];
       await send([job.customer?.email], {
-        subject: both(`Request #${d.id} closed with a ${fee} visit fee`, `تسكّر الطلب #${d.id} مع رسم زيارة ${fee}`),
-        title: both("Your request was closed", "تسكّر طلبك"),
+        subject: both(`Request #${d.id} closed with a ${fee} visit fee`, `أُغلق الطلب #${d.id} مع رسوم زيارة ${fee}`),
+        title: both("Your request was closed", "أُغلق طلبك"),
         lines: [
           both(
             `Our team closed your ${d.category.en} request #${d.id} because ${why.en}. Only the ${fee} visit fee applies.`,
-            `فريقنا سكّر طلب ${d.category.ar} #${d.id} لأنه ${why.ar}. بس رسم الزيارة ${fee} بيتطبّق.`,
+            `أغلق فريقنا طلب ${d.category.ar} #${d.id} لأنه ${why.ar}. تُطبَّق رسوم الزيارة ${fee} فقط.`,
           ),
-          both("If something isn't right, reply to this email.", "إذا في شي مش مظبوط، رد على هالإيميل."),
+          both("If something isn't right, reply to this email.", "إذا كان هناك خطأ ما، ردّ على هذا البريد."),
         ],
         path: "/requests",
-        button: both("See my requests", "شوف طلباتي"),
+        button: both("See my requests", "عرض طلباتي"),
       });
       if (job.technician) await send([job.technician.email], jobCancelled(d.id));
     }),
@@ -410,17 +411,17 @@ export const notify = {
       const job = await loadJob(id);
       const d = describe(job);
       await send(await specialistEmails(), {
-        subject: both(`Job #${d.id}: the technician reported a visit without a repair`, `المهمة #${d.id}: المعلّم بلّغ عن زيارة بلا تصليح`),
-        title: both("A visit needs your decision", "في زيارة بدها قرارك"),
+        subject: both(`Job #${d.id}: the technician reported a visit without a repair`, `المهمة #${d.id}: أبلغ الفنّي عن زيارة دون إصلاح`),
+        title: both("A visit needs your decision", "زيارة بحاجة إلى قرارك"),
         lines: [
-          both(`${job.technician?.name ?? "The technician"}: ${note}`, `${job.technician?.name ?? "المعلّم"}: ${note}`),
+          both(`${job.technician?.name ?? "The technician"}: ${note}`, `${job.technician?.name ?? "الفنّي"}: ${note}`),
           both(
             "Open the job to close it with the visit fee, or keep it going.",
-            "افتح المهمة لتسكّرها مع رسم الزيارة، أو كمّل فيها.",
+            "افتح المهمة لإغلاقها مع رسوم الزيارة، أو لمتابعتها.",
           ),
         ],
         path: "/dashboard",
-        button: both("Open the dashboard", "افتح لوحة التحكم"),
+        button: both("Open the dashboard", "فتح لوحة التحكم"),
       });
     }),
 
@@ -431,21 +432,21 @@ export const notify = {
       const d = describe(job);
       const originalId = job.request.guaranteeFor;
       await send(await specialistEmails(), {
-        subject: both(`Guarantee claim #${d.id} on job #${originalId}`, `مطالبة ضمان #${d.id} عالمهمة #${originalId}`),
-        title: both("A customer reported a problem after a job", "عميل بلّغ عن مشكلة بعد مهمة"),
+        subject: both(`Guarantee claim #${d.id} on job #${originalId}`, `مطالبة ضمان #${d.id} على المهمة #${originalId}`),
+        title: both("A customer reported a problem after a job", "أبلغ عميل عن مشكلة بعد مهمة"),
         lines: [
           both(
             `${job.customer?.name ?? "A customer"} says job #${originalId} (${d.category.en}, ${d.area}) isn't right.`,
-            `${job.customer?.name ?? "عميل"} بيقول إنو المهمة #${originalId} (${d.category.ar}، ${d.area}) مش مزبوطة.`,
+            `يقول ${job.customer?.name ?? "عميل"} إن المهمة #${originalId} (${d.category.ar}، ${d.area}) لم تُنجز بشكل صحيح.`,
           ),
           ...(job.request.notes ? [both(`"${job.request.notes}"`, `«${job.request.notes}»`)] : []),
           both(
             `Review it, then confirm a free return visit or send a price if it isn't covered. Preferred day: ${d.when.en}.`,
-            `راجعها، وبعدين أكّد زيارة مجانية أو ابعت سعر إذا مش مشمولة. اليوم المفضّل: ${d.when.ar}.`,
+            `راجعها، ثم أكّد زيارة مجانية أو أرسل سعراً إذا لم تكن مشمولة. اليوم المفضّل: ${d.when.ar}.`,
           ),
         ],
         path: "/dashboard",
-        button: both("Open the dashboard", "افتح لوحة التحكم"),
+        button: both("Open the dashboard", "فتح لوحة التحكم"),
       });
     }),
 
@@ -455,16 +456,16 @@ export const notify = {
       const job = await loadJob(id);
       const d = describe(job);
       await send([job.customer?.email], {
-        subject: both(`We'll come back for free: request #${d.id}`, `منرجع ببلاش: الطلب #${d.id}`),
-        title: both("Your return visit is free", "زيارتك الجاية ببلاش"),
+        subject: both(`We'll come back for free: request #${d.id}`, `زيارة مجانية: الطلب #${d.id}`),
+        title: both("Your return visit is free", "زيارتك القادمة مجانية"),
         lines: [
           both(
             `This is covered by our ${WORKMANSHIP_GUARANTEE_DAYS}-day guarantee, so there's nothing to pay. We'll confirm the date and technician shortly.`,
-            `هالشي مشمول بضمانة الـ${arabicDays(WORKMANSHIP_GUARANTEE_DAYS)}، فما في شي تدفعه. منأكّدلك الموعد والمعلّم قريباً.`,
+            `هذا مشمول بضمان الـ${arabicDays(WORKMANSHIP_GUARANTEE_DAYS)}، فلا شيء عليك دفعه. سنؤكّد لك الموعد والفنّي قريباً.`,
           ),
         ],
         path: "/requests",
-        button: both("See my request", "شوف طلبي"),
+        button: both("See my request", "عرض طلبي"),
       });
     }),
 
@@ -482,20 +483,20 @@ export const notify = {
         // The database may be the problem: the ADMIN_EMAILS setting still gets the email.
       }
       await send([...(env.adminEmails ?? []), ...admins], {
-        subject: both("Server errors on Be Right", "أخطاء عالسيرفر ببي رايت"),
-        title: both("Something went wrong on the server", "صار خطأ عالسيرفر"),
+        subject: both("Server errors on Be Right", "أخطاء في خادم بي رايت"),
+        title: both("Something went wrong on the server", "حدث خطأ في الخادم"),
         lines: [
           both(
             `An unexpected error happened while handling "${path}". There may be more: you get at most one of these emails an hour.`,
-            `صار خطأ مش متوقع وقت معالجة "${path}". ممكن يكون في غيره: بيوصلك إيميل واحد متل هيدا بالساعة كحد أقصى.`,
+            `حدث خطأ غير متوقع أثناء معالجة "${path}". قد توجد أخطاء أخرى: تصلك رسالة واحدة كهذه في الساعة كحد أقصى.`,
           ),
           both(
             "The details are in Netlify: Logs, Functions, api.",
-            "التفاصيل بـNetlify: Logs، Functions، api.",
+            "التفاصيل في Netlify: Logs، Functions، api.",
           ),
         ],
         path: "/admin",
-        button: both("Open the admin area", "افتح الإدارة"),
+        button: both("Open the admin area", "فتح الإدارة"),
       });
     }),
 
@@ -509,12 +510,12 @@ export const notify = {
       const trade = local(CATEGORY_MAP[app.trade]?.name, app.trade);
       await send(await emailsOf("admin"), {
         subject: both(`New technician application: ${app.name}`, `طلب توظيف فني جديد: ${app.name}`),
-        title: both("Someone applied to work with us", "في حدا قدّم ليشتغل معنا"),
+        title: both("Someone applied to work with us", "تقدّم شخص للعمل معنا"),
         lines: [
           both(`${app.name}: ${trade.en}, ${app.area}.`, `${app.name}: ${trade.ar}، ${app.area}.`),
           both(
-            "Check the application and its documents, then approve it for the specialists.",
-            "راجع الطلب ومستنداته، وبعدين وافق عليه للمختصين.",
+            "Check the application and its documents, book an in-person meeting, then approve it.",
+            "راجع الطلب ومستنداته، واحجز مقابلة، ثم وافق عليه.",
           ),
         ],
         path: "/admin?tab=applications",
@@ -530,29 +531,29 @@ export const notify = {
       });
       if (!app?.email || !app.meetingAt || !app.meetingPlace) return;
       const trade = local(CATEGORY_MAP[app.trade]?.name, app.trade);
-      const when = meetingTime(app.meetingAt);
+      const when = meetingTime(app.meetingAt, app.meetingTimeZone);
       await send([app.email], {
         subject: rescheduled
           ? both("New time for your meeting with Be Right", "موعد جديد لمقابلتك مع بي رايت")
           : both("Your meeting with Be Right", "مقابلتك مع بي رايت"),
         title: rescheduled
-          ? both("Your meeting has a new time", "مقابلتك صار إلها موعد جديد")
-          : both("Let's meet in person", "خلّينا نلتقي شخصياً"),
+          ? both("Your meeting has a new time", "تم تحديد موعد جديد لمقابلتك")
+          : both("Let's meet in person", "لنلتقِ شخصياً"),
         lines: [
           both(
             `Thanks for applying to work with Be Right (${trade.en}). We'd like to meet you in person.`,
-            `شكراً على طلبك لتشتغل مع بي رايت (${trade.ar}). حابين نلتقي فيك شخصياً.`,
+            `شكراً على تقديمك للعمل مع بي رايت (${trade.ar}). نودّ أن نلتقي بك شخصياً.`,
           ),
-          both(`When: ${when.en} (Beirut time)`, `الموعد: ${when.ar} (بتوقيت بيروت)`),
+          both(`When: ${when.en}`, `الموعد: ${when.ar}`),
           both(`Where: ${app.meetingPlace}`, `المكان: ${app.meetingPlace}`),
           ...(app.meetingNote ? [both(app.meetingNote, app.meetingNote)] : []),
           both(
             "If this time doesn't work for you, reply to this email and we'll find another one.",
-            "إذا هالموعد ما بيناسبك، ردّ على هالإيميل ومنلاقي موعد تاني.",
+            "إذا لم يناسبك هذا الموعد، ردّ على هذا البريد وسنجد موعداً آخر.",
           ),
         ],
         path: "/",
-        button: both("Visit Be Right", "زور بي رايت"),
+        button: both("Visit Be Right", "زيارة بي رايت"),
       });
     }),
 
@@ -565,24 +566,24 @@ export const notify = {
       if (!app) return;
       const trade = local(CATEGORY_MAP[app.trade]?.name, app.trade);
       await send(await emailsOf("specialist"), {
-        subject: both(`New technician on the team: ${app.name}`, `معلّم جديد بالفريق: ${app.name}`),
-        title: both("A new technician joined", "انضمّ معلّم جديد"),
+        subject: both(`New technician on the team: ${app.name}`, `فنّي جديد في الفريق: ${app.name}`),
+        title: both("A new technician joined", "انضمّ فنّي جديد"),
         lines: [
           both(`${app.name}: ${trade.en}, ${app.area}.`, `${app.name}: ${trade.ar}، ${app.area}.`),
-          both("An admin met them and approved them. You can now assign them jobs.", "الإدارة قابلتهم ووافقت عليهم. فيك هلّق تعطيهم شغل."),
+          both("An admin met them and approved them. You can now assign them jobs.", "قابلته الإدارة ووافقت عليه. يمكنك الآن إسناد المهام إليه."),
         ],
         path: "/dashboard?tab=technicians",
-        button: both("See the technicians", "شوف المعلّمين"),
+        button: both("See the technicians", "عرض الفنيين"),
       });
     }),
 };
 
 function jobCancelled(id: number): Message {
   return {
-    subject: both(`Job #${id} was cancelled`, `انلغت المهمة #${id}`),
-    title: both("A job was cancelled", "انلغت مهمة"),
-    lines: [both(`Job #${id} was cancelled. No need to go.`, `المهمة #${id} انلغت. ما في داعي تروح.`)],
+    subject: both(`Job #${id} was cancelled`, `أُلغيت المهمة #${id}`),
+    title: both("A job was cancelled", "أُلغيت مهمة"),
+    lines: [both(`Job #${id} was cancelled. No need to go.`, `أُلغيت المهمة #${id}. لا داعي للذهاب.`)],
     path: "/tech",
-    button: both("Open my jobs", "افتح مهامي"),
+    button: both("Open my jobs", "فتح مهامي"),
   };
 }

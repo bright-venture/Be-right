@@ -14,7 +14,6 @@ import {
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { HeroBird } from "@/components/HeroBird";
-import { LEBANON_PATH } from "@/components/Preloader";
 import { ClientCarousel } from "@/components/ClientCarousel";
 import { CategoryPicker } from "@/components/CategoryPicker";
 import { ServiceIcon } from "@/components/ServiceIcon";
@@ -22,23 +21,12 @@ import { useI18n } from "@/i18n";
 import {
   CATEGORY_MAP,
   CATEGORY_TINT,
-  COVERAGE_AREAS,
   COVERAGE_NOTE,
   SERVICES_IN_ORDER,
 } from "@contracts/services";
 import { INTRO_DONE_EVENT } from "@/lib/intro";
 import { AccountDeletedNotice } from "@/components/AccountDeletedNotice";
 
-// City positions projected into the geoBoundaries Lebanon silhouette.
-const COASTAL_CITIES = [
-  { en: "Tripoli", ar: "طرابلس", x: 312.0, y: 132.6 },
-  { en: "Batroun", ar: "البترون", x: 233.2, y: 223.5 },
-  { en: "Byblos", ar: "جبيل", x: 229.0, y: 291.9 },
-  { en: "Jounieh", ar: "جونيه", x: 216.2, y: 363.4 },
-  { en: "Beirut", ar: "بيروت", x: 167.1, y: 407.8 },
-  { en: "Saida", ar: "صيدا", x: 112.0, y: 579.3 },
-  { en: "Tyre", ar: "صور", x: 36.8, y: 724.3 },
-];
 
 export default function Home() {
   const { t, p, lang } = useI18n();
@@ -178,7 +166,7 @@ export default function Home() {
               </ul>
             </div>
 
-            {/* Nationwide service artwork — an open map, rather than a portrait frame. */}
+            {/* The mascot, with its speech bubble. */}
             <div className="relative mx-auto hidden w-full max-w-[420px] pt-20 sm:block">
               <div className="hero-enter hero-d1 absolute top-0 end-0 z-20 max-w-full">
                 <div className="relative rounded-2xl border-2 border-navy bg-white px-6 py-4 shadow-[0_4px_0_rgb(12_43_92/0.2)]">
@@ -187,16 +175,9 @@ export default function Home() {
                 </div>
               </div>
               <div className="relative flex items-end justify-center">
-                <svg aria-hidden viewBox="-170 -30 840 898.2" className="hero-coastal-map pointer-events-none absolute inset-0 h-full w-full">
-                  <path d={LEBANON_PATH} fill="#E2EBF7" stroke="#0C2B5C" strokeOpacity="0.18" strokeWidth="3" />
-                  {COASTAL_CITIES.map(city => (
-                    <g key={city.en}>
-                      {city.en === "Beirut" && <circle cx={city.x} cy={city.y} r="20" fill="#F45309" fillOpacity="0.14" />}
-                      <circle cx={city.x} cy={city.y} r={city.en === "Beirut" ? 10 : 7} fill="#F45309" stroke="white" strokeWidth="3" />
-                    </g>
-                  ))}
-                </svg>
-                <HeroBird className="hero-bird-offset relative z-10 w-[85%]" onSettled={() => setHeroReady(true)} />
+                {/* A soft round backdrop behind the bird. */}
+                <span aria-hidden className="pointer-events-none absolute inset-x-[6%] bottom-[4%] top-[10%] rounded-full bg-[#E2EBF7]" />
+                <HeroBird className="relative z-10 w-[85%]" onSettled={() => setHeroReady(true)} />
               </div>
               <div className="relative z-20 mx-auto -mt-5 flex w-fit items-center gap-2 rounded-full border border-navy/15 bg-white px-4 py-2">
                 <BadgeCheck className="h-5 w-5 text-flame" />
@@ -319,31 +300,21 @@ export default function Home() {
             </div>
             <p className="max-w-sm text-[13px] leading-relaxed text-navy/70">{p(COVERAGE_NOTE)}</p>
           </div>
-          <div className="mt-8 grid gap-4">
-            {COVERAGE_AREAS.map((g, i) => (
-              <div key={i} className="card-br p-6">
-                <h3 className="flex items-center gap-2 font-display text-lg font-black text-navy">
-                  <span
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-navy text-paper"
-                    style={{ boxShadow: "0 2px 0 rgb(244 83 9 / 0.9)" }}
-                  >
-                    <MapPin className="h-4 w-4" />
-                  </span>
-                  {p(g.group)}
-                </h3>
-                <ul className="mt-4 flex flex-wrap gap-2">
-                  {g.areas.map((a, j) => (
-                    <li
-                      key={j}
-                      className="rounded-full border-[1.5px] border-navy/20 bg-paper px-3 py-1 text-xs font-bold text-navy/75"
-                    >
-                      {p(a)}
-                    </li>
-                  ))}
-                </ul>
-              </div>
+          {/* How it works wherever you are: three equal cards. */}
+          <ol className="mt-8 grid gap-4 sm:grid-cols-3">
+            {t.coverage.steps.map((step, i) => (
+              <li key={i} className="card-br flex flex-col p-6">
+                <span
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-navy font-display text-sm font-black text-paper"
+                  style={{ boxShadow: "0 2px 0 rgb(244 83 9 / 0.9)" }}
+                >
+                  {i === 0 ? <MapPin className="h-4 w-4" /> : i + 1}
+                </span>
+                <h3 className="mt-4 font-display text-lg font-black text-navy">{p(step.title)}</h3>
+                <p className="mt-1.5 text-[13px] leading-relaxed text-navy/70">{p(step.body)}</p>
+              </li>
             ))}
-          </div>
+          </ol>
         </div>
       </section>
 

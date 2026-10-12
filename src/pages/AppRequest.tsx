@@ -324,7 +324,7 @@ export default function AppRequest() {
             <p className="rounded-2xl bg-navy/5 p-4 text-sm font-semibold text-navy">
               {p(t.requests.cancelAsked).replace(
                 "{date}",
-                new Date(r.cancelRequestedAt).toLocaleDateString(lang === "ar" ? "ar-LB" : "en-GB", {
+                new Date(r.cancelRequestedAt).toLocaleDateString(lang === "ar" ? "ar" : "en-GB", {
                   day: "numeric",
                   month: "long",
                 }),

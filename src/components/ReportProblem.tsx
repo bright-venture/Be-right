@@ -6,7 +6,7 @@ import { supabase } from "@/lib/supabase";
 import { shrinkImage } from "@/lib/shrinkImage";
 import { isNetworkError, isRateLimited, refusalMessage } from "@/lib/errors";
 import { arabicDays, WORKMANSHIP_GUARANTEE_DAYS } from "@contracts/legal";
-import { isValidVisitDate, MAX_BOOKING_VIDEOS, MAX_PROBLEM_FILES, TIME_SLOTS, todayInBeirut, type TimeSlot } from "@contracts/workflow";
+import { isValidVisitDate, MAX_BOOKING_VIDEOS, MAX_PROBLEM_FILES, TIME_SLOTS, todayHere, type TimeSlot } from "@contracts/workflow";
 import { MEDIA_ACCEPT } from "@contracts/uploads";
 
 const MAX_FILE_BYTES = 20 * 1024 * 1024;
@@ -50,9 +50,9 @@ export function ReportProblem({
   // eslint-disable-next-line react-hooks/purity -- compared once per render; a stale minute doesn't matter
   if (!endsAt || endsAt.getTime() < Date.now()) return null;
 
-  const until = endsAt.toLocaleDateString(lang === "ar" ? "ar-LB" : "en-GB", { day: "numeric", month: "long" });
+  const until = endsAt.toLocaleDateString(lang === "ar" ? "ar" : "en-GB", { day: "numeric", month: "long" });
   const descriptionOk = description.trim().length >= 10;
-  const dateOk = !!date && isValidVisitDate(date, todayInBeirut());
+  const dateOk = !!date && isValidVisitDate(date, todayHere());
   const slots: Record<TimeSlot, { en: string; ar: string }> = {
     morning: t.book.slotMorning,
     afternoon: t.book.slotAfternoon,
@@ -196,7 +196,7 @@ export function ReportProblem({
               id={`problem-date-${requestId}`}
               type="date"
               value={date}
-              min={todayInBeirut()}
+              min={todayHere()}
               onChange={(e) => setDate(e.target.value)}
               className={`${FIELD} min-h-12`}
             />

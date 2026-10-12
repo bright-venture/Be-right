@@ -372,10 +372,11 @@ describe("full repair workflow", () => {
     });
   });
 
-  it("requires the map pin to be in Lebanon", async () => {
-    await expect(
-      (await callerFor(alice)).requests.create(booking({ lat: 48.85, lng: 2.35 })),
-    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+  it("accepts a pin anywhere in the world, but not a missing or impossible one", async () => {
+    const c = await callerFor(alice);
+    await expect(c.requests.create(booking({ lat: 48.85, lng: 2.35 }))).resolves.toMatchObject({ id: expect.any(Number) });
+    await expect(c.requests.create(booking({ lat: 0, lng: 0 }))).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    await expect(c.requests.create(booking({ lat: 95, lng: 10 }))).rejects.toMatchObject({ code: "BAD_REQUEST" });
   });
 
   it("rejects unknown categories and other users' uploads", async () => {

@@ -3,9 +3,9 @@ export function isRecent(date: Date | string, minutes: number, now = Date.now())
   return now - new Date(date).getTime() < minutes * 60_000;
 }
 
-const locale = (lang: string) => (lang === "ar" ? "ar-LB" : "en-GB");
+const locale = (lang: string) => (lang === "ar" ? "ar" : "en-GB");
 
-/** A visit day (YYYY-MM-DD) as people say it: "Sat 12 Oct" / "السبت ١٢ تشرين الأول". */
+/** A visit day (YYYY-MM-DD) as people say it: "Sat 12 Oct" / "السبت ١٢ أكتوبر". */
 export function formatVisitDay(day: string, lang: string) {
   const date = new Date(`${day}T12:00:00`);
   if (Number.isNaN(date.getTime())) return day;
@@ -22,10 +22,9 @@ export function formatMoment(when: Date | string, lang: string) {
   });
 }
 
-/** A meeting's date and time in Lebanon's time, as shown to admins. */
+/** A meeting's date and time in this device's time zone, as shown to admins. */
 export function meetingDate(at: Date | string, lang: string) {
-  return new Date(at).toLocaleString(lang === "ar" ? "ar-LB" : "en-GB", {
-    timeZone: "Asia/Beirut",
+  return new Date(at).toLocaleString(locale(lang), {
     weekday: "short",
     day: "numeric",
     month: "short",

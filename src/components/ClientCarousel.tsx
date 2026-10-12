@@ -26,7 +26,7 @@ export function ClientCarousel() {
   }, []);
 
   return (
-    <div ref={root} className="client-logo-row mt-8" role="region" aria-label={isAr ? "شعارات زبائننا" : "Our client logos"}>
+    <div ref={root} className="client-logo-row mt-8" role="region" aria-label={isAr ? "شعارات عملائنا" : "Our client logos"}>
       <div className="overflow-hidden border-y border-navy/15 py-5" dir="ltr">
         <div className="client-logo-track" style={{ animationPlayState: !visible || !pageVisible ? "paused" : "running", animationDirection: isAr ? "reverse" : "normal" }}>
           {[0, 1].map(copy => CLIENTS.map(client => (

@@ -210,6 +210,8 @@ export const technicianApplications = pgTable("technician_applications", {
   meetingAt: timestamp("meeting_at", { withTimezone: true }),
   meetingPlace: varchar("meeting_place", { length: 200 }),
   meetingNote: text("meeting_note"),
+  /** The time zone the meeting was booked in (the admin's), for the applicant's email. */
+  meetingTimeZone: varchar("meeting_time_zone", { length: 64 }),
   /** When and by which admin the applicant was approved, which adds them to the technicians. */
   approvedAt: timestamp("approved_at", { withTimezone: true }),
   approvedBy: integer("approved_by").references(() => users.id, { onDelete: "set null" }),

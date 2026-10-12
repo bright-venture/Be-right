@@ -61,68 +61,68 @@ export interface ServiceCategory {
 export const CATEGORIES: ServiceCategory[] = [
   {
     id: "plumbing",
-    name: { en: "Plumbing", ar: "سنكري" },
+    name: { en: "Plumbing", ar: "سباكة" },
     blurb: {
       en: "Leaks, blocked drains, faucets, toilets, pumps, heaters, water tanks and filters.",
-      ar: "تسريب، انسداد مجاري، حنفيات، تواليت، مضخات، سخانات، خزانات وفلاتر مي.",
+      ar: "التسرّبات، وانسداد الصرف، والصنابير، والمراحيض، والمضخات، والسخانات، وخزانات وفلاتر المياه.",
     },
     questions: [
       {
         id: "problem",
         kind: "choice",
-        label: { en: "What is happening?", ar: "شو المشكلة؟" },
+        label: { en: "What is happening?", ar: "ما المشكلة؟" },
         options: [
-          { value: "leak", label: { en: "Water leak", ar: "تسريب مي" } },
-          { value: "blocked", label: { en: "Blocked drain", ar: "مجاري مسكرة" }, weight: 1 },
-          { value: "fixture", label: { en: "Faucet / toilet problem", ar: "مشكلة حنفية / تواليت" } },
-          { value: "pump", label: { en: "Water pump", ar: "مضخة مي" } },
-          { value: "heater", label: { en: "Water heater", ar: "سخان مي" } },
-          { value: "tank_filter", label: { en: "Water tank & filter maintenance", ar: "صيانة خزان وفلتر مي" } },
-          { value: "other", label: { en: "Something else", ar: "شي تاني" } },
+          { value: "leak", label: { en: "Water leak", ar: "تسرّب مياه" } },
+          { value: "blocked", label: { en: "Blocked drain", ar: "انسداد الصرف" }, weight: 1 },
+          { value: "fixture", label: { en: "Faucet / toilet problem", ar: "مشكلة في الصنبور / المرحاض" } },
+          { value: "pump", label: { en: "Water pump", ar: "مضخة مياه" } },
+          { value: "heater", label: { en: "Water heater", ar: "سخّان مياه" } },
+          { value: "tank_filter", label: { en: "Water tank & filter maintenance", ar: "صيانة خزان وفلتر المياه" } },
+          { value: "other", label: { en: "Something else", ar: "شيء آخر" } },
         ],
       },
       {
         id: "location",
         kind: "choice",
         when: { id: "problem", equals: "leak" },
-        label: { en: "Where is the leak?", ar: "وين التسريب؟" },
+        label: { en: "Where is the leak?", ar: "أين التسرّب؟" },
         options: [
-          { value: "kitchen", label: { en: "Kitchen", ar: "مطبخ" } },
-          { value: "bathroom", label: { en: "Bathroom", ar: "حمام" } },
-          { value: "tank", label: { en: "Water tank", ar: "خزان" } },
-          { value: "wall", label: { en: "Inside a wall", ar: "جوّا الحيط" }, weight: 1 },
-          { value: "outside", label: { en: "Outside", ar: "برّا" } },
+          { value: "kitchen", label: { en: "Kitchen", ar: "المطبخ" } },
+          { value: "bathroom", label: { en: "Bathroom", ar: "الحمّام" } },
+          { value: "tank", label: { en: "Water tank", ar: "خزان المياه" } },
+          { value: "wall", label: { en: "Inside a wall", ar: "داخل الجدار" }, weight: 1 },
+          { value: "outside", label: { en: "Outside", ar: "في الخارج" } },
         ],
       },
       {
         id: "flow",
         kind: "choice",
         when: { id: "problem", equals: "leak" },
-        label: { en: "How much water?", ar: "قديه في مي؟" },
+        label: { en: "How much water?", ar: "ما كمية المياه؟" },
         options: [
-          { value: "drops", label: { en: "Drops", ar: "نقاط" } },
-          { value: "continuous", label: { en: "Continuous trickle", ar: "تسريب متواصل" }, weight: 2 },
-          { value: "large", label: { en: "Large flow", ar: "المي عم تنزل بقوة" }, weight: 3 },
+          { value: "drops", label: { en: "Drops", ar: "قطرات" } },
+          { value: "continuous", label: { en: "Continuous trickle", ar: "تسرّب متواصل" }, weight: 2 },
+          { value: "large", label: { en: "Large flow", ar: "تدفّق قوي" }, weight: 3 },
         ],
       },
       {
         id: "canStop",
         kind: "choice",
         when: { id: "problem", equals: "leak" },
-        label: { en: "Can you stop the water?", ar: "فيك تسكّر المي؟" },
+        label: { en: "Can you stop the water?", ar: "هل يمكنك إيقاف المياه؟" },
         options: [
-          { value: "yes", label: { en: "Yes", ar: "إيه" } },
+          { value: "yes", label: { en: "Yes", ar: "نعم" } },
           { value: "no", label: { en: "No", ar: "لا" }, weight: 3 },
-          { value: "unknown", label: { en: "I don't know", ar: "ما بعرف" }, weight: 1 },
+          { value: "unknown", label: { en: "I don't know", ar: "لا أعرف" }, weight: 1 },
         ],
       },
       {
         id: "sourceVisible",
         kind: "choice",
         when: { id: "problem", equals: "leak" },
-        label: { en: "Can you see the source?", ar: "شايف مصدر التسريب؟" },
+        label: { en: "Can you see the source?", ar: "هل ترى مصدر التسرّب؟" },
         options: [
-          { value: "yes", label: { en: "Yes", ar: "إيه" } },
+          { value: "yes", label: { en: "Yes", ar: "نعم" } },
           { value: "no", label: { en: "No", ar: "لا" }, weight: 1 },
         ],
       },
@@ -133,22 +133,22 @@ export const CATEGORIES: ServiceCategory[] = [
     name: { en: "Electrical", ar: "كهرباء" },
     blurb: {
       en: "Power faults, lights, sockets, switches and generators.",
-      ar: "أعطال كهربا، إنارة، فيشات، مفاتيح ومولدات.",
+      ar: "أعطال الكهرباء، والإنارة، والمقابس، والمفاتيح، والمولّدات.",
     },
     questions: [
       {
         id: "problem",
         kind: "choice",
-        label: { en: "What is happening?", ar: "شو المشكلة؟" },
+        label: { en: "What is happening?", ar: "ما المشكلة؟" },
         options: [
-          { value: "no_power", label: { en: "No power at all", ar: "ما في كهربا أبداً" }, weight: 1 },
-          { value: "partial", label: { en: "Power in some rooms", ar: "كهربا ببعض الغرف" } },
-          { value: "lights", label: { en: "Lights issue", ar: "مشكلة إنارة" } },
-          { value: "socket", label: { en: "Socket / switch", ar: "فيش / مفتاح" } },
-          { value: "generator", label: { en: "Generator issue", ar: "مشكلة مولد" }, weight: 1 },
+          { value: "no_power", label: { en: "No power at all", ar: "لا توجد كهرباء إطلاقاً" }, weight: 1 },
+          { value: "partial", label: { en: "Power in some rooms", ar: "كهرباء في بعض الغرف فقط" } },
+          { value: "lights", label: { en: "Lights issue", ar: "مشكلة في الإنارة" } },
+          { value: "socket", label: { en: "Socket / switch", ar: "مقبس / مفتاح كهربائي" } },
+          { value: "generator", label: { en: "Generator issue", ar: "مشكلة في المولّد" }, weight: 1 },
           {
             value: "burning",
-            label: { en: "Burning smell or sparks", ar: "ريحة حريق أو شرر" },
+            label: { en: "Burning smell or sparks", ar: "رائحة احتراق أو شرر" },
             critical: true,
           },
         ],
@@ -156,56 +156,56 @@ export const CATEGORIES: ServiceCategory[] = [
       {
         id: "scope",
         kind: "choice",
-        label: { en: "How much of the home is affected?", ar: "قديه من البيت متأثر؟" },
+        label: { en: "How much of the home is affected?", ar: "ما الجزء المتأثر من المنزل؟" },
         options: [
-          { value: "single", label: { en: "One spot / room", ar: "نقطة / غرفة وحدة" } },
-          { value: "whole", label: { en: "Whole home", ar: "كل البيت" }, weight: 1 },
+          { value: "single", label: { en: "One spot / room", ar: "نقطة واحدة / غرفة واحدة" } },
+          { value: "whole", label: { en: "Whole home", ar: "المنزل بالكامل" }, weight: 1 },
         ],
       },
       {
         id: "exposed",
         kind: "choice",
-        label: { en: "Any exposed or damaged wiring?", ar: "في أسلاك مكشوفة أو متضررة؟" },
+        label: { en: "Any exposed or damaged wiring?", ar: "هل توجد أسلاك مكشوفة أو تالفة؟" },
         hint: {
           en: "Do not touch or open anything. Just tell us what you see.",
-          ar: "لا تلمس أو تفتح شي. بس خبرنا شو شايف.",
+          ar: "لا تلمس أو تفتح أي شيء. فقط أخبرنا بما تراه.",
         },
         options: [
-          { value: "yes", label: { en: "Yes", ar: "إيه" }, critical: true },
+          { value: "yes", label: { en: "Yes", ar: "نعم" }, critical: true },
           { value: "no", label: { en: "No", ar: "لا" } },
-          { value: "unknown", label: { en: "Not sure", ar: "مش متأكد" }, weight: 1 },
+          { value: "unknown", label: { en: "Not sure", ar: "غير متأكد" }, weight: 1 },
         ],
       },
     ],
   },
   {
     id: "ac",
-    name: { en: "Air conditioning", ar: "مكيّف" },
+    name: { en: "Air conditioning", ar: "تكييف" },
     blurb: {
       en: "Cleaning, servicing, installation and repairs.",
-      ar: "تنظيف، صيانة، تركيب وتصليح.",
+      ar: "التنظيف والصيانة والتركيب والإصلاح.",
     },
     questions: [
       {
         id: "service",
         kind: "choice",
-        label: { en: "What do you need?", ar: "شو بدك؟" },
+        label: { en: "What do you need?", ar: "ماذا تحتاج؟" },
         options: [
           { value: "cleaning", label: { en: "Cleaning / servicing", ar: "تنظيف / صيانة" } },
-          { value: "not_cooling", label: { en: "Not cooling well", ar: "ما عم يبرّد منيح" }, weight: 1 },
-          { value: "leaking", label: { en: "Water leaking from unit", ar: "عم يقطّر مي" }, weight: 1 },
+          { value: "not_cooling", label: { en: "Not cooling well", ar: "لا يبرّد جيداً" }, weight: 1 },
+          { value: "leaking", label: { en: "Water leaking from unit", ar: "يسرّب الماء" }, weight: 1 },
           { value: "noise", label: { en: "Strange noise", ar: "صوت غريب" } },
           { value: "install", label: { en: "New installation", ar: "تركيب جديد" } },
-          { value: "other", label: { en: "Something else", ar: "شي تاني" } },
+          { value: "other", label: { en: "Something else", ar: "شيء آخر" } },
         ],
       },
       {
         id: "unitType",
         kind: "choice",
-        label: { en: "Which type of unit?", ar: "شو نوع المكيف؟" },
+        label: { en: "Which type of unit?", ar: "ما نوع جهاز التكييف؟" },
         options: [
-          { value: "split", label: { en: "Split", ar: "سبليت" } },
-          { value: "window", label: { en: "Window unit", ar: "شباك" } },
+          { value: "split", label: { en: "Split", ar: "سبليت (منفصل)" } },
+          { value: "window", label: { en: "Window unit", ar: "نافذة" } },
           { value: "central", label: { en: "Central", ar: "مركزي" } },
           { value: "portable", label: { en: "Portable", ar: "متنقل" } },
         ],
@@ -213,11 +213,11 @@ export const CATEGORIES: ServiceCategory[] = [
       {
         id: "units",
         kind: "choice",
-        label: { en: "How many units?", ar: "قديه مكيف؟" },
+        label: { en: "How many units?", ar: "كم عدد الأجهزة؟" },
         options: [
           { value: "1", label: { en: "1", ar: "١" } },
           { value: "2", label: { en: "2", ar: "٢" } },
-          { value: "3+", label: { en: "3 or more", ar: "٣ أو أكتر" } },
+          { value: "3+", label: { en: "3 or more", ar: "٣ أو أكثر" } },
         ],
       },
     ],
@@ -227,57 +227,57 @@ export const CATEGORIES: ServiceCategory[] = [
     name: { en: "Carpentry", ar: "نجارة" },
     blurb: {
       en: "Doors, cabinets, shelves and furniture repair.",
-      ar: "أبواب، خزائن، رفوف وتصليح أثاث.",
+      ar: "الأبواب والخزائن والرفوف وإصلاح الأثاث.",
     },
     questions: [
       {
         id: "item",
         kind: "choice",
-        label: { en: "What needs work?", ar: "شو بدك تصلّح؟" },
+        label: { en: "What needs work?", ar: "ما الذي يحتاج إلى عمل؟" },
         options: [
           { value: "door", label: { en: "Door", ar: "باب" } },
           { value: "cabinet", label: { en: "Cabinet / wardrobe", ar: "خزانة" } },
           { value: "shelves", label: { en: "Shelves", ar: "رفوف" } },
-          { value: "furniture", label: { en: "Furniture repair", ar: "تصليح أثاث" } },
-          { value: "other", label: { en: "Something else", ar: "شي تاني" } },
+          { value: "furniture", label: { en: "Furniture repair", ar: "إصلاح أثاث" } },
+          { value: "other", label: { en: "Something else", ar: "شيء آخر" } },
         ],
       },
       {
         id: "workType",
         kind: "choice",
-        label: { en: "Repair or new work?", ar: "تصليح ولا شغل جديد؟" },
+        label: { en: "Repair or new work?", ar: "إصلاح أم عمل جديد؟" },
         options: [
-          { value: "repair", label: { en: "Repair", ar: "تصليح" } },
-          { value: "new", label: { en: "New / custom work", ar: "شغل جديد / تفصال" } },
+          { value: "repair", label: { en: "Repair", ar: "إصلاح" } },
+          { value: "new", label: { en: "New / custom work", ar: "عمل جديد / حسب الطلب" } },
         ],
       },
     ],
   },
   {
     id: "painting",
-    name: { en: "Painting & repairs", ar: "دهان وتصليحات" },
+    name: { en: "Painting & repairs", ar: "دهان وإصلاحات" },
     blurb: {
       en: "Interior painting, wall repair and minor tiling.",
-      ar: "دهان داخلي، تصليح حيطان وتبليط بسيط.",
+      ar: "الدهان الداخلي، وإصلاح الجدران، وأعمال البلاط البسيطة.",
     },
     questions: [
       {
         id: "scope",
         kind: "choice",
-        label: { en: "How big is the job?", ar: "قديه كبير الشغل؟" },
+        label: { en: "How big is the job?", ar: "ما حجم العمل؟" },
         options: [
-          { value: "wall", label: { en: "One wall / small repair", ar: "حيط واحد / تصليح صغير" } },
-          { value: "room", label: { en: "One room", ar: "غرفة وحدة" } },
-          { value: "home", label: { en: "Whole home", ar: "كل البيت" } },
+          { value: "wall", label: { en: "One wall / small repair", ar: "جدار واحد / إصلاح صغير" } },
+          { value: "room", label: { en: "One room", ar: "غرفة واحدة" } },
+          { value: "home", label: { en: "Whole home", ar: "المنزل بالكامل" } },
         ],
       },
       {
         id: "state",
         kind: "choice",
-        label: { en: "What condition are the walls in?", ar: "شو حالة الحيطان؟" },
+        label: { en: "What condition are the walls in?", ar: "ما حالة الجدران؟" },
         options: [
-          { value: "good", label: { en: "Good, just repaint", ar: "منيحة، بس دهان" } },
-          { value: "cracks", label: { en: "Cracks / peeling", ar: "تشققات / قشور" } },
+          { value: "good", label: { en: "Good, just repaint", ar: "جيدة، إعادة دهان فقط" } },
+          { value: "cracks", label: { en: "Cracks / peeling", ar: "تشققات / تقشّر" } },
           { value: "stains", label: { en: "Stains / humidity", ar: "بقع / رطوبة" }, weight: 1 },
         ],
       },
@@ -288,37 +288,37 @@ export const CATEGORIES: ServiceCategory[] = [
     name: { en: "Cleaning", ar: "تنظيف" },
     blurb: {
       en: "Home, office, deep and post-construction cleaning.",
-      ar: "تنظيف بيوت، مكاتب، تنظيف عميق وبعد ورشة.",
+      ar: "تنظيف المنازل والمكاتب، والتنظيف العميق، والتنظيف بعد البناء.",
     },
     questions: [
       {
         id: "type",
         kind: "choice",
-        label: { en: "What kind of cleaning?", ar: "شو نوع التنظيف؟" },
+        label: { en: "What kind of cleaning?", ar: "ما نوع التنظيف؟" },
         options: [
-          { value: "home", label: { en: "Home cleaning", ar: "تنظيف بيت" } },
+          { value: "home", label: { en: "Home cleaning", ar: "تنظيف منزل" } },
           { value: "office", label: { en: "Office cleaning", ar: "تنظيف مكتب" } },
           { value: "deep", label: { en: "Deep cleaning", ar: "تنظيف عميق" } },
-          { value: "post_construction", label: { en: "Post-construction", ar: "بعد ورشة" }, weight: 1 },
+          { value: "post_construction", label: { en: "Post-construction", ar: "بعد البناء" }, weight: 1 },
         ],
       },
       {
         id: "size",
         kind: "choice",
-        label: { en: "How big is the place?", ar: "قديه كبير المكان؟" },
+        label: { en: "How big is the place?", ar: "ما مساحة المكان؟" },
         options: [
-          { value: "studio", label: { en: "Studio / 1 bedroom", ar: "ستوديو / غرفة وصالة" } },
-          { value: "2br", label: { en: "2 bedrooms", ar: "غرفتين" } },
-          { value: "3br", label: { en: "3 bedrooms", ar: "٣ غرف" } },
+          { value: "studio", label: { en: "Studio / 1 bedroom", ar: "استوديو / غرفة نوم واحدة" } },
+          { value: "2br", label: { en: "2 bedrooms", ar: "غرفتا نوم" } },
+          { value: "3br", label: { en: "3 bedrooms", ar: "٣ غرف نوم" } },
           { value: "large", label: { en: "Larger / office", ar: "أكبر / مكتب" } },
         ],
       },
       {
         id: "frequency",
         kind: "choice",
-        label: { en: "One-time or recurring?", ar: "مرة وحدة ولا بشكل دوري؟" },
+        label: { en: "One-time or recurring?", ar: "مرة واحدة أم بشكل دوري؟" },
         options: [
-          { value: "once", label: { en: "One-time", ar: "مرة وحدة" } },
+          { value: "once", label: { en: "One-time", ar: "مرة واحدة" } },
           { value: "weekly", label: { en: "Weekly", ar: "أسبوعي" } },
           { value: "monthly", label: { en: "Monthly", ar: "شهري" } },
         ],
@@ -327,56 +327,56 @@ export const CATEGORIES: ServiceCategory[] = [
   },
   {
     id: "porter",
-    name: { en: "Porter", ar: "حمالة ونقل" },
+    name: { en: "Porter", ar: "حمل ونقل" },
     blurb: {
       en: "Carrying, moving assistance and building support.",
-      ar: "حمل، مساعدة نقل ودعم مباني.",
+      ar: "الحمل، والمساعدة في النقل، ودعم المباني.",
     },
     questions: [
       {
         id: "help",
         kind: "choice",
-        label: { en: "What do you need?", ar: "شو بدك؟" },
+        label: { en: "What do you need?", ar: "ماذا تحتاج؟" },
         options: [
-          { value: "carrying", label: { en: "Carrying heavy items", ar: "حمل غراض تقيلة" } },
-          { value: "moving", label: { en: "Moving assistance", ar: "مساعدة نقل" } },
-          { value: "building", label: { en: "Building support shift", ar: "مناوبة دعم مبنى" } },
+          { value: "carrying", label: { en: "Carrying heavy items", ar: "حمل أغراض ثقيلة" } },
+          { value: "moving", label: { en: "Moving assistance", ar: "المساعدة في النقل" } },
+          { value: "building", label: { en: "Building support shift", ar: "مناوبة دعم للمبنى" } },
         ],
       },
       {
         id: "duration",
         kind: "choice",
-        label: { en: "For how long?", ar: "لقديه وقت؟" },
+        label: { en: "For how long?", ar: "لأي مدة؟" },
         options: [
-          { value: "hours", label: { en: "A few hours", ar: "كام ساعة" } },
+          { value: "hours", label: { en: "A few hours", ar: "بضع ساعات" } },
           { value: "day", label: { en: "Full day", ar: "يوم كامل" } },
-          { value: "days", label: { en: "Several days", ar: "كام يوم" } },
+          { value: "days", label: { en: "Several days", ar: "عدة أيام" } },
         ],
       },
       {
         id: "floors",
         kind: "choice",
-        label: { en: "Stairs or elevator?", ar: "درج ولا أسانسير؟" },
+        label: { en: "Stairs or elevator?", ar: "درج أم مصعد؟" },
         options: [
-          { value: "elevator", label: { en: "Elevator available", ar: "في أسانسير" } },
-          { value: "stairs_low", label: { en: "Stairs, up to 2 floors", ar: "درج، لحد طابقين" }, weight: 1 },
-          { value: "stairs_high", label: { en: "Stairs, 3+ floors", ar: "درج، ٣ طوابق أو أكتر" }, weight: 1 },
+          { value: "elevator", label: { en: "Elevator available", ar: "يوجد مصعد" } },
+          { value: "stairs_low", label: { en: "Stairs, up to 2 floors", ar: "درج، حتى طابقين" }, weight: 1 },
+          { value: "stairs_high", label: { en: "Stairs, 3+ floors", ar: "درج، ٣ طوابق أو أكثر" }, weight: 1 },
         ],
       },
     ],
   },
   {
     id: "valet",
-    name: { en: "Valet & event staff", ar: "طاقم ضيافة وفاليه" },
+    name: { en: "Valet & event staff", ar: "طاقم مناسبات وصفّ سيارات" },
     blurb: {
       en: "Staff for restaurants, venues and events.",
-      ar: "طاقم للمطاعم، القاعات والمناسبات.",
+      ar: "طاقم للمطاعم والقاعات والمناسبات.",
     },
     questions: [
       {
         id: "venue",
         kind: "choice",
-        label: { en: "Where is the job?", ar: "وين الشغل؟" },
+        label: { en: "Where is the job?", ar: "أين العمل؟" },
         options: [
           { value: "restaurant", label: { en: "Restaurant", ar: "مطعم" } },
           { value: "event", label: { en: "Private event", ar: "مناسبة خاصة" } },
@@ -386,7 +386,7 @@ export const CATEGORIES: ServiceCategory[] = [
       {
         id: "teamSize",
         kind: "choice",
-        label: { en: "How many staff?", ar: "قديه شخص بدك؟" },
+        label: { en: "How many staff?", ar: "كم عدد الموظفين؟" },
         options: [
           { value: "1-2", label: { en: "1–2", ar: "١–٢" } },
           { value: "3-5", label: { en: "3–5", ar: "٣–٥" } },
@@ -396,7 +396,7 @@ export const CATEGORIES: ServiceCategory[] = [
       {
         id: "shift",
         kind: "choice",
-        label: { en: "Which shift?", ar: "أي دوام؟" },
+        label: { en: "Which shift?", ar: "أي مناوبة؟" },
         options: [
           { value: "day", label: { en: "Daytime", ar: "نهاري" } },
           { value: "evening", label: { en: "Evening", ar: "مسائي" } },
@@ -410,13 +410,13 @@ export const CATEGORIES: ServiceCategory[] = [
     name: { en: "Security", ar: "أمن وحراسة" },
     blurb: {
       en: "Guards for buildings, sites and events.",
-      ar: "حراس للمباني، الورش والمناسبات.",
+      ar: "حراسة المباني ومواقع البناء والمناسبات.",
     },
     questions: [
       {
         id: "site",
         kind: "choice",
-        label: { en: "What needs guarding?", ar: "شو بدك حراسة؟" },
+        label: { en: "What needs guarding?", ar: "ما الذي يحتاج إلى حراسة؟" },
         options: [
           { value: "building", label: { en: "Residential building", ar: "مبنى سكني" } },
           { value: "site", label: { en: "Construction site", ar: "ورشة بناء" } },
@@ -428,19 +428,19 @@ export const CATEGORIES: ServiceCategory[] = [
         kind: "choice",
         label: { en: "Which hours?", ar: "أي ساعات؟" },
         options: [
-          { value: "day", label: { en: "Day shift", ar: "دوام نهاري" } },
-          { value: "night", label: { en: "Night shift", ar: "دوام ليلي" } },
+          { value: "day", label: { en: "Day shift", ar: "مناوبة نهارية" } },
+          { value: "night", label: { en: "Night shift", ar: "مناوبة ليلية" } },
           { value: "24h", label: { en: "24 hours", ar: "٢٤ ساعة" } },
         ],
       },
       {
         id: "guards",
         kind: "choice",
-        label: { en: "How many guards?", ar: "قديه حارس؟" },
+        label: { en: "How many guards?", ar: "كم عدد الحراس؟" },
         options: [
           { value: "1", label: { en: "1", ar: "١" } },
           { value: "2", label: { en: "2", ar: "٢" } },
-          { value: "3+", label: { en: "3 or more", ar: "٣ أو أكتر" } },
+          { value: "3+", label: { en: "3 or more", ar: "٣ أو أكثر" } },
         ],
       },
     ],
@@ -450,31 +450,31 @@ export const CATEGORIES: ServiceCategory[] = [
     name: { en: "Landscaping", ar: "تنسيق حدائق" },
     blurb: {
       en: "Gardens, irrigation, tree trimming, fences and outdoor care.",
-      ar: "حدائق، ري، تقليم أشجار، أسيجة وعناية خارجية.",
+      ar: "الحدائق، والري، وتقليم الأشجار، والأسوار، والعناية بالمساحات الخارجية.",
     },
     questions: [
       {
         id: "work",
         kind: "choice",
-        label: { en: "What do you need?", ar: "شو بدك؟" },
+        label: { en: "What do you need?", ar: "ماذا تحتاج؟" },
         options: [
           { value: "design", label: { en: "New garden / redesign", ar: "حديقة جديدة / إعادة تصميم" } },
           { value: "maintenance", label: { en: "Regular maintenance", ar: "صيانة دورية" } },
-          { value: "trimming", label: { en: "Tree / hedge trimming", ar: "تقليم أشجار / أسيجة خضرا" }, weight: 1 },
+          { value: "trimming", label: { en: "Tree / hedge trimming", ar: "تقليم الأشجار / السياجات النباتية" }, weight: 1 },
           { value: "irrigation", label: { en: "Irrigation system", ar: "نظام ري" } },
-          { value: "fence", label: { en: "Fence / pergola / stonework", ar: "سيجة / برجولا / حجر" } },
-          { value: "cleanup", label: { en: "Cleanup / overgrowth removal", ar: "تنظيف / إزالة أعشاب" } },
-          { value: "other", label: { en: "Something else", ar: "شي تاني" } },
+          { value: "fence", label: { en: "Fence / pergola / stonework", ar: "سور / عريشة / أعمال حجرية" } },
+          { value: "cleanup", label: { en: "Cleanup / overgrowth removal", ar: "تنظيف / إزالة النباتات المتكاثفة" } },
+          { value: "other", label: { en: "Something else", ar: "شيء آخر" } },
         ],
       },
       {
         id: "space",
         kind: "choice",
-        label: { en: "How big is the space?", ar: "قديه كبيرة المساحة؟" },
+        label: { en: "How big is the space?", ar: "ما حجم المساحة؟" },
         options: [
-          { value: "balcony", label: { en: "Balcony / rooftop", ar: "بلكون / سطح" } },
-          { value: "small", label: { en: "Small garden (up to 100 m²)", ar: "حديقة صغيرة (لحد ١٠٠ م²)" } },
-          { value: "medium", label: { en: "Medium (100–300 m²)", ar: "وسط (١٠٠–٣٠٠ م²)" } },
+          { value: "balcony", label: { en: "Balcony / rooftop", ar: "شرفة / سطح" } },
+          { value: "small", label: { en: "Small garden (up to 100 m²)", ar: "حديقة صغيرة (حتى ١٠٠ م²)" } },
+          { value: "medium", label: { en: "Medium (100–300 m²)", ar: "متوسطة (١٠٠–٣٠٠ م²)" } },
           { value: "large", label: { en: "Large / villa / commercial", ar: "كبيرة / فيلا / تجاري" }, weight: 1 },
         ],
       },
@@ -484,36 +484,36 @@ export const CATEGORIES: ServiceCategory[] = [
         when: { id: "work", equals: "trimming" },
         label: {
           en: "Any tall trees near power lines or buildings?",
-          ar: "في أشجار عالية قرب خطوط كهربا أو مباني؟",
+          ar: "هل توجد أشجار عالية قرب خطوط الكهرباء أو المباني؟",
         },
         hint: {
           en: "Stay clear of the area. Just tell us what you see.",
-          ar: "ابعد عن المنطقة. بس خبرنا شو شايف.",
+          ar: "ابتعد عن المنطقة. فقط أخبرنا بما تراه.",
         },
         options: [
           { value: "no", label: { en: "No", ar: "لا" } },
-          { value: "tall", label: { en: "Tall trees, clear area", ar: "أشجار عالية، المنطقة فاضية" }, weight: 1 },
-          { value: "near_lines", label: { en: "Yes, near power lines / buildings", ar: "إيه، قرب كهربا / مباني" }, critical: true },
+          { value: "tall", label: { en: "Tall trees, clear area", ar: "أشجار عالية، والمنطقة خالية" }, weight: 1 },
+          { value: "near_lines", label: { en: "Yes, near power lines / buildings", ar: "نعم، قرب خطوط الكهرباء / المباني" }, critical: true },
         ],
       },
       {
         id: "water",
         kind: "choice",
         when: { id: "work", equals: "irrigation" },
-        label: { en: "Is there a water source on site?", ar: "في مصدر مي بالموقع؟" },
+        label: { en: "Is there a water source on site?", ar: "هل يوجد مصدر مياه في الموقع؟" },
         options: [
-          { value: "tap", label: { en: "Yes, outdoor tap", ar: "إيه، حنفية برّا" } },
-          { value: "tank", label: { en: "Tank / pump only", ar: "خزان / مضخة بس" } },
-          { value: "none", label: { en: "No source yet", ar: "لسا ما في" } },
+          { value: "tap", label: { en: "Yes, outdoor tap", ar: "نعم، صنبور خارجي" } },
+          { value: "tank", label: { en: "Tank / pump only", ar: "خزان / مضخة فقط" } },
+          { value: "none", label: { en: "No source yet", ar: "لا يوجد بعد" } },
         ],
       },
       {
         id: "frequency",
         kind: "choice",
         when: { id: "work", equals: "maintenance" },
-        label: { en: "How often?", ar: "قديه مرة بالشهر؟" },
+        label: { en: "How often?", ar: "كم مرة؟" },
         options: [
-          { value: "once", label: { en: "One-time visit", ar: "زيارة وحدة" } },
+          { value: "once", label: { en: "One-time visit", ar: "زيارة واحدة" } },
           { value: "monthly", label: { en: "Monthly", ar: "شهري" } },
           { value: "weekly", label: { en: "Weekly", ar: "أسبوعي" } },
         ],
@@ -522,10 +522,10 @@ export const CATEGORIES: ServiceCategory[] = [
   },
   {
     id: "appliance",
-    name: { en: "Appliance repair", ar: "تصليحات" },
+    name: { en: "Appliance repair", ar: "إصلاح أجهزة" },
     blurb: {
       en: "Washers, fridges, ovens and household appliances.",
-      ar: "غسالات، برادات، أفران وأجهزة منزلية.",
+      ar: "الغسالات والثلاجات والأفران والأجهزة المنزلية.",
     },
     questions: [
       {
@@ -534,65 +534,65 @@ export const CATEGORIES: ServiceCategory[] = [
         label: { en: "Which appliance?", ar: "أي جهاز؟" },
         options: [
           { value: "washer", label: { en: "Washing machine", ar: "غسالة" } },
-          { value: "fridge", label: { en: "Fridge / freezer", ar: "براد / فريزر" } },
-          { value: "oven", label: { en: "Oven / cooker", ar: "فرن / غاز" } },
-          { value: "dishwasher", label: { en: "Dishwasher", ar: "جلاية" } },
-          { value: "other", label: { en: "Other", ar: "غيره" } },
+          { value: "fridge", label: { en: "Fridge / freezer", ar: "ثلاجة / مجمّد" } },
+          { value: "oven", label: { en: "Oven / cooker", ar: "فرن / موقد" } },
+          { value: "dishwasher", label: { en: "Dishwasher", ar: "غسالة صحون" } },
+          { value: "other", label: { en: "Other", ar: "غير ذلك" } },
         ],
       },
       {
         id: "symptom",
         kind: "choice",
-        label: { en: "What is it doing?", ar: "شو عم يعمل؟" },
+        label: { en: "What is it doing?", ar: "ما الذي يحدث؟" },
         options: [
-          { value: "dead", label: { en: "No power at all", ar: "ما عم يشتغل أبداً" } },
-          { value: "not_working", label: { en: "Runs but not working right", ar: "بيشتغل بس مش منيح" } },
-          { value: "leak", label: { en: "Leaking water", ar: "عم يسرّب مي" }, weight: 2 },
-          { value: "noise", label: { en: "Loud / strange noise", ar: "صوت عالي / غريب" } },
-          { value: "smell", label: { en: "Burning smell", ar: "ريحة حريق" }, critical: true },
+          { value: "dead", label: { en: "No power at all", ar: "لا يعمل إطلاقاً" } },
+          { value: "not_working", label: { en: "Runs but not working right", ar: "يعمل لكن ليس بشكل صحيح" } },
+          { value: "leak", label: { en: "Leaking water", ar: "يسرّب الماء" }, weight: 2 },
+          { value: "noise", label: { en: "Loud / strange noise", ar: "صوت عالٍ / غريب" } },
+          { value: "smell", label: { en: "Burning smell", ar: "رائحة احتراق" }, critical: true },
         ],
       },
     ],
   },
   {
     id: "waterproofing",
-    name: { en: "Waterproofing", ar: "عزل" },
+    name: { en: "Waterproofing", ar: "عزل مائي" },
     blurb: {
       en: "Roofs, bathrooms, damp walls, basements and water tanks.",
-      ar: "سطوح، حمامات، رطوبة بالحيطان، أقبية وخزانات.",
+      ar: "الأسطح، والحمّامات، ورطوبة الجدران، والأقبية، وخزانات المياه.",
     },
     questions: [
       {
         id: "area",
         kind: "choice",
-        label: { en: "Where is the problem?", ar: "وين المشكلة؟" },
+        label: { en: "Where is the problem?", ar: "أين المشكلة؟" },
         options: [
           { value: "roof", label: { en: "Roof", ar: "سطح" } },
-          { value: "bathroom", label: { en: "Bathroom", ar: "حمام" } },
-          { value: "walls", label: { en: "Damp walls", ar: "رطوبة بالحيطان" } },
+          { value: "bathroom", label: { en: "Bathroom", ar: "الحمّام" } },
+          { value: "walls", label: { en: "Damp walls", ar: "رطوبة في الجدران" } },
           { value: "basement", label: { en: "Basement", ar: "قبو" } },
-          { value: "balcony", label: { en: "Balcony", ar: "برندا" } },
-          { value: "tank", label: { en: "Water tank", ar: "خزان مي" } },
+          { value: "balcony", label: { en: "Balcony", ar: "شرفة" } },
+          { value: "tank", label: { en: "Water tank", ar: "خزان مياه" } },
         ],
       },
       {
         id: "state",
         kind: "choice",
-        label: { en: "What do you see now?", ar: "شو عم تشوف هلّق؟" },
+        label: { en: "What do you see now?", ar: "ماذا ترى الآن؟" },
         options: [
-          { value: "leaking", label: { en: "Water coming in now", ar: "عم تدلف مي هلّق" }, weight: 2 },
+          { value: "leaking", label: { en: "Water coming in now", ar: "تتسرّب المياه الآن" }, weight: 2 },
           { value: "damp", label: { en: "Damp or stains", ar: "رطوبة أو بقع" } },
-          { value: "prevent", label: { en: "Prevention before winter", ar: "وقاية قبل الشتي" } },
+          { value: "prevent", label: { en: "Prevention before winter", ar: "وقاية قبل الشتاء" } },
         ],
       },
       {
         id: "size",
         kind: "choice",
-        label: { en: "How big is the area?", ar: "قديه كبيرة المساحة؟" },
+        label: { en: "How big is the area?", ar: "ما حجم المساحة؟" },
         options: [
           { value: "small", label: { en: "Under 20 m²", ar: "أقل من ٢٠ م²" } },
-          { value: "medium", label: { en: "20 to 100 m²", ar: "من ٢٠ لـ١٠٠ م²" } },
-          { value: "large", label: { en: "Over 100 m²", ar: "أكتر من ١٠٠ م²" } },
+          { value: "medium", label: { en: "20 to 100 m²", ar: "من ٢٠ إلى ١٠٠ م²" } },
+          { value: "large", label: { en: "Over 100 m²", ar: "أكثر من ١٠٠ م²" } },
         ],
       },
     ],
@@ -602,39 +602,39 @@ export const CATEGORIES: ServiceCategory[] = [
     name: { en: "Installation & assembly", ar: "تركيب وتجميع" },
     blurb: {
       en: "Furniture assembly, TV mounting, curtains and blinds, shelves and mirrors.",
-      ar: "تجميع أثاث، تعليق تلفزيون، برادي وستائر، رفوف ومرايات.",
+      ar: "تجميع الأثاث، وتثبيت التلفزيون، والستائر والمظلات، والرفوف والمرايا.",
     },
     questions: [
       {
         id: "item",
         kind: "choice",
-        label: { en: "What needs installing?", ar: "شو بدك تركّب؟" },
+        label: { en: "What needs installing?", ar: "ما الذي يحتاج إلى تركيب؟" },
         options: [
           { value: "furniture", label: { en: "Furniture assembly", ar: "تجميع أثاث" } },
-          { value: "tv", label: { en: "TV mounting", ar: "تعليق تلفزيون" } },
-          { value: "curtains", label: { en: "Curtains and blinds", ar: "برادي وستائر" } },
-          { value: "shelves", label: { en: "Shelves and mirrors", ar: "رفوف ومرايات" } },
-          { value: "other", label: { en: "Something else", ar: "شي تاني" } },
+          { value: "tv", label: { en: "TV mounting", ar: "تثبيت التلفزيون" } },
+          { value: "curtains", label: { en: "Curtains and blinds", ar: "ستائر ومظلات" } },
+          { value: "shelves", label: { en: "Shelves and mirrors", ar: "رفوف ومرايا" } },
+          { value: "other", label: { en: "Something else", ar: "شيء آخر" } },
         ],
       },
       {
         id: "count",
         kind: "choice",
-        label: { en: "How many items?", ar: "قديه قطعة؟" },
+        label: { en: "How many items?", ar: "كم عدد القطع؟" },
         options: [
           { value: "1", label: { en: "1", ar: "١" } },
           { value: "2-3", label: { en: "2 or 3", ar: "٢ أو ٣" } },
-          { value: "4+", label: { en: "4 or more", ar: "٤ أو أكتر" } },
+          { value: "4+", label: { en: "4 or more", ar: "٤ أو أكثر" } },
         ],
       },
       {
         id: "parts",
         kind: "choice",
-        label: { en: "Do you have the parts and fixings?", ar: "عندك القطع والبراغي؟" },
+        label: { en: "Do you have the parts and fixings?", ar: "هل لديك القطع ومواد التثبيت؟" },
         options: [
-          { value: "yes", label: { en: "Yes, everything", ar: "إيه، كل شي" } },
-          { value: "no", label: { en: "No, bring them", ar: "لا، جيبوها معكم" } },
-          { value: "unknown", label: { en: "Not sure", ar: "مش متأكد" } },
+          { value: "yes", label: { en: "Yes, everything", ar: "نعم، كل شيء" } },
+          { value: "no", label: { en: "No, bring them", ar: "لا، أحضروها معكم" } },
+          { value: "unknown", label: { en: "Not sure", ar: "غير متأكد" } },
         ],
       },
     ],
@@ -644,43 +644,43 @@ export const CATEGORIES: ServiceCategory[] = [
     name: { en: "Locksmith", ar: "أقفال ومفاتيح" },
     blurb: {
       en: "Lockouts, locks and keys for homes, businesses and cars.",
-      ar: "أبواب مسكّرة، أقفال ومفاتيح للبيوت والمحلات والسيارات.",
+      ar: "الأبواب المقفلة، والأقفال والمفاتيح للمنازل والمحلات والسيارات.",
     },
     questions: [
       {
         id: "need",
         kind: "choice",
-        label: { en: "What do you need?", ar: "شو بدك؟" },
+        label: { en: "What do you need?", ar: "ماذا تحتاج؟" },
         options: [
-          { value: "home_lockout", label: { en: "Locked out of home or office", ar: "الباب تسكّر وإنت برّا" }, weight: 2 },
-          { value: "car_lockout", label: { en: "Locked out of my car", ar: "السيارة تسكّرت والمفتاح جوّا" }, weight: 2 },
-          { value: "lock_change", label: { en: "Change or repair a lock", ar: "تغيير أو تصليح قفل" } },
+          { value: "home_lockout", label: { en: "Locked out of home or office", ar: "الباب مقفل وأنا خارج المنزل أو المكتب" }, weight: 2 },
+          { value: "car_lockout", label: { en: "Locked out of my car", ar: "سيارتي مقفلة والمفتاح بداخلها" }, weight: 2 },
+          { value: "lock_change", label: { en: "Change or repair a lock", ar: "تغيير أو إصلاح قفل" } },
           { value: "key_copy", label: { en: "New key or copy", ar: "مفتاح جديد أو نسخة" } },
-          { value: "car_key", label: { en: "Car key or remote programming", ar: "مفتاح أو ريموت سيارة" } },
+          { value: "car_key", label: { en: "Car key or remote programming", ar: "برمجة مفتاح أو جهاز تحكم السيارة" } },
           { value: "safe", label: { en: "Safe", ar: "خزنة" } },
         ],
       },
       {
         id: "inside",
         kind: "choice",
-        label: { en: "Is anyone stuck inside?", ar: "في حدا عالق جوّا؟" },
+        label: { en: "Is anyone stuck inside?", ar: "هل هناك أحد عالق في الداخل؟" },
         hint: {
-          en: "A child or someone vulnerable stuck inside a car or a home is an emergency: call the Civil Defense on 125 first.",
-          ar: "إذا في ولد أو حدا بحاجة مساعدة عالق جوّا سيارة أو بيت، هيدي حالة طوارئ: اتصل بالدفاع المدني على ١٢٥ أول شي.",
+          en: "A child or someone vulnerable stuck inside a car or a home is an emergency: call your local emergency number first.",
+          ar: "إذا كان طفل أو شخص بحاجة إلى مساعدة عالقاً داخل سيارة أو منزل، فهذه حالة طوارئ: اتصل برقم الطوارئ المحلي أولاً.",
         },
         options: [
           { value: "no", label: { en: "No", ar: "لا" } },
-          { value: "yes", label: { en: "Yes", ar: "إيه" }, critical: true },
+          { value: "yes", label: { en: "Yes", ar: "نعم" }, critical: true },
         ],
       },
     ],
   },
   {
     id: "cameras",
-    name: { en: "Cameras & alarms", ar: "كاميرات وإنذار" },
+    name: { en: "Cameras & alarms", ar: "كاميرات وأنظمة إنذار" },
     blurb: {
       en: "Security cameras, alarm systems and intercoms: installation and repair.",
-      ar: "كاميرات مراقبة، أنظمة إنذار وإنترفون: تركيب وتصليح.",
+      ar: "كاميرات المراقبة وأنظمة الإنذار وأجهزة الاتصال الداخلي: تركيب وإصلاح.",
     },
     questions: [
       {
@@ -690,71 +690,71 @@ export const CATEGORIES: ServiceCategory[] = [
         options: [
           { value: "cameras", label: { en: "Security cameras", ar: "كاميرات مراقبة" } },
           { value: "alarm", label: { en: "Alarm system", ar: "نظام إنذار" } },
-          { value: "intercom", label: { en: "Intercom or video doorbell", ar: "إنترفون أو جرس بكاميرا" } },
-          { value: "other", label: { en: "Something else", ar: "شي تاني" } },
+          { value: "intercom", label: { en: "Intercom or video doorbell", ar: "اتصال داخلي أو جرس باب بكاميرا" } },
+          { value: "other", label: { en: "Something else", ar: "شيء آخر" } },
         ],
       },
       {
         id: "need",
         kind: "choice",
-        label: { en: "What do you need?", ar: "شو بدك؟" },
+        label: { en: "What do you need?", ar: "ماذا تحتاج؟" },
         options: [
           { value: "install", label: { en: "New installation", ar: "تركيب جديد" } },
-          { value: "repair", label: { en: "Not working, repair", ar: "مش عم يشتغل، تصليح" } },
-          { value: "extend", label: { en: "Add to my system", ar: "زيادة عالنظام" } },
-          { value: "phone", label: { en: "View it on my phone", ar: "شوفه عالتلفون" } },
+          { value: "repair", label: { en: "Not working, repair", ar: "لا يعمل، إصلاح" } },
+          { value: "extend", label: { en: "Add to my system", ar: "إضافة إلى نظامي" } },
+          { value: "phone", label: { en: "View it on my phone", ar: "عرضه على هاتفي" } },
         ],
       },
       {
         id: "points",
         kind: "choice",
-        label: { en: "How many cameras or sensors?", ar: "قديه كاميرا أو حسّاس؟" },
+        label: { en: "How many cameras or sensors?", ar: "كم عدد الكاميرات أو أجهزة الاستشعار؟" },
         options: [
-          { value: "1-4", label: { en: "1 to 4", ar: "من ١ لـ٤" } },
-          { value: "5-8", label: { en: "5 to 8", ar: "من ٥ لـ٨" } },
-          { value: "9+", label: { en: "9 or more", ar: "٩ أو أكتر" } },
+          { value: "1-4", label: { en: "1 to 4", ar: "من ١ إلى ٤" } },
+          { value: "5-8", label: { en: "5 to 8", ar: "من ٥ إلى ٨" } },
+          { value: "9+", label: { en: "9 or more", ar: "٩ أو أكثر" } },
         ],
       },
     ],
   },
   {
     id: "pest",
-    name: { en: "Pest control", ar: "مكافحة حشرات" },
+    name: { en: "Pest control", ar: "مكافحة آفات" },
     blurb: {
       en: "Cockroaches, ants, mice and rats, bed bugs and termites.",
-      ar: "صراصير، نمل، فيران وجرذان، بق وأرضة.",
+      ar: "الصراصير، والنمل، والفئران والجرذان، وبق الفراش، والنمل الأبيض.",
     },
     questions: [
       {
         id: "pest",
         kind: "choice",
-        label: { en: "What is the problem?", ar: "شو المشكلة؟" },
+        label: { en: "What is the problem?", ar: "ما المشكلة؟" },
         options: [
           { value: "cockroaches", label: { en: "Cockroaches", ar: "صراصير" } },
           { value: "ants", label: { en: "Ants", ar: "نمل" } },
-          { value: "rodents", label: { en: "Mice or rats", ar: "فيران أو جرذان" }, weight: 1 },
-          { value: "bedbugs", label: { en: "Bed bugs", ar: "بق" }, weight: 1 },
-          { value: "termites", label: { en: "Termites", ar: "أرضة" } },
-          { value: "other", label: { en: "Something else", ar: "شي تاني" } },
+          { value: "rodents", label: { en: "Mice or rats", ar: "فئران أو جرذان" }, weight: 1 },
+          { value: "bedbugs", label: { en: "Bed bugs", ar: "بق الفراش" }, weight: 1 },
+          { value: "termites", label: { en: "Termites", ar: "نمل أبيض" } },
+          { value: "other", label: { en: "Something else", ar: "شيء آخر" } },
         ],
       },
       {
         id: "place",
         kind: "choice",
-        label: { en: "Where?", ar: "وين؟" },
+        label: { en: "Where?", ar: "أين؟" },
         options: [
-          { value: "home", label: { en: "Home", ar: "بيت" } },
+          { value: "home", label: { en: "Home", ar: "منزل" } },
           { value: "restaurant", label: { en: "Restaurant or kitchen", ar: "مطعم أو مطبخ" } },
           { value: "business", label: { en: "Office or shop", ar: "مكتب أو محل" } },
-          { value: "building", label: { en: "Whole building", ar: "كل البناية" } },
+          { value: "building", label: { en: "Whole building", ar: "المبنى بالكامل" } },
         ],
       },
       {
         id: "level",
         kind: "choice",
-        label: { en: "How often do you see them?", ar: "قديه عم تشوفهم؟" },
+        label: { en: "How often do you see them?", ar: "كم مرة تراها؟" },
         options: [
-          { value: "sometimes", label: { en: "Now and then", ar: "من وقت لوقت" } },
+          { value: "sometimes", label: { en: "Now and then", ar: "من حين لآخر" } },
           { value: "daily", label: { en: "Every day", ar: "كل يوم" }, weight: 1 },
         ],
       },
@@ -792,44 +792,29 @@ export const CATEGORY_TINT: Record<string, { bg: string; ink: string }> = {
 export const GUARANTEE_POINTS: LocalText[] = [
   {
     en: "Every job is documented with photos before and after, and a specialist reviews the result.",
-    ar: "كل شغلة موثّقة بصور قبل وبعد، ومختص بيراجع النتيجة.",
+    ar: "يُوثَّق كل عمل بصور قبل وبعد، ويراجع مختص النتيجة.",
   },
   {
     en: `If something isn't right within ${GUARANTEE_DAYS} days, report it from your requests page and the revisit is free.`,
-    ar: `إذا في شي مش مظبوط خلال ${arabicDigits(GUARANTEE_DAYS)} أيام، بلّغ عنه من صفحة طلباتك والزيارة مجانية.`,
+    ar: `إذا لم يكن شيء ما على ما يرام خلال ${arabicDigits(GUARANTEE_DAYS)} أيام، أبلغ عنه من صفحة طلباتك وتكون زيارة المتابعة مجانية.`,
   },
   {
     en: "The price you approved is the price you pay. Extra work only happens after your approval.",
-    ar: "السعر يلي وافقت عليه هو يلي بتدفعه. أي شغل زيادة بصير بس بعد موافقتك.",
+    ar: "السعر الذي وافقت عليه هو ما تدفعه. لا يُنفَّذ أي عمل إضافي إلا بعد موافقتك.",
   },
   {
     en: "Verified technicians only, with identity and trade checked before their first job.",
-    ar: "معلّمين موثّقين بس، الهوية والمهنة بينفحصوا قبل أول شغلة.",
+    ar: "فنيون موثّقون فقط، مع التحقق من الهوية والمهنة قبل أول مهمة.",
   },
 ];
 
 // ---------- coverage areas ----------
 
-// Nationwide — all of Lebanon.
+// Where we work: anywhere, confirmed per request.
 export const COVERAGE_NOTE: LocalText = {
-  en: "From Beirut to Tripoli, Saida to the Bekaa, any town or village. We confirm appointment availability for your address before approval.",
-  ar: "من بيروت لطرابلس، من صيدا للبقاع، أي مدينة أو ضيعة. منأكد توفر الموعد لعنوانك قبل الموافقة.",
+  en: "We're growing city by city. Book with your address and a specialist confirms, before you approve anything, that a vetted technician near you can come.",
+  ar: "نتوسّع مدينة بعد مدينة. احجز بعنوانك، ويؤكّد مختص قبل أن توافق على أي شيء أن فنّياً موثوقاً قريباً منك يستطيع الحضور.",
 };
-export const COVERAGE_AREAS: { group: LocalText; areas: LocalText[] }[] = [
-  {
-    group: { en: "Everywhere in Lebanon", ar: "كل المناطق اللبنانية" },
-    areas: [
-      { en: "Beirut", ar: "بيروت" },
-      { en: "Mount Lebanon", ar: "جبل لبنان" },
-      { en: "Tripoli & the North", ar: "طرابلس والشمال" },
-      { en: "Saida & the South", ar: "صيدا والجنوب" },
-      { en: "Bekaa", ar: "البقاع" },
-      { en: "Nabatieh", ar: "النبطية" },
-      { en: "Baalbek & Hermel", ar: "بعلبك والهرمل" },
-      { en: "Akkar", ar: "عكار" },
-    ],
-  },
-];
 
 // ---------- main vs other services (homepage grouping) ----------
 
@@ -857,12 +842,12 @@ export const SERVICES_IN_ORDER = [
 // Owner-supplied clients; logos collected from official brand sources.
 export const CLIENTS: { name: string; logo: string; note: LocalText }[] = [
   { name: "Spinneys", logo: "/assets/clients/spinneys.png", note: { en: "Gray Mackenzie Retail SAL", ar: "غراي ماكنزي ريتيل ش.م.ل" } },
-  { name: "Happy Supermarkets", logo: "/assets/clients/happy.png", note: { en: "Supermarkets", ar: "سوبرماركت" } },
+  { name: "Happy Supermarkets", logo: "/assets/clients/happy.png", note: { en: "Supermarkets", ar: "متاجر كبرى" } },
   { name: "Sky Gate", logo: "/assets/clients/sky-gate.png", note: { en: "Sky Gate Beirut", ar: "سكاي غيت بيروت" } },
   { name: "Noknok", logo: "/assets/clients/noknok.png", note: { en: "Grocery delivery", ar: "توصيل بقالة" } },
-  { name: "GrabnGO", logo: "/assets/clients/grabngo.png", note: { en: "Convenience stores", ar: "متاجر سريعة" } },
+  { name: "GrabnGO", logo: "/assets/clients/grabngo.png", note: { en: "Convenience stores", ar: "متاجر صغيرة" } },
   { name: "Malik's", logo: "/assets/clients/maliks.png", note: { en: "Bookshops & stationery", ar: "مكتبات وقرطاسية" } },
-  { name: "Tawfeer", logo: "/assets/clients/tawfeer.png", note: { en: "Supermarkets", ar: "سوبرماركت" } },
+  { name: "Tawfeer", logo: "/assets/clients/tawfeer.png", note: { en: "Supermarkets", ar: "متاجر كبرى" } },
   { name: "Beirut Duty Free", logo: "/assets/clients/beirut-duty-free.png", note: { en: "PAC SAL", ar: "باك ش.م.ل" } },
   { name: "Karout Mall", logo: "/assets/clients/teska.png", note: { en: "Teska", ar: "تيسكا" } },
 ];
@@ -905,27 +890,27 @@ export const URGENCY_META: Record<
 > = {
   normal: {
     label: { en: "Normal", ar: "عادي" },
-    note: { en: "Can wait for a scheduled visit.", ar: "بيستنى موعد عادي." },
+    note: { en: "Can wait for a scheduled visit.", ar: "يمكن الانتظار حتى موعد مجدول." },
   },
   priority: {
     label: { en: "Priority", ar: "أولوية" },
     note: {
       en: "Needs attention soon. A small priority fee may apply.",
-      ar: "بدو انتباه قريب. ممكن رسوم أولوية صغيرة.",
+      ar: "يحتاج إلى اهتمام قريب. قد تُطبَّق رسوم أولوية بسيطة.",
     },
   },
   urgent: {
     label: { en: "Urgent", ar: "مستعجل" },
     note: {
       en: "Damage may increase quickly. A dispatch surcharge applies.",
-      ar: "الضرر ممكن يكبّر بسرعة. في رسوم إرسال إضافية.",
+      ar: "قد يتفاقم الضرر بسرعة. تُطبَّق رسوم إرسال إضافية.",
     },
   },
   critical: {
     label: { en: "Critical", ar: "حرج" },
     note: {
       en: "Possible safety risk. A specialist will call you directly.",
-      ar: "ممكن خطر سلامة. المختص رح يتصل فيك مباشرة.",
+      ar: "خطر محتمل على السلامة. سيتصل بك مختص مباشرة.",
     },
   },
 };

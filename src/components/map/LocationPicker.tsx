@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Crosshair, Loader2 } from "lucide-react";
 import { useI18n } from "@/i18n";
-import { BEIRUT, isInLebanon } from "@contracts/geo";
+import { WORLD_VIEW, isValidPin } from "@contracts/geo";
 import { addBaseTiles, L, pinIcon } from "./leafletBase";
 
 export type Pin = { lat: number; lng: number };
@@ -32,8 +32,23 @@ export default function LocationPicker({
   // Create the map once.
   useEffect(() => {
     if (!el.current || map.current) return;
-    const start = value ?? BEIRUT;
-    const m = L.map(el.current, { scrollWheelZoom: false }).setView([start.lat, start.lng], value ? 17 : 12);
+    // The customer's pin if there is one; otherwise the world, then their own area if the browser
+    // already allows location (no permission prompt before they ask for it).
+    const m = L.map(el.current, { scrollWheelZoom: false }).setView(
+      value ? [value.lat, value.lng] : [WORLD_VIEW.lat, WORLD_VIEW.lng],
+      value ? 17 : WORLD_VIEW.zoom,
+    );
+    if (!value && "permissions" in navigator && "geolocation" in navigator) {
+      void navigator.permissions
+        .query({ name: "geolocation" })
+        .then((state) => {
+          if (state.state !== "granted") return;
+          navigator.geolocation.getCurrentPosition((pos) => {
+            if (map.current === m) m.setView([pos.coords.latitude, pos.coords.longitude], 15);
+          });
+        })
+        .catch(() => {});
+    }
     addBaseTiles(m);
     m.on("click", (e: L.LeafletMouseEvent) => onChangeRef.current({ lat: e.latlng.lat, lng: e.latlng.lng }));
     map.current = m;
@@ -68,7 +83,7 @@ export default function LocationPicker({
       (pos) => {
         setLocating(false);
         const pin = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-        if (!isInLebanon(pin.lat, pin.lng)) return setError(p(t.map.outsideLebanon));
+        if (!isValidPin(pin.lat, pin.lng)) return setError(p(t.map.geoUnavailable));
         onChangeRef.current(pin);
         map.current?.setView([pin.lat, pin.lng], 17);
       },
@@ -79,8 +94,6 @@ export default function LocationPicker({
       { enableHighAccuracy: true, timeout: 15000 },
     );
   }
-
-  const outside = value && !isInLebanon(value.lat, value.lng);
 
   return (
     <div>
@@ -97,9 +110,9 @@ export default function LocationPicker({
         </button>
         <p className="text-xs text-navy/70">{value ? p(t.map.dragHint) : p(t.map.tapHint)}</p>
       </div>
-      {(error || outside) && (
+      {error && (
         <p role="alert" className="mt-2 text-sm font-semibold text-destructive">
-          {error ?? p(t.map.outsideLebanon)}
+          {error}
         </p>
       )}
     </div>

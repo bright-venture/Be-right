@@ -20,12 +20,12 @@ import {
   MAX_PROBLEM_FILES,
   isValidVisitDate,
   TIME_SLOTS,
-  todayInBeirut,
+  earliestTodayAnywhere,
   validateAnswers,
   VISIT_FEE_USD,
 } from "@contracts/workflow";
 import { profilePhotoUrl, userUploadPrefix } from "./lib/storage";
-import { isInLebanon } from "@contracts/geo";
+import { isValidPin } from "@contracts/geo";
 import { isValidPhone } from "@contracts/phone";
 import { applyTransition, findRequest, logEvent, type RequestScope } from "./lib/workflow";
 import { notify } from "./notify";
@@ -101,11 +101,11 @@ export const requestsRouter = createRouter({
       }
       const answerError = validateAnswers(input.category, input.answers);
       if (answerError) throw new TRPCError({ code: "BAD_REQUEST", message: answerError });
-      if (!isValidVisitDate(input.preferredDate, todayInBeirut())) {
+      if (!isValidVisitDate(input.preferredDate, earliestTodayAnywhere())) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "Choose a date from today onwards" });
       }
-      if (!isInLebanon(input.lat, input.lng)) {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "Place the pin on your address in Lebanon" });
+      if (!isValidPin(input.lat, input.lng)) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Place the pin on your address" });
       }
       checkMedia(ctx.user.authId, input.media);
       await rateLimit(`request:user:${ctx.user.id}`, LIMITS.requestPerUser);
@@ -219,7 +219,7 @@ export const requestsRouter = createRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      if (!isValidVisitDate(input.preferredDate, todayInBeirut())) {
+      if (!isValidVisitDate(input.preferredDate, earliestTodayAnywhere())) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "Choose a date from today onwards" });
       }
       checkMedia(ctx.user.authId, input.media);

@@ -273,7 +273,7 @@ export function CustomersTab() {
   );
   const [open, setOpen] = useState<number | null>(null);
   const day = (d: Date | string | null) =>
-    d ? new Date(d).toLocaleDateString(lang === "ar" ? "ar-LB" : "en-GB", { day: "numeric", month: "short", year: "numeric" }) : "-";
+    d ? new Date(d).toLocaleDateString(lang === "ar" ? "ar" : "en-GB", { day: "numeric", month: "short", year: "numeric" }) : "-";
 
   if (!list.data) return <Pending error={list.error} retry={() => void list.refetch()} />;
   const shown = list.data.pages.flatMap((page) => page.items);
