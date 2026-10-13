@@ -1,0 +1,28 @@
+{
+  "from": 2.5,
+  "step": 0.1,
+  "sm": {
+    "frames": 66,
+    "columns": 7,
+    "frameWidth": 437,
+    "frameHeight": 248,
+    "videoWidth": 512,
+    "videoHeight": 288,
+    "crop": [
+      28,
+      12
+    ]
+  },
+  "lg": {
+    "frames": 66,
+    "columns": 7,
+    "frameWidth": 652,
+    "frameHeight": 371,
+    "videoWidth": 768,
+    "videoHeight": 432,
+    "crop": [
+      44,
+      18
+    ]
+  }
+}
