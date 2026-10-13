@@ -21,4 +21,13 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     func scene(_ scene: UIScene, continue userActivity: NSUserActivity) {
         SceneDelegateProxy.shared.scene(scene, continue: userActivity)
     }
+
+    // Hide the screen from the app switcher snapshot while the app is in the background.
+    func sceneWillResignActive(_ scene: UIScene) {
+        PrivacyCover.show(in: window)
+    }
+
+    func sceneDidBecomeActive(_ scene: UIScene) {
+        PrivacyCover.hide(in: window)
+    }
 }

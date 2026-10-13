@@ -3,7 +3,7 @@ import { Camera, Loader2 } from "lucide-react";
 import { MediaGrid } from "@/components/MediaGrid";
 import { useI18n } from "@/i18n";
 import { trpc } from "@/providers/trpc";
-import { supabase } from "@/lib/supabase";
+import { uploadToSignedTarget } from "@/lib/upload";
 import { shrinkImage } from "@/lib/shrinkImage";
 import { isRateLimited } from "@/lib/errors";
 import { MAX_JOB_PHOTOS, type JobPhotoKind } from "@contracts/workflow";
@@ -77,10 +77,7 @@ export function JobPhotoUpload({
         const file = await shrinkImage(original, { maxSide: 1600, quality: 0.8 });
         const contentType = file.type || "image/jpeg";
         const target = await createUpload.mutateAsync({ requestId, fileName: file.name, size: file.size, contentType });
-        const { error: uploadError } = await supabase.storage
-          .from(target.bucket)
-          .uploadToSignedUrl(target.key, target.token, file, { contentType });
-        if (uploadError) throw uploadError;
+        await uploadToSignedTarget(target, file, contentType);
         photos.push({ key: target.key, fileName: file.name, size: file.size, contentType });
       }
       if (photos.length) await attach.mutateAsync({ requestId, kind, photos });

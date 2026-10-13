@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { sql } from "drizzle-orm";
 import { MAX_DOCUMENT_BYTES, type ApplicationDocument } from "@contracts/applications";
-import { PHOTO_TYPES } from "@contracts/uploads";
+import { isSafeStorageKey, PHOTO_TYPES } from "@contracts/uploads";
 import { env } from "./env";
 import { getSupabaseAdmin } from "./supabase";
 import { getDb } from "../queries/connection";
@@ -65,7 +65,13 @@ function safeFileName(name: string) {
   return cleaned || "file";
 }
 
+/** Refuses any path that isn't a plain folder path the app made (see isSafeStorageKey). */
+function assertSafeKeys(keys: string[]) {
+  if (keys.some((key) => !isSafeStorageKey(key))) throw new Error("Invalid storage path");
+}
+
 async function signedUploadUrl(id: BucketId, key: string) {
+  assertSafeKeys([key]);
   await ensureBucket(id);
   const { data, error } = await getSupabaseAdmin()
     .storage.from(BUCKETS[id].name())
@@ -75,6 +81,8 @@ async function signedUploadUrl(id: BucketId, key: string) {
 }
 
 async function signedUrls(id: BucketId, keys: string[], ttl: number) {
+  // An odd path just gets no link, so one bad row can't break a whole list.
+  keys = keys.filter(isSafeStorageKey);
   if (!keys.length) return {} as Record<string, string>;
   const { data, error } = await getSupabaseAdmin()
     .storage.from(BUCKETS[id].name())
@@ -96,6 +104,15 @@ export function userUploadPrefix(authId: string) {
   return `${MEDIA_PREFIX}${authId}/`;
 }
 
+/**
+ * True only for a file directly in this person's own upload folder. A key that merely
+ * starts with their folder, such as "requests/<them>/../<someone else>/photo.jpg", is refused.
+ */
+export function isOwnUploadKey(authId: string, key: string) {
+  const prefix = userUploadPrefix(authId);
+  return isSafeStorageKey(key) && key.startsWith(prefix) && !key.slice(prefix.length).includes("/");
+}
+
 export function createUploadUrl(authId: string, fileName: string) {
   return signedUploadUrl("media", `${userUploadPrefix(authId)}${randomUUID()}-${safeFileName(fileName)}`);
 }
@@ -106,6 +123,7 @@ export function createSignedUrls(keys: string[]) {
 
 /** True only if every photo was actually uploaded. */
 export async function mediaExists(keys: string[]) {
+  assertSafeKeys(keys);
   const bucket = getSupabaseAdmin().storage.from(env.storageBucket);
   const results = await Promise.all(keys.map((k) => bucket.exists(k)));
   return results.every((r) => r.data === true);
@@ -117,7 +135,7 @@ export async function mediaExists(keys: string[]) {
 export const DOCUMENT_PREFIX = "applications/";
 
 export function documentKeyMatches(key: string, kind: ApplicationDocument) {
-  return new RegExp(`^${DOCUMENT_PREFIX}[0-9a-f-]{36}/${kind}-[\\w.-]+$`).test(key);
+  return isSafeStorageKey(key) && new RegExp(`^${DOCUMENT_PREFIX}[0-9a-f-]{36}/${kind}-[\\w.-]+$`).test(key);
 }
 
 export function createDocumentUploadUrl(kind: ApplicationDocument, fileName: string) {
@@ -126,6 +144,7 @@ export function createDocumentUploadUrl(kind: ApplicationDocument, fileName: str
 
 /** True only if every key was actually uploaded. */
 export async function documentsExist(keys: string[]) {
+  assertSafeKeys(keys);
   const bucket = getSupabaseAdmin().storage.from(env.docsBucket);
   const results = await Promise.all(keys.map((k) => bucket.exists(k)));
   return results.every((r) => r.data === true);
@@ -167,6 +186,7 @@ export async function listFilesCreatedBefore(id: BucketId, prefix: string, befor
 
 /** Permanently delete files (batched; Supabase removes up to 1,000 paths per call). */
 export async function deleteFiles(id: BucketId, keys: string[]) {
+  assertSafeKeys(keys);
   const bucket = getSupabaseAdmin().storage.from(BUCKETS[id].name());
   for (let i = 0; i < keys.length; i += 500) {
     const { error } = await bucket.remove(keys.slice(i, i + 500));

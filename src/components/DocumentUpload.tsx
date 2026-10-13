@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import { CheckCircle2, FileUp, Loader2 } from "lucide-react";
 import { useI18n } from "@/i18n";
 import { trpc } from "@/providers/trpc";
-import { supabase } from "@/lib/supabase";
+import { uploadToSignedTarget } from "@/lib/upload";
 import { isRateLimited } from "@/lib/errors";
 import { shrinkImage } from "@/lib/shrinkImage";
 import {
@@ -54,10 +54,7 @@ export function DocumentUpload({
     }
     try {
       const target = await createUpload.mutateAsync({ kind, fileName: file.name, size: file.size, contentType });
-      const { error: uploadError } = await supabase.storage
-        .from(target.bucket)
-        .uploadToSignedUrl(target.key, target.token, file, { contentType });
-      if (uploadError) throw uploadError;
+      await uploadToSignedTarget(target, file, contentType);
       setFileName(file.name);
       onUploaded(target.key);
     } catch (err) {

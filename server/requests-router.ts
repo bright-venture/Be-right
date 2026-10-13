@@ -24,7 +24,7 @@ import {
   validateAnswers,
   VISIT_FEE_USD,
 } from "@contracts/workflow";
-import { profilePhotoUrl, userUploadPrefix } from "./lib/storage";
+import { isOwnUploadKey, profilePhotoUrl } from "./lib/storage";
 import { isValidPin } from "@contracts/geo";
 import { isValidPhone } from "@contracts/phone";
 import { applyTransition, findRequest, logEvent, type RequestScope } from "./lib/workflow";
@@ -63,8 +63,7 @@ async function guaranteeStatus(db: Db, requestId: number) {
 
 /** Uploaded files must be the customer's own, with at most a couple of (unshrinkable) videos. */
 function checkMedia(authId: string, media: { key: string; contentType?: string }[]) {
-  const prefix = userUploadPrefix(authId);
-  if (media.some((m) => !m.key.startsWith(prefix) || (m.contentType && !isMediaType(m.contentType)))) {
+  if (media.some((m) => !isOwnUploadKey(authId, m.key) || (m.contentType && !isMediaType(m.contentType)))) {
     throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid media" });
   }
   if (media.filter((m) => m.contentType?.startsWith("video/")).length > MAX_BOOKING_VIDEOS) {

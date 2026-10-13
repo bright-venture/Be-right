@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import { ImagePlus, Loader2, ShieldCheck, X } from "lucide-react";
 import { useI18n } from "@/i18n";
 import { trpc } from "@/providers/trpc";
-import { supabase } from "@/lib/supabase";
+import { uploadToSignedTarget } from "@/lib/upload";
 import { shrinkImage } from "@/lib/shrinkImage";
 import { isNetworkError, isRateLimited, refusalMessage } from "@/lib/errors";
 import { arabicDays, WORKMANSHIP_GUARANTEE_DAYS } from "@contracts/legal";
@@ -86,10 +86,7 @@ export function ReportProblem({
         uploading = true;
         const contentType = file.type || "application/octet-stream";
         const target = await createUpload.mutateAsync({ fileName: file.name, size: file.size, contentType });
-        const { error: uploadError } = await supabase.storage
-          .from(target.bucket)
-          .uploadToSignedUrl(target.key, target.token, file, { contentType });
-        if (uploadError) throw uploadError;
+        await uploadToSignedTarget(target, file, contentType);
         media.push({ key: target.key, fileName: file.name, size: file.size, contentType });
       }
       uploading = false;

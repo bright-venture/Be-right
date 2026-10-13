@@ -16,3 +16,16 @@ export function isMediaType(contentType: string) {
 /** For file pickers (`accept`): the photo formats, optionally with videos. */
 export const PHOTO_ACCEPT = PHOTO_TYPES.join(",");
 export const MEDIA_ACCEPT = `${PHOTO_ACCEPT},video/*`;
+
+/**
+ * A storage path the app made itself: folders and a file name using only letters, digits,
+ * "_", "-" and ".", never "." or ".." as a whole part. Anything else could point the storage
+ * service at another folder, so it is refused before any upload, link or check.
+ */
+export function isSafeStorageKey(key: string) {
+  return (
+    key.length <= 300 &&
+    /^[\w-]+(\/[\w.-]+)+$/.test(key) &&
+    !key.split("/").some((part) => part === "." || part === "..")
+  );
+}

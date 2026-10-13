@@ -20,7 +20,7 @@ import {
   type JobPhotoKind,
 } from "@contracts/workflow";
 import { applyTransition, findRequest, logEvent } from "./lib/workflow";
-import { deleteFiles, mediaExists, profilePhotoUrls, userUploadPrefix } from "./lib/storage";
+import { deleteFiles, isOwnUploadKey, mediaExists, profilePhotoUrls, userUploadPrefix } from "./lib/storage";
 import { ratingsFor } from "./queries/ratings";
 import { notify } from "./notify";
 import { audit } from "./lib/audit";
@@ -277,8 +277,7 @@ export const techRouter = createRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const prefix = userUploadPrefix(ctx.user.authId);
-      if (input.photos.some((m) => !m.key.startsWith(prefix) || !isPhotoType(m.contentType))) {
+      if (input.photos.some((m) => !isOwnUploadKey(ctx.user.authId, m.key) || !isPhotoType(m.contentType))) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid photo" });
       }
       if (!(await mediaExists(input.photos.map((m) => m.key)))) {

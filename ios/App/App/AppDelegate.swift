@@ -12,13 +12,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
 
     func applicationWillResignActive(_ application: UIApplication) {
-        // Sent when the application is about to move from active to inactive state. This can occur for certain types of temporary interruptions (such as an incoming phone call or SMS message) or when the user quits the application and it begins the transition to the background state.
-        // Use this method to pause ongoing tasks, disable timers, and invalidate graphics rendering callbacks. Games should use this method to pause the game.
+        PrivacyCover.show(in: window)
     }
 
     func applicationDidEnterBackground(_ application: UIApplication) {
-        // Use this method to release shared resources, save user data, invalidate timers, and store enough application state information to restore your application to its current state in case it is terminated later.
-        // If your application supports background execution, this method is called instead of applicationWillTerminate: when the user quits.
+        // Hide addresses, phone numbers and documents from the app switcher snapshot.
+        PrivacyCover.show(in: window)
     }
 
     func applicationWillEnterForeground(_ application: UIApplication) {
@@ -26,7 +25,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
 
     func applicationDidBecomeActive(_ application: UIApplication) {
-        // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
+        PrivacyCover.hide(in: window)
     }
 
     func applicationWillTerminate(_ application: UIApplication) {
@@ -40,5 +39,25 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
                                           sessionRole: connectingSceneSession.role)
         config.delegateClass = SceneDelegate.self
         return config
+    }
+}
+
+/// Covers the app with a blur while it is in the background, so the snapshot iOS keeps for the
+/// app switcher shows no personal details. The app uses scenes, so SceneDelegate calls this;
+/// the AppDelegate calls cover iOS versions that run without scenes.
+enum PrivacyCover {
+    private static let tag = 0xB12_6417
+
+    static func show(in window: UIWindow?) {
+        guard let window = window, window.viewWithTag(tag) == nil else { return }
+        let cover = UIVisualEffectView(effect: UIBlurEffect(style: .systemMaterial))
+        cover.frame = window.bounds
+        cover.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        cover.tag = tag
+        window.addSubview(cover)
+    }
+
+    static func hide(in window: UIWindow?) {
+        window?.viewWithTag(tag)?.removeFromSuperview()
     }
 }

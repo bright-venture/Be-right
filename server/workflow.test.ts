@@ -389,6 +389,18 @@ describe("full repair workflow", () => {
         booking({ media: [{ key: `requests/${bob.authId}/x.jpg`, fileName: "x.jpg", size: 1 }] }),
       ),
     ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    // A path that starts in Alice's folder but climbs into Bob's is refused too.
+    for (const key of [
+      `requests/${alice.authId}/../${bob.authId}/x.jpg`,
+      `requests/${alice.authId}/./x.jpg`,
+      `requests/${alice.authId}//x.jpg`,
+      `requests/${alice.authId}/sub/x.jpg`,
+      `requests/${alice.authId}/..%2Fx.jpg`,
+    ]) {
+      await expect(
+        c.requests.create(booking({ media: [{ key, fileName: "x.jpg", size: 1 }] })),
+      ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    }
   });
 
   it("customer books; urgency is computed on the server", async () => {

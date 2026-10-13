@@ -17,7 +17,7 @@ import { AgreeCheckbox } from "@/components/AgreeCheckbox";
 import { useI18n } from "@/i18n";
 import { useRoleGate } from "@/hooks/useRoleGate";
 import { trpc } from "@/providers/trpc";
-import { supabase } from "@/lib/supabase";
+import { uploadToSignedTarget } from "@/lib/upload";
 import LocationPicker, { type Pin } from "@/components/map/LocationPicker";
 import { isValidPin } from "@contracts/geo";
 import { isValidPhone } from "@contracts/phone";
@@ -236,10 +236,7 @@ export default function Book() {
           size: m.file.size,
           contentType,
         });
-        const { error } = await supabase.storage
-          .from(target.bucket)
-          .uploadToSignedUrl(target.key, target.token, m.file, { contentType });
-        if (error) throw error;
+        await uploadToSignedTarget(target, m.file, contentType);
         uploaded.push({ key: target.key, fileName: m.file.name, size: m.file.size, contentType });
       }
       uploading = false;
