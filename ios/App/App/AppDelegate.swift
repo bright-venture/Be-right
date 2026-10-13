@@ -12,12 +12,16 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
 
     func applicationWillResignActive(_ application: UIApplication) {
-        PrivacyCover.show(in: window)
+        for window in PrivacyCover.windows(of: application, fallback: window) {
+            PrivacyCover.show(in: window)
+        }
     }
 
     func applicationDidEnterBackground(_ application: UIApplication) {
         // Hide addresses, phone numbers and documents from the app switcher snapshot.
-        PrivacyCover.show(in: window)
+        for window in PrivacyCover.windows(of: application, fallback: window) where !PrivacyCover.isCovered(window) {
+            window.addSubview(PrivacyCover.makeView(covering: window))
+        }
     }
 
     func applicationWillEnterForeground(_ application: UIApplication) {
@@ -25,7 +29,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
 
     func applicationDidBecomeActive(_ application: UIApplication) {
-        PrivacyCover.hide(in: window)
+        for window in PrivacyCover.windows(of: application, fallback: window) {
+            PrivacyCover.hide(in: window)
+        }
     }
 
     func applicationWillTerminate(_ application: UIApplication) {
@@ -48,13 +54,30 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 enum PrivacyCover {
     private static let tag = 0xB12_6417
 
-    static func show(in window: UIWindow?) {
-        guard let window = window, window.viewWithTag(tag) == nil else { return }
+    /// Every window the app shows: the scenes' windows, or the app's own one without scenes.
+    static func windows(of application: UIApplication, fallback: UIWindow?) -> [UIWindow] {
+        let sceneWindows = application.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .flatMap { $0.windows }
+        return sceneWindows.isEmpty ? [fallback].compactMap { $0 } : sceneWindows
+    }
+
+    static func isCovered(_ window: UIWindow) -> Bool {
+        window.viewWithTag(tag) != nil
+    }
+
+    /// A blur the size of the window, resizing with it.
+    static func makeView(covering window: UIWindow) -> UIView {
         let cover = UIVisualEffectView(effect: UIBlurEffect(style: .systemMaterial))
         cover.frame = window.bounds
         cover.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         cover.tag = tag
-        window.addSubview(cover)
+        return cover
+    }
+
+    static func show(in window: UIWindow?) {
+        guard let window = window, !isCovered(window) else { return }
+        window.addSubview(makeView(covering: window))
     }
 
     static func hide(in window: UIWindow?) {

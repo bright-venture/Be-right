@@ -76,7 +76,10 @@ export const requestsRouter = createRouter({
     .input(
       z.object({
         category: z.string().max(64),
-        answers: z.record(z.string().max(64), z.string().max(500)),
+        // A service asks a handful of questions: a bigger object is not a real booking.
+        answers: z
+          .record(z.string().max(64), z.string().max(500))
+          .refine((answers) => Object.keys(answers).length <= 40, "Too many answers"),
         preferredDate: z.string().max(10),
         timeSlot: z.enum(TIME_SLOTS),
         area: z.string().trim().min(1).max(255),

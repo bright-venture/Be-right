@@ -10,7 +10,9 @@ export async function uploadToSignedTarget(
   file: Blob,
   contentType: string,
 ) {
-  if (!isSafeStorageKey(target.key)) throw new Error("Unexpected upload path");
+  if (!isSafeStorageKey(target.key) || target.key.includes("../") || target.key.includes("..\\")) {
+    throw new Error("Unexpected upload path");
+  }
   const { error } = await supabase.storage
     .from(target.bucket)
     .uploadToSignedUrl(target.key, target.token, file, { contentType });

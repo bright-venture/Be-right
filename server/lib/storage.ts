@@ -72,6 +72,7 @@ function assertSafeKeys(keys: string[]) {
 
 async function signedUploadUrl(id: BucketId, key: string) {
   assertSafeKeys([key]);
+  if (key.includes("../") || key.includes("..\\")) throw new Error("Invalid storage path");
   await ensureBucket(id);
   const { data, error } = await getSupabaseAdmin()
     .storage.from(BUCKETS[id].name())
@@ -82,7 +83,7 @@ async function signedUploadUrl(id: BucketId, key: string) {
 
 async function signedUrls(id: BucketId, keys: string[], ttl: number) {
   // An odd path just gets no link, so one bad row can't break a whole list.
-  keys = keys.filter(isSafeStorageKey);
+  keys = keys.filter((key) => isSafeStorageKey(key) && !key.includes("../") && !key.includes("..\\"));
   if (!keys.length) return {} as Record<string, string>;
   const { data, error } = await getSupabaseAdmin()
     .storage.from(BUCKETS[id].name())
