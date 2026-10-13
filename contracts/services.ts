@@ -407,7 +407,7 @@ export const CATEGORIES: ServiceCategory[] = [
   },
   {
     id: "security",
-    name: { en: "Security", ar: "أمن وحراسة" },
+    name: { en: "Guard", ar: "حراسة" },
     blurb: {
       en: "Guards for buildings, sites and events.",
       ar: "حراسة المباني ومواقع البناء والمناسبات.",
@@ -816,10 +816,10 @@ export const COVERAGE_NOTE: LocalText = {
   ar: "نتوسّع مدينة بعد مدينة. احجز بعنوانك، ويؤكّد مختص قبل أن توافق على أي شيء أن فنّياً موثوقاً قريباً منك يستطيع الحضور.",
 };
 
-// ---------- main vs other services (homepage grouping) ----------
+// ---------- trades and facility services ----------
 
-/** Every service, in the order shown everywhere (one group: no separate "other services"). */
-export const SERVICES_IN_ORDER = [
+/** Repair and installation trades, in the order shown everywhere. */
+export const TRADE_SERVICES = [
   "plumbing",
   "electrical",
   "ac",
@@ -830,13 +830,21 @@ export const SERVICES_IN_ORDER = [
   "installation",
   "locksmith",
   "cameras",
-  "pest",
-  "cleaning",
-  "landscaping",
-  "porter",
-  "valet",
-  "security",
 ];
+
+/** Services for running a place, shown together under "Facility Services". */
+export const FACILITY_SERVICES = ["cleaning", "security", "valet", "porter", "pest", "landscaping"];
+
+export const FACILITY_GROUP: { name: LocalText; blurb: LocalText } = {
+  name: { en: "Facility Services", ar: "خدمات المرافق" },
+  blurb: {
+    en: "Cleaning, guards, event staff, porters, pest control and landscaping for homes, buildings and businesses.",
+    ar: "التنظيف والحراسة وطاقم المناسبات والحمّالون ومكافحة الآفات وتنسيق الحدائق للمنازل والمباني والشركات.",
+  },
+};
+
+/** Every service: the trades first, then the facility services. */
+export const SERVICES_IN_ORDER = [...TRADE_SERVICES, ...FACILITY_SERVICES];
 
 // ---------- verified client list (owner-supplied) ----------
 // Owner-supplied clients; logos collected from official brand sources.

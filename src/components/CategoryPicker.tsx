@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router";
 import {
@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { ServiceIcon } from "@/components/ServiceIcon";
 import { useI18n } from "@/i18n";
-import { CATEGORY_MAP, SERVICES_IN_ORDER, type LocalText } from "@contracts/services";
+import { CATEGORY_MAP, FACILITY_GROUP, FACILITY_SERVICES, SERVICES_IN_ORDER, type LocalText } from "@contracts/services";
 import {
   CATEGORY_PROBLEMS,
   EMERGENCY_PROBLEMS,
@@ -269,21 +269,29 @@ export function CategoryPicker() {
             </button>
           </div>
 
-          {/* Category pills — rounded white with Be Right icons */}
+          {/* Category pills, rounded white with Be Right icons; the facility services follow
+              their group name. */}
           {SERVICES_IN_ORDER.map(id => (
-            <button
-              key={id}
-              type="button"
-              onClick={() =>
-                CATEGORY_PROBLEMS[id]?.length
-                  ? openWizard({ kind: "cat", catId: id })
-                  : navigate(`/book?cat=${id}`)
-              }
-              className="flex shrink-0 snap-start items-center gap-2 rounded-full border-[1.5px] border-navy/15 bg-white px-4 py-2.5 text-sm font-bold text-navy shadow-[0_2px_0_rgb(12_43_92/0.12)] transition-all hover:-translate-y-0.5 hover:border-navy hover:shadow-[0_4px_0_rgb(12_43_92/0.25)] focus-visible:outline-2 focus-visible:outline-flame"
-            >
-              <ServiceIcon id={id} className="h-5 w-5 text-flame" />
-              {p(CATEGORY_MAP[id].name)}
-            </button>
+            <Fragment key={id}>
+              {id === FACILITY_SERVICES[0] && (
+                <span className="flex shrink-0 snap-start items-center gap-2.5 ps-2 font-display text-xs font-black uppercase tracking-[0.14em] text-navy/60">
+                  <span aria-hidden className="h-6 w-px bg-navy/20" />
+                  {p(FACILITY_GROUP.name)}
+                </span>
+              )}
+              <button
+                type="button"
+                onClick={() =>
+                  CATEGORY_PROBLEMS[id]?.length
+                    ? openWizard({ kind: "cat", catId: id })
+                    : navigate(`/book?cat=${id}`)
+                }
+                className="flex shrink-0 snap-start items-center gap-2 rounded-full border-[1.5px] border-navy/15 bg-white px-4 py-2.5 text-sm font-bold text-navy shadow-[0_2px_0_rgb(12_43_92/0.12)] transition-all hover:-translate-y-0.5 hover:border-navy hover:shadow-[0_4px_0_rgb(12_43_92/0.25)] focus-visible:outline-2 focus-visible:outline-flame"
+              >
+                <ServiceIcon id={id} className="h-5 w-5 text-flame" />
+                {p(CATEGORY_MAP[id].name)}
+              </button>
+            </Fragment>
           ))}
         </div>
 

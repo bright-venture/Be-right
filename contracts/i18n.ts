@@ -116,7 +116,7 @@ export const t = {
     errGeneric: { en: "Something went wrong. Please try again.", ar: "حدث خطأ. حاول مرة أخرى." },
   },
   hero: {
-    kicker: { en: "Services & maintenance", ar: "خدمات وصيانة" },
+    kicker: { en: "Maintenance Services", ar: "خدمات الصيانة" },
     h1a: { en: "Reliable services,", ar: "خدمات موثوقة،" },
     h1b: { en: "done right.", ar: "بإتقان." },
     promise: { en: "Fast. Simple. Sorted.", ar: "بسرعة وببساطة، وتُحلّ." },

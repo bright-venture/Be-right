@@ -3,6 +3,7 @@ import { Link } from "react-router";
 import {
   ArrowRight,
   BadgeCheck,
+  Building2,
   ChevronDown,
   ClipboardCheck,
   MapPin,
@@ -22,7 +23,9 @@ import {
   CATEGORY_MAP,
   CATEGORY_TINT,
   COVERAGE_NOTE,
-  SERVICES_IN_ORDER,
+  FACILITY_GROUP,
+  FACILITY_SERVICES,
+  TRADE_SERVICES,
 } from "@contracts/services";
 import { INTRO_DONE_EVENT } from "@/lib/intro";
 import { AccountDeletedNotice } from "@/components/AccountDeletedNotice";
@@ -73,9 +76,10 @@ export default function Home() {
     return () => io.disconnect();
   }, []);
 
-  const services = SERVICES_IN_ORDER.map((id) => CATEGORY_MAP[id]).filter(Boolean);
+  const trades = TRADE_SERVICES.map((id) => CATEGORY_MAP[id]).filter(Boolean);
+  const facility = FACILITY_SERVICES.map((id) => CATEGORY_MAP[id]).filter(Boolean);
 
-  const renderTile = (c: (typeof services)[number], i: number) => {
+  const renderTile = (c: (typeof trades)[number], i: number) => {
     const tint = CATEGORY_TINT[c.id] ?? { bg: "#ECEFF4", ink: "#0C2B5C" };
     return (
       <Link
@@ -113,7 +117,15 @@ export default function Home() {
         <div className="hero-inner relative mx-auto max-w-6xl px-4 pb-16 pt-10 sm:px-6 sm:pt-14">
           <div className="grid items-center gap-10 lg:grid-cols-[1.2fr_0.8fr]">
             <div className="relative z-10 min-w-0">
-              <span className="tech-label hero-enter text-flame-ink">{p(t.hero.kicker)}</span>
+              <h1
+                className={`hero-enter font-display font-black leading-[1.02] tracking-tight text-navy ${
+                  isAr
+                    ? "text-[38px] sm:text-[52px] lg:text-[64px]"
+                    : "text-[42px] sm:text-[58px] lg:text-[70px]"
+                }`}
+              >
+                {p(t.hero.kicker)}
+              </h1>
               {/* Phones: the bird and its speech bubble sit beside the title and the promise;
                   the paragraph wraps alongside. Larger screens: the group is invisible to layout. */}
               <div className="hero-heading-group">
@@ -122,20 +134,18 @@ export default function Home() {
                   <HeroBird className="w-full" onSettled={() => setHeroReady(true)} />
                 </div>
                 <div className="hero-title-copy">
-                  <h1
-                    className={`mt-6 font-display font-black leading-[1.02] tracking-tight text-navy ${
-                      isAr
-                        ? "text-[36px] sm:text-[48px] lg:text-[60px]"
-                        : "text-[40px] sm:text-[56px] lg:text-[68px]"
+                  <p
+                    className={`hero-subtitle mt-5 font-display font-black leading-[1.12] tracking-tight text-navy ${
+                      isAr ? "text-[24px] sm:text-[30px] lg:text-[34px]" : "text-[26px] sm:text-[32px] lg:text-[38px]"
                     }`}
                   >
                     <span className="reveal-line">
                       <span>{p(t.hero.h1a)}</span>
                     </span>
                     <span className="reveal-line">
-                      <span className="stroke-underline">{p(t.hero.h1b)}</span>
+                      <span>{p(t.hero.h1b)}</span>
                     </span>
-                  </h1>
+                  </p>
                   <p className="hero-promise hero-enter hero-d2 mt-4 font-display text-lg font-black uppercase tracking-[0.14em] text-flame-ink sm:text-xl">
                     {p(t.hero.promise)}
                   </p>
@@ -220,10 +230,29 @@ export default function Home() {
             <p className="max-w-sm text-[13px] leading-relaxed text-navy/70">{p(t.services.sub)}</p>
           </div>
 
-          {/* All sixteen services in one grid: four full rows of four (eight of two on phones).
-              The catch-all is a full-width row under it, so no row is left half empty. */}
-          <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
-              {services.map((c, i) => renderTile(c, i))}
+          {/* The ten trades: two full rows of five (five rows of two on phones). */}
+          <div className="mt-8 grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-5">
+            {trades.map((c, i) => renderTile(c, i))}
+          </div>
+
+          {/* Facility Services: the six services for running a place, as one group
+              (one row of six on computers, two of three on tablets, three of two on phones). */}
+          <div className="mt-4 rounded-[30px] border-[1.5px] border-navy/12 bg-[#F1F5FB] p-3 sm:mt-5 sm:p-5">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 px-1 pb-4 pt-1">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-navy text-white">
+                <Building2 className="h-5 w-5" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <h3 className="font-display text-lg font-black text-navy sm:text-xl">{p(FACILITY_GROUP.name)}</h3>
+                <p className="text-[13px] leading-snug text-navy/70">{p(FACILITY_GROUP.blurb)}</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-6">
+              {facility.map((c, i) => renderTile(c, trades.length + i))}
+            </div>
+          </div>
+
+          <div className="mt-4 grid sm:mt-5">
               <Link
                 to="/book"
                 className="group col-span-full flex min-h-16 items-center justify-center gap-3 rounded-[26px] px-5 py-4 text-white transition-all duration-200 hover:-translate-y-1 focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-navy active:translate-y-0"
