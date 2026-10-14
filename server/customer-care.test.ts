@@ -260,7 +260,8 @@ describe("emergency calls", () => {
 
     const s = await callerFor(admin);
     const waiting = (await s.emergency.waiting()).find((e) => e.id === id);
-    expect(waiting).toMatchObject({ problem: "leak", address: "Flat 2", status: "open", name: "Lina" });
+    expect(waiting).toMatchObject({ problem: "leak", address: "Flat 2", status: "open" });
+    expect(waiting).not.toHaveProperty("name");
 
     const { requestId } = await s.emergency.create(call({ emergencyId: id }));
     expect((await s.emergency.waiting()).map((e) => e.id)).not.toContain(id);

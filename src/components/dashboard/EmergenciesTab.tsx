@@ -372,7 +372,7 @@ function OpenEmergencies({ onOpen }: { onOpen: (prefill: Prefill) => void }) {
             return (
               <li key={`sent-${e.id}`} className="relative overflow-hidden rounded-2xl border border-flame/40 bg-flame/[0.03] shadow-[0_1px_2px_rgb(12_43_92/0.06)]">
                 <span aria-hidden className="absolute inset-y-0 start-0 w-1 bg-flame" />
-                <div className="grid gap-3 p-4 ps-5 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)_auto] lg:items-center lg:gap-6">
+                <div className="grid gap-3 p-4 ps-5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center lg:gap-6">
                   <div className="flex min-w-0 items-start gap-3">
                     <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-flame text-white">
                       <Siren className="h-5 w-5" />
@@ -387,16 +387,6 @@ function OpenEmergencies({ onOpen }: { onOpen: (prefill: Prefill) => void }) {
                         <span className="line-clamp-1">{e.address || p(t.emergency.pinOnly)}</span>
                       </p>
                       <p className="text-xs text-navy/55">{timeAgo(e.createdAt, lang)}</p>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div className="min-w-0">
-                      <p className={LABEL}>{p(t.emergency.contactName)}</p>
-                      <p className="truncate font-semibold text-navy">{e.name ?? "-"}</p>
-                    </div>
-                    <div className="min-w-0">
-                      <p className={LABEL}>{p(t.emergency.contactPhone)}</p>
-                      <p className="truncate font-semibold text-navy" dir="ltr">{e.phone ?? "-"}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 lg:justify-end">

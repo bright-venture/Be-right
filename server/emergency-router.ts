@@ -46,17 +46,15 @@ export const emergencyRouter = createRouter({
       return { id: created.id };
     }),
 
-  /** Sent emergencies waiting for the call, newest first, with the account's name and phone if any. */
-  waiting: specialistQuery.query(async () => {
-    const rows = await getDb()
-      .select({ emergency: emergencyRequests, name: users.name, phone: users.phone })
+  /** Sent emergencies waiting for the call, newest first (who is calling comes with the call). */
+  waiting: specialistQuery.query(() =>
+    getDb()
+      .select()
       .from(emergencyRequests)
-      .leftJoin(users, eq(emergencyRequests.userId, users.id))
       .where(eq(emergencyRequests.status, "open"))
       .orderBy(desc(emergencyRequests.createdAt))
-      .limit(100);
-    return rows.map((r) => ({ ...r.emergency, name: r.name, phone: r.phone }));
-  }),
+      .limit(100),
+  ),
 
   /** Not a real emergency, or handled without a technician: take it off the list. */
   dismiss: specialistQuery.input(z.object({ id: z.number().int() })).mutation(async ({ ctx, input }) => {
