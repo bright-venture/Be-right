@@ -9,15 +9,19 @@ import { supabase } from "@/lib/supabase";
 import { isNetworkError, refusalMessage } from "@/lib/errors";
 import { ACCOUNT_DELETED_FLAG } from "@/lib/session";
 import { isValidPhone } from "@contracts/phone";
-import { ROLES } from "@contracts/roles";
+import { canDispatch, ROLES } from "@contracts/roles";
 import { siteOrigin } from "@/lib/native";
+import { useConfirm } from "@/hooks/useConfirm";
 
 const INPUT =
   "mt-2 min-h-12 w-full rounded-2xl border-2 border-navy/30 bg-white px-4 font-semibold text-navy placeholder:font-normal placeholder:text-navy/40 focus:border-flame focus:outline-none";
 const LABEL = "font-display text-sm font-extrabold text-navy";
 const MIN_PASSWORD = 8;
 
-/** Every signed-in role: details and password. Customers can also delete their account. */
+/**
+ * Every signed-in role: details and password. Customers, specialists and admins can also
+ * delete their account; a technician's is closed by the team (jobs and hiring records).
+ */
 export default function Account() {
   const { t, p } = useI18n();
   const { user, isLoading } = useRoleGate(ROLES, { requireSignIn: true });
@@ -38,8 +42,8 @@ export default function Account() {
         <Details key={user.id} name={user.name ?? ""} phone={user.phone ?? ""} />
         <EmailChange current={user.email ?? ""} />
         <PasswordChange email={user.email ?? ""} />
-        {user.role === "customer" ? (
-          <DeleteAccount />
+        {user.role === "customer" || canDispatch(user.role) ? (
+          <DeleteAccount staff={canDispatch(user.role)} />
         ) : (
           <p className="text-sm text-navy/70">{p(t.account.staffNote)}</p>
         )}
@@ -206,21 +210,23 @@ export function PasswordChange({ email }: { email: string }) {
   );
 }
 
-export function DeleteAccount() {
+export function DeleteAccount({ staff = false }: { staff?: boolean }) {
   const { t, p } = useI18n();
+  const [confirm, confirmDialog] = useConfirm();
   const [understood, setUnderstood] = useState(false);
-  const remove = trpc.auth.deleteAccount.useMutation({
-    onSuccess: async () => {
-      try {
-        sessionStorage.setItem(ACCOUNT_DELETED_FLAG, "1");
-      } catch {
-        // The notice is a nicety.
-      }
-      // The sign-in no longer exists on the server: just forget it on this device.
-      await supabase.auth.signOut({ scope: "local" });
-      window.location.replace("/");
-    },
-  });
+  const onSuccess = async () => {
+    try {
+      sessionStorage.setItem(ACCOUNT_DELETED_FLAG, "1");
+    } catch {
+      // The notice is a nicety.
+    }
+    // The sign-in no longer exists on the server: just forget it on this device.
+    await supabase.auth.signOut({ scope: "local" });
+    window.location.replace("/");
+  };
+  const removeCustomer = trpc.auth.deleteAccount.useMutation({ onSuccess });
+  const removeStaff = trpc.auth.deleteStaffAccount.useMutation({ onSuccess });
+  const remove = staff ? removeStaff : removeCustomer;
   const error = remove.error
     ? isNetworkError(remove.error)
       ? p(t.misc.offline)
@@ -230,14 +236,21 @@ export function DeleteAccount() {
   return (
     <section className="card-br !border-red-700 p-5 sm:p-6">
       <h2 className="font-display text-lg font-extrabold text-red-700">{p(t.account.deleteTitle)}</h2>
-      <p className="mt-2 text-sm leading-relaxed text-navy/80">{p(t.account.deleteIntro)}</p>
+      {confirmDialog}
+      <p className="mt-2 text-sm leading-relaxed text-navy/80">{p(staff ? t.account.staffDeleteIntro : t.account.deleteIntro)}</p>
       <label className="mt-4 flex items-start gap-3 text-sm font-semibold text-navy">
         <input type="checkbox" checked={understood} onChange={(e) => setUnderstood(e.target.checked)} className="mt-0.5 h-5 w-5 accent-red-700" />
         {p(t.account.deleteUnderstand)}
       </label>
       <button
-        onClick={() => {
-          if (window.confirm(p(t.account.deleteAsk))) remove.mutate();
+        onClick={async () => {
+          const ok = await confirm({
+            title: p(t.account.deleteAsk),
+            message: p(staff ? t.account.staffDeleteIntro : t.account.deleteIntro),
+            confirmLabel: p(t.account.deleteTitle),
+            tone: "danger",
+          });
+          if (ok) remove.mutate();
         }}
         disabled={!understood || remove.isPending}
         className="btn-pill-outline mt-4 !border-red-700 !text-red-700 disabled:opacity-40"

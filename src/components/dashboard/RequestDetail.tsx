@@ -9,6 +9,7 @@ import { BeforeAfter } from "@/components/JobPhotos";
 import { AnswerList } from "@/components/AnswerList";
 import JobMap from "@/components/map/JobMap";
 import { useI18n } from "@/i18n";
+import { useConfirm } from "@/hooks/useConfirm";
 import { trpc } from "@/providers/trpc";
 import { telLink, whatsappLink } from "@/lib/contact";
 import { CATEGORY_MAP, type RequestStatus } from "@contracts/services";
@@ -267,6 +268,7 @@ type RequestRow = Outputs["specialist"]["detail"]["request"];
  */
 function VisitFeeClose({ request: r, onDone }: { request: RequestRow; onDone: () => void }) {
   const { t, p } = useI18n();
+  const [confirm, confirmDialog] = useConfirm();
   const [reason, setReason] = useState<VisitFeeReason | null>(null);
   const [note, setNote] = useState("");
   const close = trpc.specialist.closeWithVisitFee.useMutation({ onSuccess: onDone });
@@ -300,10 +302,11 @@ function VisitFeeClose({ request: r, onDone }: { request: RequestRow; onDone: ()
         aria-label={p(t.visitFee.notePh)}
         className={`${INPUT} mt-2 w-full`}
       />
+      {confirmDialog}
       <button
-        onClick={() => {
+        onClick={async () => {
           const label = p(t.visitFee.staffConfirm).replace("{fee}", fee);
-          if (reason && window.confirm(`${label}: #${r.id}?`)) {
+          if (reason && (await confirm({ title: `${label}: #${r.id}?`, confirmLabel: label }))) {
             close.mutate({ id: r.id, reason, note: note.trim() || undefined });
           }
         }}
@@ -335,6 +338,7 @@ function NextStep({
   onGoToApplications?: () => void;
 }) {
   const { t, p } = useI18n();
+  const [confirm, confirmDialog] = useConfirm();
   const status = r.status as RequestStatus;
   const [amount, setAmount] = useState("");
   const [quoteNote, setQuoteNote] = useState("");
@@ -528,11 +532,15 @@ function NextStep({
               className="w-full rounded-2xl border-2 border-navy/30 bg-white px-4 py-2 text-sm font-semibold text-navy placeholder:font-normal placeholder:text-navy/40 focus:border-flame focus:outline-none"
             />
             <div className="flex flex-wrap gap-2">
+              {confirmDialog}
               <button
-                onClick={() => {
-                  if (window.confirm(p(t.dash4.closeAsk).replace("{id}", String(r.id)))) {
-                    cancel.mutate({ id: r.id, reason: closeReason.trim() });
-                  }
+                onClick={async () => {
+                  const ok = await confirm({
+                    title: p(t.dash4.closeAsk).replace("{id}", String(r.id)),
+                    confirmLabel: p(t.dash4.closeConfirm),
+                    tone: "danger",
+                  });
+                  if (ok) cancel.mutate({ id: r.id, reason: closeReason.trim() });
                 }}
                 disabled={busy || closeReason.trim().length < 3}
                 className="btn-pill-outline !min-h-10 !border-red-700 !py-1.5 text-sm !text-red-700 disabled:opacity-40"

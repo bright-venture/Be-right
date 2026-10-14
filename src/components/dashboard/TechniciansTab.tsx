@@ -4,6 +4,7 @@ import type { inferRouterOutputs } from "@trpc/server";
 import type { AppRouter } from "../../../server/router";
 import { ServiceIcon } from "@/components/ServiceIcon";
 import { useI18n } from "@/i18n";
+import { useConfirm } from "@/hooks/useConfirm";
 import { trpc } from "@/providers/trpc";
 import { telLink, whatsappLink } from "@/lib/contact";
 import { CATEGORY_MAP } from "@contracts/services";
@@ -49,6 +50,7 @@ export function TechniciansTab({ onGoToApplications }: { onGoToApplications?: ()
 
 function TechnicianCard({ tech: x }: { tech: Technician }) {
   const { t, p } = useI18n();
+  const [confirm, confirmDialog] = useConfirm();
   const utils = trpc.useUtils();
   const [showDocs, setShowDocs] = useState(false);
   const { user } = useAuth();
@@ -179,11 +181,15 @@ function TechnicianCard({ tech: x }: { tech: Technician }) {
 
       {isAdmin && (
       <div className="mt-auto pt-4">
+        {confirmDialog}
         <button
-          onClick={() => {
-            if (window.confirm(p(t.dash4.removeConfirm).replace("{name}", x.name ?? x.email ?? ""))) {
-              remove.mutate({ technicianId: x.id });
-            }
+          onClick={async () => {
+            const ok = await confirm({
+              title: p(t.dash4.removeConfirm).replace("{name}", x.name ?? x.email ?? ""),
+              confirmLabel: p(t.dash2.remove),
+              tone: "danger",
+            });
+            if (ok) remove.mutate({ technicianId: x.id });
           }}
           disabled={remove.isPending}
           className="text-xs font-bold text-navy/70 underline underline-offset-4 hover:text-destructive disabled:opacity-40"

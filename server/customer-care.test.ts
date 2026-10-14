@@ -1,7 +1,7 @@
 // The workmanship guarantee ("report a problem") and customers managing their account.
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { and, eq } from "drizzle-orm";
-import { requestEvents, requestMedia, serviceRequests, users, type User } from "@db/schema";
+import { auditLog, requestEvents, requestMedia, serviceRequests, users, type User } from "@db/schema";
 import type { Email } from "./lib/email";
 import { WORKMANSHIP_GUARANTEE_DAYS as DAYS } from "@contracts/legal";
 import {
@@ -11,6 +11,7 @@ import {
   createTestDb,
   deletedMedia,
   futureDate,
+  makeAdmin,
   makeTechnician,
   makeUser,
   makeSpecialist,
@@ -392,5 +393,37 @@ describe("my account", () => {
   it("is only for customers", async () => {
     await rejected((await callerFor(tech)).auth.deleteAccount(), "FORBIDDEN");
     await rejected((await callerFor(admin)).auth.deleteAccount(), "FORBIDDEN");
+  });
+});
+
+describe("a staff account", () => {
+  it("can be deleted by the specialist: details erased, sign-in deleted, the work kept", async () => {
+    const leaving = await makeSpecialist("leaving-specialist@example.com", "Rami");
+    const handled = await job(customer, "approved");
+    await (await callerFor(leaving)).auth.deleteStaffAccount();
+
+    const [row] = await db.select().from(users).where(eq(users.id, leaving.id));
+    expect(row).toMatchObject({ name: null, email: null, phone: null });
+    expect(row.deletedAt).toBeInstanceOf(Date);
+    expect(state.deletedLogins).toContain(leaving.authId);
+    const [entry] = await db.select().from(auditLog).where(eq(auditLog.actorId, leaving.id));
+    expect(entry).toMatchObject({ action: "staff_account_deleted", details: { role: "specialist" } });
+    // The request stays as it was.
+    expect((await db.select().from(serviceRequests).where(eq(serviceRequests.id, handled)))[0]?.status).toBe("approved");
+  });
+
+  it("always leaves one admin", async () => {
+    const first = await makeAdmin("first-admin@example.com");
+    await expect((await callerFor(first)).auth.deleteStaffAccount()).rejects.toMatchObject({
+      message: "You're the only admin. Make someone else admin in Team first.",
+    });
+    const second = await makeAdmin("second-admin@example.com");
+    await (await callerFor(first)).auth.deleteStaffAccount();
+    await rejected((await callerFor(second)).auth.deleteStaffAccount());
+  });
+
+  it("is for specialists and admins only (technicians are closed by the team)", async () => {
+    await rejected((await callerFor(tech)).auth.deleteStaffAccount(), "FORBIDDEN");
+    await rejected((await callerFor(customer)).auth.deleteStaffAccount(), "FORBIDDEN");
   });
 });

@@ -760,6 +760,7 @@ export const t = {
       application_status: { en: "Marked {applicant}'s application as {to}", ar: "غيّر حالة طلب {applicant} إلى {to}" },
       technician_hired: { en: "Hired {applicant} as a technician", ar: "وظّف {applicant} كفنّي" },
       technician_removed: { en: "Removed {target} from the technicians", ar: "أزال {target} من الفنيين" },
+      staff_account_deleted: { en: "Deleted their own account ({role})", ar: "حذف حسابه ({role})" },
       application_approved: { en: "Approved {applicant}'s application", ar: "وافق على طلب {applicant}" },
       meeting_booked: { en: "Booked a meeting with {applicant}: {date}", ar: "حجز مقابلة مع {applicant}: {date}" },
       meeting_moved: { en: "Moved the meeting with {applicant} to {date}", ar: "غيّر موعد المقابلة مع {applicant} إلى {date}" },
@@ -1184,8 +1185,12 @@ export const t = {
     deleteAsk: { en: "Delete your account for good?", ar: "حذف حسابك نهائياً؟" },
     deleted: { en: "Your account was deleted.", ar: "تم حذف حسابك." },
     staffNote: {
-      en: "To close a technician or staff account, contact the Be Right team.",
-      ar: "لإغلاق حساب فنّي أو موظف، تواصل مع فريق بي رايت.",
+      en: "To close a technician account, contact the Be Right team.",
+      ar: "لإغلاق حساب فنّي، تواصل مع فريق بي رايت.",
+    },
+    staffDeleteIntro: {
+      en: "This erases your name, email and phone, deletes your sign-in and signs you out. The work you did (requests handled, the activity log) stays, under a deleted account. To work with Be Right again, an admin adds you back to the team.",
+      ar: "يؤدي هذا إلى محو اسمك وبريدك الإلكتروني وهاتفك، وحذف بيانات دخولك، وتسجيل خروجك. يبقى العمل الذي أنجزته (الطلبات التي عالجتها وسجل النشاط) باسم حساب محذوف. للعمل مع بي رايت مجدداً، يعيد أحد المسؤولين إضافتك إلى الفريق.",
     },
   },
   notFound: {
@@ -1194,6 +1199,9 @@ export const t = {
       en: "The link may be old or mistyped. Head home or book a service directly.",
       ar: "ربما يكون الرابط قديماً أو مكتوباً بشكل خاطئ. عُد إلى الصفحة الرئيسية أو احجز خدمة مباشرة.",
     },
+  },
+  confirm: {
+    cancel: { en: "Cancel", ar: "إلغاء" },
   },
   misc: {
     langName: { en: "العربية", ar: "English" },
@@ -1377,6 +1385,11 @@ export const t = {
     pinOnly: { en: "Location on the map", ar: "الموقع على الخريطة" },
     openInForm: { en: "Open", ar: "فتح" },
     dismiss: { en: "Dismiss", ar: "تجاهل" },
+    dismissAsk: { en: "Dismiss this emergency?", ar: "تجاهل حالة الطوارئ هذه؟" },
+    dismissNote: {
+      en: "\"{problem}\" leaves the list and no technician is sent. Do this only if it isn't a real emergency or it was handled another way.",
+      ar: "تُزال «{problem}» من القائمة ولن يُرسَل أي فنّي. لا تفعل ذلك إلا إذا لم تكن حالة طوارئ حقيقية أو عولجت بطريقة أخرى.",
+    },
     fromDispatch: { en: "Priority dispatch", ar: "أولوية في الإرسال" },
     clearForm: { en: "Clear", ar: "مسح" },
     noOpenJobs: { en: "No emergency jobs open right now.", ar: "لا توجد مهام طوارئ مفتوحة حالياً." },

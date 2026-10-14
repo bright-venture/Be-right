@@ -13,6 +13,7 @@ import {
   UserCheck,
   UserCog,
   UserMinus,
+  UserX,
   UserPlus,
   ShieldAlert,
   type LucideIcon,
@@ -20,6 +21,7 @@ import {
 import { ServiceIcon } from "@/components/ServiceIcon";
 import { StatusBadge } from "@/components/requests/RequestParts";
 import { useI18n } from "@/i18n";
+import { useConfirm } from "@/hooks/useConfirm";
 import { trpc } from "@/providers/trpc";
 import { formatMoment, meetingDate } from "@/lib/time";
 import { CATEGORY_MAP, STATUS_ORDER, type RequestStatus } from "@contracts/services";
@@ -383,6 +385,7 @@ function CustomerRequests({ id, email, phone, lastSignIn }: { id: number; email:
 /** Specialists and admins: add people, change roles, take people off the team. */
 export function TeamTab() {
   const { t, p, lang } = useI18n();
+  const [confirm, confirmDialog] = useConfirm();
   const utils = trpc.useUtils();
   const { data, error, refetch } = trpc.admin.team.useQuery();
   const [email, setEmail] = useState("");
@@ -495,10 +498,12 @@ export function TeamTab() {
                     <button
                       type="button"
                       disabled={resetTwoStep.isPending}
-                      onClick={() => {
-                        if (window.confirm(p(t.admin.twoStepResetAsk).replace("{name}", m.name || m.email || ""))) {
-                          resetTwoStep.mutate({ userId: m.id });
-                        }
+                      onClick={async () => {
+                        const ok = await confirm({
+                          title: p(t.admin.twoStepResetAsk).replace("{name}", m.name || m.email || ""),
+                          confirmLabel: p(t.admin.twoStepReset),
+                        });
+                        if (ok) resetTwoStep.mutate({ userId: m.id });
                       }}
                       className="btn-pill-outline !min-h-10 w-full justify-center !px-3 text-xs sm:w-auto"
                     >
@@ -518,10 +523,13 @@ export function TeamTab() {
                       <button
                         type="button"
                         disabled={setStaffRole.isPending}
-                        onClick={() => {
-                          if (window.confirm(p(t.admin.removeAsk).replace("{name}", m.name || m.email || ""))) {
-                            setStaffRole.mutate({ userId: m.id, role: "customer" });
-                          }
+                        onClick={async () => {
+                          const ok = await confirm({
+                            title: p(t.admin.removeAsk).replace("{name}", m.name || m.email || ""),
+                            confirmLabel: p(t.admin.remove),
+                            tone: "danger",
+                          });
+                          if (ok) setStaffRole.mutate({ userId: m.id, role: "customer" });
                         }}
                         className="btn-pill-outline !min-h-10 justify-center !border-red-700 !px-3 text-xs !text-red-700"
                       >
@@ -534,6 +542,7 @@ export function TeamTab() {
             })}
           </ul>
         )}
+        {confirmDialog}
         {(setStaffRole.error ?? resetTwoStep.error) && (
           <p role="alert" className="mt-3 text-sm font-semibold text-destructive">
             {(setStaffRole.error ?? resetTwoStep.error)?.message}
@@ -581,6 +590,7 @@ const AUDIT_ICON: Record<AuditAction, LucideIcon> = {
   application_status: ClipboardCheck,
   technician_hired: UserCheck,
   technician_removed: UserMinus,
+  staff_account_deleted: UserX,
   staff_access_refused: ShieldAlert,
 };
 

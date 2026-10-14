@@ -3,6 +3,7 @@ import { CircleCheck, Clock, Loader2, MapPin, Phone, PhoneIncoming, Send, Siren,
 import { ServiceIcon } from "@/components/ServiceIcon";
 import LocationPicker, { type Pin } from "@/components/map/LocationPicker";
 import { useI18n } from "@/i18n";
+import { useConfirm } from "@/hooks/useConfirm";
 import { trpc } from "@/providers/trpc";
 import { telLink } from "@/lib/contact";
 import { timeAgo } from "@/lib/time";
@@ -346,6 +347,7 @@ function EmergencyJobForm({
  */
 function OpenEmergencies({ onOpen }: { onOpen: (prefill: Prefill) => void }) {
   const { t, p, lang } = useI18n();
+  const [confirm, confirmDialog] = useConfirm();
   const utils = trpc.useUtils();
   const queue = useLiveQueue();
   const technicians = trpc.tech.list.useQuery();
@@ -360,6 +362,7 @@ function OpenEmergencies({ onOpen }: { onOpen: (prefill: Prefill) => void }) {
 
   return (
     <section>
+      {confirmDialog}
       <h2 className={`${SECTION_TITLE} flex items-center gap-2`}>
         {p(t.emergency.openJobs)}
         <span className="rounded-md bg-flame px-1.5 py-px text-[11px] tracking-normal text-white">{sentList.length + open.length}</span>
@@ -410,7 +413,15 @@ function OpenEmergencies({ onOpen }: { onOpen: (prefill: Prefill) => void }) {
                     </button>
                     <button
                       type="button"
-                      onClick={() => dismiss.mutate({ id: e.id })}
+                      onClick={async () => {
+                        const ok = await confirm({
+                          title: p(t.emergency.dismissAsk),
+                          message: p(t.emergency.dismissNote).replace("{problem}", label),
+                          confirmLabel: p(t.emergency.dismiss),
+                          tone: "danger",
+                        });
+                        if (ok) dismiss.mutate({ id: e.id });
+                      }}
                       disabled={dismiss.isPending}
                       className="inline-flex h-10 items-center rounded-lg border border-navy/15 px-3 text-sm font-semibold text-navy hover:bg-navy/5 disabled:opacity-50"
                     >

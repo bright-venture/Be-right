@@ -7,7 +7,7 @@ import { env } from "../lib/env";
 const SIGN_IN_TOUCH_MS = 60 * 60 * 1000;
 
 /** ADMIN_EMAILS are admins (everyone else's role is given in the app). */
-function isAdminEmail(email: string | null) {
+export function isAdminEmail(email: string | null) {
   return !!email && (env.adminEmails ?? []).includes(email.toLowerCase());
 }
 

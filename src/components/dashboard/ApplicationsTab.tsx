@@ -4,6 +4,7 @@ import type { inferRouterOutputs } from "@trpc/server";
 import type { AppRouter } from "../../../server/router";
 import { ServiceIcon } from "@/components/ServiceIcon";
 import { useI18n } from "@/i18n";
+import { useConfirm } from "@/hooks/useConfirm";
 import { trpc } from "@/providers/trpc";
 import { telLink, whatsappLink } from "@/lib/contact";
 import { CATEGORY_MAP } from "@contracts/services";
@@ -75,6 +76,7 @@ function ApplicationCard({
   onChanged: () => void;
 }) {
   const { t, p, lang } = useI18n();
+  const [confirm, confirmDialog] = useConfirm();
   const [email, setEmail] = useState("");
   const [result, setResult] = useState<string | null>(null);
   const utils = trpc.useUtils();
@@ -118,13 +120,14 @@ function ApplicationCard({
           .replace("{name}", existing.name ?? hireEmail)
           .replace("{applicant}", app.name)
       : p(t.dash3.hireConfirm).replace("{email}", hireEmail);
-    if (window.confirm(question)) {
+    if (await confirm({ title: question, confirmLabel: p(t.dash3.hire) })) {
       hire.mutate({ id: app.id, email: app.email ? undefined : hireEmail });
     }
   }
 
   return (
     <div className="card-br overflow-hidden">
+      {confirmDialog}
       <button
         type="button"
         onClick={onToggle}

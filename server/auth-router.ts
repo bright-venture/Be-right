@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { and, eq, inArray } from "drizzle-orm";
-import { createRouter, authedQuery, customerQuery, publicQuery } from "./middleware";
+import { and, eq, inArray, isNull } from "drizzle-orm";
+import { createRouter, authedQuery, customerQuery, publicQuery, specialistQuery } from "./middleware";
 import { getDb } from "./queries/connection";
 import { emergencyRequests, requestEvents, requestMedia, reviews, serviceRequests, technicianLocations, users } from "../db/schema";
 import { LEGAL_VERSION } from "@contracts/legal";
@@ -10,6 +10,8 @@ import { canTransition } from "@contracts/workflow";
 import type { RequestStatus } from "@contracts/services";
 import { deleteFiles } from "./lib/storage";
 import { deleteAuthUser } from "./lib/accounts";
+import { audit } from "./lib/audit";
+import { isAdminEmail } from "./queries/users";
 import { logEvent } from "./lib/workflow";
 import { notify } from "./notify";
 
@@ -119,6 +121,48 @@ export const authRouter = createRouter({
       await deleteAuthUser(user.authId);
     } catch (error) {
       console.error("[deleteAccount] sign-in not deleted", user.authId, error);
+    }
+    return { ok: true };
+  }),
+
+  /**
+   * A specialist or admin deletes their own account: name, email and phone are erased and
+   * the sign-in is deleted. What they did (requests handled, the audit trail) stays, under a
+   * deleted account. Be Right always keeps one admin; ADMIN_EMAILS admins are set on the server.
+   */
+  deleteStaffAccount: specialistQuery.mutation(async ({ ctx }) => {
+    const user = ctx.user;
+    if (isAdminEmail(user.email)) {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: "Your admin account is set in the server settings (ADMIN_EMAILS). Remove it there first.",
+      });
+    }
+    await getDb().transaction(async (tx) => {
+      if (user.role === "admin") {
+        // Lock every admin row, as when an admin is removed from the team: never zero admins.
+        const admins = await tx
+          .select({ id: users.id })
+          .from(users)
+          .where(and(eq(users.role, "admin"), isNull(users.deletedAt)))
+          .for("update");
+        if (admins.length <= 1) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "You're the only admin. Make someone else admin in Team first.",
+          });
+        }
+      }
+      await tx
+        .update(users)
+        .set({ name: null, email: null, phone: null, avatar: null, deletedAt: new Date() })
+        .where(eq(users.id, user.id));
+      await audit({ actorId: user.id, action: "staff_account_deleted", targetUserId: user.id, details: { role: user.role } }, tx);
+    });
+    try {
+      await deleteAuthUser(user.authId);
+    } catch (error) {
+      console.error("[deleteStaffAccount] sign-in not deleted", user.authId, error);
     }
     return { ok: true };
   }),

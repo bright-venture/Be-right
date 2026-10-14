@@ -19,7 +19,7 @@ import { Footer } from "@/components/Footer";
 import { useI18n } from "@/i18n";
 import { useAuth } from "@/hooks/useAuth";
 import { useRoleGate } from "@/hooks/useRoleGate";
-import { ROLES } from "@contracts/roles";
+import { canDispatch, ROLES } from "@contracts/roles";
 import { DeleteAccount, Details, EmailChange, PasswordChange } from "./Account";
 
 /** Screens one level down (/account/details …): each one is the same form as the website's. */
@@ -83,6 +83,7 @@ export default function AppAccount() {
   const { user, isLoading } = useRoleGate(ROLES, { requireSignIn: true });
   const { logout, isLoading: signingOut } = useAuth();
   const section = useParams().section as Section | undefined;
+  const canDelete = !!user && (user.role === "customer" || canDispatch(user.role));
 
   if (isLoading || !user) {
     return (
@@ -94,7 +95,7 @@ export default function AppAccount() {
 
   // One level down: the form for that setting, with the top bar's Back button.
   if (section) {
-    if (!SECTIONS.includes(section) || (section === "delete" && user.role !== "customer")) {
+    if (!SECTIONS.includes(section) || (section === "delete" && !canDelete)) {
       return <Navigate to="/account" replace />;
     }
     return (
@@ -105,7 +106,7 @@ export default function AppAccount() {
           {section === "details" && <Details key={user.id} name={user.name ?? ""} phone={user.phone ?? ""} />}
           {section === "email" && <EmailChange current={user.email ?? ""} />}
           {section === "password" && <PasswordChange email={user.email ?? ""} />}
-          {section === "delete" && <DeleteAccount />}
+          {section === "delete" && <DeleteAccount staff={canDispatch(user.role)} />}
         </main>
         <Footer />
       </div>
@@ -209,8 +210,8 @@ export default function AppAccount() {
           {p(t.nav.logout)}
         </button>
 
-        {/* leaving for good: customers delete their own account; staff accounts are managed by Be Right */}
-        {user.role === "customer" ? (
+        {/* leaving for good: technicians' accounts are closed by the team (jobs and hiring records) */}
+        {canDelete ? (
           <div className={GROUP}>
             <Row first to="/account/delete" icon={Trash2} label={p(t.account.deleteTitle)} tone="danger" />
           </div>
