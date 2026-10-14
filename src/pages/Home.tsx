@@ -17,6 +17,7 @@ import { Footer } from "@/components/Footer";
 import { HeroBird } from "@/components/HeroBird";
 import { ClientCarousel } from "@/components/ClientCarousel";
 import { CategoryPicker } from "@/components/CategoryPicker";
+import { EmergencyChoice } from "@/components/EmergencyChoice";
 import { ServiceIcon } from "@/components/ServiceIcon";
 import { useI18n } from "@/i18n";
 import {
@@ -154,15 +155,8 @@ export default function Home() {
               <p className="hero-description hero-enter hero-d3 mt-4 max-w-xl text-[15px] leading-relaxed text-navy/70 sm:text-base">
                 {p(t.hero.sub)}
               </p>
-              <div className="hero-actions hero-enter hero-d4 mt-7 grid gap-3 sm:flex sm:flex-wrap sm:items-center">
-                <Link to="/book" className="btn-pill-primary justify-center text-base">
-                  {p(t.hero.cta)}
-                  <ArrowRight className="h-5 w-5 rtl:-scale-x-100" />
-                </Link>
-                <a href="#how" className="btn-pill-outline justify-center">
-                  {p(t.hero.ctaSecondary)}
-                </a>
-              </div>
+              {/* The two ways in: an emergency (call the team) or a normal booking online. */}
+              <EmergencyChoice bookHref="/book" className="hero-actions hero-enter hero-d4 mt-7 max-w-xl" />
               <ul className="hero-benefits hero-enter hero-d5 mt-6 flex flex-wrap gap-x-5 gap-y-2">
                 {[t.hero.chip1, t.hero.chip2, t.hero.chip3, t.hero.chip4].map((c, i) => (
                   <li

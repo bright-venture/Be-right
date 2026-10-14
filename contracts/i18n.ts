@@ -125,7 +125,6 @@ export const t = {
       ar: "للمنازل والمطاعم والمكاتب والمباني والشركات. احجز عبر الإنترنت بخطوات بسيطة. يراجع مختص طلبك، وتوافق على السعر قبل إرسال الفنّي إليك، وإذا لم يكن العمل صحيحاً، نعود ونصلحه.",
     },
     cta: { en: "Book a service", ar: "احجز خدمة" },
-    ctaSecondary: { en: "How it works", ar: "كيف نعمل" },
     chip1: { en: "Free to book", ar: "الحجز مجاني" },
     chip2: { en: "Book online", ar: "احجز عبر الإنترنت" },
     chip3: { en: "You approve the price first", ar: "توافق على السعر أولاً" },
@@ -543,11 +542,6 @@ export const t = {
     evening: { en: "Good evening", ar: "مساء الخير" },
     headline: { en: "What needs fixing today?", ar: "ماذا تريد أن نصلح اليوم؟" },
     searchPh: { en: "Describe the problem", ar: "صِف المشكلة" },
-    emergencyTitle: { en: "Emergency?", ar: "حالة طارئة؟" },
-    emergencySub: {
-      en: "Leaks, power cuts, lockouts: pick what's wrong and call our team now.",
-      ar: "تسرّبات، انقطاع كهرباء، أبواب مقفلة: اختر ما حدث واتصل بفريقنا الآن.",
-    },
     current: { en: "Your current request", ar: "طلبك الحالي" },
     view: { en: "View", ar: "عرض" },
     quoteReady: { en: "Your quote is ready. Review and approve it.", ar: "عرض السعر جاهز. راجعه ووافق عليه." },
@@ -1299,6 +1293,13 @@ export const t = {
     cta: { en: "Book a checked technician", ar: "احجز فنّياً موثوقاً" },
   },
   emergency: {
+    // the two ways in (home page and app home)
+    choiceQ: { en: "Is it an emergency?", ar: "هل هي حالة طارئة؟" },
+    yesTitle: { en: "Emergency", ar: "حالة طارئة" },
+    yesSub: { en: "Pick what's wrong, then call our team now.", ar: "اختر ما حدث، ثم اتصل بفريقنا الآن." },
+    noTitle: { en: "Not an emergency", ar: "ليست حالة طارئة" },
+    noSub: { en: "Choose the service and book online.", ar: "اختر الخدمة واحجز عبر الإنترنت." },
+    railLabel: { en: "Not an emergency? Choose a service", ar: "ليست حالة طارئة؟ اختر خدمة" },
     title: { en: "Emergency", ar: "طوارئ" },
     intro: { en: "Tell us what's wrong in two taps, then call our team.", ar: "أخبرنا بما حدث بنقرتين، ثم اتصل بفريقنا." },
     serviceQ: { en: "Which service do you need?", ar: "ما الخدمة التي تحتاجها؟" },
@@ -1347,8 +1348,6 @@ export const t = {
     openCount: { en: "{n} open", ar: "{n} مفتوحة" },
   },
   picker: {
-    emergency: { en: "Emergency", ar: "طوارئ" },
-    emergencyQ: { en: "What's the emergency?", ar: "ما حالة الطوارئ؟" },
     locationQ: { en: "Where are you?", ar: "أين أنت؟" },
     locationPh: { en: "Your city or neighbourhood", ar: "مدينتك أو حيّك" },
     continue: { en: "Continue", ar: "متابعة" },

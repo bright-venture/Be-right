@@ -5,7 +5,6 @@ import {
   ChevronRight,
   ChevronLeft,
   MapPin,
-  Siren,
   X,
 } from "lucide-react";
 import { ServiceIcon } from "@/components/ServiceIcon";
@@ -15,8 +14,7 @@ import { CATEGORY_PROBLEMS, PROBLEM_MAP } from "@contracts/picker";
 
 /**
  * Checkatrade-inspired category pill row in Be Right branding:
- * - Emergency pill first (flame, siren): opens the Emergency screen, where the
- *   customer picks the service and what's wrong, then calls.
+ * - The non-emergency way in: emergencies have their own button above (EmergencyChoice).
  * - Other pills are rounded white with the Be Right service icons.
  * - A pill click opens a centered white modal over a blurred/dimmed backdrop:
  *   problem -> location -> the existing booking flow.
@@ -147,6 +145,7 @@ export function CategoryPicker() {
 
   return (
     <div className="category-rail hero-enter hero-d6 relative z-10 mt-10 w-full">
+      <p className="mb-2 font-display text-sm font-extrabold text-navy">{p(t.emergency.railLabel)}</p>
       {/* ---- Pill rail: full-width, arrows OUTSIDE the clipped strip ---- */}
       <div className="flex items-center gap-2">
         <button
@@ -179,16 +178,6 @@ export function CategoryPicker() {
           }}
           className="flex flex-1 snap-x snap-mandatory gap-2.5 overflow-x-auto rounded-2xl py-2 [-ms-overflow-style:none] [scrollbar-width:none] focus-visible:outline-2 focus-visible:outline-flame [&::-webkit-scrollbar]:hidden"
         >
-          {/* Emergency, highlighted with the siren: opens the Emergency screen. */}
-          <button
-            type="button"
-            onClick={() => navigate("/emergency")}
-            className="flex shrink-0 snap-start items-center gap-2 rounded-full border-2 border-flame bg-flame px-4 py-2.5 font-display text-sm font-black text-white shadow-[0_3px_0_#081E42] transition-transform hover:-translate-y-0.5 active:translate-y-0"
-          >
-            <Siren className="h-4 w-4" />
-            {p(t.picker.emergency)}
-          </button>
-
           {/* Category pills, rounded white with Be Right icons; the facility services follow
               their group name. */}
           {SERVICES_IN_ORDER.map(id => (
