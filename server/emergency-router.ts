@@ -27,30 +27,22 @@ const technician = alias(users, "technician");
 
 export const emergencyRouter = createRouter({
   /**
-   * The Emergency button: logs what is wrong and where, so the team knows who is calling
-   * and can send a technician. A call back needs a name and a phone number; a call to the
-   * line doesn't (the call itself reaches the team), but keeps them when given.
+   * The Emergency button: as the customer calls the emergency line, logs who they are, what
+   * is wrong and where, so the team can match the call and send a technician.
    */
   report: publicQuery
     .input(
       z.object({
         category: z.string().max(64),
         problem: z.string().max(64),
-        kind: z.enum(["call", "callback"]),
-        name: z.string().trim().max(255).optional(),
-        phone: z.string().trim().max(32).optional(),
+        name: z.string().trim().min(2, "Enter your name").max(255),
+        phone: z.string().trim().max(32).refine(isValidPhone, "Invalid phone number"),
         ...location,
       }),
     )
     .mutation(async ({ ctx, input }) => {
       if (!isEmergency(input.category, input.problem)) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "Unknown emergency" });
-      }
-      const name = input.name || null;
-      const phone = input.phone || null;
-      if (phone && !isValidPhone(phone)) throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid phone number" });
-      if (input.kind === "callback" && (!name || !phone)) {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "Enter your name and phone number so we can call you" });
       }
       const pinned = input.lat !== undefined && input.lng !== undefined;
       if (pinned && !isValidPin(input.lat!, input.lng!)) {
@@ -63,9 +55,9 @@ export const emergencyRouter = createRouter({
           userId: ctx.user?.id ?? null,
           category: input.category,
           problem: input.problem,
-          kind: input.kind,
-          name,
-          phone,
+          kind: "call",
+          name: input.name,
+          phone: input.phone,
           lat: pinned ? input.lat! : null,
           lng: pinned ? input.lng! : null,
           address: input.address || null,

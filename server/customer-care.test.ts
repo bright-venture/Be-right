@@ -218,7 +218,6 @@ describe("ratings", () => {
     const { id } = await (await callerFor(leaving)).emergency.report({
       category: "plumbing",
       problem: "leak",
-      kind: "callback",
       name: "Rami",
       phone: "+1 202 555 0123",
     });
@@ -247,7 +246,6 @@ describe("sending a technician to an emergency", () => {
     const { id } = await (await callerFor()).emergency.report({
       category: "plumbing",
       problem: "leak",
-      kind: "callback",
       name: "Rami",
       phone: "+44 20 7946 0123",
       ...PIN,
@@ -278,13 +276,13 @@ describe("sending a technician to an emergency", () => {
 
   it("puts a signed-in customer's emergency in their requests", async () => {
     const caller = await makeUser("emergency-account@example.com", "Lina");
-    const { id } = await (await callerFor(caller)).emergency.report({ category: "electrical", problem: "no-power", kind: "call" });
+    const { id } = await (await callerFor(caller)).emergency.report({ category: "electrical", problem: "no-power", name: "Rami", phone: "+44 20 7946 0123" });
     const { requestId } = await (await callerFor(admin)).emergency.dispatch(dispatchInput(id));
     expect((await (await callerFor(caller)).requests.mine()).map((r) => r.id)).toContain(requestId);
   });
 
   it("only lets staff send, to a real technician, with a pin, a phone and a price", async () => {
-    const { id } = await (await callerFor()).emergency.report({ category: "locksmith", problem: "locked-out", kind: "call" });
+    const { id } = await (await callerFor()).emergency.report({ category: "locksmith", problem: "locked-out", name: "Rami", phone: "+44 20 7946 0123" });
     await rejected((await callerFor(customer)).emergency.dispatch(dispatchInput(id)), "FORBIDDEN");
     const s = await callerFor(admin);
     await rejected(s.emergency.dispatch({ ...dispatchInput(id), technicianId: customer.id }));
@@ -297,23 +295,22 @@ describe("sending a technician to an emergency", () => {
 describe("the Emergency button", () => {
   it("logs a call for the team and emails the specialists", async () => {
     const visitor = await callerFor();
-    await visitor.emergency.report({ category: "plumbing", problem: "leak", kind: "call" });
+    await visitor.emergency.report({ category: "plumbing", problem: "leak", name: "Rami", phone: "+44 20 7946 0123" });
     const mail = state.sent.find((m) => m.to.includes(SPECIALIST_EMAIL));
     expect(mail?.subject).toContain("Water leaking or flooding");
     const list = await (await callerFor(admin)).emergency.list();
-    expect(list[0]).toMatchObject({ category: "plumbing", problem: "leak", kind: "call", name: null, handledAt: null });
+    expect(list[0]).toMatchObject({ category: "plumbing", problem: "leak", kind: "call", name: "Rami", phone: "+44 20 7946 0123", handledAt: null });
   });
 
-  it("needs a name and a valid phone for a call back, and a known emergency", async () => {
+  it("needs a name, a valid phone and a known emergency", async () => {
     const visitor = await callerFor();
-    await rejected(visitor.emergency.report({ category: "plumbing", problem: "leak", kind: "callback" }));
-    await rejected(visitor.emergency.report({ category: "plumbing", problem: "leak", kind: "callback", name: "Rami", phone: "123" }));
-    await rejected(visitor.emergency.report({ category: "painting", problem: "other", kind: "call" }));
-    await rejected(visitor.emergency.report({ category: "plumbing", problem: "nope", kind: "call" }));
+    await rejected(visitor.emergency.report({ category: "plumbing", problem: "leak", name: "", phone: "+44 20 7946 0123" }));
+    await rejected(visitor.emergency.report({ category: "plumbing", problem: "leak", name: "Rami", phone: "123" }));
+    await rejected(visitor.emergency.report({ category: "painting", problem: "other", name: "Rami", phone: "+44 20 7946 0123" }));
+    await rejected(visitor.emergency.report({ category: "plumbing", problem: "nope", name: "Rami", phone: "+44 20 7946 0123" }));
     const { id } = await visitor.emergency.report({
       category: "electrical",
       problem: "sparks",
-      kind: "callback",
       name: "Rami",
       phone: "+1 202 555 0123",
     });
@@ -321,7 +318,7 @@ describe("the Emergency button", () => {
   });
 
   it("is only listed and handled by staff, once", async () => {
-    const { id } = await (await callerFor(customer)).emergency.report({ category: "locksmith", problem: "other", kind: "call" });
+    const { id } = await (await callerFor(customer)).emergency.report({ category: "locksmith", problem: "other", name: "Rami", phone: "+44 20 7946 0123" });
     await rejected((await callerFor(customer)).emergency.list(), "FORBIDDEN");
     await rejected((await callerFor(customer)).emergency.markHandled({ id }), "FORBIDDEN");
     const s = await callerFor(admin);
@@ -332,8 +329,8 @@ describe("the Emergency button", () => {
 
   it("is limited per connection", async () => {
     const visitor = await callerFor(undefined, { ip: "203.0.113.9" });
-    for (let i = 0; i < 6; i++) await visitor.emergency.report({ category: "plumbing", problem: "other", kind: "call" });
-    await rejected(visitor.emergency.report({ category: "plumbing", problem: "other", kind: "call" }), "TOO_MANY_REQUESTS");
+    for (let i = 0; i < 6; i++) await visitor.emergency.report({ category: "plumbing", problem: "other", name: "Rami", phone: "+44 20 7946 0123" });
+    await rejected(visitor.emergency.report({ category: "plumbing", problem: "other", name: "Rami", phone: "+44 20 7946 0123" }), "TOO_MANY_REQUESTS");
   });
 });
 

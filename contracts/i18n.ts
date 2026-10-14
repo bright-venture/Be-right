@@ -1326,26 +1326,18 @@ export const t = {
     },
     callTitle: { en: "Call our emergency line", ar: "اتصل بخط الطوارئ" },
     callBody: {
-      en: "Our team sees what you picked here and sends help as fast as possible.",
-      ar: "يرى فريقنا ما اخترته هنا ويرسل المساعدة بأسرع ما يمكن.",
+      en: "Enter your name and number, then tap Call. Our team sees what's wrong and where you are while you're on the phone.",
+      ar: "أدخل اسمك ورقمك، ثم اضغط على «اتصل الآن». يرى فريقنا ما حدث وموقعك أثناء المكالمة.",
     },
-    callButton: { en: "Call {phone}", ar: "اتصل على {phone}" },
-    contactOptional: {
-      en: "Your name and number (optional) help us call you back if the line drops.",
-      ar: "اسمك ورقمك (اختياري) يساعداننا على معاودة الاتصال بك إذا انقطع الخط.",
+    lineLabel: { en: "Emergency line", ar: "خط الطوارئ" },
+    lineSoon: {
+      en: "Our emergency line number will appear here soon.",
+      ar: "سيظهر رقم خط الطوارئ هنا قريباً.",
     },
-    callbackTitle: { en: "We'll call you", ar: "سنتصل بك" },
-    callbackBody: {
-      en: "Leave your name and number and our team calls you back as soon as possible.",
-      ar: "اترك اسمك ورقمك وسيتصل بك فريقنا في أسرع وقت ممكن.",
-    },
+    callNowButton: { en: "Call now", ar: "اتصل الآن" },
+    needName: { en: "Enter your name.", ar: "أدخل اسمك." },
     name: { en: "Your name", ar: "اسمك" },
     phone: { en: "Phone (with country code)", ar: "الهاتف (مع رمز البلد)" },
-    callbackButton: { en: "Call me back", ar: "اتصلوا بي" },
-    callbackSent: {
-      en: "Thank you. Our team will call you as soon as possible. Keep your phone close.",
-      ar: "شكراً لك. سيتصل بك فريقنا في أسرع وقت ممكن. أبقِ هاتفك قريباً منك.",
-    },
     // dashboard
     tab: { en: "Emergencies", ar: "الطوارئ" },
     openTitle: { en: "Open", ar: "مفتوحة" },

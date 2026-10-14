@@ -1,6 +1,6 @@
-import { useState, type FormEvent } from "react";
+import { useState, type MouseEvent } from "react";
 import { useSearchParams } from "react-router";
-import { AlertTriangle, Check, Loader2, MapPin, Phone, Siren } from "lucide-react";
+import { AlertTriangle, MapPin, Phone, PhoneCall, Siren } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { ServiceIcon } from "@/components/ServiceIcon";
@@ -23,9 +23,9 @@ const CHOICE =
 
 /**
  * The Emergency button: pick the service, then what's wrong, then share where you are, then
- * call the emergency line. While there is no line yet (COMPANY.emergencyPhone), the customer
- * asks to be called back. Each step is in the address (?cat=…&problem=…&at=call), so the
- * phone's Back button goes back a step.
+ * enter your name and number and call the emergency line (COMPANY.emergencyPhone). The
+ * details are saved as the call starts, so the team sees who is calling, why and where.
+ * Each step is in the address (?cat=…&problem=…&at=call), so the Back button goes back a step.
  */
 export default function Emergency() {
   const { t, p } = useI18n();
@@ -62,32 +62,24 @@ export default function Emergency() {
   const where = { lat: pin?.lat, lng: pin?.lng, address: address.trim() || undefined };
 
   const report = trpc.emergency.report.useMutation();
-  const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const failure = (err: unknown) =>
-    p(isRateLimited(err) ? t.misc.tooMany : isNetworkError(err) ? t.misc.offline : t.misc.error);
 
-  /** Calling the line: the call itself reaches the team, so the log is sent without waiting. */
-  const logCall = () => {
-    if (!category || !problem) return;
-    report.mutate({
-      category,
-      problem,
-      kind: "call",
-      name: name.trim() || undefined,
-      phone: isValidPhone(phone) ? phone.trim() : undefined,
-      ...where,
-    });
-  };
-
-  const askCallback = (event: FormEvent) => {
-    event.preventDefault();
-    if (!category || !problem) return;
-    if (!isValidPhone(phone)) return setError(p(t.misc.phoneInvalid));
+  /**
+   * Tapping Call: the details must be filled in first. They are saved while the phone opens
+   * the dialer (the page stays open behind the call, so the request still goes through).
+   */
+  const call = (event: MouseEvent<HTMLAnchorElement>) => {
+    if (!category || !problem) return event.preventDefault();
+    const missing = name.trim().length < 2 ? t.emergency.needName : !isValidPhone(phone) ? t.misc.phoneInvalid : null;
+    if (missing) {
+      event.preventDefault();
+      setError(p(missing));
+      return;
+    }
     setError(null);
     report.mutate(
-      { category, problem, kind: "callback", name: name.trim(), phone: phone.trim(), ...where },
-      { onSuccess: () => setSent(true), onError: (err) => setError(failure(err)) },
+      { category, problem, name: name.trim(), phone: phone.trim(), ...where },
+      { onError: (err) => isRateLimited(err) || isNetworkError(err) || console.error(err) },
     );
   };
 
@@ -245,7 +237,7 @@ export default function Emergency() {
           </section>
         )}
 
-        {/* Step 4: call (or, without a line yet, ask to be called back). */}
+        {/* Step 4: your details, then call. */}
         {step === 4 && (
           <section className="mt-5 flex flex-col gap-4 animate-rise-in">
             {danger && (
@@ -255,46 +247,57 @@ export default function Emergency() {
               </p>
             )}
 
-            {line ? (
-              <div className="card-br flex flex-col gap-5 !border-flame p-5 sm:p-6">
-                <div>
-                  <h2 className="font-display text-xl font-extrabold text-navy">{p(t.emergency.callTitle)}</h2>
-                  <p className="mt-1 text-sm text-navy/70">{p(t.emergency.callBody)}</p>
-                </div>
-                <a href={telLink(line)} onClick={logCall} className="btn-pill-primary min-h-14 justify-center text-lg">
-                  <Phone className="h-5 w-5" />
-                  {p(t.emergency.callButton).replace("{phone}", line)}
+            <div className="card-br flex flex-col gap-5 !border-flame p-5 sm:p-6">
+              <div>
+                <h2 className="font-display text-xl font-extrabold text-navy">{p(t.emergency.callTitle)}</h2>
+                <p className="mt-1 text-sm text-navy/70">{p(t.emergency.callBody)}</p>
+              </div>
+
+              {/* The number itself, large, so it can also be dialled by hand. */}
+              {line ? (
+                <a
+                  href={telLink(line)}
+                  onClick={call}
+                  className="flex items-center gap-3 rounded-2xl bg-flame/[0.07] p-4 transition-colors hover:bg-flame/10"
+                >
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-flame text-white">
+                    <PhoneCall className="h-5 w-5" />
+                  </span>
+                  <span>
+                    <span className="block text-[11px] font-bold uppercase tracking-[0.12em] text-navy/55">
+                      {p(t.emergency.lineLabel)}
+                    </span>
+                    <span dir="ltr" className="block font-display text-2xl font-black tracking-tight text-navy sm:text-3xl">
+                      {line}
+                    </span>
+                  </span>
                 </a>
-                <div>
-                  <p className="text-xs text-navy/60">{p(t.emergency.contactOptional)}</p>
-                  <div className="mt-2">{contactFields(false)}</div>
-                </div>
-              </div>
-            ) : sent ? (
-              <div role="status" className="card-br flex items-start gap-3 !border-flame p-5 sm:p-6">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-flame text-white">
-                  <Check className="h-5 w-5" />
-                </span>
-                <p className="font-semibold text-navy">{p(t.emergency.callbackSent)}</p>
-              </div>
-            ) : (
-              <form onSubmit={askCallback} className="card-br flex flex-col gap-5 !border-flame p-5 sm:p-6">
-                <div>
-                  <h2 className="font-display text-xl font-extrabold text-navy">{p(t.emergency.callbackTitle)}</h2>
-                  <p className="mt-1 text-sm text-navy/70">{p(t.emergency.callbackBody)}</p>
-                </div>
-                {contactFields(true)}
-                {error && (
-                  <p role="alert" className="text-sm font-bold text-red-700">
-                    {error}
-                  </p>
-                )}
-                <button type="submit" disabled={report.isPending} className="btn-pill-primary min-h-14 justify-center text-lg">
-                  {report.isPending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Phone className="h-5 w-5" />}
-                  {p(t.emergency.callbackButton)}
+              ) : (
+                <p className="rounded-2xl border border-dashed border-navy/25 p-4 text-sm font-semibold text-navy/60">
+                  {p(t.emergency.lineSoon)}
+                </p>
+              )}
+
+              {contactFields(true)}
+
+              {error && (
+                <p role="alert" className="text-sm font-bold text-red-700">
+                  {error}
+                </p>
+              )}
+
+              {line ? (
+                <a href={telLink(line)} onClick={call} className="btn-pill-primary min-h-14 justify-center text-lg">
+                  <Phone className="h-5 w-5" />
+                  {p(t.emergency.callNowButton)}
+                </a>
+              ) : (
+                <button type="button" disabled className="btn-pill-primary min-h-14 justify-center text-lg opacity-40">
+                  <Phone className="h-5 w-5" />
+                  {p(t.emergency.callNowButton)}
                 </button>
-              </form>
-            )}
+              )}
+            </div>
           </section>
         )}
       </main>
