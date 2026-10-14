@@ -350,10 +350,10 @@ function MeetingBox({ app, lastPlace, onChanged }: { app: Application; lastPlace
   const [when, setWhen] = useState(app.meetingAt ? toLocalInput(new Date(app.meetingAt)) : "");
   const [place, setPlace] = useState(app.meetingPlace ?? lastPlace);
   const [note, setNote] = useState(app.meetingNote ?? "");
-  const [sent, setSent] = useState<boolean | null>(null);
+  const [sent, setSent] = useState<"sent" | "none" | "failed" | null>(null);
   const book = trpc.join.bookMeeting.useMutation({
     onSuccess: (res) => {
-      setSent(res.emailed);
+      setSent(res.email);
       setEditing(false);
       onChanged();
     },
@@ -389,8 +389,8 @@ function MeetingBox({ app, lastPlace, onChanged }: { app: Application; lastPlace
             {p(t.dash3.changeMeeting)}
           </button>
           {sent !== null && (
-            <p role="status" className="w-full text-xs text-navy/70">
-              {p(sent ? t.dash3.meetingEmailed : t.dash3.meetingNoEmail)}
+            <p role="status" className={`w-full text-xs ${sent === "failed" ? "font-semibold text-red-700" : "text-navy/70"}`}>
+              {p(sent === "sent" ? t.dash3.meetingEmailed : sent === "none" ? t.dash3.meetingNoEmail : t.dash3.meetingNotSent)}
             </p>
           )}
         </div>

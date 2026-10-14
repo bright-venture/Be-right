@@ -70,17 +70,19 @@ function render(m: Message) {
   return { subject, html, text };
 }
 
+/** Whether the email went out (false: nobody to send to, or emails are off). */
 async function send(to: (string | null | undefined)[], message: Message) {
   const recipients = [...new Set(to.filter((e): e is string => !!e).map((e) => e.toLowerCase()))];
-  if (recipients.length) await sendEmail({ to: recipients, ...render(message) });
+  return recipients.length ? (await sendEmail({ to: recipients, ...render(message) })) === true : false;
 }
 
-/** Runs a notification without ever failing the caller. */
-async function safely(name: string, fn: () => Promise<void>) {
+/** Runs a notification without ever failing the caller (undefined if it failed). */
+async function safely<T>(name: string, fn: () => Promise<T>): Promise<T | undefined> {
   try {
-    await fn();
+    return await fn();
   } catch (error) {
     console.error(`[notify] ${name} failed`, error);
+    return undefined;
   }
 }
 
@@ -523,16 +525,16 @@ export const notify = {
       });
     }),
 
-  /** The applicant's in-person meeting at the office: when and where (or its new time). */
+  /** The applicant's in-person meeting at the office: when and where (or its new time). Whether it was emailed. */
   meetingBooked: (applicationId: number, rescheduled: boolean) =>
     safely("meetingBooked", async () => {
       const app = await getDb().query.technicianApplications.findFirst({
         where: eq(technicianApplications.id, applicationId),
       });
-      if (!app?.email || !app.meetingAt || !app.meetingPlace) return;
+      if (!app?.email || !app.meetingAt || !app.meetingPlace) return false;
       const trade = local(CATEGORY_MAP[app.trade]?.name, app.trade);
       const when = meetingTime(app.meetingAt, app.meetingTimeZone);
-      await send([app.email], {
+      return send([app.email], {
         subject: rescheduled
           ? both("New time for your meeting with Be Right", "موعد جديد لمقابلتك مع بي رايت")
           : both("Your meeting with Be Right", "مقابلتك مع بي رايت"),

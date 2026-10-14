@@ -40,6 +40,7 @@ vi.mock("./lib/env", () => ({
 vi.mock("./lib/email", () => ({
   sendEmail: async (email: { to: string[]; subject: string; text: string }) => {
     state.emails.push(email);
+    return true;
   },
 }));
 vi.mock("./lib/storage", async (importOriginal) =>
@@ -177,7 +178,7 @@ describe("admin area", () => {
       consent: true,
     });
     await makeUser("rawad@example.com", "Rawad");
-    await o.join.bookMeeting({ id, ...meetingSlot() });
+    expect(await o.join.bookMeeting({ id, ...meetingSlot() })).toMatchObject({ email: "sent" });
     await o.join.hire({ id });
     for (const status of ["rejected", "contacted", "new"] as const) {
       await expect(o.join.setStatus({ id, status })).rejects.toMatchObject({ code: "BAD_REQUEST" });

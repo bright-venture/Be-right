@@ -194,8 +194,9 @@ export const joinRouter = createRouter({
         applicationId: app.id,
         details: { at: input.at.toISOString(), place: input.place, rescheduled },
       });
-      await notify.meetingBooked(app.id, rescheduled);
-      return { ok: true, emailed: !!app.email };
+      const emailed = await notify.meetingBooked(app.id, rescheduled);
+      // "none": no email to send to; "failed": not sent (emails off, or Resend refused it).
+      return { ok: true, email: !app.email ? ("none" as const) : emailed ? ("sent" as const) : ("failed" as const) };
     }),
 
   setStatus: adminQuery

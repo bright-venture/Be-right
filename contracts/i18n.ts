@@ -928,6 +928,10 @@ export const t = {
     keepMeeting: { en: "Keep the current time", ar: "الإبقاء على الموعد الحالي" },
     meetingSet: { en: "{date}, at {place}", ar: "{date}، في {place}" },
     meetingEmailed: { en: "The applicant got the details by email.", ar: "تلقى المتقدّم التفاصيل عبر البريد الإلكتروني." },
+    meetingNotSent: {
+      en: "The email couldn't be sent: tell the applicant the date and place by phone.",
+      ar: "تعذّر إرسال البريد الإلكتروني: أبلغ المتقدّم بالموعد والمكان عبر الهاتف.",
+    },
     meetingNoEmail: {
       en: "This applicant has no email: tell them the date and place by phone.",
       ar: "لا يوجد بريد إلكتروني لهذا المتقدّم: أبلغه بالموعد والمكان عبر الهاتف.",
