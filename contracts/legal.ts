@@ -20,9 +20,11 @@ export const COMPANY = {
   whatsapp: "",
   /**
    * The emergency line the Emergency button calls, with its country code, e.g.
-   * "+1 202 555 0123". Empty: the Emergency screen offers a call back instead.
+   * "+1 202 555 0123". Empty: the Emergency screen says the number is coming soon and
+   * Call is disabled.
+   * TODO before launch: replace this temporary test number (a reserved, fictional US number).
    */
-  emergencyPhone: "",
+  emergencyPhone: "+1 202 555 0100",
 } as const;
 
 /**
