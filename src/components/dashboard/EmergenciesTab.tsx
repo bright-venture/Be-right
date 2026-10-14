@@ -25,6 +25,7 @@ type Prefill = {
   category: string;
   problem: string;
   pin: Pin;
+  phone: string;
   address: string;
 };
 
@@ -127,7 +128,8 @@ function EmergencyJobForm({
   const [category, setCategory] = useState(prefill?.category ?? "");
   const [problem, setProblem] = useState(prefill?.problem ?? "");
   const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
+  // The number the customer sent with the emergency (theirs, typed by them).
+  const [phone, setPhone] = useState(prefill?.phone ?? "");
   const [pin, setPin] = useState<Pin | null>(prefill?.pin ?? null);
   const [address, setAddress] = useState(prefill?.address ?? "");
   const [technicianId, setTechnicianId] = useState("");
@@ -385,6 +387,12 @@ function OpenEmergencies({ onOpen }: { onOpen: (prefill: Prefill) => void }) {
                         {label}
                         <span className="rounded-md bg-flame/10 px-1.5 py-0.5 text-[11px] font-bold text-flame-ink">{p(t.emergency.waitingCall)}</span>
                       </p>
+                      {e.phone && (
+                        <a href={telLink(e.phone)} className="flex items-center gap-1 text-xs font-semibold text-navy hover:underline">
+                          <Phone className="h-3.5 w-3.5 shrink-0 text-flame" />
+                          <span dir="ltr">{e.phone}</span>
+                        </a>
+                      )}
                       <p className="flex items-start gap-1 text-xs text-navy/70">
                         <MapPin className="mt-px h-3.5 w-3.5 shrink-0 text-flame" />
                         <span className="line-clamp-1">{e.address || p(t.emergency.pinOnly)}</span>
@@ -403,6 +411,7 @@ function OpenEmergencies({ onOpen }: { onOpen: (prefill: Prefill) => void }) {
                           category: info?.category ?? "",
                           problem: label,
                           pin: { lat: e.lat, lng: e.lng },
+                          phone: e.phone ?? "",
                           address: e.address ?? "",
                         })
                       }

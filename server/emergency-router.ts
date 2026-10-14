@@ -16,8 +16,8 @@ import { notify } from "./notify";
 
 export const emergencyRouter = createRouter({
   /**
-   * Priority dispatch, from the customer: what's wrong and where, sent just before they call
-   * the emergency line. The specialist who answers finds it waiting in the dashboard.
+   * Priority dispatch, from the customer: what's wrong, where, and their phone number, sent
+   * just before they call the emergency line. The specialist who answers finds it waiting.
    */
   report: publicQuery
     .input(
@@ -25,7 +25,7 @@ export const emergencyRouter = createRouter({
         problem: z.string().max(64),
         lat: z.number().min(-90).max(90),
         lng: z.number().min(-180).max(180),
-        address: z.string().trim().max(1000).optional(),
+        phone: z.string().trim().max(32).refine(isValidPhone, "Invalid phone number"),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -39,7 +39,7 @@ export const emergencyRouter = createRouter({
           problem: input.problem,
           lat: input.lat,
           lng: input.lng,
-          address: input.address || null,
+          phone: input.phone,
         })
         .returning({ id: emergencyRequests.id });
       await notify.emergencyReported(created.id);

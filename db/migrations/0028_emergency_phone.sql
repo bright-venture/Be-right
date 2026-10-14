@@ -1,0 +1,1 @@
+ALTER TABLE "emergency_requests" ADD COLUMN "phone" varchar(32);

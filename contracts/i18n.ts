@@ -1318,6 +1318,7 @@ export const t = {
       ar: "شارك موقعك وأرسله، ثم اتصل بنا: سيعرف فريقنا مسبقاً إلى أين يتوجّه.",
     },
     sendDetails: { en: "Send details", ar: "إرسال التفاصيل" },
+    yourPhone: { en: "Your phone number", ar: "رقم هاتفك" },
     sentNowCall: { en: "Sent to our team. Now call us.", ar: "أُرسلت إلى فريقنا. اتصل بنا الآن." },
     callAnyway: { en: "You can still call us on the number below.", ar: "لا يزال بإمكانك الاتصال بنا على الرقم أدناه." },
     callTitle: { en: "Call our emergency line", ar: "اتصل بخط الطوارئ" },

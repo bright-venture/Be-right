@@ -608,6 +608,7 @@ export const notify = {
             `${problem.en}. The customer is calling the emergency line now.`,
             `${problem.ar}. يتصل العميل بخط الطوارئ الآن.`,
           ),
+          ...(sent.phone ? [both(`Phone: ${sent.phone}.`, `الهاتف: ${sent.phone}.`)] : []),
           ...(sent.address ? [both(`Address: ${sent.address}.`, `العنوان: ${sent.address}.`)] : []),
           both(`Map: ${map}`, `الخريطة: ${map}`),
         ],

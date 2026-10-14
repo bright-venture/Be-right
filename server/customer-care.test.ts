@@ -256,12 +256,12 @@ describe("emergency calls", () => {
   it("start from a sent emergency: waiting for the call, then the job, in the customer's requests", async () => {
     const sender = await makeUser("priority@example.com", "Lina");
     state.sent.length = 0;
-    const { id } = await (await callerFor(sender)).emergency.report({ problem: "leak", lat: 51.5072, lng: -0.1276, address: "Flat 2" });
+    const { id } = await (await callerFor(sender)).emergency.report({ problem: "leak", lat: 51.5072, lng: -0.1276, phone: "+44 20 7946 0999" });
     expect(state.sent.find((m) => m.to.includes(SPECIALIST_EMAIL))?.subject).toContain("Water leak");
 
     const s = await callerFor(admin);
     const waiting = (await s.emergency.waiting()).find((e) => e.id === id);
-    expect(waiting).toMatchObject({ problem: "leak", address: "Flat 2", status: "open" });
+    expect(waiting).toMatchObject({ problem: "leak", phone: "+44 20 7946 0999", status: "open" });
     expect(waiting).not.toHaveProperty("name");
 
     const { requestId } = await s.emergency.create(call({ emergencyId: id }));
@@ -273,9 +273,11 @@ describe("emergency calls", () => {
 
   it("can be sent by anyone, for a known emergency and a real place, and dismissed by staff", async () => {
     const visitor = await callerFor();
-    await rejected(visitor.emergency.report({ problem: "nope", lat: 51.5, lng: -0.12 }));
-    await rejected(visitor.emergency.report({ problem: "leak", lat: 0, lng: 0 }));
-    const { id } = await visitor.emergency.report({ problem: "other", lat: 51.5, lng: -0.12 });
+    const phone = "+44 20 7946 0100";
+    await rejected(visitor.emergency.report({ problem: "nope", lat: 51.5, lng: -0.12, phone }));
+    await rejected(visitor.emergency.report({ problem: "leak", lat: 0, lng: 0, phone }));
+    await rejected(visitor.emergency.report({ problem: "leak", lat: 51.5, lng: -0.12, phone: "3432" }));
+    const { id } = await visitor.emergency.report({ problem: "other", lat: 51.5, lng: -0.12, phone });
     await rejected(visitor.emergency.waiting(), "UNAUTHORIZED");
     await rejected((await callerFor(customer)).emergency.dismiss({ id }), "FORBIDDEN");
     const s = await callerFor(admin);
@@ -286,7 +288,7 @@ describe("emergency calls", () => {
 
   it("are erased with the sender's account", async () => {
     const leaving = await makeUser("priority-left@example.com");
-    const { id } = await (await callerFor(leaving)).emergency.report({ problem: "no-power", lat: 51.5, lng: -0.12 });
+    const { id } = await (await callerFor(leaving)).emergency.report({ problem: "no-power", lat: 51.5, lng: -0.12, phone: "+44 20 7946 0101" });
     await (await callerFor(leaving)).auth.deleteAccount();
     expect((await (await callerFor(admin)).emergency.waiting()).map((e) => e.id)).not.toContain(id);
   });

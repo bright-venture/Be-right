@@ -303,6 +303,8 @@ export const emergencyRequests = pgTable(
     problem: varchar("problem", { length: 64 }).notNull(),
     lat: doublePrecision("lat").notNull(),
     lng: doublePrecision("lng").notNull(),
+    /** Where to reach the customer. Older emergencies have address details instead. */
+    phone: varchar("phone", { length: 32 }),
     address: text("address"),
     status: varchar("status", { length: 16 }).$type<EmergencyStatus>().default("open").notNull(),
     requestId: integer("request_id").references(() => serviceRequests.id, { onDelete: "set null" }),
