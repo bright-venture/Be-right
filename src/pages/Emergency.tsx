@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { useSearchParams } from "react-router";
-import { AlertTriangle, CircleCheck, Loader2, MapPin, Phone, PhoneCall, Send, Siren } from "lucide-react";
+import { AlertTriangle, CircleCheck, Loader2, MapPin, Phone, PhoneCall, Send, Siren, X } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { ServiceIcon } from "@/components/ServiceIcon";
@@ -83,35 +83,72 @@ export default function Emergency() {
     );
   };
 
+  /**
+   * A field filled from the account: tapping it selects the text (typing replaces it), and
+   * the × empties it in one tap.
+   */
+  const clearable = (id: string, value: string, set: (v: string) => void) => ({
+    onFocus: (e: { currentTarget: HTMLInputElement }) => e.currentTarget.select(),
+    clear: value ? (
+      <button
+        type="button"
+        onClick={() => {
+          set("");
+          document.getElementById(id)?.focus();
+        }}
+        aria-label={p(t.emergency.clear)}
+        className="absolute inset-y-0 end-2 my-auto flex h-8 w-8 items-center justify-center rounded-full text-navy/45 hover:bg-navy/5 hover:text-navy"
+      >
+        <X className="h-4 w-4" />
+      </button>
+    ) : null,
+  });
+  const nameField = clearable("emergency-name", name, setName);
+  const phoneField = clearable("emergency-phone", phone, setPhone);
+
   const contactFields = (required: boolean) => (
     <div className="grid gap-4 sm:grid-cols-2">
-      <label className="block">
-        <span className={LABEL}>{p(t.emergency.name)}</span>
-        <input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          autoComplete="name"
-          required={required}
-          minLength={required ? 2 : undefined}
-          maxLength={255}
-          className={INPUT}
-        />
-      </label>
-      <label className="block">
-        <span className={LABEL}>{p(t.emergency.phone)}</span>
-        <input
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-          type="tel"
-          inputMode="tel"
-          autoComplete="tel"
-          dir="ltr"
-          required={required}
-          maxLength={32}
-          placeholder={p(t.book.phonePh)}
-          className={INPUT}
-        />
-      </label>
+      <div>
+        <label htmlFor="emergency-name" className={LABEL}>
+          {p(t.emergency.name)}
+        </label>
+        <div className="relative mt-2">
+          <input
+            id="emergency-name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            onFocus={nameField.onFocus}
+            autoComplete="name"
+            required={required}
+            minLength={required ? 2 : undefined}
+            maxLength={255}
+            className={`${INPUT} !mt-0 pe-11`}
+          />
+          {nameField.clear}
+        </div>
+      </div>
+      <div>
+        <label htmlFor="emergency-phone" className={LABEL}>
+          {p(t.emergency.phone)}
+        </label>
+        <div className="relative mt-2">
+          <input
+            id="emergency-phone"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            onFocus={phoneField.onFocus}
+            type="tel"
+            inputMode="tel"
+            autoComplete="tel"
+            dir="ltr"
+            required={required}
+            maxLength={32}
+            placeholder={p(t.book.phonePh)}
+            className={`${INPUT} !mt-0 pe-11`}
+          />
+          {phoneField.clear}
+        </div>
+      </div>
     </div>
   );
 
