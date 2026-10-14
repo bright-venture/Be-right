@@ -1340,7 +1340,6 @@ export const t = {
       ar: "سيظهر رقم خط الطوارئ هنا قريباً.",
     },
     needName: { en: "Enter your name.", ar: "أدخل اسمك." },
-    clear: { en: "Clear", ar: "مسح" },
     name: { en: "Your name", ar: "اسمك" },
     phone: { en: "Phone (with country code)", ar: "الهاتف (مع رمز البلد)" },
     // dashboard
