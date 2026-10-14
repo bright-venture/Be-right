@@ -109,16 +109,21 @@ export function RequestDetail({
             <p className={LABEL}>{p(t.dash.customer)}</p>
             <p className="mt-2 font-bold text-navy">{d.customer?.name ?? r.contactName ?? "-"}</p>
             {d.customer?.email && <p className="text-navy/70">{d.customer.email}</p>}
+            {/* An emergency job's phone can arrive after the technician was sent. */}
             <p className="mt-1 text-navy/70" dir="ltr">
-              {r.phone}
+              {r.phone || "-"}
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
-              <a href={telLink(r.phone)} className={SMALL_BTN}>
-                <Phone className="h-4 w-4" /> {p(t.dash3.call)}
-              </a>
-              <a href={whatsappLink(r.phone)} target="_blank" rel="noreferrer" className={SMALL_BTN}>
-                <MessageCircle className="h-4 w-4" /> {p(t.dash3.whatsapp)}
-              </a>
+              {r.phone && (
+                <>
+                  <a href={telLink(r.phone)} className={SMALL_BTN}>
+                    <Phone className="h-4 w-4" /> {p(t.dash3.call)}
+                  </a>
+                  <a href={whatsappLink(r.phone)} target="_blank" rel="noreferrer" className={SMALL_BTN}>
+                    <MessageCircle className="h-4 w-4" /> {p(t.dash3.whatsapp)}
+                  </a>
+                </>
+              )}
               {d.customer?.email && (
                 <a href={`mailto:${d.customer.email}`} className={SMALL_BTN}>
                   <Mail className="h-4 w-4" /> {p(t.dash3.emailAction)}

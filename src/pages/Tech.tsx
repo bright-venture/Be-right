@@ -9,6 +9,7 @@ import { BeforeAfter, JobPhotoUpload } from "@/components/JobPhotos";
 import JobMap from "@/components/map/JobMap";
 import { DirectionsLinks } from "@/components/map/DirectionsLinks";
 import { useI18n } from "@/i18n";
+import { telLink } from "@/lib/contact";
 import { useRoleGate } from "@/hooks/useRoleGate";
 import { trpc } from "@/providers/trpc";
 import {
@@ -172,7 +173,13 @@ export default function Tech() {
                   <p className="font-bold text-navy">{r.area}</p>
                   <p>{r.address}</p>
                   {r.contactName && <p className="mt-1 font-semibold text-navy">{r.contactName}</p>}
-                  <p dir="ltr" className="mt-1 text-start">{r.phone}</p>
+                  {r.phone ? (
+                    <a href={telLink(r.phone)} dir="ltr" className="mt-1 block text-start font-semibold text-flame-ink underline underline-offset-2">
+                      {r.phone}
+                    </a>
+                  ) : (
+                    <p className="mt-1 text-navy/55">{p(t.emergency.phoneSoon)}</p>
+                  )}
                   {r.notes && <p className="mt-1 italic">{r.notes}</p>}
                 </div>
 

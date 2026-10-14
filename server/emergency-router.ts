@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, notInArray } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { createRouter, publicQuery, specialistQuery } from "./middleware";
 import { getDb } from "./queries/connection";
@@ -70,10 +70,10 @@ export const emergencyRouter = createRouter({
   }),
 
   /**
-   * Send a technician: the specialist on the call fills in the rest. The job is created
-   * already approved (price agreed on the phone) and scheduled for now, in the technician's
-   * app, marked Emergency. From a sent emergency (`emergencyId`), a signed-in customer also
-   * sees it in their requests.
+   * Send a technician at once: the service, what's wrong and where are enough. The job is
+   * created scheduled for now, in the technician's app, marked Emergency. The customer's
+   * name, phone and the price can come later (updateJob), while they are on the phone.
+   * From a sent emergency (`emergencyId`), a signed-in customer also sees it in their requests.
    */
   create: specialistQuery
     .input(
@@ -82,13 +82,13 @@ export const emergencyRouter = createRouter({
         category: z.string().max(64),
         /** What's wrong, as the customer described it on the phone. */
         problem: z.string().trim().min(2).max(2000),
-        name: z.string().trim().min(2).max(255),
-        phone: z.string().trim().max(32).refine(isValidPhone, "Invalid phone number"),
-        address: z.string().trim().min(1).max(1000),
+        name: z.string().trim().min(2).max(255).optional(),
+        phone: z.string().trim().max(32).refine(isValidPhone, "Invalid phone number").optional(),
+        address: z.string().trim().max(1000).optional(),
         lat: z.number().min(-90).max(90),
         lng: z.number().min(-180).max(180),
         technicianId: z.number().int(),
-        amount: z.string().trim().regex(QUOTE_AMOUNT_PATTERN, "Enter the amount in USD, e.g. 45 or 45.50"),
+        amount: z.string().trim().regex(QUOTE_AMOUNT_PATTERN, "Enter the amount in USD, e.g. 45 or 45.50").optional(),
         /** The specialist's own today and time of day, so the visit isn't dated in another time zone. */
         visitDate: z.string().max(10),
         timeSlot: z.enum(TIME_SLOTS),
@@ -115,11 +115,12 @@ export const emergencyRouter = createRouter({
           const owner = sent.userId ? await tx.query.users.findFirst({ where: eq(users.id, sent.userId) }) : undefined;
           if (owner && owner.role === "customer" && !owner.deletedAt) customerId = owner.id;
         }
+        const address = input.address || "-";
         const [job] = await tx
           .insert(serviceRequests)
           .values({
             userId: customerId,
-            contactName: input.name,
+            contactName: input.name ?? null,
             emergency: true,
             technicianId: tech.id,
             category: input.category,
@@ -127,19 +128,26 @@ export const emergencyRouter = createRouter({
             status: "scheduled",
             preferredDate: input.visitDate,
             timeSlot: input.timeSlot,
-            area: input.address.split(",")[0].trim().slice(0, 255) || input.address.slice(0, 255),
-            address: input.address,
+            area: address.split(",")[0].trim().slice(0, 255) || address.slice(0, 255),
+            address,
             lat: input.lat,
             lng: input.lng,
-            phone: input.phone,
+            // Added on the call (updateJob) when not known yet.
+            phone: input.phone ?? "",
             notes: input.problem,
-            quoteAmount: input.amount,
+            quoteAmount: input.amount ?? null,
             quoteNote: "Agreed on the phone (emergency)",
             visitFee: String(VISIT_FEE_USD),
           })
           .returning({ id: serviceRequests.id });
         await logEvent(tx, job.id, "submitted", ctx.user.id, input.emergencyId ? "Priority dispatch" : "Emergency call");
-        await logEvent(tx, job.id, "approved", ctx.user.id, `Price agreed on the phone: $${input.amount}`);
+        await logEvent(
+          tx,
+          job.id,
+          "approved",
+          ctx.user.id,
+          input.amount ? `Price agreed on the phone: $${input.amount}` : "Price to be agreed on the phone",
+        );
         await logEvent(tx, job.id, "assigned", ctx.user.id, `Technician: ${tech.name ?? tech.email ?? tech.id}`);
         await logEvent(tx, job.id, "scheduled", ctx.user.id, "Emergency: sent now");
         if (input.emergencyId) {
@@ -152,5 +160,60 @@ export const emergencyRouter = createRouter({
       });
       await notify.emergencyDispatched(requestId);
       return { requestId };
+    }),
+
+  /**
+   * The rest of an emergency job, taken on the call after the technician was sent: the
+   * customer's name and phone, the agreed price, the address details. The technician is
+   * emailed when the customer's number arrives.
+   */
+  updateJob: specialistQuery
+    .input(
+      z.object({
+        requestId: z.number().int(),
+        name: z.string().trim().min(2).max(255).optional(),
+        phone: z.string().trim().max(32).refine(isValidPhone, "Invalid phone number").optional(),
+        amount: z.string().trim().regex(QUOTE_AMOUNT_PATTERN, "Enter the amount in USD, e.g. 45 or 45.50").optional(),
+        address: z.string().trim().min(1).max(1000).optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const db = getDb();
+      const { phoneAdded } = await db.transaction(async (tx) => {
+        const [job] = await tx
+          .select()
+          .from(serviceRequests)
+          .where(
+            and(
+              eq(serviceRequests.id, input.requestId),
+              eq(serviceRequests.emergency, true),
+              notInArray(serviceRequests.status, ["completed", "cancelled"]),
+            ),
+          )
+          .for("update");
+        if (!job) throw new TRPCError({ code: "NOT_FOUND", message: "No open emergency job" });
+        await tx
+          .update(serviceRequests)
+          .set({
+            ...(input.name !== undefined && { contactName: input.name }),
+            ...(input.phone !== undefined && { phone: input.phone }),
+            ...(input.amount !== undefined && { quoteAmount: input.amount }),
+            ...(input.address !== undefined && {
+              address: input.address,
+              area: input.address.split(",")[0].trim().slice(0, 255) || input.address.slice(0, 255),
+            }),
+          })
+          .where(eq(serviceRequests.id, job.id));
+        const changed = [
+          input.name !== undefined && `name: ${input.name}`,
+          input.phone !== undefined && `phone: ${input.phone}`,
+          input.amount !== undefined && `price agreed on the phone: $${input.amount}`,
+          input.address !== undefined && `address: ${input.address}`,
+        ].filter(Boolean);
+        if (changed.length) await logEvent(tx, job.id, "prepared", ctx.user.id, `Customer details: ${changed.join(", ")}`);
+        return { phoneAdded: input.phone !== undefined && input.phone !== job.phone };
+      });
+      if (phoneAdded) await notify.emergencyDetails(input.requestId);
+      return { ok: true };
     }),
 });

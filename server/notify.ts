@@ -577,6 +577,22 @@ export const notify = {
       });
     }),
 
+  /** The specialist added the customer's details to an emergency job: the technician can call them. */
+  emergencyDetails: (id: number) =>
+    safely("emergencyDetails", async () => {
+      const job = await loadJob(id);
+      const d = describe(job);
+      const who = [job.request.contactName, job.request.phone].filter(Boolean).join(", ");
+      if (!who) return;
+      await send([job.technician?.email], {
+        subject: both(`Emergency job #${d.id}: customer's contact`, `مهمة طارئة #${d.id}: بيانات العميل`),
+        title: both("The customer's contact", "بيانات التواصل مع العميل"),
+        lines: [both(`Emergency job #${d.id} (${d.category.en}): ${who}.`, `المهمة الطارئة #${d.id} (${d.category.ar}): ${who}.`)],
+        path: "/tech",
+        button: both("Open my jobs", "فتح مهامي"),
+      });
+    }),
+
   /** A customer sent an emergency (priority dispatch) and is calling the emergency line. */
   emergencyReported: (id: number) =>
     safely("emergencyReported", async () => {

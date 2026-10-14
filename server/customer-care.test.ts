@@ -289,6 +289,43 @@ describe("emergency calls", () => {
     expect((await (await callerFor(admin)).emergency.waiting()).map((e) => e.id)).not.toContain(id);
   });
 
+  it("send the technician at once; the name, phone and price come later, on the call", async () => {
+    const s = await callerFor(admin);
+    const { requestId } = await s.emergency.create({
+      category: "electrical",
+      problem: "No power at all",
+      lat: 51.5,
+      lng: -0.12,
+      technicianId: tech.id,
+      visitDate: new Intl.DateTimeFormat("en-CA").format(new Date()),
+      timeSlot: "evening",
+    });
+    expect((await s.specialist.detail({ id: requestId })).request).toMatchObject({
+      status: "scheduled",
+      contactName: null,
+      phone: "",
+      quoteAmount: null,
+      address: "-",
+    });
+    state.sent.length = 0;
+    await s.emergency.updateJob({ requestId, name: "Rami", phone: "+44 20 7946 0555", amount: "80", address: "12 High Street" });
+    expect((await s.specialist.detail({ id: requestId })).request).toMatchObject({
+      contactName: "Rami",
+      phone: "+44 20 7946 0555",
+      quoteAmount: "80",
+      address: "12 High Street",
+    });
+    expect(state.sent.find((m) => m.to.includes("ali@example.com"))?.subject).toContain("customer's contact");
+    await rejected(s.emergency.updateJob({ requestId, phone: "123" }));
+    await rejected((await callerFor(customer)).emergency.updateJob({ requestId, name: "Someone" }), "FORBIDDEN");
+  });
+
+  it("only let the details of an open emergency job be changed", async () => {
+    const s = await callerFor(admin);
+    const { id } = await (await callerFor(customer)).requests.create(booking);
+    await rejected(s.emergency.updateJob({ requestId: id, name: "Not an emergency" }), "NOT_FOUND");
+  });
+
   it("are for staff only, to a real technician, with a service, a pin, a phone and a price", async () => {
     await rejected((await callerFor(customer)).emergency.create(call()), "FORBIDDEN");
     const s = await callerFor(admin);
