@@ -48,6 +48,7 @@ export const emergencyRouter = createRouter({
       if (pinned && !isValidPin(input.lat!, input.lng!)) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "Place the pin on your address" });
       }
+      await rateLimit(`emergency:phone:${input.phone.replace(/\D/g, "").replace(/^00/, "")}`, LIMITS.emergencyPerPhone);
       await rateLimit(`emergency:ip:${clientIp(ctx.req)}`, LIMITS.emergencyPerIp);
       const [created] = await getDb()
         .insert(emergencyCalls)
