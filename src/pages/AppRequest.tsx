@@ -19,9 +19,7 @@ import {
   CATEGORY_MAP,
   CATEGORY_TINT,
   STATUS_ORDER,
-  URGENCY_META,
   type RequestStatus,
-  type UrgencyLevel,
 } from "@contracts/services";
 import { ACTIVE_JOB_STATUSES, CANCEL_REQUESTABLE_STATUSES, canTransition } from "@contracts/workflow";
 
@@ -264,13 +262,7 @@ export default function AppRequest() {
 
         {/* details */}
         <section className={`${CARD} flex flex-col gap-5`}>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="rounded-2xl bg-paper p-3">
-              <p className="text-xs text-navy/60">{p(t.requests.urgency)}</p>
-              <p className="mt-0.5 text-sm font-bold text-navy">
-                {p(URGENCY_META[(r.urgencyFinal ?? r.urgencySuggested) as UrgencyLevel].label)}
-              </p>
-            </div>
+          <div>
             <div className="rounded-2xl bg-paper p-3">
               {/* closed with the visit fee: that is what the customer pays, not the quote */}
               <p className="text-xs text-navy/60">{p(r.visitFeeReason ? t.book.visitFeeTitle : t.requests.quote)}</p>

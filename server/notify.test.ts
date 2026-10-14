@@ -92,7 +92,7 @@ describe("notification emails", () => {
 
   it("sends the customer the price, and says when it changes", async () => {
     const s = await callerFor(admin);
-    await s.specialist.startReview({ id, urgency: "normal" });
+    await s.specialist.startReview({ id });
     expect(state.sent).toHaveLength(0);
 
     await s.specialist.sendQuote({ id, amount: "45", note: "Replace the valve" });
@@ -137,7 +137,7 @@ describe("notification emails", () => {
   it("confirms the visit to the customer and the technician", async () => {
     const s = await callerFor(admin);
     const other = await (await callerFor(customer)).requests.create(booking);
-    await s.specialist.startReview({ id: other.id, urgency: "normal" });
+    await s.specialist.startReview({ id: other.id });
     await s.specialist.sendQuote({ id: other.id, amount: "30" });
     await (await callerFor(customer)).requests.approveQuote({ id: other.id, amount: "30" });
     await s.tech.assign({ requestId: other.id, technicianId: hassan.id });
@@ -168,7 +168,7 @@ describe("notification emails", () => {
     expect(emailTo(SPECIALIST_EMAIL).subject).toContain("cancelled by the customer");
 
     const late = await c.requests.create(booking);
-    await s.specialist.startReview({ id: late.id, urgency: "normal" });
+    await s.specialist.startReview({ id: late.id });
     await s.specialist.sendQuote({ id: late.id, amount: "20" });
     await c.requests.approveQuote({ id: late.id, amount: "20" });
     await s.tech.assign({ requestId: late.id, technicianId: ali.id });

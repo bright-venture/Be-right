@@ -3,7 +3,7 @@ import { TRPCError } from "@trpc/server";
 import { and, eq, inArray } from "drizzle-orm";
 import { createRouter, authedQuery, customerQuery, publicQuery } from "./middleware";
 import { getDb } from "./queries/connection";
-import { requestEvents, requestMedia, reviews, serviceRequests, technicianLocations, users } from "../db/schema";
+import { emergencyCalls, requestEvents, requestMedia, reviews, serviceRequests, technicianLocations, users } from "../db/schema";
 import { LEGAL_VERSION } from "@contracts/legal";
 import { isValidPhone } from "@contracts/phone";
 import { canTransition } from "@contracts/workflow";
@@ -97,6 +97,8 @@ export const authRouter = createRouter({
           .set({ note: null })
           .where(and(inArray(requestEvents.requestId, ids), eq(requestEvents.actorId, user.id)));
       }
+      // Emergency button entries keep what happened, not who.
+      await tx.update(emergencyCalls).set({ name: null, phone: null }).where(eq(emergencyCalls.userId, user.id));
       await tx
         .update(users)
         // deletedAt also shuts out the old sign-in while it is still valid (see findOrCreateUser).

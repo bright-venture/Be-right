@@ -403,21 +403,13 @@ describe("full repair workflow", () => {
     }
   });
 
-  it("customer books; urgency is computed on the server", async () => {
+  it("customer books", async () => {
     const res = await (await callerFor(alice)).requests.create(
       booking({ media: [{ key: aliceKey(), fileName: "photo.jpg", size: 1234, contentType: "image/jpeg" }] }),
     );
     requestId = res.id;
-    expect(res.urgency).toBe("urgent");
     const mine = await (await callerFor(alice)).requests.mine();
     expect(mine.map((r) => r.id)).toContain(requestId);
-  });
-
-  it("flags burning smell as critical", async () => {
-    const res = await (await callerFor(bob)).requests.create(
-      booking({ category: "electrical", answers: { problem: "burning", scope: "single", exposed: "no" } }),
-    );
-    expect(res.urgency).toBe("critical");
   });
 
   it("keeps customers out of each other's requests", async () => {
@@ -433,7 +425,7 @@ describe("full repair workflow", () => {
   it("keeps non-admins out of the specialist dashboard", async () => {
     const a = await callerFor(alice);
     await expect(a.specialist.queue()).rejects.toMatchObject({ code: "FORBIDDEN" });
-    await expect(a.specialist.startReview({ id: requestId, urgency: "normal" })).rejects.toMatchObject({
+    await expect(a.specialist.startReview({ id: requestId })).rejects.toMatchObject({
       code: "FORBIDDEN",
     });
     await expect(a.tech.myJobs()).rejects.toMatchObject({ code: "FORBIDDEN" });
@@ -442,14 +434,13 @@ describe("full repair workflow", () => {
   it("specialist reviews and quotes", async () => {
     const s = await callerFor(admin);
     expect((await s.specialist.queue()).map((r) => r.request.id)).toContain(requestId);
-    await s.specialist.startReview({ id: requestId, urgency: "priority" });
-    await expect(s.specialist.startReview({ id: requestId, urgency: "normal" })).rejects.toMatchObject({
+    await s.specialist.startReview({ id: requestId });
+    await expect(s.specialist.startReview({ id: requestId })).rejects.toMatchObject({
       code: "BAD_REQUEST",
     });
     await s.specialist.sendQuote({ id: requestId, amount: "45", note: "Replace angle valve" });
     const d = await s.specialist.detail({ id: requestId });
     expect(d.request.status).toBe("quote_ready");
-    expect(d.request.urgencyFinal).toBe("priority");
     expect(d.media).toHaveLength(1);
   });
 

@@ -80,7 +80,7 @@ async function job(who: User, until: "submitted" | "approved" | "scheduled" | "c
   const s = await callerFor(admin);
   const { id } = await c.requests.create(booking);
   if (until === "submitted") return id;
-  await s.specialist.startReview({ id, urgency: "normal" });
+  await s.specialist.startReview({ id });
   await s.specialist.sendQuote({ id, amount: "40" });
   await c.requests.approveQuote({ id, amount: "40" });
   if (until === "approved") return id;
@@ -161,7 +161,7 @@ describe("report a problem (workmanship guarantee)", () => {
     expect(detail.guarantee).toMatchObject({ originalId: done, technicianId: tech.id, technicianName: "Ali" });
 
     await rejected(s.specialist.acceptGuarantee({ id: claim })); // must be reviewed first
-    await s.specialist.startReview({ id: claim, urgency: "priority" });
+    await s.specialist.startReview({ id: claim });
     await rejected(c.specialist.acceptGuarantee({ id: claim }), "FORBIDDEN");
     state.sent.length = 0;
     await s.specialist.acceptGuarantee({ id: claim });
@@ -175,7 +175,7 @@ describe("report a problem (workmanship guarantee)", () => {
   it("never makes an ordinary request free", async () => {
     const s = await callerFor(admin);
     const id = await job(customer, "submitted");
-    await s.specialist.startReview({ id, urgency: "normal" });
+    await s.specialist.startReview({ id });
     await expect(s.specialist.acceptGuarantee({ id })).rejects.toMatchObject({ message: "Only guarantee visits can be free" });
   });
 });
@@ -212,16 +212,62 @@ describe("ratings", () => {
     await (await callerFor(leaving)).auth.deleteAccount();
     expect((await (await callerFor(admin)).specialist.detail({ id: done })).review).toMatchObject({ rating: 3, comment: null });
   });
+
+  it("erases the name and phone of their emergencies when the customer deletes their account", async () => {
+    const leaving = await makeUser("emergency-and-left@example.com");
+    const { id } = await (await callerFor(leaving)).emergency.report({
+      category: "plumbing",
+      problem: "leak",
+      kind: "callback",
+      name: "Rami",
+      phone: "+1 202 555 0123",
+    });
+    await (await callerFor(leaving)).auth.deleteAccount();
+    const entry = (await (await callerFor(admin)).emergency.list()).find((e) => e.id === id);
+    expect(entry).toMatchObject({ category: "plumbing", problem: "leak", name: null, phone: null });
+  });
 });
 
-describe("emergency bookings", () => {
-  it("are at least urgent, whatever the answers say", async () => {
-    const c = await callerFor(customer);
+describe("the Emergency button", () => {
+  it("logs a call for the team and emails the specialists", async () => {
+    const visitor = await callerFor();
+    await visitor.emergency.report({ category: "plumbing", problem: "leak", kind: "call" });
+    const mail = state.sent.find((m) => m.to.includes(SPECIALIST_EMAIL));
+    expect(mail?.subject).toContain("Water leaking or flooding");
+    const list = await (await callerFor(admin)).emergency.list();
+    expect(list[0]).toMatchObject({ category: "plumbing", problem: "leak", kind: "call", name: null, handledAt: null });
+  });
+
+  it("needs a name and a valid phone for a call back, and a known emergency", async () => {
+    const visitor = await callerFor();
+    await rejected(visitor.emergency.report({ category: "plumbing", problem: "leak", kind: "callback" }));
+    await rejected(visitor.emergency.report({ category: "plumbing", problem: "leak", kind: "callback", name: "Rami", phone: "123" }));
+    await rejected(visitor.emergency.report({ category: "painting", problem: "other", kind: "call" }));
+    await rejected(visitor.emergency.report({ category: "plumbing", problem: "nope", kind: "call" }));
+    const { id } = await visitor.emergency.report({
+      category: "electrical",
+      problem: "sparks",
+      kind: "callback",
+      name: "Rami",
+      phone: "+1 202 555 0123",
+    });
+    expect(id).toBeGreaterThan(0);
+  });
+
+  it("is only listed and handled by staff, once", async () => {
+    const { id } = await (await callerFor(customer)).emergency.report({ category: "locksmith", problem: "other", kind: "call" });
+    await rejected((await callerFor(customer)).emergency.list(), "FORBIDDEN");
+    await rejected((await callerFor(customer)).emergency.markHandled({ id }), "FORBIDDEN");
     const s = await callerFor(admin);
-    const calm = await c.requests.create({ ...booking, emergency: true });
-    expect((await s.specialist.detail({ id: calm.id })).request.urgencySuggested).toBe("urgent");
-    const normal = await c.requests.create(booking);
-    expect((await s.specialist.detail({ id: normal.id })).request.urgencySuggested).toBe("normal");
+    await s.emergency.markHandled({ id });
+    await rejected(s.emergency.markHandled({ id }), "NOT_FOUND");
+    expect((await s.emergency.list()).find((e) => e.id === id)?.handledBy).toBe(admin.id);
+  });
+
+  it("is limited per connection", async () => {
+    const visitor = await callerFor(undefined, { ip: "203.0.113.9" });
+    for (let i = 0; i < 6; i++) await visitor.emergency.report({ category: "plumbing", problem: "other", kind: "call" });
+    await rejected(visitor.emergency.report({ category: "plumbing", problem: "other", kind: "call" }), "TOO_MANY_REQUESTS");
   });
 });
 

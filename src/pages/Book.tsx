@@ -35,9 +35,6 @@ import {
   FACILITY_SERVICES,
   CATEGORY_MAP,
   CATEGORY_TINT,
-  computeUrgency,
-  URGENCY_META,
-  type UrgencyLevel,
 } from "@contracts/services";
 import {
   answersFromLink,
@@ -62,13 +59,6 @@ function toMediaDraft(file: File): MediaDraft {
   return { id: crypto.randomUUID(), file, previewUrl: URL.createObjectURL(file) };
 }
 
-const URGENCY_BADGE: Record<UrgencyLevel, string> = {
-  normal: "border-navy text-navy",
-  priority: "border-bird bg-bird text-white",
-  urgent: "border-flame bg-flame text-white",
-  critical: "border-navy bg-navy text-white",
-};
-
 const MAX_FILE_BYTES = 20 * 1024 * 1024;
 
 const STEPS = ["stepCategory", "stepQuestions", "stepPhotos", "stepWhen", "stepReview"] as const;
@@ -81,8 +71,8 @@ export default function Book() {
   const navigate = useNavigate();
 
   const initialCat = params.get("cat") ?? "";
-  // The home page's service picker hands over the problem, the area and "emergency".
-  const fromPicker = params.has("ans") || params.has("area") || params.get("priority") === "1";
+  // The home page's service picker hands over the problem and the area.
+  const fromPicker = params.has("ans") || params.has("area");
   // Restore an unfinished booking (e.g. after returning from the sign-in email link),
   // unless the visitor came in for a different service or picked a new problem.
   const [draft] = useState(() => {
@@ -100,7 +90,6 @@ export default function Book() {
   const [answers, setAnswers] = useState<Record<string, string>>(
     () => draft?.answers ?? answersFromLink(initialCat, params.get("ans")),
   );
-  const [emergency] = useState(() => draft?.emergency ?? params.get("priority") === "1");
   const [media, setMedia] = useState<MediaDraft[]>([]);
   const [uploadError, setUploadError] = useState<"file" | "videos" | null>(null);
   const [preparingFiles, setPreparingFiles] = useState(false);
@@ -120,7 +109,6 @@ export default function Book() {
   /** Shown under the submit button; already translated. */
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [doneId, setDoneId] = useState<number | null>(null);
-  const [doneUrgency, setDoneUrgency] = useState<UrgencyLevel | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const cat = category ? CATEGORY_MAP[category] : null;
@@ -131,9 +119,6 @@ export default function Book() {
       ),
     [cat, answers],
   );
-  const urgency = category ? computeUrgency(category, answers) : null;
-  // Emergency bookings are never below "urgent" (the server applies the same rule).
-  if (urgency && emergency && (urgency.level === "normal" || urgency.level === "priority")) urgency.level = "urgent";
 
   const createUpload = trpc.storage.createUpload.useMutation();
   const createMutation = trpc.requests.create.useMutation();
@@ -174,8 +159,8 @@ export default function Book() {
 
   useEffect(() => {
     if (doneId !== null || !category) return;
-    saveDraftFields({ step, category, answers, date, slot, area, address, phone, notes, pin, emergency });
-  }, [doneId, step, category, answers, date, slot, area, address, phone, notes, pin, emergency]);
+    saveDraftFields({ step, category, answers, date, slot, area, address, phone, notes, pin });
+  }, [doneId, step, category, answers, date, slot, area, address, phone, notes, pin]);
 
   useEffect(() => {
     if (filesRestored.current && doneId === null) void saveDraftFiles(media.map((m) => m.file));
@@ -253,11 +238,9 @@ export default function Book() {
         phone: contactPhone,
         notes: notes || undefined,
         media: uploaded,
-        emergency: emergency || undefined,
       });
       await clearDraft();
       setDoneId(res.id);
-      setDoneUrgency(res.urgency as UrgencyLevel);
     } catch (err) {
       const reason = refusalMessage(err);
       setSubmitError(
@@ -293,13 +276,6 @@ export default function Book() {
             <p className="mt-2 font-display text-sm font-bold uppercase tracking-[0.2em] text-navy/70">
               #{doneId}
             </p>
-            {doneUrgency && (
-              <span
-                className={`mt-4 inline-block rounded-full border-2 px-4 py-1 text-sm font-bold ${URGENCY_BADGE[doneUrgency]}`}
-              >
-                {p(URGENCY_META[doneUrgency].label)}: {p(URGENCY_META[doneUrgency].note)}
-              </span>
-            )}
             <p className="mt-4 text-sm leading-relaxed text-navy/70">
               {p(t.book.successBody)}
             </p>
@@ -596,7 +572,7 @@ export default function Book() {
           )}
 
           {/* STEP 4 — review */}
-          {step === 4 && cat && urgency && (
+          {step === 4 && cat && (
             <div className="flex flex-col gap-5">
               <h2 className="font-display text-xl font-extrabold text-navy">
                 {p(t.book.reviewTitle)}
@@ -647,22 +623,7 @@ export default function Book() {
                 </dl>
               </div>
 
-              <div className="card-br border-flame p-5">
-                <p className="font-display text-xs font-bold uppercase tracking-[0.2em] text-navy/70">
-                  {p(t.book.suggestedUrgency)}
-                </p>
-                <span
-                  className={`mt-3 inline-block rounded-full border-2 px-5 py-2 font-display text-base font-extrabold ${URGENCY_BADGE[urgency.level]}`}
-                >
-                  {p(URGENCY_META[urgency.level].label)}
-                </span>
-                <p className="mt-2 text-sm text-navy/80">
-                  {p(URGENCY_META[urgency.level].note)}
-                </p>
-                <p className="mt-3 text-xs leading-relaxed text-navy/70">
-                  {p(t.book.urgencyDisclaimer)}
-                </p>
-              </div>
+              <p className="card-br border-flame p-5 text-sm leading-relaxed text-navy/80">{p(t.book.reviewNote)}</p>
 
               {/* The visit fee, agreed before booking (contracts/workflow.ts). */}
               <div className="card-br flex items-start gap-3 p-5">

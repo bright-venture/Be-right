@@ -44,7 +44,7 @@ async function approvedRequest() {
   const c = await callerFor(customer);
   const s = await callerFor(admin);
   const { id } = await c.requests.create(base);
-  await s.specialist.startReview({ id, urgency: "normal" });
+  await s.specialist.startReview({ id });
   await s.specialist.sendQuote({ id, amount: "30" });
   await c.requests.approveQuote({ id, amount: "30" });
   return id;
@@ -100,7 +100,7 @@ describe("booking validation", () => {
 });
 
 describe("specialist rules", () => {
-  it("confirms urgency before quoting", async () => {
+  it("starts the review before quoting", async () => {
     const { id } = await (await callerFor(customer)).requests.create(base);
     await rejected((await callerFor(admin)).specialist.sendQuote({ id, amount: "20" }));
   });
@@ -108,7 +108,7 @@ describe("specialist rules", () => {
   it("requires a numeric quote amount", async () => {
     const { id } = await (await callerFor(customer)).requests.create(base);
     const s = await callerFor(admin);
-    await s.specialist.startReview({ id, urgency: "normal" });
+    await s.specialist.startReview({ id });
     await rejected(s.specialist.sendQuote({ id, amount: "call me" }));
     await s.specialist.sendQuote({ id, amount: "45.50" });
   });
@@ -231,7 +231,7 @@ describe("specialist corrections", () => {
     const s = await callerFor(admin);
     const c = await callerFor(customer);
     const { id } = await c.requests.create(base);
-    await s.specialist.startReview({ id, urgency: "normal" });
+    await s.specialist.startReview({ id });
     await s.specialist.sendQuote({ id, amount: "30" });
     await s.specialist.sendQuote({ id, amount: "55", note: "Needs a new valve" });
     expect((await c.requests.get({ id })).request).toMatchObject({ quoteAmount: "55", quoteNote: "Needs a new valve" });

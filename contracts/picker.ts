@@ -3,12 +3,7 @@
 
 export const PROBLEM_MAP: Record<string, { cat: string; answers: Record<string, string> }> = {
   leak: { cat: "plumbing", answers: { problem: "leak" } },
-  "blocked-toilet": { cat: "plumbing", answers: { problem: "blocked" } },
   "locked-out": { cat: "locksmith", answers: { need: "home_lockout" } },
-  "broken-door-window": { cat: "carpentry", answers: { item: "door" } },
-  "no-power": { cat: "electrical", answers: { problem: "no_power" } },
-  "damaged-roof": { cat: "waterproofing", answers: { area: "roof" } },
-  "no-hot-water": { cat: "plumbing", answers: { problem: "heater" } },
   "blocked-drain": { cat: "plumbing", answers: { problem: "blocked" } },
   "tap-toilet": { cat: "plumbing", answers: { problem: "fixture" } },
   "water-pump": { cat: "plumbing", answers: { problem: "pump" } },
@@ -66,16 +61,6 @@ export const PROBLEM_MAP: Record<string, { cat: string; answers: Record<string, 
   termites: { cat: "pest", answers: { pest: "termites" } },
 };
 
-export const EMERGENCY_PROBLEMS = [
-  "leak",
-  "blocked-toilet",
-  "locked-out",
-  "broken-door-window",
-  "no-power",
-  "damaged-roof",
-  "no-hot-water",
-] as const;
-
 export const CATEGORY_PROBLEMS: Record<string, string[]> = {
   plumbing: ["leak", "blocked-drain", "tap-toilet", "water-pump", "water-tank", "tank-filter", "water-heater"],
   electrical: ["no-light-power", "socket-switch", "breaker", "generator-inverter", "fan-light"],
@@ -92,12 +77,11 @@ export const CATEGORY_PROBLEMS: Record<string, string[]> = {
   landscaping: ["garden-care", "tree-trimming"],
 };
 
-/** Booking form link for one problem, pre-filled; emergencies ask for priority dispatch. */
-export function bookingHref(problem: string, { emergency = false } = {}) {
+/** Booking form link for one problem, pre-filled. */
+export function bookingHref(problem: string) {
   const map = PROBLEM_MAP[problem];
   const params = new URLSearchParams({ cat: map?.cat ?? "plumbing" });
   if (map && Object.keys(map.answers).length) params.set("ans", JSON.stringify(map.answers));
-  if (emergency) params.set("priority", "1");
   return `/book?${params.toString()}`;
 }
 

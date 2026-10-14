@@ -2,8 +2,9 @@
 // Called by the routers after a change has been saved. A failed email is logged and
 // never undoes or blocks the change itself.
 import { and, count, eq, inArray } from "drizzle-orm";
-import { requestEvents, serviceRequests, technicianApplications, users } from "@db/schema";
-import { CATEGORY_MAP, URGENCY_META, type LocalText, type UrgencyLevel } from "@contracts/services";
+import { emergencyCalls, requestEvents, serviceRequests, technicianApplications, users } from "@db/schema";
+import { emergencyLabel } from "@contracts/emergency";
+import { CATEGORY_MAP, type LocalText } from "@contracts/services";
 import { arabicDays, WORKMANSHIP_GUARANTEE_DAYS } from "@contracts/legal";
 import { t } from "@contracts/i18n";
 import { getDb } from "./queries/connection";
@@ -149,7 +150,6 @@ function describe(job: Job) {
     category: local(CATEGORY_MAP[r.category]?.name, r.category),
     area: r.area,
     when: both(`${day("en")}, ${slot.en}`, `${day("ar")}، ${slot.ar}`),
-    urgency: local(URGENCY_META[(r.urgencyFinal ?? r.urgencySuggested) as UrgencyLevel]?.label, r.urgencySuggested),
   };
 }
 
@@ -169,7 +169,6 @@ export const notify = {
             `${job.customer?.name ?? "A customer"} booked ${d.category.en} in ${d.area} for ${d.when.en}.`,
             `حجز ${job.customer?.name ?? "عميل"} خدمة ${d.category.ar} في ${d.area} ليوم ${d.when.ar}.`,
           ),
-          both(`Suggested urgency: ${d.urgency.en}.`, `الاستعجال المقترح: ${d.urgency.ar}.`),
         ],
         path: "/dashboard",
         button: both("Open the dashboard", "فتح لوحة التحكم"),
@@ -574,6 +573,29 @@ export const notify = {
         ],
         path: "/dashboard?tab=technicians",
         button: both("See the technicians", "عرض الفنيين"),
+      });
+    }),
+
+  /** Someone used the Emergency button: they are calling now, or want to be called back. */
+  emergencyReported: (id: number) =>
+    safely("emergencyReported", async () => {
+      const call = await getDb().query.emergencyCalls.findFirst({ where: eq(emergencyCalls.id, id) });
+      if (!call) return;
+      const service = local(CATEGORY_MAP[call.category]?.name, call.category);
+      const problem = emergencyLabel(call.category, call.problem);
+      const who = call.name || call.phone ? `${call.name ?? ""}${call.name && call.phone ? ", " : ""}${call.phone ?? ""}` : null;
+      await send(await specialistEmails(), {
+        subject: both(`Emergency: ${problem.en} (${service.en})`, `طوارئ: ${problem.ar} (${service.ar})`),
+        title:
+          call.kind === "callback"
+            ? both("Someone needs a call back now", "شخص بحاجة إلى معاودة الاتصال الآن")
+            : both("Someone is calling the emergency line", "شخص يتصل بخط الطوارئ"),
+        lines: [
+          both(`${service.en}: ${problem.en}.`, `${service.ar}: ${problem.ar}.`),
+          ...(who ? [both(`Contact: ${who}.`, `جهة الاتصال: ${who}.`)] : []),
+        ],
+        path: "/dashboard?tab=emergencies",
+        button: both("Open emergencies", "فتح حالات الطوارئ"),
       });
     }),
 };

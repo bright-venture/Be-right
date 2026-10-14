@@ -1,5 +1,5 @@
 // Bilingual UI strings (English / Arabic).
-import type { Lang, RequestStatus, UrgencyLevel, LocalText } from "./services";
+import type { Lang, RequestStatus, LocalText } from "./services";
 import { arabicDays, arabicDigits, VISIT_FEE_USD as FEE, WORKMANSHIP_GUARANTEE_DAYS as DAYS } from "./legal";
 import { MAX_DOCUMENT_MB as MB } from "./applications";
 
@@ -178,8 +178,8 @@ export const t = {
     moreTitle: { en: "More details", ar: "تفاصيل أكثر" },
     moreItems: [
       {
-        en: "A remote specialist checks the issue and urgency, and lists the skills, tools and likely parts before anyone drives to you.",
-        ar: "يراجع مختص عن بُعد المشكلة ومدى استعجالها، ويحدّد المهارات والمعدات والقطع المتوقعة قبل أن يتوجّه أحد إليك.",
+        en: "A remote specialist checks the issue and lists the skills, tools and likely parts before anyone drives to you.",
+        ar: "يراجع مختص عن بُعد المشكلة، ويحدّد المهارات والمعدات والقطع المتوقعة قبل أن يتوجّه أحد إليك.",
       },
       {
         en: "If parts are needed, we route them through an approved supplier first.",
@@ -230,10 +230,10 @@ export const t = {
       en: `Booking a request is free. If the technician comes and no repair goes ahead, a fixed $${FEE} visit fee applies. If you go ahead, it's already included in your price. Guarantee visits are always free.`,
       ar: `تقديم الطلب مجاني. إذا حضر الفنّي ولم يتم الإصلاح، تُطبَّق رسوم زيارة ثابتة قدرها $${FEE}. وإذا أكملت الإصلاح، تكون الرسوم مشمولة في السعر. زيارات الضمان مجانية دائماً.`,
     },
-    partsTitle: { en: "Labour, parts & priority", ar: "العمل والقطع والاستعجال" },
+    partsTitle: { en: "Labour & parts", ar: "العمل والقطع" },
     partsBody: {
-      en: "Your quote separates labour, parts at supplier prices, and any priority charge, so you see exactly what you're paying for.",
-      ar: "يفصل عرض السعر بين أجرة العمل، والقطع بسعر المورّد، وأي رسوم استعجال، لتعرف بالضبط ما الذي تدفع مقابله.",
+      en: "Your quote separates labour from parts at supplier prices, so you see exactly what you're paying for.",
+      ar: "يفصل عرض السعر بين أجرة العمل والقطع بسعر المورّد، لتعرف بالضبط ما الذي تدفع مقابله.",
     },
     approveTitle: { en: "You approve everything", ar: "كل شيء بموافقتك" },
     approveBody: {
@@ -298,11 +298,6 @@ export const t = {
       en: "Other apps give you a phone number. We give you a case owner. The specialist prepares the job before travel so the technician arrives with the right context, tools and likely parts.",
       ar: "التطبيقات الأخرى تعطيك رقم هاتف. أما نحن فنعطيك مسؤولاً عن ملفك. يُحضّر المختص العمل قبل انطلاق الفنّي، فيصل ومعه المعلومات والمعدات والقطع الصحيحة.",
     },
-    urgencyTitle: { en: "Urgency you can see", ar: "استعجال واضح" },
-    urgencySub: {
-      en: "Your answers, not a button, suggest the urgency. A specialist confirms it, and any surcharge is shown clearly before you approve.",
-      ar: "إجاباتك، لا زرّ، هي التي تحدّد الاستعجال. يؤكّده المختص، وتظهر أي رسوم إضافية بوضوح قبل موافقتك.",
-    },
   },
   trust: {
     kicker: { en: "(Our promise)", ar: "(وعدنا)" },
@@ -315,8 +310,8 @@ export const t = {
       {
         title: { en: "Fast", ar: "سرعة" },
         body: {
-          en: "Book online in a few simple steps. No calls, no waiting for a callback. Urgent cases jump the queue and a specialist reviews them first.",
-          ar: "احجز عبر الإنترنت بخطوات بسيطة. دون اتصالات ودون انتظار من يردّ عليك. الحالات الطارئة تتقدّم في الدور ويراجعها المختص أولاً.",
+          en: "Book online in a few simple steps. For an emergency, press Emergency, pick what's wrong and call our team straight away.",
+          ar: "احجز عبر الإنترنت بخطوات بسيطة. في حالة الطوارئ، اضغط على «طوارئ»، واختر ما حدث، واتصل بفريقنا فوراً.",
         },
       },
       {
@@ -400,10 +395,9 @@ export const t = {
     reviewTitle: { en: "Check your request", ar: "راجع طلبك" },
     submit: { en: "Submit request", ar: "أرسل الطلب" },
     submitting: { en: "Sending…", ar: "جارٍ الإرسال…" },
-    suggestedUrgency: { en: "Suggested urgency from your answers", ar: "الاستعجال المقترح بناءً على إجاباتك" },
-    urgencyDisclaimer: {
-      en: "A specialist confirms urgency and any surcharge before dispatch. Nothing is charged without your approval.",
-      ar: "يؤكّد المختص الاستعجال وأي رسوم إضافية قبل إرسال الفنّي إليك. لا يُحتسب أي مبلغ دون موافقتك.",
+    reviewNote: {
+      en: "A specialist reviews your request and sends you a price before anyone is sent. Nothing is charged without your approval.",
+      ar: "يراجع مختص طلبك ويرسل لك سعراً قبل إرسال أي شخص. لا يُحتسب أي مبلغ دون موافقتك.",
     },
     successTitle: { en: "Request received!", ar: "تم استلام طلبك!" },
     successBody: {
@@ -441,7 +435,6 @@ export const t = {
     empty: { en: "No requests yet. Book your first service.", ar: "لا توجد طلبات بعد. احجز خدمتك الأولى." },
     created: { en: "Created", ar: "تاريخ الطلب" },
     preferred: { en: "Preferred", ar: "الموعد المفضل" },
-    urgency: { en: "Urgency", ar: "الاستعجال" },
     quote: { en: "Quote", ar: "العرض" },
     approveQuote: { en: "Approve quote", ar: "وافق على العرض" },
     declineQuote: { en: "Decline", ar: "ارفض" },
@@ -490,14 +483,12 @@ export const t = {
     title: { en: "Specialist dashboard", ar: "لوحة المختص" },
     queue: { en: "Queue", ar: "الطلبات" },
     empty: { en: "No requests in the queue.", ar: "لا توجد طلبات." },
-    setUrgency: { en: "Confirmed urgency", ar: "الاستعجال المؤكَّد" },
     sendQuote: { en: "Send quote", ar: "أرسل العرض" },
     quoteAmount: { en: "Quote amount (USD)", ar: "قيمة العرض (دولار)" },
     quoteNote: { en: "Quote note", ar: "ملاحظة العرض" },
     advance: { en: "Advance status", ar: "تحديث الحالة" },
     note: { en: "Note (optional)", ar: "ملاحظة (اختياري)" },
     customer: { en: "Customer", ar: "العميل" },
-    suggested: { en: "System suggestion", ar: "اقتراح النظام" },
     review: { en: "Start review", ar: "ابدأ المراجعة" },
     schedule: { en: "Schedule", ar: "تحديد الموعد" },
     startWork: { en: "Start work", ar: "بدء العمل" },
@@ -515,18 +506,11 @@ export const t = {
     completed: { en: "Completed", ar: "مكتمل" },
     cancelled: { en: "Cancelled", ar: "ملغي" },
   } as Record<RequestStatus, { en: string; ar: string }>,
-  urgency: {
-    normal: { en: "Normal", ar: "عادي" },
-    priority: { en: "Priority", ar: "أولوية" },
-    urgent: { en: "Urgent", ar: "مستعجل" },
-    critical: { en: "Critical", ar: "حرج" },
-  } as Record<UrgencyLevel, { en: string; ar: string }>,
   tech: {
     title: { en: "My jobs", ar: "مهامي" },
     problem: { en: "What the customer told us", ar: "ما أخبرنا به العميل" },
     fromSpecialist: { en: "From your specialist", ar: "من المختص" },
     photos: { en: "Customer photos", ar: "صور العميل" },
-    urgency: { en: "Urgency", ar: "الاستعجال" },
     empty: { en: "No jobs assigned to you yet.", ar: "لا توجد مهام مسندة إليك بعد." },
     customer: { en: "Customer", ar: "العميل" },
     appointment: { en: "Appointment", ar: "الموعد" },
@@ -561,10 +545,9 @@ export const t = {
     searchPh: { en: "Describe the problem", ar: "صِف المشكلة" },
     emergencyTitle: { en: "Emergency?", ar: "حالة طارئة؟" },
     emergencySub: {
-      en: "Priority dispatch for leaks, power cuts and lockouts.",
-      ar: "أولوية في المواعيد للتسرّبات وانقطاع الكهرباء والأبواب المقفلة.",
+      en: "Leaks, power cuts, lockouts: pick what's wrong and call our team now.",
+      ar: "تسرّبات، انقطاع كهرباء، أبواب مقفلة: اختر ما حدث واتصل بفريقنا الآن.",
     },
-    otherEmergency: { en: "Other emergency", ar: "حالة طارئة أخرى" },
     current: { en: "Your current request", ar: "طلبك الحالي" },
     view: { en: "View", ar: "عرض" },
     quoteReady: { en: "Your quote is ready. Review and approve it.", ar: "عرض السعر جاهز. راجعه ووافق عليه." },
@@ -680,6 +663,7 @@ export const t = {
     tabs: {
       overview: { en: "Overview", ar: "نظرة عامة" },
       requests: { en: "Requests", ar: "الطلبات" },
+      emergencies: { en: "Emergencies", ar: "الطوارئ" },
       customers: { en: "Customers", ar: "العملاء" },
       applications: { en: "Applications", ar: "طلبات التوظيف" },
       technicians: { en: "Technicians", ar: "الفنيون" },
@@ -994,7 +978,6 @@ export const t = {
     needsAction: { en: "Needs you", ar: "بحاجة إليك" },
     waitingCustomer: { en: "Waiting for customer", ar: "بانتظار العميل" },
     inProgress: { en: "Scheduled & in progress", ar: "محدّدة وقيد التنفيذ" },
-    urgentOpen: { en: "Urgent & critical", ar: "مستعجلة وحرجة" },
     doneToday: { en: "Completed today", ar: "اكتملت اليوم" },
     // filters
     search: { en: "Search name, phone, area or #", ar: "ابحث بالاسم أو الهاتف أو المنطقة أو الرقم" },
@@ -1002,7 +985,6 @@ export const t = {
     viewAll: { en: "All", ar: "الكل" },
     viewCompleted: { en: "Completed", ar: "مكتملة" },
     viewCancelled: { en: "Cancelled", ar: "ملغاة" },
-    anyUrgency: { en: "Any urgency", ar: "أي استعجال" },
     anyService: { en: "Any service", ar: "أي خدمة" },
     noMatches: { en: "No requests match these filters.", ar: "لا توجد طلبات تطابق هذه المرشحات." },
     showOlder: { en: "Show requests closed over 30 days ago", ar: "عرض الطلبات المغلقة منذ أكثر من ٣٠ يوماً" },
@@ -1011,7 +993,7 @@ export const t = {
     selectRequest: { en: "Select a request to see its details.", ar: "اختر طلباً لعرض تفاصيله." },
     // detail
     nextStep: { en: "Next step", ar: "الخطوة التالية" },
-    stepReview: { en: "Confirm the urgency to start the review.", ar: "أكّد الاستعجال لبدء المراجعة." },
+    stepReview: { en: "Start the review to prepare a price.", ar: "ابدأ المراجعة لتحضير السعر." },
     stepQuote: { en: "Send the customer a price to approve.", ar: "أرسل للعميل سعراً للموافقة عليه." },
     stepWaitQuote: {
       en: "Waiting for the customer to approve the quote of ${amount}.",
@@ -1316,6 +1298,54 @@ export const t = {
     },
     cta: { en: "Book a checked technician", ar: "احجز فنّياً موثوقاً" },
   },
+  emergency: {
+    title: { en: "Emergency", ar: "طوارئ" },
+    intro: { en: "Tell us what's wrong in two taps, then call our team.", ar: "أخبرنا بما حدث بنقرتين، ثم اتصل بفريقنا." },
+    serviceQ: { en: "Which service do you need?", ar: "ما الخدمة التي تحتاجها؟" },
+    problemQ: { en: "What's the emergency?", ar: "ما حالة الطوارئ؟" },
+    other: { en: "Something else", ar: "شيء آخر" },
+    change: { en: "Change", ar: "تغيير" },
+    danger: {
+      en: "Fire, a gas smell, smoke or someone hurt? Leave the area and call your local emergency number first.",
+      ar: "حريق، رائحة غاز، دخان أو شخص مصاب؟ غادر المكان واتصل برقم الطوارئ المحلي أولاً.",
+    },
+    sparks: {
+      en: "If it's safe, switch the power off at the main switch and keep away. Fire or smoke: call your local emergency number.",
+      ar: "إذا كان ذلك آمناً، افصل الكهرباء من المفتاح الرئيسي وابتعد. في حال وجود حريق أو دخان: اتصل برقم الطوارئ المحلي.",
+    },
+    callTitle: { en: "Call our emergency line", ar: "اتصل بخط الطوارئ" },
+    callBody: {
+      en: "Our team sees what you picked here and sends help as fast as possible.",
+      ar: "يرى فريقنا ما اخترته هنا ويرسل المساعدة بأسرع ما يمكن.",
+    },
+    callButton: { en: "Call {phone}", ar: "اتصل على {phone}" },
+    contactOptional: {
+      en: "Your name and number (optional) help us call you back if the line drops.",
+      ar: "اسمك ورقمك (اختياري) يساعداننا على معاودة الاتصال بك إذا انقطع الخط.",
+    },
+    callbackTitle: { en: "We'll call you", ar: "سنتصل بك" },
+    callbackBody: {
+      en: "Leave your name and number and our team calls you back as soon as possible.",
+      ar: "اترك اسمك ورقمك وسيتصل بك فريقنا في أسرع وقت ممكن.",
+    },
+    name: { en: "Your name", ar: "اسمك" },
+    phone: { en: "Phone (with country code)", ar: "الهاتف (مع رمز البلد)" },
+    callbackButton: { en: "Call me back", ar: "اتصلوا بي" },
+    callbackSent: {
+      en: "Thank you. Our team will call you as soon as possible. Keep your phone close.",
+      ar: "شكراً لك. سيتصل بك فريقنا في أسرع وقت ممكن. أبقِ هاتفك قريباً منك.",
+    },
+    // dashboard
+    tab: { en: "Emergencies", ar: "الطوارئ" },
+    empty: { en: "No emergencies right now.", ar: "لا توجد حالات طوارئ حالياً." },
+    calling: { en: "Called the emergency line", ar: "اتصل بخط الطوارئ" },
+    callback: { en: "Wants a call back", ar: "يطلب معاودة الاتصال" },
+    noContact: { en: "No name or number given", ar: "لم يُذكر اسم أو رقم" },
+    callNow: { en: "Call", ar: "اتصال" },
+    markHandled: { en: "Mark handled", ar: "تحديد كمُعالَجة" },
+    handled: { en: "Handled {time}", ar: "عولجت {time}" },
+    openCount: { en: "{n} open", ar: "{n} مفتوحة" },
+  },
   picker: {
     emergency: { en: "Emergency", ar: "طوارئ" },
     emergencyQ: { en: "What's the emergency?", ar: "ما حالة الطوارئ؟" },
@@ -1328,12 +1358,7 @@ export const t = {
     otherHelp: { en: "Something else", ar: "شيء آخر" },
     problems: {
       leak: { en: "Water leak", ar: "تسرّب مياه" },
-      "blocked-toilet": { en: "Blocked toilet", ar: "انسداد المرحاض" },
       "locked-out": { en: "Locked out", ar: "الباب مقفل وأنت في الخارج" },
-      "broken-door-window": { en: "Broken door or window", ar: "باب أو نافذة مكسورة" },
-      "no-power": { en: "Electrics not working", ar: "عطل في الكهرباء" },
-      "damaged-roof": { en: "Damaged roof", ar: "سقف متضرّر" },
-      "no-hot-water": { en: "No hot water", ar: "لا توجد مياه ساخنة" },
       "blocked-drain": { en: "Blocked drain", ar: "انسداد الصرف" },
       "tap-toilet": { en: "Faucet / toilet problem", ar: "مشكلة في الصنبور / المرحاض" },
       "water-pump": { en: "Water pump", ar: "مضخة مياه" },
@@ -1388,7 +1413,6 @@ export const t = {
       "bed-bugs": { en: "Bed bugs", ar: "بق الفراش" },
       termites: { en: "Termites", ar: "أرضة" },
     },
-    emergencyTag: { en: "Priority dispatch", ar: "أولوية في الإرسال" },
     trades: {
       plumbing: { en: "plumber", ar: "سبّاك" },
       electrical: { en: "electrician", ar: "كهربائي" },

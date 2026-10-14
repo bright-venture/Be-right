@@ -160,7 +160,6 @@ describe("unused upload clean-up", () => {
         userId: customer.id,
         category: "plumbing",
         answers: "{}",
-        urgencySuggested: "normal",
         preferredDate: futureDate(),
         timeSlot: "morning",
         area: "Hamra",

@@ -4,10 +4,9 @@ import { createRouter, specialistQuery } from "./middleware";
 import { getDb } from "./queries/connection";
 import { requestEvents, requestMedia, serviceRequests, technicianLocations, users } from "../db/schema";
 import { ACTIVE_JOB_STATUSES } from "@contracts/workflow";
-import type { RequestStatus, UrgencyLevel } from "@contracts/services";
+import type { RequestStatus } from "@contracts/services";
 import {
   QUOTE_AMOUNT_PATTERN,
-  URGENCY_LEVELS,
   VISIT_FEE_REASON_LABEL,
   VISIT_FEE_REASONS,
 } from "@contracts/workflow";
@@ -20,9 +19,8 @@ import { likeTerm, pageInput, PAGE_SIZE } from "./lib/paging";
 
 const byId = z.object({ id: z.number().int() });
 
-// Queue order: open cases first, most urgent first, then oldest first.
+// Queue order: open cases first, then oldest first.
 const CLOSED: readonly RequestStatus[] = ["completed", "cancelled"];
-const URGENCY_RANK: Record<UrgencyLevel, number> = { critical: 0, urgent: 1, priority: 2, normal: 3 };
 
 /** Closed requests stay in the live queue this long; older ones load on demand (`history`). */
 const RECENT_CLOSED_DAYS = 30;
@@ -52,12 +50,11 @@ export const specialistRouter = createRouter({
       .limit(LIVE_QUEUE_LIMIT);
     const rank = (r: (typeof rows)[number]["request"]) => [
       CLOSED.includes(r.status) ? 1 : 0,
-      URGENCY_RANK[r.urgencyFinal ?? r.urgencySuggested],
       r.createdAt.getTime(),
     ];
     return rows.sort((a, b) => {
       const [x, y] = [rank(a.request), rank(b.request)];
-      return x[0] - y[0] || x[1] - y[1] || x[2] - y[2];
+      return x[0] - y[0] || x[1] - y[1];
     });
   }),
 
@@ -162,15 +159,13 @@ export const specialistRouter = createRouter({
   }),
 
   startReview: specialistQuery
-    .input(z.object({ id: z.number().int(), urgency: z.enum(URGENCY_LEVELS) }))
+    .input(byId)
     .mutation(async ({ ctx, input }) => {
       await applyTransition({
         id: input.id,
         name: "startReview",
         actorId: ctx.user.id,
         scope: "any",
-        patch: { urgencyFinal: input.urgency },
-        note: `Urgency confirmed: ${input.urgency}`,
       });
       return { ok: true };
     }),

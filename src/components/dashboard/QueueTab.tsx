@@ -3,11 +3,10 @@ import { Clock, Loader2, Search } from "lucide-react";
 import { ServiceIcon } from "@/components/ServiceIcon";
 import { useI18n } from "@/i18n";
 import { trpc } from "@/providers/trpc";
-import { CATEGORIES, CATEGORY_MAP, URGENCY_META, type RequestStatus, type UrgencyLevel } from "@contracts/services";
-import { URGENCY_LEVELS } from "@contracts/workflow";
+import { CATEGORIES, CATEGORY_MAP, type RequestStatus } from "@contracts/services";
 import { RequestDetail } from "./RequestDetail";
 import { useLiveQueue } from "./useLiveQueue";
-import { cancelPending, inView, NEEDS_SPECIALIST, URGENCY_DOT, urgencyOf, waitingFor, type QueueView } from "./queueMeta";
+import { cancelPending, inView, NEEDS_SPECIALIST, waitingFor, type QueueView } from "./queueMeta";
 
 const SELECT =
   "min-h-11 rounded-2xl border-2 border-navy/30 bg-white px-3 text-sm font-semibold text-navy focus:border-flame focus:outline-none";
@@ -18,14 +17,13 @@ export function QueueTab({ onGoToApplications }: { onGoToApplications?: () => vo
   const technicians = trpc.tech.list.useQuery();
   const [view, setView] = useState<QueueView>("open");
   const [search, setSearch] = useState("");
-  const [urgency, setUrgency] = useState<UrgencyLevel | "">("");
   const [service, setService] = useState("");
   const [selected, setSelected] = useState<number | null>(null);
 
   const rows = useMemo(() => queue.data ?? [], [queue.data]);
   const counters = useMemo(
     () =>
-      (["needsAction", "waitingCustomer", "inProgress", "urgent", "doneToday"] as const).map((v) => ({
+      (["needsAction", "waitingCustomer", "inProgress", "doneToday"] as const).map((v) => ({
         view: v,
         count: rows.filter((x) => inView(v, x.request)).length,
       })),
@@ -35,7 +33,6 @@ export function QueueTab({ onGoToApplications }: { onGoToApplications?: () => vo
   const term = search.trim().toLowerCase().replace(/^#/, "");
   const filtered = rows.filter(({ request: r, customerName, customerEmail }) => {
     if (!inView(view, r)) return false;
-    if (urgency && urgencyOf(r) !== urgency) return false;
     if (service && r.category !== service) return false;
     if (!term) return true;
     const haystack = [String(r.id), customerName, customerEmail, r.phone, r.area, r.address]
@@ -44,7 +41,7 @@ export function QueueTab({ onGoToApplications }: { onGoToApplications?: () => vo
       .toLowerCase();
     return haystack.includes(term) || haystack.replace(/\s/g, "").includes(term.replace(/\s/g, ""));
   });
-  const filtersActive = view !== "open" || !!urgency || !!service || !!term;
+  const filtersActive = view !== "open" || !!service || !!term;
 
   // Requests closed over 30 days ago aren't in the live queue: they load on demand, a page at a time.
   const showsClosed = view === "completed" || view === "cancelled" || view === "all";
@@ -62,25 +59,21 @@ export function QueueTab({ onGoToApplications }: { onGoToApplications?: () => vo
     },
     { enabled: older && showsClosed, getNextPageParam: (last) => last.nextCursor },
   );
-  const olderRows =
-    older && showsClosed
-      ? (history.data?.pages.flatMap((page) => page.items) ?? []).filter((x) => !urgency || urgencyOf(x.request) === urgency)
-      : [];
+  const olderRows = older && showsClosed ? (history.data?.pages.flatMap((page) => page.items) ?? []) : [];
   const listed = [...filtered, ...olderRows];
 
   const counterLabel = {
     needsAction: t.dash4.needsAction,
     waitingCustomer: t.dash4.waitingCustomer,
     inProgress: t.dash4.inProgress,
-    urgent: t.dash4.urgentOpen,
     doneToday: t.dash4.doneToday,
   };
 
   return (
     <div className="mt-8">
       {/* overview: each counter is also a quick filter */}
-      {/* Five counters: one row on wide screens; two per row below, the fifth across the full width. */}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-5 max-lg:[&>*:last-child:nth-child(odd)]:col-span-2">
+      {/* Four counters: one row on wide screens, two rows of two below. */}
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {counters.map((c) => (
           <button
             key={c.view}
@@ -90,20 +83,14 @@ export function QueueTab({ onGoToApplications }: { onGoToApplications?: () => vo
               view === c.view ? "!border-flame !bg-flame/5" : ""
             }`}
           >
-            <span
-              className={`block font-display text-3xl font-black ${
-                c.view === "urgent" && c.count > 0 ? "text-flame-ink" : "text-navy"
-              }`}
-            >
-              {c.count}
-            </span>
+            <span className="block font-display text-3xl font-black text-navy">{c.count}</span>
             <span className="mt-1 block text-xs font-bold text-navy/70">{p(counterLabel[c.view])}</span>
           </button>
         ))}
       </div>
 
       {/* filters */}
-      {/* Phones: search and status across the width, urgency and service side by side. */}
+      {/* Phones: search, status and service each across the width. */}
       <div className="mt-5 grid grid-cols-2 items-center gap-2 sm:flex sm:flex-wrap">
         <label className="relative col-span-2 min-w-60 flex-1">
           <Search className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-navy/50" />
@@ -120,21 +107,12 @@ export function QueueTab({ onGoToApplications }: { onGoToApplications?: () => vo
           <option value="needsAction">{p(t.dash4.needsAction)}</option>
           <option value="waitingCustomer">{p(t.dash4.waitingCustomer)}</option>
           <option value="inProgress">{p(t.dash4.inProgress)}</option>
-          <option value="urgent">{p(t.dash4.urgentOpen)}</option>
           <option value="doneToday">{p(t.dash4.doneToday)}</option>
           <option value="completed">{p(t.dash4.viewCompleted)}</option>
           <option value="cancelled">{p(t.dash4.viewCancelled)}</option>
           <option value="all">{p(t.dash4.viewAll)}</option>
         </select>
-        <select value={urgency} onChange={(e) => setUrgency(e.target.value as UrgencyLevel | "")} aria-label={p(t.requests.urgency)} className={`${SELECT} min-w-0`}>
-          <option value="">{p(t.dash4.anyUrgency)}</option>
-          {URGENCY_LEVELS.map((u) => (
-            <option key={u} value={u}>
-              {p(URGENCY_META[u].label)}
-            </option>
-          ))}
-        </select>
-        <select value={service} onChange={(e) => setService(e.target.value)} aria-label={p(t.book.stepCategory)} className={`${SELECT} min-w-0`}>
+        <select value={service} onChange={(e) => setService(e.target.value)} aria-label={p(t.book.stepCategory)} className={`${SELECT} col-span-2 min-w-0`}>
           <option value="">{p(t.dash4.anyService)}</option>
           {CATEGORIES.map((c) => (
             <option key={c.id} value={c.id}>
@@ -146,7 +124,6 @@ export function QueueTab({ onGoToApplications }: { onGoToApplications?: () => vo
           <button
             onClick={() => {
               setView("open");
-              setUrgency("");
               setService("");
               setSearch("");
             }}
@@ -168,7 +145,6 @@ export function QueueTab({ onGoToApplications }: { onGoToApplications?: () => vo
             </div>
           )}
           {listed.map(({ request: r, customerName, customerEmail }) => {
-            const level = urgencyOf(r);
             const status = r.status as RequestStatus;
             const wait = NEEDS_SPECIALIST.includes(status) ? waitingFor(r.updatedAt) : null;
             return (
@@ -188,7 +164,6 @@ export function QueueTab({ onGoToApplications }: { onGoToApplications?: () => vo
                   selected === r.id ? "!border-flame !bg-flame/5" : ""
                 }`}
               >
-                <span className={`h-3 w-3 shrink-0 rounded-full ${URGENCY_DOT[level]}`} title={p(URGENCY_META[level].label)} />
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border-2 border-navy/15 bg-paper text-bird">
                   <ServiceIcon id={r.category} className="h-5 w-5" />
                 </span>

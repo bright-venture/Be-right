@@ -4,6 +4,7 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { ApplicationsTab } from "@/components/dashboard/ApplicationsTab";
 import { QueueTab } from "@/components/dashboard/QueueTab";
+import { EmergenciesTab, EMERGENCY_REFRESH_MS } from "@/components/dashboard/EmergenciesTab";
 import { TechniciansTab } from "@/components/dashboard/TechniciansTab";
 import { ActivityTab, CustomersTab, OverviewTab, TeamTab } from "@/components/admin/AdminTabs";
 import { useI18n } from "@/i18n";
@@ -15,7 +16,7 @@ import { StaffGate } from "@/components/admin/StaffGate";
 import { SectionMenu } from "@/components/admin/SectionMenu";
 import { trpc } from "@/providers/trpc";
 
-const TABS = ["overview", "requests", "customers", "applications", "technicians", "team", "activity"] as const;
+const TABS = ["overview", "requests", "emergencies", "customers", "applications", "technicians", "team", "activity"] as const;
 type Tab = (typeof TABS)[number];
 
 /**
@@ -42,6 +43,7 @@ export default function Admin() {
   const access = trpc.admin.access.useQuery(undefined, { enabled: isAdmin, retry: false });
   const allowed = !!access.data;
   const applications = trpc.join.list.useQuery(undefined, { enabled: allowed });
+  const emergencies = trpc.emergency.list.useQuery(undefined, { enabled: allowed, refetchInterval: EMERGENCY_REFRESH_MS });
 
   if (isLoading) {
     return (
@@ -93,6 +95,8 @@ export default function Admin() {
   const newApplications = (applications.data ?? []).filter(
     (a) => !a.approvedAt && (a.status === "new" || a.status === "contacted"),
   ).length;
+  const openEmergencies = (emergencies.data ?? []).filter((e) => !e.handledAt).length;
+  const badgeOf = (k: Tab) => (k === "applications" ? newApplications : k === "emergencies" ? openEmergencies : 0);
 
   return (
     <StaffGate access={access} onSignOut={() => void otherAccount()}>
@@ -102,7 +106,7 @@ export default function Admin() {
           <h1 className="font-display text-3xl font-black text-navy sm:text-4xl">{p(t.admin.title)}</h1>
           <p className="mt-1 text-sm text-navy/60">{p(t.admin.sub)}</p>
 
-          {/* Phones and tablets: the 7 sections don't fit in a row, so one clear menu. */}
+          {/* Phones and tablets: the 8 sections don't fit in a row, so one clear menu. */}
           <div className="mt-6 lg:hidden">
             <SectionMenu
               label={p(t.admin.sectionLabel)}
@@ -111,7 +115,7 @@ export default function Admin() {
               options={TABS.map((k) => ({
                 value: k,
                 label: p(t.admin.tabs[k]),
-                badge: k === "applications" ? newApplications : undefined,
+                badge: badgeOf(k) || undefined,
               }))}
             />
           </div>
@@ -130,9 +134,9 @@ export default function Admin() {
                   }`}
                 >
                   {p(t.admin.tabs[k])}
-                  {k === "applications" && newApplications > 0 && (
+                  {badgeOf(k) > 0 && (
                     <span className={`rounded-full px-2 py-px text-[11px] font-black ${tab === k ? "bg-paper text-navy" : "bg-flame text-white"}`}>
-                      {newApplications}
+                      {badgeOf(k)}
                     </span>
                   )}
                 </button>
@@ -142,6 +146,7 @@ export default function Admin() {
 
           {tab === "overview" && <OverviewTab onOpen={setTab} />}
           {tab === "requests" && <QueueTab onGoToApplications={() => setTab("applications")} />}
+          {tab === "emergencies" && <EmergenciesTab />}
           {tab === "customers" && <CustomersTab />}
           {tab === "applications" && <ApplicationsTab />}
           {tab === "technicians" && <TechniciansTab onGoToApplications={() => setTab("applications")} />}

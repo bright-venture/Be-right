@@ -17,9 +17,7 @@ import { trpc } from "@/providers/trpc";
 import {
   CATEGORY_MAP,
   STATUS_ORDER,
-  URGENCY_META,
   type RequestStatus,
-  type UrgencyLevel,
 } from "@contracts/services";
 import { CANCEL_REQUESTABLE_STATUSES, canTransition } from "@contracts/workflow";
 
@@ -175,22 +173,8 @@ export default function Requests() {
                       })}
                     </ol>
 
-                    {/* urgency + quote */}
-                    <div className="mt-5 grid gap-4 sm:grid-cols-2">
-                      <div className="rounded-2xl border-2 border-navy/15 bg-paper p-4">
-                        <p className="font-display text-xs font-bold uppercase tracking-[0.2em] text-navy/70">
-                          {p(t.requests.urgency)}
-                        </p>
-                        <p className="mt-2 font-display text-lg font-extrabold text-navy">
-                          {p(
-                            URGENCY_META[
-                              (detail.data.request.urgencyFinal ??
-                                detail.data.request
-                                  .urgencySuggested) as UrgencyLevel
-                            ].label,
-                          )}
-                        </p>
-                      </div>
+                    {/* quote */}
+                    <div className="mt-5">
                       <div className="rounded-2xl border-2 border-navy/15 bg-paper p-4">
                         <p className="font-display text-xs font-bold uppercase tracking-[0.2em] text-navy/70">
                           {p(detail.data.request.visitFeeReason ? t.book.visitFeeTitle : t.requests.quote)}

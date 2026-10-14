@@ -10,7 +10,7 @@ import {
   technicianLocations,
   users,
 } from "../db/schema";
-import { computeUrgency, CATEGORY_MAP } from "@contracts/services";
+import { CATEGORY_MAP } from "@contracts/services";
 import {
   ACTIVE_JOB_STATUSES,
   CANCEL_REQUESTABLE_STATUSES,
@@ -90,8 +90,6 @@ export const requestsRouter = createRouter({
         // Map pin for the visit address.
         lat: z.number().min(-90).max(90),
         lng: z.number().min(-180).max(180),
-        /** Booked through the home page's Emergency button. */
-        emergency: z.boolean().optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -112,8 +110,6 @@ export const requestsRouter = createRouter({
       checkMedia(ctx.user.authId, input.media);
       await rateLimit(`request:user:${ctx.user.id}`, LIMITS.requestPerUser);
 
-      const urgency = computeUrgency(input.category, input.answers);
-      if (input.emergency && (urgency.level === "normal" || urgency.level === "priority")) urgency.level = "urgent";
       const id = await getDb().transaction(async (tx) => {
         const [created] = await tx
           .insert(serviceRequests)
@@ -121,7 +117,6 @@ export const requestsRouter = createRouter({
             userId: ctx.user.id,
             category: input.category,
             answers: JSON.stringify(input.answers),
-            urgencySuggested: urgency.level,
             status: "submitted",
             preferredDate: input.preferredDate,
             timeSlot: input.timeSlot,
@@ -149,7 +144,7 @@ export const requestsRouter = createRouter({
         return created.id;
       });
       await notify.requestSubmitted(id);
-      return { id, urgency: urgency.level };
+      return { id };
     }),
 
   mine: customerQuery.query(async ({ ctx }) => {
@@ -248,7 +243,6 @@ export const requestsRouter = createRouter({
             guaranteeFor: original.id,
             category: original.category,
             answers: original.answers,
-            urgencySuggested: original.urgencyFinal ?? original.urgencySuggested,
             status: "submitted",
             preferredDate: input.preferredDate,
             timeSlot: input.timeSlot,

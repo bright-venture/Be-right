@@ -44,7 +44,7 @@ async function scheduledJob() {
   const c = await callerFor(customer);
   const s = await callerFor(admin);
   const { id } = await c.requests.create(booking);
-  await s.specialist.startReview({ id, urgency: "normal" });
+  await s.specialist.startReview({ id });
   await s.specialist.sendQuote({ id, amount: "45" });
   await c.requests.approveQuote({ id, amount: "45" });
   await s.tech.assign({ requestId: id, technicianId: tech.id });

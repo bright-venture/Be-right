@@ -13,9 +13,7 @@ import { useRoleGate } from "@/hooks/useRoleGate";
 import { trpc } from "@/providers/trpc";
 import {
   CATEGORY_MAP,
-  URGENCY_META,
   type RequestStatus,
-  type UrgencyLevel,
 } from "@contracts/services";
 import { ACTIVE_JOB_STATUSES, VISIT_REPORTS } from "@contracts/workflow";
 
@@ -206,15 +204,9 @@ export default function Tech() {
                 )}
 
                 <div className="mt-4 rounded-2xl border-2 border-navy/15 p-4">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="font-display text-xs font-bold uppercase tracking-[0.2em] text-navy/70">
-                      {p(t.tech.problem)}
-                    </p>
-                    <span className="text-xs font-bold text-navy">
-                      {p(t.tech.urgency)}:{" "}
-                      {p(URGENCY_META[(r.urgencyFinal ?? r.urgencySuggested) as UrgencyLevel].label)}
-                    </span>
-                  </div>
+                  <p className="font-display text-xs font-bold uppercase tracking-[0.2em] text-navy/70">
+                    {p(t.tech.problem)}
+                  </p>
                   <AnswerList category={r.category} answersJson={r.answers} className="mt-2 flex flex-col gap-1.5 text-sm" />
                   {customerPhotos.length > 0 && (
                     <>

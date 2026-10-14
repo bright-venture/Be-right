@@ -11,15 +11,14 @@ import JobMap from "@/components/map/JobMap";
 import { useI18n } from "@/i18n";
 import { trpc } from "@/providers/trpc";
 import { telLink, whatsappLink } from "@/lib/contact";
-import { CATEGORY_MAP, URGENCY_META, type RequestStatus, type UrgencyLevel } from "@contracts/services";
+import { CATEGORY_MAP, type RequestStatus } from "@contracts/services";
 import {
   ASSIGNABLE_STATUSES,
   QUOTE_AMOUNT_PATTERN,
-  URGENCY_LEVELS,
   VISIT_FEE_REASONS,
   type VisitFeeReason,
 } from "@contracts/workflow";
-import { cancelPending, URGENCY_BADGE } from "./queueMeta";
+import { cancelPending } from "./queueMeta";
 
 type Outputs = inferRouterOutputs<AppRouter>;
 type Technician = Outputs["tech"]["list"][number];
@@ -58,7 +57,6 @@ export function RequestDetail({
 
   const r = d.request;
   const status = r.status as RequestStatus;
-  const level = (r.urgencyFinal ?? r.urgencySuggested) as UrgencyLevel;
   const cat = CATEGORY_MAP[r.category];
   const tech = d.technician;
   const dateTime = (v: Date | string) =>
@@ -87,9 +85,6 @@ export function RequestDetail({
             </p>
           )}
         </div>
-        <span className={`rounded-full border-2 px-3 py-1 text-xs font-bold ${URGENCY_BADGE[level]}`}>
-          {p(URGENCY_META[level].label)}
-        </span>
         <span className="rounded-full border-2 border-navy/25 px-3 py-1 text-xs font-bold text-navy">
           {p(t.status[status])}
         </span>
@@ -151,9 +146,6 @@ export function RequestDetail({
           <section className="text-sm">
             <p className={LABEL}>{p(t.dash.answers)}</p>
             <AnswerList category={r.category} answersJson={r.answers} className="mt-2 flex flex-col gap-1.5" />
-            <p className="mt-2 text-xs text-navy/70">
-              {p(t.dash.suggested)}: <span className="font-bold text-navy">{p(URGENCY_META[r.urgencySuggested as UrgencyLevel].label)}</span>
-            </p>
             {r.notes && <p className="mt-3 rounded-xl bg-navy/5 p-3 text-navy/80">{r.notes}</p>}
           </section>
 
@@ -336,7 +328,6 @@ function NextStep({
 }) {
   const { t, p } = useI18n();
   const status = r.status as RequestStatus;
-  const [urgency, setUrgency] = useState<UrgencyLevel>((r.urgencyFinal ?? r.urgencySuggested) as UrgencyLevel);
   const [amount, setAmount] = useState("");
   const [quoteNote, setQuoteNote] = useState("");
   const [note, setNote] = useState("");
@@ -405,25 +396,10 @@ function NextStep({
       )}
 
       {status === "submitted" && (
-        <div className="mt-3 flex flex-col gap-3">
-          <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={p(t.dash.setUrgency)}>
-            {URGENCY_LEVELS.map((u) => (
-              <button
-                key={u}
-                role="radio"
-                aria-checked={urgency === u}
-                onClick={() => setUrgency(u)}
-                className={`min-h-10 rounded-full border-2 px-4 text-sm font-bold ${urgency === u ? "border-navy bg-navy text-paper" : "border-navy/30 bg-white text-navy"}`}
-              >
-                {p(URGENCY_META[u].label)}
-              </button>
-            ))}
-          </div>
-          <button onClick={() => startReview.mutate({ id: r.id, urgency })} disabled={busy} className="btn-pill-primary self-start">
-            {spinner}
-            {p(t.dash.review)}
-          </button>
-        </div>
+        <button onClick={() => startReview.mutate({ id: r.id })} disabled={busy} className="btn-pill-primary mt-3 self-start">
+          {spinner}
+          {p(t.dash.review)}
+        </button>
       )}
 
       {status === "quote_ready" && !changingQuote && (

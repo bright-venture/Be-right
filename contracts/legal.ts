@@ -18,13 +18,18 @@ export const COMPANY = {
    * "WhatsApp us" button on the site stays hidden.
    */
   whatsapp: "",
+  /**
+   * The emergency line the Emergency button calls, with its country code, e.g.
+   * "+1 202 555 0123". Empty: the Emergency screen offers a call back instead.
+   */
+  emergencyPhone: "",
 } as const;
 
 /**
  * Bump when the Terms or Privacy Policy change materially; accounts record the
  * version they accepted, so you can ask for re-acceptance later.
  */
-export const LEGAL_VERSION = "2026-10-07";
+export const LEGAL_VERSION = "2026-10-14";
 
 /**
  * Days a customer has to report a problem with completed work ("we come back").

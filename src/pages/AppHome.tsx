@@ -3,20 +3,11 @@ import {
   ArrowRight,
   BadgeCheck,
   ChevronRight,
-  CircleAlert,
-  DoorOpen,
-  Droplets,
-  House,
-  KeyRound,
   LayoutGrid,
   RotateCcw,
   Search,
   ShieldCheck,
-  ShowerHead,
   Siren,
-  Toilet,
-  ZapOff,
-  type LucideIcon,
 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
@@ -32,20 +23,9 @@ import {
   STATUS_ORDER,
   type RequestStatus,
 } from "@contracts/services";
-import { EMERGENCY_PROBLEMS, bookingHref } from "@contracts/picker";
+import { EMERGENCIES } from "@contracts/emergency";
 import { WORKMANSHIP_GUARANTEE_DAYS, arabicDigits } from "@contracts/legal";
 import { HOME_BY_ROLE, type Role } from "@contracts/roles";
-
-/** An icon for each emergency problem on the home screen. */
-const EMERGENCY_ICONS: Record<(typeof EMERGENCY_PROBLEMS)[number], LucideIcon> = {
-  leak: Droplets,
-  "blocked-toilet": Toilet,
-  "locked-out": KeyRound,
-  "broken-door-window": DoorOpen,
-  "no-power": ZapOff,
-  "damaged-roof": House,
-  "no-hot-water": ShowerHead,
-};
 
 const EMERGENCY_TILE =
   "flex min-h-[52px] items-center gap-2.5 rounded-2xl bg-white px-3 py-2 text-[13px] font-bold leading-tight text-navy active:scale-[0.97]";
@@ -156,21 +136,15 @@ export default function AppHome() {
               <p className="text-sm text-white/90">{p(t.app.emergencySub)}</p>
             </div>
           </div>
-          {/* Two even columns of equal tiles, plus "Other emergency" to complete the grid. */}
+          {/* The six services that take emergencies: three rows of two. Each opens the
+              Emergency screen on that service, to pick what's wrong and call. */}
           <div className="mt-4 grid auto-rows-fr grid-cols-2 gap-2">
-            {EMERGENCY_PROBLEMS.map((id) => {
-              const Icon = EMERGENCY_ICONS[id];
-              return (
-                <Link key={id} to={bookingHref(id, { emergency: true })} className={EMERGENCY_TILE}>
-                  <Icon className="h-5 w-5 shrink-0 text-flame" />
-                  {p(t.picker.problems[id])}
-                </Link>
-              );
-            })}
-            <Link to="/book?priority=1" className={EMERGENCY_TILE}>
-              <CircleAlert className="h-5 w-5 shrink-0 text-flame" />
-              {p(t.app.otherEmergency)}
-            </Link>
+            {EMERGENCIES.map(({ category }) => (
+              <Link key={category} to={`/emergency?cat=${category}`} className={EMERGENCY_TILE}>
+                <ServiceIcon id={category} className="h-5 w-5 shrink-0 text-flame" />
+                {p(CATEGORY_MAP[category].name)}
+              </Link>
+            ))}
           </div>
         </section>
 

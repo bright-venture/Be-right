@@ -19,8 +19,6 @@ export type DraftFields = {
   notes: string;
   /** Map pin for the visit address. */
   pin?: { lat: number; lng: number } | null;
-  /** Started from the home page's Emergency button. */
-  emergency?: boolean;
 };
 
 export function loadDraftFields(): DraftFields | null {

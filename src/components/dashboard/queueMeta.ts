@@ -1,19 +1,5 @@
-import type { RequestStatus, UrgencyLevel } from "@contracts/services";
+import type { RequestStatus } from "@contracts/services";
 import { todayHere } from "@contracts/workflow";
-
-export const URGENCY_DOT: Record<UrgencyLevel, string> = {
-  normal: "bg-navy/30",
-  priority: "bg-bird",
-  urgent: "bg-flame",
-  critical: "bg-red-700",
-};
-
-export const URGENCY_BADGE: Record<UrgencyLevel, string> = {
-  normal: "border-navy/25 text-navy",
-  priority: "border-bird bg-bird/10 text-navy",
-  urgent: "border-flame bg-flame text-white",
-  critical: "border-red-700 bg-red-700 text-white",
-};
 
 /** Statuses where the next move is the specialist's. */
 export const NEEDS_SPECIALIST: readonly RequestStatus[] = ["submitted", "in_review", "approved"];
@@ -24,7 +10,6 @@ export type QueueView =
   | "needsAction"
   | "waitingCustomer"
   | "inProgress"
-  | "urgent"
   | "doneToday"
   | "completed"
   | "cancelled"
@@ -32,16 +17,12 @@ export type QueueView =
 
 type Row = {
   status: string;
-  urgencyFinal: string | null;
-  urgencySuggested: string;
   updatedAt: Date;
   cancelRequestedAt: Date | null;
 };
 
 /** The customer asked to cancel a scheduled visit and nobody has handled it yet. */
 export const cancelPending = (r: Row) => !!r.cancelRequestedAt && !OPEN_EXCLUDED.includes(r.status as RequestStatus);
-
-export const urgencyOf = (r: Row) => (r.urgencyFinal ?? r.urgencySuggested) as UrgencyLevel;
 
 /** A moment's date on this device, as YYYY-MM-DD. */
 const localDay = (d: Date) => new Intl.DateTimeFormat("en-CA").format(d);
@@ -57,8 +38,6 @@ export function inView(view: QueueView, r: Row) {
       return status === "quote_ready";
     case "inProgress":
       return status === "scheduled" || status === "in_progress";
-    case "urgent":
-      return !OPEN_EXCLUDED.includes(status) && ["urgent", "critical"].includes(urgencyOf(r));
     case "doneToday":
       return status === "completed" && localDay(new Date(r.updatedAt)) === todayHere();
     case "completed":

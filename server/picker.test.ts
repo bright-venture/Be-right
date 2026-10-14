@@ -2,7 +2,7 @@
 // must land on real questions and options, or the pre-fill would silently be dropped.
 import { describe, expect, it } from "vitest";
 import { CATEGORIES, CATEGORY_MAP, SERVICES_IN_ORDER } from "@contracts/services";
-import { CATEGORY_PROBLEMS, EMERGENCY_PROBLEMS, PROBLEM_MAP } from "@contracts/picker";
+import { CATEGORY_PROBLEMS, PROBLEM_MAP } from "@contracts/picker";
 import { answersFromLink } from "@contracts/workflow";
 import { t } from "@contracts/i18n";
 
@@ -10,7 +10,7 @@ describe("service picker", () => {
   it("only offers services and problems that exist", () => {
     for (const id of SERVICES_IN_ORDER) expect(CATEGORY_MAP[id], id).toBeDefined();
     for (const id of Object.keys(CATEGORY_PROBLEMS)) expect(CATEGORY_MAP[id], id).toBeDefined();
-    for (const id of [...EMERGENCY_PROBLEMS, ...Object.values(CATEGORY_PROBLEMS).flat()]) {
+    for (const id of Object.values(CATEGORY_PROBLEMS).flat()) {
       expect(PROBLEM_MAP[id], id).toBeDefined();
       expect((t.picker.problems as Record<string, unknown>)[id], `wording for ${id}`).toBeDefined();
     }

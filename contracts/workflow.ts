@@ -1,9 +1,7 @@
 // Single source of truth for how a repair request moves through its life cycle,
 // and for validating what a customer submits. Shared by the API and the UI.
-import { CATEGORY_MAP, type RequestStatus, type UrgencyLevel } from "./services";
+import { CATEGORY_MAP, type RequestStatus } from "./services";
 import { WORKMANSHIP_GUARANTEE_DAYS } from "./legal";
-
-export const URGENCY_LEVELS = ["normal", "priority", "urgent", "critical"] as const satisfies readonly UrgencyLevel[];
 
 export const TIME_SLOTS = ["morning", "afternoon", "evening"] as const;
 export type TimeSlot = (typeof TIME_SLOTS)[number];

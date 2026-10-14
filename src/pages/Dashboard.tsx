@@ -4,6 +4,7 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { QueueTab } from "@/components/dashboard/QueueTab";
 import { TechniciansTab } from "@/components/dashboard/TechniciansTab";
+import { EmergenciesTab, EMERGENCY_REFRESH_MS } from "@/components/dashboard/EmergenciesTab";
 import { inView } from "@/components/dashboard/queueMeta";
 import { useI18n } from "@/i18n";
 import { useRoleGate } from "@/hooks/useRoleGate";
@@ -14,10 +15,10 @@ import { useLiveQueue } from "@/components/dashboard/useLiveQueue";
 import { trpc } from "@/providers/trpc";
 
 // Applications are reviewed by admins only (in /admin); specialists see the technicians.
-const TABS = ["queue", "technicians"] as const;
+const TABS = ["queue", "emergencies", "technicians"] as const;
 type Tab = (typeof TABS)[number];
 
-/** Specialist control center: requests queue, technician applications, technicians. */
+/** Specialist control center: requests queue, emergencies, technicians. */
 export default function Dashboard() {
   const { t, p } = useI18n();
   // Admins run the dashboard too.
@@ -40,9 +41,10 @@ export default function Dashboard() {
   // Badge counts (same queries the tabs use, so they share the cache).
   const queue = useLiveQueue(allowed);
   const technicians = trpc.tech.list.useQuery(undefined, { enabled: allowed });
+  const emergencies = trpc.emergency.list.useQuery(undefined, { enabled: allowed, refetchInterval: EMERGENCY_REFRESH_MS });
 
   // An admin who lands here (old link, bookmark, an email) sees the same thing in /admin.
-  if (role === "admin") return <Navigate to={`/admin?tab=${tab === "technicians" ? "technicians" : "requests"}`} replace />;
+  if (role === "admin") return <Navigate to={`/admin?tab=${tab === "queue" ? "requests" : tab}`} replace />;
 
   if (authLoading || !isSpecialist) {
     return (
@@ -54,10 +56,12 @@ export default function Dashboard() {
 
   const badges: Record<Tab, number> = {
     queue: (queue.data ?? []).filter((x) => inView("needsAction", x.request)).length,
+    emergencies: (emergencies.data ?? []).filter((e) => !e.handledAt).length,
     technicians: technicians.data?.length ?? 0,
   };
   const labels = {
     queue: t.dash3.tabQueue,
+    emergencies: t.emergency.tab,
     technicians: t.dash3.tabTechnicians,
   };
 
@@ -94,6 +98,7 @@ export default function Dashboard() {
           </div>
 
           {tab === "queue" && <QueueTab />}
+          {tab === "emergencies" && <EmergenciesTab />}
           {tab === "technicians" && <TechniciansTab />}
         </main>
         <Footer />

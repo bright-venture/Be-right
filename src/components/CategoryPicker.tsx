@@ -2,7 +2,6 @@ import { Fragment, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router";
 import {
-  ChevronDown,
   ChevronRight,
   ChevronLeft,
   MapPin,
@@ -12,23 +11,19 @@ import {
 import { ServiceIcon } from "@/components/ServiceIcon";
 import { useI18n } from "@/i18n";
 import { CATEGORY_MAP, FACILITY_GROUP, FACILITY_SERVICES, SERVICES_IN_ORDER, type LocalText } from "@contracts/services";
-import {
-  CATEGORY_PROBLEMS,
-  EMERGENCY_PROBLEMS,
-  PROBLEM_MAP,
-} from "@contracts/picker";
+import { CATEGORY_PROBLEMS, PROBLEM_MAP } from "@contracts/picker";
 
 /**
  * Checkatrade-inspired category pill row in Be Right branding:
- * - Emergency pill first (flame, siren, chevron) opening a dropdown of urgent
- *   problems, then a city/area step.
+ * - Emergency pill first (flame, siren): opens the Emergency screen, where the
+ *   customer picks the service and what's wrong, then calls.
  * - Other pills are rounded white with the Be Right service icons.
  * - A pill click opens a centered white modal over a blurred/dimmed backdrop:
  *   problem -> location -> the existing booking flow.
  *   Back / Close / Escape, focus trap, and choices are preserved on Back.
  */
 
-type Wizard = { kind: "emergency" | "cat"; catId?: string } | null;
+type Wizard = { catId: string } | null;
 
 export function CategoryPicker() {
   const { t, p, dir } = useI18n();
@@ -37,24 +32,15 @@ export function CategoryPicker() {
   const [step, setStep] = useState(0); // 0 = problem, 1 = location
   const [problem, setProblem] = useState("");
   const [area, setArea] = useState("");
-  const [openDropdown, setOpenDropdown] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const emergencyBtnRef = useRef<HTMLDivElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
   const rowRef = useRef<HTMLDivElement>(null);
   const [canPrev, setCanPrev] = useState(false);
   const [canNext, setCanNext] = useState(false);
-  const [dropPos, setDropPos] = useState<{
-    top: number;
-    left: number;
-    flip: boolean;
-  } | null>(null);
 
   const openWizard = (w: NonNullable<Wizard>, preselect = "") => {
     setWizard(w);
     setStep(preselect ? 1 : 0);
     setProblem(preselect);
-    setOpenDropdown(false);
   };
   const closeWizard = () => {
     setWizard(null);
@@ -100,53 +86,6 @@ export function CategoryPicker() {
     });
   };
 
-  // Emergency dropdown is portaled to <body> (fixed) so the rail's
-  // overflow-x clipping can never cut it off; position tracks the pill.
-  useEffect(() => {
-    if (!openDropdown) return;
-    const update = () => {
-      const btn = emergencyBtnRef.current;
-      if (!btn) return;
-      const r = btn.getBoundingClientRect();
-      const W = 288; // w-72
-      let left = dir === "rtl" ? r.right - W : r.left;
-      left = Math.max(8, Math.min(left, window.innerWidth - W - 8));
-      const below = window.innerHeight - r.bottom;
-      const flip = below < 320 && r.top > below;
-      setDropPos({ top: flip ? r.top - 8 : r.bottom + 8, left, flip });
-    };
-    update();
-    window.addEventListener("resize", update);
-    window.addEventListener("scroll", update, true);
-    return () => {
-      window.removeEventListener("resize", update);
-      window.removeEventListener("scroll", update, true);
-    };
-  }, [openDropdown, dir]);
-
-  // Close the emergency dropdown on outside click / Escape.
-  useEffect(() => {
-    if (!openDropdown) return;
-    const onDoc = (e: MouseEvent) => {
-      const target = e.target as Node;
-      if (
-        dropdownRef.current?.contains(target) ||
-        emergencyBtnRef.current?.contains(target)
-      )
-        return;
-      setOpenDropdown(false);
-    };
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpenDropdown(false);
-    };
-    document.addEventListener("mousedown", onDoc);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("mousedown", onDoc);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [openDropdown]);
-
   // Modal: Escape closes, focus trap, body scroll lock.
   useEffect(() => {
     if (!wizard) return;
@@ -185,38 +124,26 @@ export function CategoryPicker() {
 
   const goToBooking = () => {
     const map = PROBLEM_MAP[problem];
-    const catId =
-      wizard?.kind === "cat" ? wizard.catId! : (map?.cat ?? "plumbing");
+    const catId = wizard?.catId ?? map?.cat ?? "plumbing";
     const params = new URLSearchParams({ cat: catId });
     if (map && Object.keys(map.answers).length)
       params.set("ans", JSON.stringify(map.answers));
     if (area.trim()) params.set("area", area.trim());
-    if (wizard?.kind === "emergency") params.set("priority", "1");
     closeWizard();
     navigate(`/book?${params.toString()}`);
   };
 
-  const problemList =
-    wizard?.kind === "emergency"
-      ? [...EMERGENCY_PROBLEMS]
-      : wizard?.catId
-        ? (CATEGORY_PROBLEMS[wizard.catId] ?? [])
-        : [];
+  const problemList = wizard ? (CATEGORY_PROBLEMS[wizard.catId] ?? []) : [];
 
-  const wizardTitle =
-    wizard?.kind === "emergency"
-      ? step === 0
-        ? p(t.picker.emergencyQ)
-        : p(t.picker.locationQ)
-      : wizard?.catId
-        ? step === 0
-          ? dir === "rtl"
-            ? wizard.catId === "plumbing"
-              ? "ما الذي تريد من السبّاك إصلاحه؟"
-              : `ما الذي تحتاجه في خدمة ${p(CATEGORY_MAP[wizard.catId].name)}؟`
-            : `What do you need a ${p((t.picker.trades as Record<string, LocalText>)[wizard.catId] ?? CATEGORY_MAP[wizard.catId].name).toLowerCase()} to help with?`
-          : p(t.picker.locationQ)
-        : "";
+  const wizardTitle = !wizard
+    ? ""
+    : step > 0
+      ? p(t.picker.locationQ)
+      : dir === "rtl"
+        ? wizard.catId === "plumbing"
+          ? "ما الذي تريد من السبّاك إصلاحه؟"
+          : `ما الذي تحتاجه في خدمة ${p(CATEGORY_MAP[wizard.catId].name)}؟`
+        : `What do you need a ${p((t.picker.trades as Record<string, LocalText>)[wizard.catId] ?? CATEGORY_MAP[wizard.catId].name).toLowerCase()} to help with?`;
 
   return (
     <div className="category-rail hero-enter hero-d6 relative z-10 mt-10 w-full">
@@ -252,22 +179,15 @@ export function CategoryPicker() {
           }}
           className="flex flex-1 snap-x snap-mandatory gap-2.5 overflow-x-auto rounded-2xl py-2 [-ms-overflow-style:none] [scrollbar-width:none] focus-visible:outline-2 focus-visible:outline-flame [&::-webkit-scrollbar]:hidden"
         >
-          {/* Emergency — highlighted with siren + chevron; tap toggles dropdown */}
-          <div ref={emergencyBtnRef} className="relative shrink-0 snap-start">
-            <button
-              type="button"
-              onClick={() => setOpenDropdown(v => !v)}
-              aria-expanded={openDropdown}
-              aria-haspopup="listbox"
-              className="flex items-center gap-2 rounded-full border-2 border-flame bg-flame px-4 py-2.5 font-display text-sm font-black text-white shadow-[0_3px_0_#081E42] transition-transform hover:-translate-y-0.5 active:translate-y-0"
-            >
-              <Siren className="h-4 w-4" />
-              {p(t.picker.emergency)}
-              <ChevronDown
-                className={`h-4 w-4 transition-transform ${openDropdown ? "rotate-180" : ""}`}
-              />
-            </button>
-          </div>
+          {/* Emergency, highlighted with the siren: opens the Emergency screen. */}
+          <button
+            type="button"
+            onClick={() => navigate("/emergency")}
+            className="flex shrink-0 snap-start items-center gap-2 rounded-full border-2 border-flame bg-flame px-4 py-2.5 font-display text-sm font-black text-white shadow-[0_3px_0_#081E42] transition-transform hover:-translate-y-0.5 active:translate-y-0"
+          >
+            <Siren className="h-4 w-4" />
+            {p(t.picker.emergency)}
+          </button>
 
           {/* Category pills, rounded white with Be Right icons; the facility services follow
               their group name. */}
@@ -283,7 +203,7 @@ export function CategoryPicker() {
                 type="button"
                 onClick={() =>
                   CATEGORY_PROBLEMS[id]?.length
-                    ? openWizard({ kind: "cat", catId: id })
+                    ? openWizard({ catId: id })
                     : navigate(`/book?cat=${id}`)
                 }
                 className="flex shrink-0 snap-start items-center gap-2 rounded-full border-[1.5px] border-navy/15 bg-white px-4 py-2.5 text-sm font-bold text-navy shadow-[0_2px_0_rgb(12_43_92/0.12)] transition-all hover:-translate-y-0.5 hover:border-navy hover:shadow-[0_4px_0_rgb(12_43_92/0.25)] focus-visible:outline-2 focus-visible:outline-flame"
@@ -309,46 +229,6 @@ export function CategoryPicker() {
           )}
         </button>
       </div>
-
-      {/* ---- Emergency dropdown: portaled out of the rail (no clipping) ---- */}
-      {openDropdown &&
-        dropPos &&
-        createPortal(
-          <div
-            ref={dropdownRef}
-            data-emergency-dropdown
-            aria-label={p(t.picker.emergency)}
-            style={{
-              position: "fixed",
-              top: dropPos.top,
-              left: dropPos.left,
-              transform: dropPos.flip ? "translateY(-100%)" : undefined,
-            }}
-            className="z-[80] w-72 overflow-hidden rounded-2xl border-2 border-navy bg-white shadow-[0_8px_0_rgb(12_43_92/0.25)]"
-          >
-            <div className="border-b border-navy/10 px-4 py-2.5 font-display text-[11px] font-black uppercase tracking-[0.18em] text-flame">
-              {p(t.picker.emergencyTag)}
-            </div>
-            <ul className="max-h-[min(320px,55vh)] overflow-y-auto">
-              {EMERGENCY_PROBLEMS.map(id => (
-                <li key={id}>
-                  <button
-                    type="button"
-                    aria-label={p(
-                      t.picker.problems[id as keyof typeof t.picker.problems]
-                    )}
-                    onClick={() => openWizard({ kind: "emergency" }, id)}
-                    className="flex w-full items-center justify-between gap-2 px-4 py-2.5 text-start text-sm font-bold text-navy transition-colors hover:bg-paper"
-                  >
-                    {p(t.picker.problems[id as keyof typeof t.picker.problems])}
-                    <ChevronRight className="h-4 w-4 shrink-0 text-navy/40 rtl:-scale-x-100" />
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>,
-          document.body
-        )}
 
       {/* ---- Guided modal: portaled to <body> too. The rail keeps a transform from its
            entrance animation, which would otherwise trap this "fixed" overlay inside it. ---- */}

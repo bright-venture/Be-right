@@ -23,12 +23,6 @@ import type { Transport, WorkMode } from "../contracts/applications";
 // the browser's publishable key — gets no access to these tables at all.
 
 export const userRole = pgEnum("user_role", ["customer", "specialist", "technician", "admin"]);
-export const urgencyLevel = pgEnum("urgency_level", [
-  "normal",
-  "priority",
-  "urgent",
-  "critical",
-]);
 export const requestStatus = pgEnum("request_status", [
   "submitted",
   "in_review",
@@ -88,8 +82,6 @@ export const serviceRequests = pgTable(
     technicianId: integer("technician_id").references(() => users.id),
     category: varchar("category", { length: 64 }).notNull(),
     answers: text("answers").notNull(), // JSON: Record<string, string>
-    urgencySuggested: urgencyLevel("urgency_suggested").notNull(),
-    urgencyFinal: urgencyLevel("urgency_final"),
     status: requestStatus("status").default("submitted").notNull(),
     preferredDate: varchar("preferred_date", { length: 32 }).notNull(),
     timeSlot: varchar("time_slot", { length: 32 }).notNull(),
@@ -289,4 +281,30 @@ export const auditLog = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => [index("audit_log_created_idx").on(t.createdAt)],
+).enableRLS();
+
+/**
+ * Emergencies reported through the Emergency button: the customer picks the service and
+ * what is wrong, then calls (or asks to be called back). Specialists see them in the
+ * dashboard and mark them handled. Name and phone are erased with the account, and every
+ * entry is deleted after EMERGENCY_RETENTION_DAYS (contracts/emergency.ts).
+ */
+export const emergencyCalls = pgTable(
+  "emergency_calls",
+  {
+    id: serial("id").primaryKey(),
+    /** Signed-in customer, if any. */
+    userId: integer("user_id").references(() => users.id, { onDelete: "set null" }),
+    category: varchar("category", { length: 64 }).notNull(),
+    /** One of the category's emergencies, or "other". */
+    problem: varchar("problem", { length: 64 }).notNull(),
+    name: varchar("name", { length: 255 }),
+    phone: varchar("phone", { length: 32 }),
+    /** "call": they phoned the emergency line; "callback": they asked to be called. */
+    kind: varchar("kind", { length: 16 }).$type<"call" | "callback">().notNull(),
+    handledAt: timestamp("handled_at", { withTimezone: true }),
+    handledBy: integer("handled_by").references(() => users.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [index("emergency_calls_created_idx").on(t.createdAt)],
 ).enableRLS();

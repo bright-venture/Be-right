@@ -1,11 +1,10 @@
-// Shared domain model: service categories, guided question trees, urgency engine.
+// Shared domain model: service categories and their guided question trees.
 // Used by both the booking flow (frontend) and request creation (backend).
 
 import { arabicDigits, WORKMANSHIP_GUARANTEE_DAYS as GUARANTEE_DAYS } from "./legal";
 
 export type Lang = "en" | "ar";
 
-export type UrgencyLevel = "normal" | "priority" | "urgent" | "critical";
 
 export type RequestStatus =
   | "submitted"
@@ -35,10 +34,6 @@ export interface LocalText {
 export interface QuestionOption {
   value: string;
   label: LocalText;
-  /** urgency points added when picked */
-  weight?: number;
-  /** immediately flags a critical safety case */
-  critical?: boolean;
 }
 
 export interface Question {
@@ -73,7 +68,7 @@ export const CATEGORIES: ServiceCategory[] = [
         label: { en: "What is happening?", ar: "ما المشكلة؟" },
         options: [
           { value: "leak", label: { en: "Water leak", ar: "تسرّب مياه" } },
-          { value: "blocked", label: { en: "Blocked drain", ar: "انسداد الصرف" }, weight: 1 },
+          { value: "blocked", label: { en: "Blocked drain", ar: "انسداد الصرف" } },
           { value: "fixture", label: { en: "Faucet / toilet problem", ar: "مشكلة في الصنبور / المرحاض" } },
           { value: "pump", label: { en: "Water pump", ar: "مضخة مياه" } },
           { value: "heater", label: { en: "Water heater", ar: "سخّان مياه" } },
@@ -90,7 +85,7 @@ export const CATEGORIES: ServiceCategory[] = [
           { value: "kitchen", label: { en: "Kitchen", ar: "المطبخ" } },
           { value: "bathroom", label: { en: "Bathroom", ar: "الحمّام" } },
           { value: "tank", label: { en: "Water tank", ar: "خزان المياه" } },
-          { value: "wall", label: { en: "Inside a wall", ar: "داخل الجدار" }, weight: 1 },
+          { value: "wall", label: { en: "Inside a wall", ar: "داخل الجدار" } },
           { value: "outside", label: { en: "Outside", ar: "في الخارج" } },
         ],
       },
@@ -101,8 +96,8 @@ export const CATEGORIES: ServiceCategory[] = [
         label: { en: "How much water?", ar: "ما كمية المياه؟" },
         options: [
           { value: "drops", label: { en: "Drops", ar: "قطرات" } },
-          { value: "continuous", label: { en: "Continuous trickle", ar: "تسرّب متواصل" }, weight: 2 },
-          { value: "large", label: { en: "Large flow", ar: "تدفّق قوي" }, weight: 3 },
+          { value: "continuous", label: { en: "Continuous trickle", ar: "تسرّب متواصل" } },
+          { value: "large", label: { en: "Large flow", ar: "تدفّق قوي" } },
         ],
       },
       {
@@ -112,8 +107,8 @@ export const CATEGORIES: ServiceCategory[] = [
         label: { en: "Can you stop the water?", ar: "هل يمكنك إيقاف المياه؟" },
         options: [
           { value: "yes", label: { en: "Yes", ar: "نعم" } },
-          { value: "no", label: { en: "No", ar: "لا" }, weight: 3 },
-          { value: "unknown", label: { en: "I don't know", ar: "لا أعرف" }, weight: 1 },
+          { value: "no", label: { en: "No", ar: "لا" } },
+          { value: "unknown", label: { en: "I don't know", ar: "لا أعرف" } },
         ],
       },
       {
@@ -123,7 +118,7 @@ export const CATEGORIES: ServiceCategory[] = [
         label: { en: "Can you see the source?", ar: "هل ترى مصدر التسرّب؟" },
         options: [
           { value: "yes", label: { en: "Yes", ar: "نعم" } },
-          { value: "no", label: { en: "No", ar: "لا" }, weight: 1 },
+          { value: "no", label: { en: "No", ar: "لا" } },
         ],
       },
     ],
@@ -141,16 +136,12 @@ export const CATEGORIES: ServiceCategory[] = [
         kind: "choice",
         label: { en: "What is happening?", ar: "ما المشكلة؟" },
         options: [
-          { value: "no_power", label: { en: "No power at all", ar: "لا توجد كهرباء إطلاقاً" }, weight: 1 },
+          { value: "no_power", label: { en: "No power at all", ar: "لا توجد كهرباء إطلاقاً" } },
           { value: "partial", label: { en: "Power in some rooms", ar: "كهرباء في بعض الغرف فقط" } },
           { value: "lights", label: { en: "Lights issue", ar: "مشكلة في الإنارة" } },
           { value: "socket", label: { en: "Socket / switch", ar: "مقبس / مفتاح كهربائي" } },
-          { value: "generator", label: { en: "Generator issue", ar: "مشكلة في المولّد" }, weight: 1 },
-          {
-            value: "burning",
-            label: { en: "Burning smell or sparks", ar: "رائحة احتراق أو شرر" },
-            critical: true,
-          },
+          { value: "generator", label: { en: "Generator issue", ar: "مشكلة في المولّد" } },
+          { value: "burning", label: { en: "Burning smell or sparks", ar: "رائحة احتراق أو شرر" } },
         ],
       },
       {
@@ -159,7 +150,7 @@ export const CATEGORIES: ServiceCategory[] = [
         label: { en: "How much of the home is affected?", ar: "ما الجزء المتأثر من المنزل؟" },
         options: [
           { value: "single", label: { en: "One spot / room", ar: "نقطة واحدة / غرفة واحدة" } },
-          { value: "whole", label: { en: "Whole home", ar: "المنزل بالكامل" }, weight: 1 },
+          { value: "whole", label: { en: "Whole home", ar: "المنزل بالكامل" } },
         ],
       },
       {
@@ -171,9 +162,9 @@ export const CATEGORIES: ServiceCategory[] = [
           ar: "لا تلمس أو تفتح أي شيء. فقط أخبرنا بما تراه.",
         },
         options: [
-          { value: "yes", label: { en: "Yes", ar: "نعم" }, critical: true },
+          { value: "yes", label: { en: "Yes", ar: "نعم" } },
           { value: "no", label: { en: "No", ar: "لا" } },
-          { value: "unknown", label: { en: "Not sure", ar: "غير متأكد" }, weight: 1 },
+          { value: "unknown", label: { en: "Not sure", ar: "غير متأكد" } },
         ],
       },
     ],
@@ -192,8 +183,8 @@ export const CATEGORIES: ServiceCategory[] = [
         label: { en: "What do you need?", ar: "ماذا تحتاج؟" },
         options: [
           { value: "cleaning", label: { en: "Cleaning / servicing", ar: "تنظيف / صيانة" } },
-          { value: "not_cooling", label: { en: "Not cooling well", ar: "لا يبرّد جيداً" }, weight: 1 },
-          { value: "leaking", label: { en: "Water leaking from unit", ar: "يسرّب الماء" }, weight: 1 },
+          { value: "not_cooling", label: { en: "Not cooling well", ar: "لا يبرّد جيداً" } },
+          { value: "leaking", label: { en: "Water leaking from unit", ar: "يسرّب الماء" } },
           { value: "noise", label: { en: "Strange noise", ar: "صوت غريب" } },
           { value: "install", label: { en: "New installation", ar: "تركيب جديد" } },
           { value: "other", label: { en: "Something else", ar: "شيء آخر" } },
@@ -278,7 +269,7 @@ export const CATEGORIES: ServiceCategory[] = [
         options: [
           { value: "good", label: { en: "Good, just repaint", ar: "جيدة، إعادة دهان فقط" } },
           { value: "cracks", label: { en: "Cracks / peeling", ar: "تشققات / تقشّر" } },
-          { value: "stains", label: { en: "Stains / humidity", ar: "بقع / رطوبة" }, weight: 1 },
+          { value: "stains", label: { en: "Stains / humidity", ar: "بقع / رطوبة" } },
         ],
       },
     ],
@@ -299,7 +290,7 @@ export const CATEGORIES: ServiceCategory[] = [
           { value: "home", label: { en: "Home cleaning", ar: "تنظيف منزل" } },
           { value: "office", label: { en: "Office cleaning", ar: "تنظيف مكتب" } },
           { value: "deep", label: { en: "Deep cleaning", ar: "تنظيف عميق" } },
-          { value: "post_construction", label: { en: "Post-construction", ar: "بعد البناء" }, weight: 1 },
+          { value: "post_construction", label: { en: "Post-construction", ar: "بعد البناء" } },
         ],
       },
       {
@@ -359,8 +350,8 @@ export const CATEGORIES: ServiceCategory[] = [
         label: { en: "Stairs or elevator?", ar: "درج أم مصعد؟" },
         options: [
           { value: "elevator", label: { en: "Elevator available", ar: "يوجد مصعد" } },
-          { value: "stairs_low", label: { en: "Stairs, up to 2 floors", ar: "درج، حتى طابقين" }, weight: 1 },
-          { value: "stairs_high", label: { en: "Stairs, 3+ floors", ar: "درج، ٣ طوابق أو أكثر" }, weight: 1 },
+          { value: "stairs_low", label: { en: "Stairs, up to 2 floors", ar: "درج، حتى طابقين" } },
+          { value: "stairs_high", label: { en: "Stairs, 3+ floors", ar: "درج، ٣ طوابق أو أكثر" } },
         ],
       },
     ],
@@ -460,7 +451,7 @@ export const CATEGORIES: ServiceCategory[] = [
         options: [
           { value: "design", label: { en: "New garden / redesign", ar: "حديقة جديدة / إعادة تصميم" } },
           { value: "maintenance", label: { en: "Regular maintenance", ar: "صيانة دورية" } },
-          { value: "trimming", label: { en: "Tree / hedge trimming", ar: "تقليم الأشجار / السياجات النباتية" }, weight: 1 },
+          { value: "trimming", label: { en: "Tree / hedge trimming", ar: "تقليم الأشجار / السياجات النباتية" } },
           { value: "irrigation", label: { en: "Irrigation system", ar: "نظام ري" } },
           { value: "fence", label: { en: "Fence / pergola / stonework", ar: "سور / عريشة / أعمال حجرية" } },
           { value: "cleanup", label: { en: "Cleanup / overgrowth removal", ar: "تنظيف / إزالة النباتات المتكاثفة" } },
@@ -475,7 +466,7 @@ export const CATEGORIES: ServiceCategory[] = [
           { value: "balcony", label: { en: "Balcony / rooftop", ar: "شرفة / سطح" } },
           { value: "small", label: { en: "Small garden (up to 100 m²)", ar: "حديقة صغيرة (حتى ١٠٠ م²)" } },
           { value: "medium", label: { en: "Medium (100–300 m²)", ar: "متوسطة (١٠٠–٣٠٠ م²)" } },
-          { value: "large", label: { en: "Large / villa / commercial", ar: "كبيرة / فيلا / تجاري" }, weight: 1 },
+          { value: "large", label: { en: "Large / villa / commercial", ar: "كبيرة / فيلا / تجاري" } },
         ],
       },
       {
@@ -492,8 +483,8 @@ export const CATEGORIES: ServiceCategory[] = [
         },
         options: [
           { value: "no", label: { en: "No", ar: "لا" } },
-          { value: "tall", label: { en: "Tall trees, clear area", ar: "أشجار عالية، والمنطقة خالية" }, weight: 1 },
-          { value: "near_lines", label: { en: "Yes, near power lines / buildings", ar: "نعم، قرب خطوط الكهرباء / المباني" }, critical: true },
+          { value: "tall", label: { en: "Tall trees, clear area", ar: "أشجار عالية، والمنطقة خالية" } },
+          { value: "near_lines", label: { en: "Yes, near power lines / buildings", ar: "نعم، قرب خطوط الكهرباء / المباني" } },
         ],
       },
       {
@@ -547,9 +538,9 @@ export const CATEGORIES: ServiceCategory[] = [
         options: [
           { value: "dead", label: { en: "No power at all", ar: "لا يعمل إطلاقاً" } },
           { value: "not_working", label: { en: "Runs but not working right", ar: "يعمل لكن ليس بشكل صحيح" } },
-          { value: "leak", label: { en: "Leaking water", ar: "يسرّب الماء" }, weight: 2 },
+          { value: "leak", label: { en: "Leaking water", ar: "يسرّب الماء" } },
           { value: "noise", label: { en: "Loud / strange noise", ar: "صوت عالٍ / غريب" } },
-          { value: "smell", label: { en: "Burning smell", ar: "رائحة احتراق" }, critical: true },
+          { value: "smell", label: { en: "Burning smell", ar: "رائحة احتراق" } },
         ],
       },
     ],
@@ -580,7 +571,7 @@ export const CATEGORIES: ServiceCategory[] = [
         kind: "choice",
         label: { en: "What do you see now?", ar: "ماذا ترى الآن؟" },
         options: [
-          { value: "leaking", label: { en: "Water coming in now", ar: "تتسرّب المياه الآن" }, weight: 2 },
+          { value: "leaking", label: { en: "Water coming in now", ar: "تتسرّب المياه الآن" } },
           { value: "damp", label: { en: "Damp or stains", ar: "رطوبة أو بقع" } },
           { value: "prevent", label: { en: "Prevention before winter", ar: "وقاية قبل الشتاء" } },
         ],
@@ -652,8 +643,8 @@ export const CATEGORIES: ServiceCategory[] = [
         kind: "choice",
         label: { en: "What do you need?", ar: "ماذا تحتاج؟" },
         options: [
-          { value: "home_lockout", label: { en: "Locked out of home or office", ar: "الباب مقفل وأنا خارج المنزل أو المكتب" }, weight: 2 },
-          { value: "car_lockout", label: { en: "Locked out of my car", ar: "سيارتي مقفلة والمفتاح بداخلها" }, weight: 2 },
+          { value: "home_lockout", label: { en: "Locked out of home or office", ar: "الباب مقفل وأنا خارج المنزل أو المكتب" } },
+          { value: "car_lockout", label: { en: "Locked out of my car", ar: "سيارتي مقفلة والمفتاح بداخلها" } },
           { value: "lock_change", label: { en: "Change or repair a lock", ar: "تغيير أو إصلاح قفل" } },
           { value: "key_copy", label: { en: "New key or copy", ar: "مفتاح جديد أو نسخة" } },
           { value: "car_key", label: { en: "Car key or remote programming", ar: "برمجة مفتاح أو جهاز تحكم السيارة" } },
@@ -670,7 +661,7 @@ export const CATEGORIES: ServiceCategory[] = [
         },
         options: [
           { value: "no", label: { en: "No", ar: "لا" } },
-          { value: "yes", label: { en: "Yes", ar: "نعم" }, critical: true },
+          { value: "yes", label: { en: "Yes", ar: "نعم" } },
         ],
       },
     ],
@@ -732,8 +723,8 @@ export const CATEGORIES: ServiceCategory[] = [
         options: [
           { value: "cockroaches", label: { en: "Cockroaches", ar: "صراصير" } },
           { value: "ants", label: { en: "Ants", ar: "نمل" } },
-          { value: "rodents", label: { en: "Mice or rats", ar: "فئران أو جرذان" }, weight: 1 },
-          { value: "bedbugs", label: { en: "Bed bugs", ar: "بق الفراش" }, weight: 1 },
+          { value: "rodents", label: { en: "Mice or rats", ar: "فئران أو جرذان" } },
+          { value: "bedbugs", label: { en: "Bed bugs", ar: "بق الفراش" } },
           { value: "termites", label: { en: "Termites", ar: "نمل أبيض" } },
           { value: "other", label: { en: "Something else", ar: "شيء آخر" } },
         ],
@@ -755,7 +746,7 @@ export const CATEGORIES: ServiceCategory[] = [
         label: { en: "How often do you see them?", ar: "كم مرة تراها؟" },
         options: [
           { value: "sometimes", label: { en: "Now and then", ar: "من حين لآخر" } },
-          { value: "daily", label: { en: "Every day", ar: "كل يوم" }, weight: 1 },
+          { value: "daily", label: { en: "Every day", ar: "كل يوم" } },
         ],
       },
     ],
@@ -860,65 +851,3 @@ export const CLIENTS: { name: string; logo: string; note: LocalText }[] = [
   { name: "Karout Mall", logo: "/assets/clients/teska.png", note: { en: "Teska", ar: "تيسكا" } },
 ];
 
-// ---------- urgency engine ----------
-
-export interface UrgencyResult {
-  level: UrgencyLevel;
-  score: number;
-  criticalFlags: string[];
-}
-
-export function computeUrgency(
-  categoryId: string,
-  answers: Record<string, string>,
-): UrgencyResult {
-  const cat = CATEGORY_MAP[categoryId];
-  let score = 0;
-  const criticalFlags: string[] = [];
-  if (cat) {
-    for (const q of cat.questions) {
-      const val = answers[q.id];
-      if (!val || !q.options) continue;
-      const opt = q.options.find((o) => o.value === val);
-      if (!opt) continue;
-      score += opt.weight ?? 0;
-      if (opt.critical) criticalFlags.push(`${q.id}=${val}`);
-    }
-  }
-  let level: UrgencyLevel = "normal";
-  if (score >= 4) level = "urgent";
-  else if (score >= 2) level = "priority";
-  if (criticalFlags.length > 0) level = "critical";
-  return { level, score, criticalFlags };
-}
-
-export const URGENCY_META: Record<
-  UrgencyLevel,
-  { label: LocalText; note: LocalText }
-> = {
-  normal: {
-    label: { en: "Normal", ar: "عادي" },
-    note: { en: "Can wait for a scheduled visit.", ar: "يمكن الانتظار حتى موعد مجدول." },
-  },
-  priority: {
-    label: { en: "Priority", ar: "أولوية" },
-    note: {
-      en: "Needs attention soon. A small priority fee may apply.",
-      ar: "يحتاج إلى اهتمام قريب. قد تُطبَّق رسوم أولوية بسيطة.",
-    },
-  },
-  urgent: {
-    label: { en: "Urgent", ar: "مستعجل" },
-    note: {
-      en: "Damage may increase quickly. A dispatch surcharge applies.",
-      ar: "قد يتفاقم الضرر بسرعة. تُطبَّق رسوم إرسال إضافية.",
-    },
-  },
-  critical: {
-    label: { en: "Critical", ar: "حرج" },
-    note: {
-      en: "Possible safety risk. A specialist will call you directly.",
-      ar: "خطر محتمل على السلامة. سيتصل بك مختص مباشرة.",
-    },
-  },
-};
