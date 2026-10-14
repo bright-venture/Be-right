@@ -216,7 +216,7 @@ describe("ratings", () => {
 
 describe("emergency calls", () => {
   const call = (
-    overrides: Partial<{ category: string; lat: number; lng: number; technicianId: number; phone: string; amount: string }> = {},
+    overrides: Partial<{ emergencyId: number; category: string; lat: number; lng: number; technicianId: number; phone: string; amount: string }> = {},
   ) => ({
     category: "plumbing",
     problem: "Water coming through the kitchen ceiling",
@@ -250,6 +250,43 @@ describe("emergency calls", () => {
     expect((await (await callerFor(tech)).tech.myJobs()).map((j) => j.id)).toContain(requestId);
     expect(state.sent.find((m) => m.to.includes("ali@example.com"))?.subject).toContain("Emergency job");
     expect((await s.specialist.queue()).find((x) => x.request.id === requestId)?.request.emergency).toBe(true);
+  });
+
+  it("start from a sent emergency: waiting for the call, then the job, in the customer's requests", async () => {
+    const sender = await makeUser("priority@example.com", "Lina");
+    state.sent.length = 0;
+    const { id } = await (await callerFor(sender)).emergency.report({ problem: "leak", lat: 51.5072, lng: -0.1276, address: "Flat 2" });
+    expect(state.sent.find((m) => m.to.includes(SPECIALIST_EMAIL))?.subject).toContain("Water leak");
+
+    const s = await callerFor(admin);
+    const waiting = (await s.emergency.waiting()).find((e) => e.id === id);
+    expect(waiting).toMatchObject({ problem: "leak", address: "Flat 2", status: "open", name: "Lina" });
+
+    const { requestId } = await s.emergency.create(call({ emergencyId: id }));
+    expect((await s.emergency.waiting()).map((e) => e.id)).not.toContain(id);
+    expect((await (await callerFor(sender)).requests.mine()).map((r) => r.id)).toContain(requestId);
+    // Once is enough.
+    await rejected(s.emergency.create(call({ emergencyId: id })));
+  });
+
+  it("can be sent by anyone, for a known emergency and a real place, and dismissed by staff", async () => {
+    const visitor = await callerFor();
+    await rejected(visitor.emergency.report({ problem: "nope", lat: 51.5, lng: -0.12 }));
+    await rejected(visitor.emergency.report({ problem: "leak", lat: 0, lng: 0 }));
+    const { id } = await visitor.emergency.report({ problem: "other", lat: 51.5, lng: -0.12 });
+    await rejected(visitor.emergency.waiting(), "UNAUTHORIZED");
+    await rejected((await callerFor(customer)).emergency.dismiss({ id }), "FORBIDDEN");
+    const s = await callerFor(admin);
+    await s.emergency.dismiss({ id });
+    await rejected(s.emergency.dismiss({ id }), "NOT_FOUND");
+    expect((await s.emergency.waiting()).map((e) => e.id)).not.toContain(id);
+  });
+
+  it("are erased with the sender's account", async () => {
+    const leaving = await makeUser("priority-left@example.com");
+    const { id } = await (await callerFor(leaving)).emergency.report({ problem: "no-power", lat: 51.5, lng: -0.12 });
+    await (await callerFor(leaving)).auth.deleteAccount();
+    expect((await (await callerFor(admin)).emergency.waiting()).map((e) => e.id)).not.toContain(id);
   });
 
   it("are for staff only, to a real technician, with a service, a pin, a phone and a price", async () => {

@@ -1,5 +1,6 @@
 import { purgeRejectedDocuments } from "./jobs/purgeRejectedDocuments";
 import { purgeOrphanUploads } from "./jobs/purgeOrphanUploads";
+import { purgeOldEmergencies } from "./jobs/purgeOldEmergencies";
 import { purgeExpiredRateLimits } from "./lib/rateLimit";
 
 // Netlify Scheduled Function (daily; schedule set in netlify.toml). Scheduled
@@ -8,6 +9,7 @@ export default async function handler(): Promise<Response> {
   const result = {
     rejectedApplications: await purgeRejectedDocuments(),
     orphanUploads: await purgeOrphanUploads(),
+    oldEmergencies: await purgeOldEmergencies(),
     expiredRateLimits: await purgeExpiredRateLimits(),
   };
   console.log("[cleanup]", result);

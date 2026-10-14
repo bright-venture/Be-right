@@ -1,5 +1,5 @@
-import { useState, type FormEvent, type ReactNode } from "react";
-import { CircleCheck, Clock, Loader2, Phone, PhoneIncoming, Send } from "lucide-react";
+import { useRef, useState, type FormEvent, type ReactNode } from "react";
+import { CircleCheck, Clock, Loader2, MapPin, Phone, PhoneIncoming, Send, Siren, X } from "lucide-react";
 import { ServiceIcon } from "@/components/ServiceIcon";
 import LocationPicker, { type Pin } from "@/components/map/LocationPicker";
 import { useI18n } from "@/i18n";
@@ -11,6 +11,23 @@ import { isValidPhone } from "@contracts/phone";
 import { CATEGORIES, CATEGORY_MAP, type RequestStatus } from "@contracts/services";
 import { QUOTE_AMOUNT_PATTERN, todayHere } from "@contracts/workflow";
 import { useLiveQueue } from "./useLiveQueue";
+import { EMERGENCY_PROBLEM_MAP } from "@contracts/emergency";
+
+/** How often the list checks for newly sent emergencies (the customer is calling). */
+export const EMERGENCY_REFRESH_MS = 15_000;
+
+/** What a sent emergency fills in for the specialist; the rest is taken on the phone. */
+type Prefill = {
+  emergencyId: number;
+  label: string;
+  createdAt: Date;
+  category: string;
+  problem: string;
+  pin: Pin;
+  address: string;
+  name: string;
+  phone: string;
+};
 
 const INPUT =
   "mt-1.5 h-10 w-full rounded-lg border border-navy/15 bg-white px-3 text-sm text-navy placeholder:text-navy/35 transition-colors focus:border-navy/40 focus:outline-none focus:ring-2 focus:ring-flame/20";
@@ -47,50 +64,83 @@ function Field({ label, children, className = "" }: { label: string; children: R
 }
 
 /**
- * Emergency calls: a customer phoned the emergency line. While on the phone, the specialist
- * fills this in and sends a technician at once; the job lands in the technician's app,
- * scheduled for now and marked Emergency. Below: the emergency jobs still open.
+ * Emergencies. A customer sent a priority dispatch (what's wrong and where) and is calling,
+ * or simply called the emergency line. While on the phone, the specialist fills in the rest
+ * (opening a sent emergency fills in what the customer gave) and sends a technician; the job
+ * lands in the technician's app, scheduled for now and marked Emergency. Below: emergencies
+ * waiting for the call, and the emergency jobs still open.
  */
 export function EmergenciesTab() {
+  const { t, p } = useI18n();
+  const [prefill, setPrefill] = useState<Prefill | null>(null);
+  // Each new form (blank, or from a sent emergency) starts fresh.
+  const [formKey, setFormKey] = useState(0);
+  const [sent, setSent] = useState<{ id: number; technician: string } | null>(null);
+  const top = useRef<HTMLDivElement>(null);
+
+  const open = (next: Prefill) => {
+    setPrefill(next);
+    setSent(null);
+    setFormKey((k) => k + 1);
+    top.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+  const reset = () => {
+    setPrefill(null);
+    setFormKey((k) => k + 1);
+  };
+
   return (
-    <div className="mt-8 flex flex-col gap-10">
-      <EmergencyJobForm />
-      <OpenEmergencies />
+    <div ref={top} className="mt-8 flex scroll-mt-24 flex-col gap-10">
+      <div className="flex flex-col gap-3">
+        {sent && (
+          <p role="status" className="flex items-center gap-2 rounded-xl border border-green-700/20 bg-green-700/[0.06] px-4 py-3 text-sm font-medium text-navy">
+            <CircleCheck className="h-4 w-4 shrink-0 text-green-700" />
+            {p(t.emergency.sentTo).replace("{name}", sent.technician).replace("{id}", String(sent.id))}
+          </p>
+        )}
+        <EmergencyJobForm
+          key={formKey}
+          prefill={prefill}
+          onClear={reset}
+          onSent={(job) => {
+            setSent(job);
+            reset();
+          }}
+        />
+      </div>
+      <OpenEmergencies onOpen={open} />
     </div>
   );
 }
 
-function EmergencyJobForm() {
-  const { t, p } = useI18n();
+function EmergencyJobForm({
+  prefill,
+  onClear,
+  onSent,
+}: {
+  prefill: Prefill | null;
+  onClear: () => void;
+  onSent: (job: { id: number; technician: string }) => void;
+}) {
+  const { t, p, lang } = useI18n();
   const utils = trpc.useUtils();
   const technicians = trpc.tech.list.useQuery();
-  const [category, setCategory] = useState("");
-  const [problem, setProblem] = useState("");
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [pin, setPin] = useState<Pin | null>(null);
-  const [address, setAddress] = useState("");
+  const [category, setCategory] = useState(prefill?.category ?? "");
+  const [problem, setProblem] = useState(prefill?.problem ?? "");
+  const [name, setName] = useState(prefill?.name ?? "");
+  const [phone, setPhone] = useState(prefill?.phone ?? "");
+  const [pin, setPin] = useState<Pin | null>(prefill?.pin ?? null);
+  const [address, setAddress] = useState(prefill?.address ?? "");
   const [technicianId, setTechnicianId] = useState("");
   const [amount, setAmount] = useState("");
   const [missing, setMissing] = useState<string | null>(null);
-  const [sent, setSent] = useState<{ id: number; technician: string } | null>(null);
-  // The map remounts empty after a job is sent.
-  const [formKey, setFormKey] = useState(0);
 
   const create = trpc.emergency.create.useMutation({
     onSuccess: ({ requestId }) => {
       const tech = technicians.data?.find((x) => x.id === Number(technicianId));
-      setSent({ id: requestId, technician: tech?.name ?? tech?.email ?? "" });
-      setCategory("");
-      setProblem("");
-      setName("");
-      setPhone("");
-      setPin(null);
-      setAddress("");
-      setTechnicianId("");
-      setAmount("");
-      setFormKey((k) => k + 1);
+      onSent({ id: requestId, technician: tech?.name ?? tech?.email ?? "" });
       void utils.specialist.queue.invalidate();
+      void utils.emergency.waiting.invalidate();
       void utils.tech.list.invalidate();
     },
   });
@@ -132,8 +182,8 @@ function EmergencyJobForm() {
                     : null;
     setMissing(problemText ? p(problemText) : null);
     if (problemText || !pin) return;
-    setSent(null);
     create.mutate({
+      emergencyId: prefill?.emergencyId,
       category,
       problem: problem.trim(),
       name: name.trim(),
@@ -167,14 +217,20 @@ function EmergencyJobForm() {
         </span>
       </div>
 
-      {sent && (
-        <p role="status" className="flex items-center gap-2 border-b border-green-700/15 bg-green-700/[0.06] px-5 py-3 text-sm font-medium text-navy">
-          <CircleCheck className="h-4 w-4 shrink-0 text-green-700" />
-          {p(t.emergency.sentTo).replace("{name}", sent.technician).replace("{id}", String(sent.id))}
-        </p>
+      {prefill && (
+        <div className="flex items-center gap-2 border-b border-flame/20 bg-flame/[0.06] px-5 py-2.5 text-sm text-navy">
+          <Siren className="h-4 w-4 shrink-0 text-flame" />
+          <span className="min-w-0 flex-1 truncate">
+            <span className="font-semibold">{p(t.emergency.fromDispatch)}</span> · {prefill.label} · {timeAgo(prefill.createdAt, lang)}
+          </span>
+          <button type="button" onClick={onClear} className="inline-flex h-8 items-center gap-1 rounded-lg px-2 text-xs font-semibold text-navy/70 hover:bg-navy/5">
+            <X className="h-3.5 w-3.5" />
+            {p(t.emergency.clearForm)}
+          </button>
+        </div>
       )}
 
-      <form key={formKey} onSubmit={submit}>
+      <form onSubmit={submit}>
         <div className="grid gap-8 p-5 lg:grid-cols-2">
           <div className="flex flex-col gap-8">
             <Part n={1} title={p(t.emergency.partCustomer)}>
@@ -288,11 +344,18 @@ function EmergencyJobForm() {
   );
 }
 
-/** Emergency jobs still open, from the live queue: who called, where, who went. */
-function OpenEmergencies() {
+/**
+ * Open emergencies: those sent by customers and waiting for the call (Open fills in the form,
+ * Dismiss takes one off the list), then the emergency jobs under way, from the live queue.
+ */
+function OpenEmergencies({ onOpen }: { onOpen: (prefill: Prefill) => void }) {
   const { t, p, lang } = useI18n();
+  const utils = trpc.useUtils();
   const queue = useLiveQueue();
   const technicians = trpc.tech.list.useQuery();
+  const waiting = trpc.emergency.waiting.useQuery(undefined, { refetchInterval: EMERGENCY_REFRESH_MS });
+  const dismiss = trpc.emergency.dismiss.useMutation({ onSettled: () => utils.emergency.waiting.invalidate() });
+  const sentList = waiting.data ?? [];
   const open = (queue.data ?? []).filter((x) => x.request.emergency && !CLOSED.includes(x.request.status as RequestStatus));
   const techName = (id: number | null) => {
     const x = technicians.data?.find((tech) => tech.id === id);
@@ -303,9 +366,80 @@ function OpenEmergencies() {
     <section>
       <h2 className={`${SECTION_TITLE} flex items-center gap-2`}>
         {p(t.emergency.openJobs)}
-        <span className="rounded-md bg-flame px-1.5 py-px text-[11px] tracking-normal text-white">{open.length}</span>
+        <span className="rounded-md bg-flame px-1.5 py-px text-[11px] tracking-normal text-white">{sentList.length + open.length}</span>
       </h2>
-      {open.length === 0 ? (
+      {sentList.length > 0 && (
+        <ul className="mt-3 flex flex-col gap-3">
+          {sentList.map((e) => {
+            const info = EMERGENCY_PROBLEM_MAP[e.problem];
+            const label = info ? p(info.label) : e.problem;
+            return (
+              <li key={`sent-${e.id}`} className="relative overflow-hidden rounded-2xl border border-flame/40 bg-flame/[0.03] shadow-[0_1px_2px_rgb(12_43_92/0.06)]">
+                <span aria-hidden className="absolute inset-y-0 start-0 w-1 bg-flame" />
+                <div className="grid gap-3 p-4 ps-5 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)_auto] lg:items-center lg:gap-6">
+                  <div className="flex min-w-0 items-start gap-3">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-flame text-white">
+                      <Siren className="h-5 w-5" />
+                    </span>
+                    <div className="min-w-0">
+                      <p className="flex flex-wrap items-center gap-2 font-display text-[15px] font-extrabold text-navy">
+                        {label}
+                        <span className="rounded-md bg-flame/10 px-1.5 py-0.5 text-[11px] font-bold text-flame-ink">{p(t.emergency.waitingCall)}</span>
+                      </p>
+                      <p className="flex items-start gap-1 text-xs text-navy/70">
+                        <MapPin className="mt-px h-3.5 w-3.5 shrink-0 text-flame" />
+                        <span className="line-clamp-1">{e.address || p(t.emergency.pinOnly)}</span>
+                      </p>
+                      <p className="text-xs text-navy/55">{timeAgo(e.createdAt, lang)}</p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div className="min-w-0">
+                      <p className={LABEL}>{p(t.emergency.contactName)}</p>
+                      <p className="truncate font-semibold text-navy">{e.name ?? "-"}</p>
+                    </div>
+                    <div className="min-w-0">
+                      <p className={LABEL}>{p(t.emergency.contactPhone)}</p>
+                      <p className="truncate font-semibold text-navy" dir="ltr">{e.phone ?? "-"}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 lg:justify-end">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        onOpen({
+                          emergencyId: e.id,
+                          label,
+                          createdAt: e.createdAt,
+                          category: info?.category ?? "",
+                          problem: label,
+                          pin: { lat: e.lat, lng: e.lng },
+                          address: e.address ?? "",
+                          name: e.name ?? "",
+                          phone: e.phone ?? "",
+                        })
+                      }
+                      className="inline-flex h-10 items-center gap-1.5 rounded-lg bg-flame px-4 text-sm font-semibold text-white hover:bg-flame-ink"
+                    >
+                      <Send className="h-4 w-4" />
+                      {p(t.emergency.openInForm)}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => dismiss.mutate({ id: e.id })}
+                      disabled={dismiss.isPending}
+                      className="inline-flex h-10 items-center rounded-lg border border-navy/15 px-3 text-sm font-semibold text-navy hover:bg-navy/5 disabled:opacity-50"
+                    >
+                      {p(t.emergency.dismiss)}
+                    </button>
+                  </div>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+      {sentList.length === 0 && open.length === 0 ? (
         <p className="mt-3 rounded-2xl border border-dashed border-navy/20 bg-white p-6 text-center text-sm text-navy/60">{p(t.emergency.noOpenJobs)}</p>
       ) : (
         <ul className="mt-3 flex flex-col gap-3">

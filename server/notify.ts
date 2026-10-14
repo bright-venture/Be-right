@@ -2,7 +2,9 @@
 // Called by the routers after a change has been saved. A failed email is logged and
 // never undoes or blocks the change itself.
 import { and, count, eq, inArray } from "drizzle-orm";
-import { requestEvents, serviceRequests, technicianApplications, users } from "@db/schema";
+import { emergencyRequests, requestEvents, serviceRequests, technicianApplications, users } from "@db/schema";
+import { EMERGENCY_PROBLEM_MAP } from "@contracts/emergency";
+import { directionsLinks } from "@contracts/geo";
 import { CATEGORY_MAP, type LocalText } from "@contracts/services";
 import { arabicDays, WORKMANSHIP_GUARANTEE_DAYS } from "@contracts/legal";
 import { t } from "@contracts/i18n";
@@ -575,7 +577,30 @@ export const notify = {
       });
     }),
 
-  /** A specialist sent a technician to an emergency call: they go now. */
+  /** A customer sent an emergency (priority dispatch) and is calling the emergency line. */
+  emergencyReported: (id: number) =>
+    safely("emergencyReported", async () => {
+      const sent = await getDb().query.emergencyRequests.findFirst({ where: eq(emergencyRequests.id, id) });
+      if (!sent) return;
+      const problem = local(EMERGENCY_PROBLEM_MAP[sent.problem]?.label, sent.problem);
+      const map = directionsLinks(sent.lat, sent.lng).google;
+      await send(await specialistEmails(), {
+        subject: both(`Emergency: ${problem.en}`, `طوارئ: ${problem.ar}`),
+        title: both("An emergency is coming in", "حالة طوارئ واردة"),
+        lines: [
+          both(
+            `${problem.en}. The customer is calling the emergency line now.`,
+            `${problem.ar}. يتصل العميل بخط الطوارئ الآن.`,
+          ),
+          ...(sent.address ? [both(`Address: ${sent.address}.`, `العنوان: ${sent.address}.`)] : []),
+          both(`Map: ${map}`, `الخريطة: ${map}`),
+        ],
+        path: "/dashboard?tab=emergencies",
+        button: both("Open emergencies", "فتح حالات الطوارئ"),
+      });
+    }),
+
+  /** A specialist sent a technician to an emergency: they go now; a signed-in customer is told. */
   emergencyDispatched: (id: number) =>
     safely("emergencyDispatched", async () => {
       const job = await loadJob(id);
@@ -593,6 +618,21 @@ export const notify = {
         ],
         path: "/tech",
         button: both("Open my jobs", "فتح مهامي"),
+      });
+      const techName = job.technician?.name;
+      await send([job.customer?.email], {
+        subject: both("A technician is on the way", "فنّي في الطريق إليك"),
+        title: both("Help is on the way", "المساعدة في الطريق"),
+        lines: [
+          both(`${d.category.en}: we're sending a technician now.`, `${d.category.ar}: نرسل إليك فنّياً الآن.`),
+          ...(techName ? [both(`Your technician: ${techName}.`, `الفنّي المكلّف: ${techName}.`)] : []),
+          both(
+            "When they're on the way, you can follow them on the map in your requests.",
+            "عندما يكون في الطريق، يمكنك متابعته على الخريطة في صفحة طلباتك.",
+          ),
+        ],
+        path: "/requests",
+        button: both("See my request", "عرض طلبي"),
       });
     }),
 };

@@ -4,7 +4,7 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { QueueTab } from "@/components/dashboard/QueueTab";
 import { TechniciansTab } from "@/components/dashboard/TechniciansTab";
-import { EmergenciesTab } from "@/components/dashboard/EmergenciesTab";
+import { EmergenciesTab, EMERGENCY_REFRESH_MS } from "@/components/dashboard/EmergenciesTab";
 import { inView } from "@/components/dashboard/queueMeta";
 import { useI18n } from "@/i18n";
 import { useRoleGate } from "@/hooks/useRoleGate";
@@ -41,6 +41,7 @@ export default function Dashboard() {
   // Badge counts (same queries the tabs use, so they share the cache).
   const queue = useLiveQueue(allowed);
   const technicians = trpc.tech.list.useQuery(undefined, { enabled: allowed });
+  const waiting = trpc.emergency.waiting.useQuery(undefined, { enabled: allowed, refetchInterval: EMERGENCY_REFRESH_MS });
 
   // An admin who lands here (old link, bookmark, an email) sees the same thing in /admin.
   if (role === "admin") return <Navigate to={`/admin?tab=${tab === "queue" ? "requests" : tab}`} replace />;
@@ -55,10 +56,12 @@ export default function Dashboard() {
 
   const badges: Record<Tab, number> = {
     queue: (queue.data ?? []).filter((x) => inView("needsAction", x.request)).length,
-    // Emergency jobs still open (a technician is on the way or at work).
-    emergencies: (queue.data ?? []).filter(
-      (x) => x.request.emergency && x.request.status !== "completed" && x.request.status !== "cancelled",
-    ).length,
+    // Sent emergencies waiting for the call, plus emergency jobs still under way.
+    emergencies:
+      (waiting.data?.length ?? 0) +
+      (queue.data ?? []).filter(
+        (x) => x.request.emergency && x.request.status !== "completed" && x.request.status !== "cancelled",
+      ).length,
     technicians: technicians.data?.length ?? 0,
   };
   const labels = {

@@ -4,7 +4,7 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { ApplicationsTab } from "@/components/dashboard/ApplicationsTab";
 import { QueueTab } from "@/components/dashboard/QueueTab";
-import { EmergenciesTab } from "@/components/dashboard/EmergenciesTab";
+import { EmergenciesTab, EMERGENCY_REFRESH_MS } from "@/components/dashboard/EmergenciesTab";
 import { TechniciansTab } from "@/components/dashboard/TechniciansTab";
 import { ActivityTab, CustomersTab, OverviewTab, TeamTab } from "@/components/admin/AdminTabs";
 import { useI18n } from "@/i18n";
@@ -43,6 +43,7 @@ export default function Admin() {
   const access = trpc.admin.access.useQuery(undefined, { enabled: isAdmin, retry: false });
   const allowed = !!access.data;
   const applications = trpc.join.list.useQuery(undefined, { enabled: allowed });
+  const waiting = trpc.emergency.waiting.useQuery(undefined, { enabled: allowed, refetchInterval: EMERGENCY_REFRESH_MS });
 
   if (isLoading) {
     return (
@@ -94,7 +95,7 @@ export default function Admin() {
   const newApplications = (applications.data ?? []).filter(
     (a) => !a.approvedAt && (a.status === "new" || a.status === "contacted"),
   ).length;
-  const badgeOf = (k: Tab) => (k === "applications" ? newApplications : 0);
+  const badgeOf = (k: Tab) => (k === "applications" ? newApplications : k === "emergencies" ? (waiting.data?.length ?? 0) : 0);
 
   return (
     <StaffGate access={access} onSignOut={() => void otherAccount()}>

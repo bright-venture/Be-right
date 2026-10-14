@@ -30,6 +30,11 @@ export const LIMITS = {
   serverErrorAlert: { limit: 1, windowSeconds: HOUR },
   /** Crash reports from one browser's IP (a page sends at most 5). */
   clientErrorPerIp: { limit: 20, windowSeconds: HOUR },
+  /**
+   * Priority dispatch sends from one IP: each one emails every specialist. Loose, since a
+   * mobile network shares one IP between many customers and an emergency must get through.
+   */
+  emergencyPerIp: { limit: 30, windowSeconds: HOUR },
 } satisfies Record<string, Limit>;
 
 /** The visitor's IP as Netlify reports it; locally there is none, so everyone shares one bucket. */

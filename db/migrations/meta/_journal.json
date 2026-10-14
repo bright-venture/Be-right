@@ -190,6 +190,13 @@
       "when": 1791965668608,
       "tag": "0026_drop_emergency_calls",
       "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1791973894101,
+      "tag": "0027_emergency_requests",
+      "breakpoints": true
     }
   ]
 }

@@ -1301,7 +1301,18 @@ export const t = {
     cta: { en: "Book a checked technician", ar: "احجز فنّياً موثوقاً" },
   },
   emergency: {
-    // the emergency line (home page pill, app home box)
+    // priority dispatch (home page pill, app home box): pick, where, send, then call
+    dispatchTitle: { en: "Priority dispatch", ar: "أولوية في الإرسال" },
+    close: { en: "Close", ar: "إغلاق" },
+    whereQ: { en: "Where are you?", ar: "أين أنت؟" },
+    whereHint: {
+      en: "Share your location, send it, then call us: our team will already know where to go.",
+      ar: "شارك موقعك وأرسله، ثم اتصل بنا: سيعرف فريقنا مسبقاً إلى أين يتوجّه.",
+    },
+    sendDetails: { en: "Send details", ar: "إرسال التفاصيل" },
+    callWithoutSending: { en: "Call without sending", ar: "الاتصال دون إرسال" },
+    sentNowCall: { en: "Sent to our team. Now call us.", ar: "أُرسلت إلى فريقنا. اتصل بنا الآن." },
+    callAnyway: { en: "You can still call us on the number below.", ar: "لا يزال بإمكانك الاتصال بنا على الرقم أدناه." },
     callTitle: { en: "Call our emergency line", ar: "اتصل بخط الطوارئ" },
     lineLabel: { en: "Emergency line", ar: "خط الطوارئ" },
     lineSoon: {
@@ -1356,6 +1367,12 @@ export const t = {
     needTechnician: { en: "Choose a technician.", ar: "اختر فنّياً." },
     needPrice: { en: "Enter the price in USD, e.g. 45 or 45.50.", ar: "أدخل السعر بالدولار، مثلاً 45 أو 45.50." },
     openJobs: { en: "Open emergency jobs", ar: "مهام الطوارئ المفتوحة" },
+    waitingCall: { en: "Waiting for the call", ar: "بانتظار المكالمة" },
+    pinOnly: { en: "Location on the map", ar: "الموقع على الخريطة" },
+    openInForm: { en: "Open", ar: "فتح" },
+    dismiss: { en: "Dismiss", ar: "تجاهل" },
+    fromDispatch: { en: "Priority dispatch", ar: "أولوية في الإرسال" },
+    clearForm: { en: "Clear", ar: "مسح" },
     noOpenJobs: { en: "No emergency jobs open right now.", ar: "لا توجد مهام طوارئ مفتوحة حالياً." },
   },
   picker: {

@@ -17,6 +17,7 @@ import {
 import type { MediaKind, VisitFeeReason } from "../contracts/workflow";
 import type { AuditAction, AuditDetails } from "../contracts/audit";
 import type { Transport, WorkMode } from "../contracts/applications";
+import type { EmergencyStatus } from "../contracts/emergency";
 
 // Every table enables Row Level Security with no policies. The app server talks to
 // Postgres directly (bypassing RLS), while Supabase's public REST API — reachable with
@@ -284,4 +285,30 @@ export const auditLog = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => [index("audit_log_created_idx").on(t.createdAt)],
+).enableRLS();
+
+/**
+ * Priority dispatch: an emergency a customer sent (what's wrong and where) before calling the
+ * emergency line. The specialist who answers opens it, adds the rest and sends a technician
+ * (requestId: the job it became), or dismisses it. Deleted after EMERGENCY_RETENTION_DAYS
+ * (contracts/emergency.ts), and with the customer's account.
+ */
+export const emergencyRequests = pgTable(
+  "emergency_requests",
+  {
+    id: serial("id").primaryKey(),
+    /** Signed-in customer, if any. */
+    userId: integer("user_id").references(() => users.id, { onDelete: "set null" }),
+    /** One of EMERGENCY_PROBLEMS. */
+    problem: varchar("problem", { length: 64 }).notNull(),
+    lat: doublePrecision("lat").notNull(),
+    lng: doublePrecision("lng").notNull(),
+    address: text("address"),
+    status: varchar("status", { length: 16 }).$type<EmergencyStatus>().default("open").notNull(),
+    requestId: integer("request_id").references(() => serviceRequests.id, { onDelete: "set null" }),
+    handledBy: integer("handled_by").references(() => users.id, { onDelete: "set null" }),
+    handledAt: timestamp("handled_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [index("emergency_requests_created_idx").on(t.createdAt)],
 ).enableRLS();

@@ -10,12 +10,13 @@ import {
 import { ServiceIcon } from "@/components/ServiceIcon";
 import { useI18n } from "@/i18n";
 import { CATEGORY_MAP, FACILITY_GROUP, FACILITY_SERVICES, SERVICES_IN_ORDER } from "@contracts/services";
-import { EmergencyLine } from "@/components/EmergencyLine";
+import { EmergencyDialog } from "@/components/EmergencyDialog";
+import { EMERGENCY_PROBLEMS } from "@contracts/emergency";
 
 /**
  * Checkatrade-inspired category pill row in Be Right branding:
- * - Emergency pill first (flame, siren, chevron): drops down the emergency line to call.
- *   The specialist who answers takes the details and sends a technician.
+ * - Emergency pill first (flame, siren, chevron): priority dispatch. Pick the emergency,
+ *   share where you are, send it, then call the emergency line (EmergencyDialog).
  * - Other pills are rounded white with the Be Right service icons; each opens the booking
  *   form on that service, at its questions.
  */
@@ -27,6 +28,8 @@ export function CategoryPicker() {
   const [canPrev, setCanPrev] = useState(false);
   const [canNext, setCanNext] = useState(false);
   const [openDropdown, setOpenDropdown] = useState(false);
+  /** The emergency picked from the dropdown: its dialog is open. */
+  const [emergency, setEmergency] = useState<string | null>(null);
   const emergencyBtnRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [dropPos, setDropPos] = useState<{ top: number; left: number; flip: boolean } | null>(null);
@@ -39,7 +42,7 @@ export function CategoryPicker() {
       const btn = emergencyBtnRef.current;
       if (!btn) return;
       const r = btn.getBoundingClientRect();
-      const W = Math.min(320, window.innerWidth - 16); // w-80
+      const W = 288; // w-72
       let left = dir === "rtl" ? r.right - W : r.left;
       left = Math.max(8, Math.min(left, window.innerWidth - W - 8));
       const below = window.innerHeight - r.bottom;
@@ -203,7 +206,7 @@ export function CategoryPicker() {
         createPortal(
           <div
             ref={dropdownRef}
-            role="dialog"
+            role="menu"
             aria-label={p(t.picker.emergency)}
             style={{
               position: "fixed",
@@ -211,13 +214,34 @@ export function CategoryPicker() {
               left: dropPos.left,
               transform: dropPos.flip ? "translateY(-100%)" : undefined,
             }}
-            className="z-[80] w-80 max-w-[calc(100vw-16px)] overflow-hidden rounded-2xl border-2 border-navy bg-white p-4 shadow-[0_8px_0_rgb(12_43_92/0.25)]"
+            className="z-[80] w-72 overflow-hidden rounded-2xl border-2 border-navy bg-white shadow-[0_8px_0_rgb(12_43_92/0.25)]"
           >
-            <p className="mb-3 font-display text-[11px] font-black uppercase tracking-[0.18em] text-flame">{p(t.emergency.callTitle)}</p>
-            <EmergencyLine />
+            <div className="border-b border-navy/10 px-4 py-2.5 font-display text-[11px] font-black uppercase tracking-[0.18em] text-flame">
+              {p(t.emergency.dispatchTitle)}
+            </div>
+            <ul className="max-h-[min(360px,60vh)] overflow-y-auto">
+              {EMERGENCY_PROBLEMS.map((x) => (
+                <li key={x.id}>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      setOpenDropdown(false);
+                      setEmergency(x.id);
+                    }}
+                    className="flex w-full items-center justify-between gap-2 px-4 py-2.5 text-start text-sm font-bold text-navy transition-colors hover:bg-paper"
+                  >
+                    {p(x.label)}
+                    <ChevronRight className="h-4 w-4 shrink-0 text-navy/40 rtl:-scale-x-100" />
+                  </button>
+                </li>
+              ))}
+            </ul>
           </div>,
           document.body,
         )}
+
+      {emergency && <EmergencyDialog problem={emergency} onClose={() => setEmergency(null)} />}
     </div>
   );
 }

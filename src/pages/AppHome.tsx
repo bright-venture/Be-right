@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link, Navigate } from "react-router";
 import {
   ArrowRight,
@@ -23,7 +24,8 @@ import {
   STATUS_ORDER,
   type RequestStatus,
 } from "@contracts/services";
-import { EmergencyLine } from "@/components/EmergencyLine";
+import { EmergencyDialog } from "@/components/EmergencyDialog";
+import { EMERGENCY_PROBLEMS } from "@contracts/emergency";
 import { WORKMANSHIP_GUARANTEE_DAYS, arabicDigits } from "@contracts/legal";
 import { HOME_BY_ROLE, type Role } from "@contracts/roles";
 
@@ -43,6 +45,8 @@ export default function AppHome() {
   const isCustomer = user?.role === "customer";
   const mine = trpc.requests.mine.useQuery(undefined, { enabled: isCustomer });
   const current = mine.data?.find((r) => OPEN.includes(r.status as RequestStatus));
+  /** The emergency tapped in the Emergency box: its dialog is open. */
+  const [emergency, setEmergency] = useState<string | null>(null);
 
   // This home is the customers' tab: technicians and staff open on their own first tab.
   if (user && !isCustomer) return <Navigate to={HOME_BY_ROLE[user.role as Role]} replace />;
@@ -133,11 +137,21 @@ export default function AppHome() {
               <p className="text-sm text-white/90">{p(t.app.emergencySub)}</p>
             </div>
           </div>
-          {/* The emergency line: the specialist who answers sends a technician. */}
-          <div className="mt-4">
-            <EmergencyLine tone="onFlame" />
+          {/* Priority dispatch: pick the emergency (two even columns), then where, send, call. */}
+          <div className="mt-4 grid auto-rows-fr grid-cols-2 gap-2">
+            {EMERGENCY_PROBLEMS.map((x) => (
+              <button
+                key={x.id}
+                type="button"
+                onClick={() => setEmergency(x.id)}
+                className="flex min-h-[52px] items-center rounded-2xl bg-white px-3 py-2 text-start text-[13px] font-bold leading-tight text-navy active:scale-[0.97]"
+              >
+                {p(x.label)}
+              </button>
+            ))}
           </div>
         </section>
+        {emergency && <EmergencyDialog problem={emergency} onClose={() => setEmergency(null)} />}
 
         {/* services */}
         <section>

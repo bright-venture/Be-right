@@ -1,27 +1,84 @@
 import { z } from "zod";
-import { eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
-import { createRouter, specialistQuery } from "./middleware";
+import { createRouter, publicQuery, specialistQuery } from "./middleware";
 import { getDb } from "./queries/connection";
-import { serviceRequests, users } from "../db/schema";
+import { emergencyRequests, serviceRequests, users } from "../db/schema";
+import { EMERGENCY_PROBLEM_MAP } from "@contracts/emergency";
 import { isValidPin } from "@contracts/geo";
 import { VISIT_FEE_USD } from "@contracts/legal";
 import { isValidPhone } from "@contracts/phone";
 import { CATEGORY_MAP } from "@contracts/services";
 import { earliestTodayAnywhere, isValidVisitDate, QUOTE_AMOUNT_PATTERN, TIME_SLOTS } from "@contracts/workflow";
+import { clientIp, LIMITS, rateLimit } from "./lib/rateLimit";
 import { logEvent } from "./lib/workflow";
 import { notify } from "./notify";
 
 export const emergencyRouter = createRouter({
   /**
-   * An emergency call: the customer phoned the emergency line and the specialist took the
-   * details. This sends a technician at once: the job is created already approved (price
-   * agreed on the phone) and scheduled for now, in the technician's app, marked Emergency.
-   * The caller needn't have an account: the job keeps their name and phone.
+   * Priority dispatch, from the customer: what's wrong and where, sent just before they call
+   * the emergency line. The specialist who answers finds it waiting in the dashboard.
+   */
+  report: publicQuery
+    .input(
+      z.object({
+        problem: z.string().max(64),
+        lat: z.number().min(-90).max(90),
+        lng: z.number().min(-180).max(180),
+        address: z.string().trim().max(1000).optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      if (!EMERGENCY_PROBLEM_MAP[input.problem]) throw new TRPCError({ code: "BAD_REQUEST", message: "Unknown emergency" });
+      if (!isValidPin(input.lat, input.lng)) throw new TRPCError({ code: "BAD_REQUEST", message: "Place the pin on your address" });
+      await rateLimit(`emergency:ip:${clientIp(ctx.req)}`, LIMITS.emergencyPerIp);
+      const [created] = await getDb()
+        .insert(emergencyRequests)
+        .values({
+          userId: ctx.user?.id ?? null,
+          problem: input.problem,
+          lat: input.lat,
+          lng: input.lng,
+          address: input.address || null,
+        })
+        .returning({ id: emergencyRequests.id });
+      await notify.emergencyReported(created.id);
+      return { id: created.id };
+    }),
+
+  /** Sent emergencies waiting for the call, newest first, with the account's name and phone if any. */
+  waiting: specialistQuery.query(async () => {
+    const rows = await getDb()
+      .select({ emergency: emergencyRequests, name: users.name, phone: users.phone })
+      .from(emergencyRequests)
+      .leftJoin(users, eq(emergencyRequests.userId, users.id))
+      .where(eq(emergencyRequests.status, "open"))
+      .orderBy(desc(emergencyRequests.createdAt))
+      .limit(100);
+    return rows.map((r) => ({ ...r.emergency, name: r.name, phone: r.phone }));
+  }),
+
+  /** Not a real emergency, or handled without a technician: take it off the list. */
+  dismiss: specialistQuery.input(z.object({ id: z.number().int() })).mutation(async ({ ctx, input }) => {
+    const [row] = await getDb()
+      .update(emergencyRequests)
+      .set({ status: "dismissed", handledBy: ctx.user.id, handledAt: new Date() })
+      .where(and(eq(emergencyRequests.id, input.id), eq(emergencyRequests.status, "open")))
+      .returning({ id: emergencyRequests.id });
+    if (!row) throw new TRPCError({ code: "NOT_FOUND", message: "Already handled" });
+    return { ok: true };
+  }),
+
+  /**
+   * Send a technician: the specialist on the call fills in the rest. The job is created
+   * already approved (price agreed on the phone) and scheduled for now, in the technician's
+   * app, marked Emergency. From a sent emergency (`emergencyId`), a signed-in customer also
+   * sees it in their requests.
    */
   create: specialistQuery
     .input(
       z.object({
+        emergencyId: z.number().int().optional(),
         category: z.string().max(64),
         /** What's wrong, as the customer described it on the phone. */
         problem: z.string().trim().min(2).max(2000),
@@ -49,10 +106,19 @@ export const emergencyRouter = createRouter({
         throw new TRPCError({ code: "BAD_REQUEST", message: "Not a technician" });
       }
       const requestId = await db.transaction(async (tx) => {
+        let customerId: number | null = null;
+        if (input.emergencyId) {
+          const [sent] = await tx.select().from(emergencyRequests).where(eq(emergencyRequests.id, input.emergencyId)).for("update");
+          if (!sent) throw new TRPCError({ code: "NOT_FOUND", message: "Emergency not found" });
+          if (sent.status !== "open") throw new TRPCError({ code: "BAD_REQUEST", message: "This emergency was already handled" });
+          // The job belongs to the sender's account only if they are a customer.
+          const owner = sent.userId ? await tx.query.users.findFirst({ where: eq(users.id, sent.userId) }) : undefined;
+          if (owner && owner.role === "customer" && !owner.deletedAt) customerId = owner.id;
+        }
         const [job] = await tx
           .insert(serviceRequests)
           .values({
-            userId: null,
+            userId: customerId,
             contactName: input.name,
             emergency: true,
             technicianId: tech.id,
@@ -72,10 +138,16 @@ export const emergencyRouter = createRouter({
             visitFee: String(VISIT_FEE_USD),
           })
           .returning({ id: serviceRequests.id });
-        await logEvent(tx, job.id, "submitted", ctx.user.id, "Emergency call");
+        await logEvent(tx, job.id, "submitted", ctx.user.id, input.emergencyId ? "Priority dispatch" : "Emergency call");
         await logEvent(tx, job.id, "approved", ctx.user.id, `Price agreed on the phone: $${input.amount}`);
         await logEvent(tx, job.id, "assigned", ctx.user.id, `Technician: ${tech.name ?? tech.email ?? tech.id}`);
         await logEvent(tx, job.id, "scheduled", ctx.user.id, "Emergency: sent now");
+        if (input.emergencyId) {
+          await tx
+            .update(emergencyRequests)
+            .set({ status: "dispatched", requestId: job.id, handledBy: ctx.user.id, handledAt: new Date() })
+            .where(eq(emergencyRequests.id, input.emergencyId));
+        }
         return job.id;
       });
       await notify.emergencyDispatched(requestId);
