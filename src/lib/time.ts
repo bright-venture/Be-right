@@ -22,6 +22,15 @@ export function formatMoment(when: Date | string, lang: string) {
   });
 }
 
+/** How long ago, in words: "12 min. ago", "3 hr. ago", "yesterday". */
+export function timeAgo(when: Date | string, lang: string, now = Date.now()) {
+  const minutes = Math.round((now - new Date(when).getTime()) / 60_000);
+  const format = new Intl.RelativeTimeFormat(locale(lang), { numeric: "auto", style: "short" });
+  if (minutes < 60) return format.format(-Math.max(0, minutes), "minute");
+  if (minutes < 24 * 60) return format.format(-Math.round(minutes / 60), "hour");
+  return format.format(-Math.round(minutes / (24 * 60)), "day");
+}
+
 /** A meeting's date and time in this device's time zone, as shown to admins. */
 export function meetingDate(at: Date | string, lang: string) {
   return new Date(at).toLocaleString(locale(lang), {
