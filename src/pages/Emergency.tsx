@@ -1,6 +1,6 @@
-import { useState, type MouseEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { useSearchParams } from "react-router";
-import { AlertTriangle, MapPin, Phone, PhoneCall, Siren } from "lucide-react";
+import { AlertTriangle, CircleCheck, Loader2, MapPin, Phone, PhoneCall, Send, Siren } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { ServiceIcon } from "@/components/ServiceIcon";
@@ -23,8 +23,8 @@ const CHOICE =
 
 /**
  * The Emergency button: pick the service, then what's wrong, then share where you are, then
- * enter your name and number and call the emergency line (COMPANY.emergencyPhone). The
- * details are saved as the call starts, so the team sees who is calling, why and where.
+ * send your name and number, then call the emergency line (COMPANY.emergencyPhone). The team
+ * has the details (who, why and where) before the call starts.
  * Each step is in the address (?cat=…&problem=…&at=call), so the Back button goes back a step.
  */
 export default function Emergency() {
@@ -63,23 +63,23 @@ export default function Emergency() {
 
   const report = trpc.emergency.report.useMutation();
   const [error, setError] = useState<string | null>(null);
+  const sent = report.isSuccess;
+  // On a computer the Call button can't dial: say to call from a phone instead.
+  const [onComputer] = useState(() => !window.matchMedia("(pointer: coarse)").matches);
 
-  /**
-   * Tapping Call: the details must be filled in first. They are saved while the phone opens
-   * the dialer (the page stays open behind the call, so the request still goes through).
-   */
-  const call = (event: MouseEvent<HTMLAnchorElement>) => {
-    if (!category || !problem) return event.preventDefault();
+  /** Send my details: once, then the Call button takes over. A failure never blocks calling. */
+  const send = (event: FormEvent) => {
+    event.preventDefault();
+    if (!category || !problem || report.isPending || sent) return;
     const missing = name.trim().length < 2 ? t.emergency.needName : !isValidPhone(phone) ? t.misc.phoneInvalid : null;
-    if (missing) {
-      event.preventDefault();
-      setError(p(missing));
-      return;
-    }
+    if (missing) return setError(p(missing));
     setError(null);
     report.mutate(
       { category, problem, name: name.trim(), phone: phone.trim(), ...where },
-      { onError: (err) => isRateLimited(err) || isNetworkError(err) || console.error(err) },
+      {
+        onError: (err) =>
+          setError(p(isRateLimited(err) ? t.misc.tooMany : isNetworkError(err) ? t.misc.offline : t.misc.error) + " " + p(t.emergency.callAnyway)),
+      },
     );
   };
 
@@ -237,7 +237,7 @@ export default function Emergency() {
           </section>
         )}
 
-        {/* Step 4: your details, then call. */}
+        {/* Step 4: send your details, then call. */}
         {step === 4 && (
           <section className="mt-5 flex flex-col gap-4 animate-rise-in">
             {danger && (
@@ -253,11 +253,10 @@ export default function Emergency() {
                 <p className="mt-1 text-sm text-navy/70">{p(t.emergency.callBody)}</p>
               </div>
 
-              {/* The number itself, large, so it can also be dialled by hand. */}
+              {/* The number itself, large: always there, and always callable. */}
               {line ? (
                 <a
                   href={telLink(line)}
-                  onClick={call}
                   className="flex items-center gap-3 rounded-2xl bg-flame/[0.07] p-4 transition-colors hover:bg-flame/10"
                 >
                   <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-flame text-white">
@@ -278,24 +277,40 @@ export default function Emergency() {
                 </p>
               )}
 
-              {contactFields(true)}
-
-              {error && (
-                <p role="alert" className="text-sm font-bold text-red-700">
-                  {error}
-                </p>
-              )}
-
-              {line ? (
-                <a href={telLink(line)} onClick={call} className="btn-pill-primary min-h-14 justify-center text-lg">
-                  <Phone className="h-5 w-5" />
-                  {p(t.emergency.callNowButton)}
-                </a>
+              {sent ? (
+                <>
+                  {/* Step 2: the details are with the team; now call. */}
+                  <div role="status" className="flex items-start gap-3 rounded-2xl border border-green-700/25 bg-green-700/[0.06] p-4">
+                    <CircleCheck className="mt-0.5 h-5 w-5 shrink-0 text-green-700" />
+                    <div className="min-w-0">
+                      <p className="font-display text-base font-extrabold text-navy">{p(t.emergency.sentTitle)}</p>
+                      <p className="mt-0.5 text-sm text-navy/70">
+                        {name.trim()} · <span dir="ltr">{phone.trim()}</span>
+                      </p>
+                    </div>
+                  </div>
+                  {line && (
+                    <a href={telLink(line)} className="btn-pill-primary min-h-14 justify-center text-lg">
+                      <Phone className="h-5 w-5" />
+                      {p(t.emergency.callNumber).replace("{phone}", line)}
+                    </a>
+                  )}
+                  {line && onComputer && <p className="text-center text-sm font-semibold text-navy/70">{p(t.emergency.computerHint)}</p>}
+                </>
               ) : (
-                <button type="button" disabled className="btn-pill-primary min-h-14 justify-center text-lg opacity-40">
-                  <Phone className="h-5 w-5" />
-                  {p(t.emergency.callNowButton)}
-                </button>
+                <form onSubmit={send} className="flex flex-col gap-5">
+                  {/* Step 1: who you are. */}
+                  {contactFields(true)}
+                  {error && (
+                    <p role="alert" className="text-sm font-bold text-red-700">
+                      {error}
+                    </p>
+                  )}
+                  <button type="submit" disabled={report.isPending} className="btn-pill-primary min-h-14 justify-center text-lg">
+                    {report.isPending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
+                    {p(t.emergency.sendDetails)}
+                  </button>
+                </form>
               )}
             </div>
           </section>
