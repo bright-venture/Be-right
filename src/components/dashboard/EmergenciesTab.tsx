@@ -16,7 +16,7 @@ import { EMERGENCY_PROBLEM_MAP } from "@contracts/emergency";
 /** How often the list checks for newly sent emergencies (the customer is calling). */
 export const EMERGENCY_REFRESH_MS = 15_000;
 
-/** What a sent emergency fills in for the specialist; the rest is taken on the phone. */
+/** What a sent emergency fills in for the specialist; the rest (name, phone...) is taken on the phone. */
 type Prefill = {
   emergencyId: number;
   label: string;
@@ -25,8 +25,6 @@ type Prefill = {
   problem: string;
   pin: Pin;
   address: string;
-  name: string;
-  phone: string;
 };
 
 const INPUT =
@@ -127,8 +125,8 @@ function EmergencyJobForm({
   const technicians = trpc.tech.list.useQuery();
   const [category, setCategory] = useState(prefill?.category ?? "");
   const [problem, setProblem] = useState(prefill?.problem ?? "");
-  const [name, setName] = useState(prefill?.name ?? "");
-  const [phone, setPhone] = useState(prefill?.phone ?? "");
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
   const [pin, setPin] = useState<Pin | null>(prefill?.pin ?? null);
   const [address, setAddress] = useState(prefill?.address ?? "");
   const [technicianId, setTechnicianId] = useState("");
@@ -415,8 +413,6 @@ function OpenEmergencies({ onOpen }: { onOpen: (prefill: Prefill) => void }) {
                           problem: label,
                           pin: { lat: e.lat, lng: e.lng },
                           address: e.address ?? "",
-                          name: e.name ?? "",
-                          phone: e.phone ?? "",
                         })
                       }
                       className="inline-flex h-10 items-center gap-1.5 rounded-lg bg-flame px-4 text-sm font-semibold text-white hover:bg-flame-ink"
