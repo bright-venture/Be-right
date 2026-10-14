@@ -82,29 +82,15 @@ export async function makeAdmin(email: string, name = email.split("@")[0]) {
   return updated;
 }
 
-/** A meeting two days from now at the office (the input of join.bookMeeting). */
-export function meetingSlot() {
-  return { at: new Date(Date.now() + 2 * 86_400_000), place: "Be Right office, Hamra" };
-}
-
-/**
- * For tests about what comes after: records that an admin met the applicant (booking the
- * meeting itself is tested through join.bookMeeting).
- */
-export async function meetApplicant(id: number) {
-  const { getDb } = await import("../queries/connection");
-  const { technicianApplications } = await import("@db/schema");
-  const { eq } = await import("drizzle-orm");
-  await getDb()
-    .update(technicianApplications)
-    .set({ meetingAt: new Date(), meetingPlace: "Be Right office" })
-    .where(eq(technicianApplications.id, id));
-}
-
 /** A pin in Achrafieh, Beirut. */
 export const BEIRUT_PIN = { lat: 33.8886, lng: 35.5195 };
 
-/** Keys shaped like real uploaded application documents. */
+/** A key shaped like a real uploaded applicant photo (all the application form asks for). */
+export function photoKey() {
+  return `applications/${randomUUID()}/photo-file.jpg`;
+}
+
+/** Keys shaped like the papers older applications were sent with. */
 export function documentKeys() {
   const key = (kind: string) => `applications/${randomUUID()}/${kind}-file.jpg`;
   return {

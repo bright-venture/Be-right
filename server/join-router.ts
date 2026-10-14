@@ -7,13 +7,9 @@ import { serviceRequests, technicianApplications, users } from "../db/schema";
 import { CATEGORIES } from "../contracts/services";
 import {
   APPLICATION_DOCUMENTS,
-  AVAILABILITY,
   DOCUMENT_FIELD,
-  EXPERIENCE_LEVELS,
   MANUAL_APPLICATION_STATUSES,
   TRANSPORT,
-  WORK_MODES,
-  requiredDocuments,
   type ApplicationDocument,
 } from "@contracts/applications";
 import { getSupabaseAdmin } from "./lib/supabase";
@@ -38,33 +34,14 @@ function documentKeysOf(app: Record<(typeof DOCUMENT_FIELD)[ApplicationDocument]
 const email = z.string().trim().toLowerCase().email().max(320);
 type Tx = Parameters<Parameters<ReturnType<typeof getDb>["transaction"]>[0]>[0];
 /**
- * An application. Only admins review applications: they meet the applicant in person, then
- * approve (which adds them to the technicians) or reject. Specialists only see technicians.
+ * An application. Only admins review applications: they call the applicant, meet them in
+ * person, then accept (which adds them to the technicians) or reject. Specialists only see technicians.
  */
 async function findApplication(id: number) {
   const app = await getDb().query.technicianApplications.findFirst({ where: eq(technicianApplications.id, id) });
   if (!app) throw new TRPCError({ code: "NOT_FOUND" });
   return app;
 }
-const isOpen = (status: string) => status !== "hired" && status !== "rejected";
-
-/** A real IANA time zone name, or null (then emails show the time in UTC). */
-function validTimeZone(zone: string | undefined) {
-  if (!zone) return null;
-  try {
-    new Intl.DateTimeFormat("en", { timeZone: zone });
-    return zone;
-  } catch {
-    return null;
-  }
-}
-
-/** Whether every document the application needs was uploaded. */
-function documentsOnFile(app: Parameters<typeof documentKeysOf>[0] & { transport: (typeof TRANSPORT)[number] | null }) {
-  const keys = documentKeysOf(app);
-  return requiredDocuments(app.transport).every((kind) => !!keys[kind]);
-}
-
 /** Where the invitation link lands: set a password, then the technician's jobs page. */
 function inviteRedirect(req: Request) {
   const origin = req.headers.get("origin") ?? process.env.SITE_URL;
@@ -82,40 +59,18 @@ export const joinRouter = createRouter({
         phone: z.string().trim().max(64).refine(isValidPhone, "Invalid phone number"),
         email,
         trade: z.enum(TRADE_IDS),
-        area: z.string().trim().min(2).max(255),
-        experience: z.enum(EXPERIENCE_LEVELS),
-        availability: z.enum(AVAILABILITY),
-        hasTools: z.boolean(),
         transport: z.enum(TRANSPORT),
-        workMode: z.enum(WORK_MODES),
-        // Required when they work with a company.
-        companyName: z.string().trim().max(255).optional(),
-        // Every field is required, including what the applicant tells us about their work.
-        notes: z.string().trim().min(3).max(2000),
-        // Mandatory documents, uploaded first via storage.createDocumentUpload.
-        idDocumentKey: documentKey,
-        criminalRecordKey: documentKey,
-        proofOfAddressKey: documentKey,
-        // Required when the applicant works with a vehicle (transport other than "none").
-        vehicleRegistrationKey: documentKey.optional(),
+        // The profile photo, uploaded first via storage.createDocumentUpload.
         photoKey: documentKey,
-        // Privacy Policy + consent to review the documents.
+        // Privacy Policy.
         consent: z.literal(true),
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      if (input.workMode === "company" && (input.companyName ?? "").length < 2) {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "Please give the company's name" });
-      }
       await rateLimit(`apply:ip:${clientIp(ctx.req)}`, LIMITS.applicationPerIp);
-      // Each required key must be a real upload of the right kind (not, say, the photo sent as the ID).
-      const required = requiredDocuments(input.transport);
-      const keys = required.map((kind) => input[DOCUMENT_FIELD[kind]]);
-      if (
-        required.some((kind) => !documentKeyMatches(input[DOCUMENT_FIELD[kind]] ?? "", kind)) ||
-        !(await documentsExist(keys as string[]))
-      ) {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "Please upload every required document" });
+      // The photo must be a real upload made for the photo.
+      if (!documentKeyMatches(input.photoKey, "photo") || !(await documentsExist([input.photoKey]))) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Please upload your photo" });
       }
       // \`consent\` is validated above (must be true); what's stored is when and which version.
       const [res] = await getDb()
@@ -125,19 +80,8 @@ export const joinRouter = createRouter({
           phone: input.phone,
           email: input.email,
           trade: input.trade,
-          area: input.area,
-          experience: input.experience,
-          availability: input.availability,
-          hasTools: input.hasTools,
           hasTransport: input.transport !== "none",
           transport: input.transport,
-          workMode: input.workMode,
-          companyName: input.workMode === "company" ? input.companyName : null,
-          notes: input.notes ?? null,
-          idDocumentKey: input.idDocumentKey,
-          criminalRecordKey: input.criminalRecordKey,
-          proofOfAddressKey: input.proofOfAddressKey,
-          vehicleRegistrationKey: required.includes("vehicleRegistration") ? input.vehicleRegistrationKey : null,
           photoKey: input.photoKey,
           consentAt: new Date(),
           consentVersion: LEGAL_VERSION,
@@ -148,56 +92,9 @@ export const joinRouter = createRouter({
     }),
 
   /** Every application, newest first (admins only). */
-  list: adminQuery.query(async () => {
-    const rows = await getDb().select().from(technicianApplications).orderBy(desc(technicianApplications.createdAt));
-    return rows.map((app) => ({ ...app, documentsOnFile: documentsOnFile(app) }));
-  }),
-
-  /**
-   * Book (or move) the in-person meeting at the office. The applicant gets the date, time and
-   * place by email. After meeting them, an admin approves or rejects.
-   */
-  bookMeeting: adminQuery
-    .input(
-      z.object({
-        id: z.number().int().positive(),
-        at: z.date(),
-        place: z.string().trim().min(3).max(200),
-        note: z.string().trim().max(500).optional(),
-        // The admin's time zone (their browser's), e.g. "Europe/Paris".
-        timeZone: z.string().max(64).optional(),
-      }),
-    )
-    .mutation(async ({ ctx, input }) => {
-      const app = await findApplication(input.id);
-      if (!isOpen(app.status)) {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "Only an open application can have a meeting" });
-      }
-      if (input.at.getTime() < Date.now() - 60 * 60_000) {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "Pick a date and time that hasn't passed" });
-      }
-      const rescheduled = !!app.meetingAt;
-      await getDb()
-        .update(technicianApplications)
-        .set({
-          meetingAt: input.at,
-          meetingPlace: input.place,
-          meetingNote: input.note || null,
-          meetingTimeZone: validTimeZone(input.timeZone),
-          // Booking a meeting means they were contacted.
-          status: app.status === "new" ? "contacted" : app.status,
-        })
-        .where(eq(technicianApplications.id, app.id));
-      await audit({
-        actorId: ctx.user.id,
-        action: "meeting_booked",
-        applicationId: app.id,
-        details: { at: input.at.toISOString(), place: input.place, rescheduled },
-      });
-      const emailed = await notify.meetingBooked(app.id, rescheduled);
-      // "none": no email to send to; "failed": not sent (emails off, or Resend refused it).
-      return { ok: true, email: !app.email ? ("none" as const) : emailed ? ("sent" as const) : ("failed" as const) };
-    }),
+  list: adminQuery.query(() =>
+    getDb().select().from(technicianApplications).orderBy(desc(technicianApplications.createdAt)),
+  ),
 
   setStatus: adminQuery
     .input(
@@ -239,8 +136,9 @@ export const joinRouter = createRouter({
     const app = await findApplication(input.id);
     // Recorded before any link is handed out: no record, no documents.
     await auditDocumentsViewed(ctx.user.id, app.id);
-    const kinds = requiredDocuments(app.transport);
+    // What this application has on file: the photo, and the papers of older applications.
     const keys = documentKeysOf(app);
+    const kinds = APPLICATION_DOCUMENTS.filter((kind) => !!keys[kind]);
     const urls = await createDocumentUrls(kinds.map((kind) => keys[kind]).filter((k): k is string => !!k));
     const link = (key: string | null) =>
       key && urls[key] ? { url: urls[key], isPdf: key.toLowerCase().endsWith(".pdf") } : null;
@@ -259,7 +157,7 @@ export const joinRouter = createRouter({
   }),
 
   /**
-   * Approve an applicant after meeting them (admins only): they join the technicians, so the
+   * Accept an applicant after meeting them (admins only): they join the technicians, so the
    * specialists can assign them jobs. An existing account becomes a technician right away;
    * otherwise they're invited by email and their technician account is created now.
    */
@@ -268,15 +166,8 @@ export const joinRouter = createRouter({
     .mutation(async ({ ctx, input }) => {
       const db = getDb();
       const app = await findApplication(input.id);
-      if (!app.meetingAt) {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "Book a meeting with the applicant before approving" });
-      }
-      const keysOnFile = documentKeysOf(app);
-      if (requiredDocuments(app.transport).some((kind) => !keysOnFile[kind])) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Every required document is needed. Ask the applicant to apply again with them.",
-        });
+      if (app.status === "hired" && app.hiredUserId) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "This applicant is already a technician" });
       }
       const address = input.email ?? app.email?.toLowerCase();
       if (!address) {

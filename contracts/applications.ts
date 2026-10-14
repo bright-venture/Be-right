@@ -1,4 +1,6 @@
-// Technician application options, shared by the public form and the dashboard.
+// Technician applications, shared by the public form and the dashboard. The form is short
+// (name, phone, email, trade, transport, photo): an admin calls the applicant, meets them in
+// person, then accepts or rejects. Older applications also have the answers and papers below.
 import type { LocalText } from "./services";
 import { PHOTO_TYPES } from "./uploads";
 
@@ -49,14 +51,11 @@ export const TRANSPORT_LABELS: Record<Transport, LocalText> = {
   truck: { en: "Truck", ar: "شاحنة" },
 };
 
-/** Documents a technician applicant uploads, in the order the form shows them. */
+/** Documents on an application (older ones had papers; new ones only have the photo). */
 export const APPLICATION_DOCUMENTS = ["photo", "idDocument", "proofOfAddress", "criminalRecord", "vehicleRegistration"] as const;
 export type ApplicationDocument = (typeof APPLICATION_DOCUMENTS)[number];
 
-/**
- * Private papers: only admins see them (step 1 of the review). Specialists, who make the
- * final decision (step 2), see the application's details and the profile photo.
- */
+/** Private papers, on older applications only: admins see them, never customers. */
 export const PRIVATE_DOCUMENTS = ["idDocument", "proofOfAddress", "criminalRecord", "vehicleRegistration"] as const;
 
 /** Where each document's storage key is kept on an application (db/schema.ts). */
@@ -80,13 +79,8 @@ export const DOCUMENT_TYPES: Record<ApplicationDocument, readonly string[]> = {
   photo: PHOTO_TYPES,
 };
 
-/**
- * The documents an applicant must provide: the vehicle's registration papers only when they
- * work with a vehicle. Applications from before the transport question (null) weren't asked.
- */
-export function requiredDocuments(transport: Transport | null | undefined): ApplicationDocument[] {
-  return APPLICATION_DOCUMENTS.filter((kind) => kind !== "vehicleRegistration" || (!!transport && transport !== "none"));
-}
+/** What an applicant uploads: a profile photo, which customers see once they work with us. */
+export const REQUIRED_DOCUMENTS = ["photo"] as const satisfies readonly ApplicationDocument[];
 /** Largest file accepted per document (photos are shrunk in the browser before this check). */
 export const MAX_DOCUMENT_MB = 10;
 export const MAX_DOCUMENT_BYTES = MAX_DOCUMENT_MB * 1024 * 1024;
@@ -95,5 +89,5 @@ export function isAllowedDocumentType(kind: ApplicationDocument, contentType: st
   return DOCUMENT_TYPES[kind].includes(contentType.toLowerCase());
 }
 
-/** Statuses a specialist sets by hand; "hired" only comes from the Hire action. */
+/** Statuses an admin sets by hand ("contacted": called to set up the meeting); "hired" only comes from Accept. */
 export const MANUAL_APPLICATION_STATUSES = ["new", "contacted", "rejected"] as const;

@@ -13,8 +13,7 @@ import {
   makeUser,
   makeSpecialist,
   makeAdmin,
-  meetApplicant,
-  meetingSlot,
+  photoKey,
   type TestDb,
 } from "./test/harness";
 
@@ -52,14 +51,8 @@ const application = {
   phone: "+961 71 111 111",
   email: "hassan@example.com",
   trade: "electrical",
-  area: "Beirut",
-  experience: "5-10" as const,
-  availability: "full_time" as const,
-  hasTools: true,
   transport: "car" as const,
-  workMode: "independent" as const,
-  notes: "Licensed electrician, 8 years with residential buildings",
-  ...documentKeys(),
+  photoKey: photoKey(),
   consent: true as const,
 };
 
@@ -149,39 +142,27 @@ describe("technician applications (public)", () => {
     await expect(
       (await callerFor()).join.submit({ ...application, trade: "hacking" }),
     ).rejects.toMatchObject({ code: "BAD_REQUEST" });
-    // Every field is required, what they tell us about their work included.
-    await expect(
-      (await callerFor()).join.submit({ ...application, notes: "  " }),
-    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
     // Transport: one of the listed types, never left out.
     await expect(
       (await callerFor()).join.submit({ ...application, transport: "bicycle" as never }),
     ).rejects.toMatchObject({ code: "BAD_REQUEST" });
-    // Working with a company: its name is required, and kept.
-    await expect(
-      (await callerFor()).join.submit({ ...application, workMode: "company" }),
-    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
-    const { id } = await (await callerFor()).join.submit({
-      ...application,
-      email: "company.tech@example.com",
-      workMode: "company",
-      companyName: "Haddad Electric SARL",
-    });
-    expect((await (await callerFor(boss)).join.list()).find((a) => a.id === id)).toMatchObject({
-      workMode: "company",
-      companyName: "Haddad Electric SARL",
-    });
-    // On your own: no company name kept, even if one was sent.
-    const solo = await (await callerFor()).join.submit({ ...application, email: "solo@example.com", companyName: "Ignored" });
-    expect((await (await callerFor(boss)).join.list()).find((a) => a.id === solo.id)).toMatchObject({
-      workMode: "independent",
-      companyName: null,
-    });
     const withoutTransport: Partial<typeof application> = { ...application };
     delete withoutTransport.transport;
     await expect(
       (await callerFor()).join.submit(withoutTransport as typeof application),
     ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+  });
+
+  it("keeps only what the short form asks: no papers, experience or work mode", async () => {
+    const { id } = await (await callerFor()).join.submit({
+      ...application,
+      email: "short.form@example.com",
+      // Sent by an older version of the form: ignored.
+      ...({ notes: "Old field", workMode: "company", ...documentKeys() } as object),
+    });
+    const row = (await (await callerFor(boss)).join.list()).find((a) => a.id === id);
+    expect(row).toMatchObject({ area: null, notes: null, workMode: null, idDocumentKey: null, criminalRecordKey: null });
+    expect(row?.photoKey).toMatch(/photo/);
   });
 });
 
@@ -211,34 +192,14 @@ describe("terms and consent", () => {
 });
 
 describe("technician documents", () => {
-  it("requires the ID and photo, uploaded, with the right kind", async () => {
+  it("requires the photo, uploaded, of the right kind", async () => {
     const c = await callerFor();
-    const docs = documentKeys();
-    await expect(c.join.submit({ ...application, ...docs, photoKey: docs.idDocumentKey })).rejects.toMatchObject({
+    const papers = documentKeys();
+    await expect(c.join.submit({ ...application, photoKey: papers.idDocumentKey })).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    await expect(c.join.submit({ ...application, photoKey: photoKey().replace("file", "missing") })).rejects.toMatchObject({
       code: "BAD_REQUEST",
     });
-    await expect(
-      c.join.submit({ ...application, ...docs, idDocumentKey: docs.idDocumentKey.replace("file", "missing") }),
-    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
-    await expect(c.join.submit({ ...application, ...docs, idDocumentKey: "requests/x/idDocument-a.jpg" })).rejects.toMatchObject({
-      code: "BAD_REQUEST",
-    });
-  });
-
-  it("asks for the vehicle papers only from applicants who use a vehicle", async () => {
-    const c = await callerFor();
-    const docs = documentKeys();
-    // A car without its registration papers: refused.
-    const noPapers: Partial<typeof application> = { ...application, ...docs, email: "nopapers@example.com" };
-    delete noPapers.vehicleRegistrationKey;
-    await expect(c.join.submit(noPapers as typeof application)).rejects.toMatchObject({ code: "BAD_REQUEST" });
-    // No transport: no papers needed, and none kept even if sent.
-    const { id } = await c.join.submit({ ...application, ...docs, transport: "none", email: "walker@example.com" });
-    const row = (await (await callerFor(boss)).join.list()).find((a) => a.id === id);
-    expect(row).toMatchObject({ transport: "none", hasTransport: false, vehicleRegistrationKey: null });
-    const links = await (await callerFor(boss)).join.documents({ id });
-    expect(Object.keys(links)).toContain("idDocument");
-    expect(Object.keys(links)).not.toContain("vehicleRegistration");
+    await expect(c.join.submit({ ...application, photoKey: "requests/x/photo-a.jpg" })).rejects.toMatchObject({ code: "BAD_REQUEST" });
   });
 
   it("checks document type and size before handing out an upload link", async () => {
@@ -247,30 +208,28 @@ describe("technician documents", () => {
       c.storage.createDocumentUpload({ kind: "photo", fileName: "me.pdf", size: 1000, contentType: "application/pdf" }),
     ).rejects.toMatchObject({ code: "BAD_REQUEST" });
     await expect(
-      c.storage.createDocumentUpload({ kind: "idDocument", fileName: "id.pdf", size: 50 * 1024 * 1024, contentType: "application/pdf" }),
+      c.storage.createDocumentUpload({ kind: "photo", fileName: "me.jpg", size: 50 * 1024 * 1024, contentType: "image/jpeg" }),
     ).rejects.toMatchObject({ code: "BAD_REQUEST" });
-    const ok = await c.storage.createDocumentUpload({ kind: "idDocument", fileName: "id.pdf", size: 1000, contentType: "application/pdf" });
-    expect(ok.key).toMatch(/^applications\/.+\/idDocument-id\.pdf$/);
+    const ok = await c.storage.createDocumentUpload({ kind: "photo", fileName: "me.jpg", size: 1000, contentType: "image/jpeg" });
+    expect(ok.key).toMatch(/^applications\/.+\/photo-me\.jpg$/);
   });
 
-  it("keeps applicants' documents for admins only", async () => {
+  it("shows applicants' photos, and older applications' papers, to admins only", async () => {
     const { id } = await (await callerFor()).join.submit({ ...application, email: "docs@example.com" });
     await expect((await callerFor(alice)).join.documents({ id })).rejects.toMatchObject({ code: "FORBIDDEN" });
     await expect((await callerFor(admin)).join.documents({ id })).rejects.toMatchObject({ code: "FORBIDDEN" });
-    const all = await (await callerFor(boss)).join.documents({ id });
-    expect(all.idDocument?.url).toContain("idDocument");
-    expect(all.criminalRecord?.url).toContain("criminalRecord");
-    expect(all.photo?.url).toContain("photo");
-  });
+    const links = await (await callerFor(boss)).join.documents({ id });
+    expect(Object.keys(links)).toEqual(["photo"]);
+    expect(links.photo?.url).toContain("photo");
 
-  it("refuses to hire an application without documents", async () => {
     const { technicianApplications } = await import("@db/schema");
     const [old] = await db
       .insert(technicianApplications)
-      .values({ name: "No Docs", phone: "+961 1 111 111", trade: "plumbing", area: "Jbeil", email: "nodocs@example.com" })
+      .values({ name: "Older", phone: "+961 1 222 333", trade: "plumbing", area: "Jbeil", ...documentKeys() })
       .returning({ id: technicianApplications.id });
-    await meetApplicant(old.id);
-    await expect((await callerFor(boss)).join.hire({ id: old.id })).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    const older = await (await callerFor(boss)).join.documents({ id: old.id });
+    expect(older.idDocument?.url).toContain("idDocument");
+    expect(older.criminalRecord?.url).toContain("criminalRecord");
   });
 });
 
@@ -278,17 +237,8 @@ describe("hiring technicians from applications", () => {
   it("invites a new applicant and creates their technician account right away", async () => {
     const { id } = await (await callerFor()).join.submit({ ...application, email: "New.Tech@Example.com" });
     const s = await callerFor(boss);
-    // Only after meeting them in person.
-    await expect(s.join.hire({ id })).rejects.toMatchObject({ code: "BAD_REQUEST" });
-    // A meeting in the past can't be booked.
-    await expect(
-      s.join.bookMeeting({ id, at: new Date(Date.now() - 3 * 86_400_000), place: "Office" }),
-    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
-    await s.join.bookMeeting({ id, ...meetingSlot() });
-    expect((await s.join.list()).find((a) => a.id === id)).toMatchObject({
-      status: "contacted",
-      meetingPlace: "Be Right office, Hamra",
-    });
+    // Called to set up the meeting (by phone), then accepted after it.
+    await s.join.setStatus({ id, status: "contacted" });
     const res = await s.join.hire({ id });
     expect(res).toMatchObject({ invited: true, email: "new.tech@example.com" });
     expect(state.invites).toContain("new.tech@example.com");
@@ -299,6 +249,8 @@ describe("hiring technicians from applications", () => {
     expect(app?.hiredUserId).toBeTruthy();
     expect(app).toMatchObject({ approvedBy: boss.id, approvedAt: expect.any(Date) });
     // The specialists see the new technician (and can't remove them).
+    // Accepting twice does nothing more.
+    await expect(s.join.hire({ id })).rejects.toMatchObject({ code: "BAD_REQUEST" });
     const desk = await callerFor(admin);
     expect((await desk.tech.list()).map((x) => x.email)).toContain("new.tech@example.com");
     const techId = (await desk.tech.list()).find((x) => x.email === "new.tech@example.com")!.id;
@@ -308,7 +260,6 @@ describe("hiring technicians from applications", () => {
   it("promotes an applicant who already has an account, without inviting", async () => {
     const existing = await makeUser("already@example.com", "Already");
     const { id } = await (await callerFor()).join.submit({ ...application, email: "already@example.com" });
-    await meetApplicant(id);
     const before = state.invites.length;
     const res = await (await callerFor(boss)).join.hire({ id });
     expect(res.invited).toBe(false);
@@ -319,7 +270,6 @@ describe("hiring technicians from applications", () => {
   it("refuses to hire a specialist's email or an application without email", async () => {
     const s = await callerFor(boss);
     const { id } = await (await callerFor()).join.submit({ ...application, email: SPECIALIST_EMAIL });
-    await meetApplicant(id);
     await expect(s.join.hire({ id })).rejects.toMatchObject({ code: "BAD_REQUEST" });
     // Older applications had no email: the specialist supplies one when hiring.
     const { technicianApplications } = await import("@db/schema");
@@ -327,7 +277,6 @@ describe("hiring technicians from applications", () => {
       .insert(technicianApplications)
       .values({ name: "Old Applicant", phone: "+961 1 000 000", trade: "plumbing", area: "Saida", ...documentKeys() })
       .returning({ id: technicianApplications.id });
-    await meetApplicant(old.id);
     await expect(s.join.hire({ id: old.id })).rejects.toMatchObject({ code: "BAD_REQUEST" });
     const res = await s.join.hire({ id: old.id, email: "old.applicant@example.com" });
     expect(res.invited).toBe(true);
@@ -343,7 +292,6 @@ describe("hiring technicians from applications", () => {
     });
 
     const { id } = await (await callerFor()).join.submit({ ...application, email: "david@example.com" });
-    await meetApplicant(id);
     await s.join.hire({ id });
     await s.tech.remove({ technicianId: customer.id });
     const reopened = (await s.join.list()).find((a) => a.id === id);
@@ -351,14 +299,11 @@ describe("hiring technicians from applications", () => {
     expect((await s.tech.list()).map((x) => x.id)).not.toContain(customer.id);
   });
 
-  it("only admins can approve and add technicians", async () => {
+  it("only admins can accept or reject applicants", async () => {
     const { id } = await (await callerFor()).join.submit({ ...application, email: "x@example.com" });
-    await meetApplicant(id);
     await expect((await callerFor(alice)).join.hire({ id })).rejects.toMatchObject({ code: "FORBIDDEN" });
     await expect((await callerFor(admin)).join.hire({ id })).rejects.toMatchObject({ code: "FORBIDDEN" });
-    await expect((await callerFor(admin)).join.bookMeeting({ id, ...meetingSlot() })).rejects.toMatchObject({
-      code: "FORBIDDEN",
-    });
+    await expect((await callerFor(admin)).join.setStatus({ id, status: "rejected" })).rejects.toMatchObject({ code: "FORBIDDEN" });
   });
 });
 

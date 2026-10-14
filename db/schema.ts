@@ -171,7 +171,8 @@ export const technicianApplications = pgTable("technician_applications", {
   name: varchar("name", { length: 255 }).notNull(),
   phone: varchar("phone", { length: 64 }).notNull(),
   trade: varchar("trade", { length: 64 }).notNull(),
-  area: varchar("area", { length: 255 }).notNull(),
+  /** Older applications only, like experience, availability, tools, work mode, notes and the papers below. */
+  area: varchar("area", { length: 255 }),
   notes: text("notes"),
   /** Contact + login email; required for new applications (older ones may lack it). */
   email: varchar("email", { length: 320 }),

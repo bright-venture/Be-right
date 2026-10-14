@@ -10,22 +10,8 @@ import { useI18n } from "@/i18n";
 import { trpc } from "@/providers/trpc";
 import { CATEGORY_MAP, SERVICES_IN_ORDER, type LocalText } from "@contracts/services";
 import { isValidPhone } from "@contracts/phone";
-import { DOCUMENT_FIELD, requiredDocuments, type ApplicationDocument } from "@contracts/applications";
 import { isRateLimited } from "@/lib/errors";
-import {
-  AVAILABILITY,
-  AVAILABILITY_LABELS,
-  WORK_MODES,
-  WORK_MODE_LABELS,
-  type WorkMode,
-  EXPERIENCE_LABELS,
-  EXPERIENCE_LEVELS,
-  TRANSPORT,
-  TRANSPORT_LABELS,
-  type Availability,
-  type ExperienceLevel,
-  type Transport,
-} from "@contracts/applications";
+import { TRANSPORT, TRANSPORT_LABELS, type Transport } from "@contracts/applications";
 
 const INPUT =
   "mt-2 min-h-12 w-full rounded-2xl border-2 border-navy/30 bg-white px-4 font-semibold text-navy placeholder:font-normal placeholder:text-navy/40 focus:border-flame focus:outline-none";
@@ -90,47 +76,25 @@ export default function Join() {
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [trade, setTrade] = useState("");
-  const [area, setArea] = useState("");
-  const [experience, setExperience] = useState<ExperienceLevel | null>(null);
-  const [availability, setAvailability] = useState<Availability | null>(null);
-  const [hasTools, setHasTools] = useState<"yes" | "no" | null>(null);
-  const [workMode, setWorkMode] = useState<WorkMode | null>(null);
-  const [companyName, setCompanyName] = useState("");
   const [transport, setTransport] = useState<Transport | null>(null);
-  const [notes, setNotes] = useState("");
-  /** Storage key of each uploaded document (missing until uploaded). */
-  const [documents, setDocuments] = useState<Partial<Record<ApplicationDocument, string>>>({});
-  const setDocument = (kind: ApplicationDocument) => (key: string | null) =>
-    setDocuments((d) => ({ ...d, [kind]: key ?? undefined }));
+  /** Storage key of the uploaded profile photo (null until uploaded). */
+  const [photoKey, setPhotoKey] = useState<string | null>(null);
   const [consent, setConsent] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState("");
 
   const submitMutation = trpc.join.submit.useMutation();
-  const yesNo = [
-    { value: "yes" as const, label: p(t.join.yes) },
-    { value: "no" as const, label: p(t.join.no) },
-  ];
   const labelled = <T extends string>(values: readonly T[], labels: Record<T, LocalText>) =>
     values.map((v) => ({ value: v, label: p(labels[v]) }));
 
-  // The vehicle's papers show from the start (so nobody misses them) and only go away when
-  // the applicant answers "No transport".
-  const required = requiredDocuments(transport ?? "car");
+  // A short application: the team calls the applicant and meets them in person.
   const valid =
     name.trim().length >= 2 &&
     isValidPhone(phone) &&
     EMAIL_PATTERN.test(email.trim()) &&
     trade !== "" &&
-    area.trim().length >= 2 &&
-    experience !== null &&
-    availability !== null &&
-    hasTools !== null &&
-    workMode !== null &&
-    (workMode !== "company" || companyName.trim().length >= 2) &&
     transport !== null &&
-    notes.trim().length >= 3 &&
-    required.every((kind) => !!documents[kind]) &&
+    !!photoKey &&
     consent;
 
   async function submit() {
@@ -142,19 +106,8 @@ export default function Join() {
         phone: phone.trim(),
         email: email.trim(),
         trade,
-        area: area.trim(),
-        experience: experience!,
-        availability: availability!,
-        hasTools: hasTools === "yes",
-        workMode: workMode!,
-        companyName: workMode === "company" ? companyName.trim() : undefined,
         transport: transport!,
-        notes: notes.trim(),
-        // `valid` above requires every document
-        ...(Object.fromEntries(required.map((kind) => [DOCUMENT_FIELD[kind], documents[kind]!])) as Record<
-          (typeof DOCUMENT_FIELD)[ApplicationDocument],
-          string
-        >),
+        photoKey: photoKey!,
         consent: true,
       });
       setDone(true);
@@ -294,98 +247,6 @@ export default function Join() {
                 </div>
 
                 <div>
-                  <label htmlFor="join-area" className={LABEL}>
-                    {p(t.join.area)}
-                    <Req />
-                  </label>
-                  <input
-                    id="join-area"
-                    required
-                    value={area}
-                    onChange={(e) => setArea(e.target.value)}
-                    placeholder={p(t.join.areaPh)}
-                    className={INPUT}
-                  />
-                </div>
-
-                <div>
-                  <p className={LABEL}>
-                    {p(t.join.experience)}
-                    <Req />
-                  </p>
-                  <Choice
-                    label={p(t.join.experience)}
-                    options={labelled(EXPERIENCE_LEVELS, EXPERIENCE_LABELS)}
-                    columns="grid-cols-2 sm:grid-cols-5 [&>*:last-child:nth-child(odd)]:col-span-2 sm:[&>*:last-child:nth-child(odd)]:col-span-1"
-                    value={experience}
-                    onChange={setExperience}
-                  />
-                </div>
-
-                <div>
-                  <p className={LABEL}>
-                    {p(t.join.availability)}
-                    <Req />
-                  </p>
-                  <Choice
-                    label={p(t.join.availability)}
-                    options={labelled(AVAILABILITY, AVAILABILITY_LABELS)}
-                    columns="grid-cols-1 sm:grid-cols-3"
-                    value={availability}
-                    onChange={setAvailability}
-                  />
-                </div>
-
-                <div>
-                  <div>
-                    <p className={LABEL}>
-                      {p(t.join.hasTools)}
-                      <Req />
-                    </p>
-                    <Choice
-                      label={p(t.join.hasTools)}
-                      options={yesNo}
-                      value={hasTools}
-                      onChange={setHasTools}
-                      columns="grid-cols-2"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <p className={LABEL}>
-                    {p(t.join.workMode)}
-                    <Req />
-                  </p>
-                  <Choice
-                    label={p(t.join.workMode)}
-                    options={labelled(WORK_MODES, WORK_MODE_LABELS)}
-                    value={workMode}
-                    onChange={setWorkMode}
-                    columns="grid-cols-2"
-                  />
-                  {workMode === "company" && (
-                    <div className="mt-3">
-                      <label htmlFor="join-company" className={LABEL}>
-                        {p(t.join.companyName)}
-                        <Req />
-                      </label>
-                      <input
-                        id="join-company"
-                        required
-                        minLength={2}
-                        maxLength={255}
-                        autoComplete="organization"
-                        value={companyName}
-                        onChange={(e) => setCompanyName(e.target.value)}
-                        placeholder={p(t.join.companyNamePh)}
-                        className={INPUT}
-                      />
-                    </div>
-                  )}
-                </div>
-
-                <div>
                   <p className={LABEL}>
                     {p(t.join.transport)}
                     <Req />
@@ -399,40 +260,7 @@ export default function Join() {
                   />
                 </div>
 
-                <div>
-                  <p className={LABEL}>
-                    {p(t.docs.title)}
-                    <Req />
-                  </p>
-                  <p className="mt-1 text-xs leading-relaxed text-navy/70">{p(t.docs.privacy)}</p>
-                  <div className="mt-3 flex flex-col gap-3">
-                    {required.map((kind) => (
-                      <DocumentUpload
-                        key={kind}
-                        kind={kind}
-                        label={p(t.docs[kind])}
-                        hint={p(t.docs[`${kind}Hint`])}
-                        onUploaded={setDocument(kind)}
-                      />
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <label htmlFor="join-notes" className={LABEL}>
-                    {p(t.join.notes)}
-                    <Req />
-                  </label>
-                  <textarea
-                    id="join-notes"
-                    required
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    placeholder={p(t.join.notesPh)}
-                    rows={3}
-                    className="mt-2 w-full rounded-2xl border-2 border-navy/30 bg-white px-4 py-3 font-semibold text-navy placeholder:font-normal placeholder:text-navy/40 focus:border-flame focus:outline-none"
-                  />
-                </div>
+                <DocumentUpload kind="photo" label={p(t.docs.photo)} hint={p(t.docs.photoHint)} onUploaded={setPhotoKey} />
 
                 <AgreeCheckbox id="join-consent" text={t.legal.agreeApplication} checked={consent} onChange={setConsent} />
 

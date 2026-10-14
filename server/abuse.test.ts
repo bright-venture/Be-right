@@ -10,6 +10,7 @@ import {
   deletedDocuments,
   deletedMedia,
   documentKeys,
+  photoKey,
   futureDate,
   makeUser,
   storedFiles,
@@ -82,14 +83,8 @@ describe("rate limits", () => {
         phone: "+961 70 123 456",
         email: `applicant${n}@example.com`,
         trade: "plumbing",
-        area: "Beirut",
-        experience: "1-3",
-        availability: "full_time",
-        hasTools: true,
         transport: "motorcycle",
-        workMode: "independent",
-        notes: "Licensed, 8 years with residential buildings",
-        ...documentKeys(),
+        photoKey: photoKey(),
         consent: true,
       });
     for (let i = 0; i < 5; i++) await apply(i);

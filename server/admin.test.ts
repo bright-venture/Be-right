@@ -6,12 +6,11 @@ import { STAFF_PASSWORD_REQUIRED, STAFF_TWO_STEP_REQUIRED } from "@contracts/rol
 import {
   BEIRUT_PIN,
   callerFor,
-  documentKeys,
+  photoKey,
   futureDate,
   makeSpecialist,
   makeTechnician,
   makeUser,
-  meetingSlot,
   type TestDb,
 } from "./test/harness";
 
@@ -167,18 +166,11 @@ describe("admin area", () => {
       phone: "+961 70 999 000",
       email: "rawad@example.com",
       trade: "plumbing",
-      area: "Zahle",
-      experience: "3-5",
-      availability: "full_time",
-      hasTools: true,
       transport: "car",
-      workMode: "independent",
-      notes: "Ten years with residential plumbing",
-      ...documentKeys(),
+      photoKey: photoKey(),
       consent: true,
     });
     await makeUser("rawad@example.com", "Rawad");
-    expect(await o.join.bookMeeting({ id, ...meetingSlot() })).toMatchObject({ email: "sent" });
     await o.join.hire({ id });
     for (const status of ["rejected", "contacted", "new"] as const) {
       await expect(o.join.setStatus({ id, status })).rejects.toMatchObject({ code: "BAD_REQUEST" });
@@ -250,25 +242,18 @@ describe("audit trail", () => {
     await o.admin.setStaffRole({ userId: nour.id, role: "admin" });
     await o.admin.setStaffRole({ userId: nour.id, role: "customer" });
 
-    // An application: documents opened twice in one visit, a meeting, approved, then removed.
+    // An application: documents opened twice in one visit, accepted, then removed.
     const { id } = await (await callerFor()).join.submit({
       name: "Hadi",
       phone: "+961 71 222 333",
       email: "hadi@example.com",
       trade: "locksmith",
-      area: "Jounieh",
-      experience: "3-5",
-      availability: "full_time",
-      hasTools: true,
       transport: "motorcycle",
-      workMode: "independent",
-      notes: "Locks and car keys for eight years",
-      ...documentKeys(),
+      photoKey: photoKey(),
       consent: true,
     });
     await o.join.documents({ id });
     await o.join.documents({ id });
-    await o.join.bookMeeting({ id, ...meetingSlot() });
     await o.join.hire({ id });
     const hadi = (await o.tech.list()).find((x) => x.email === "hadi@example.com")!;
     await o.tech.remove({ technicianId: hadi.id });
@@ -279,17 +264,15 @@ describe("audit trail", () => {
     expect(mine.map((e) => e.action)).toEqual([
       "technician_removed",
       "technician_hired",
-      "meeting_booked",
       "documents_viewed", // once, not once per reload
       "staff_role_changed",
       "staff_role_changed",
       "staff_added",
     ]);
     expect(mine[0]).toMatchObject({ actorEmail: "owner@example.com", targetEmail: "hadi@example.com", applicantName: "Hadi" });
-    expect(mine[2]).toMatchObject({ actorEmail: "owner@example.com", details: { place: "Be Right office, Hamra", rescheduled: false } });
-    expect(mine[3]).toMatchObject({ actorEmail: "owner@example.com", applicantName: "Hadi" });
-    expect(mine[4].details).toEqual({ from: "admin", to: "customer" });
-    expect(mine[6]).toMatchObject({ actorEmail: "owner@example.com", details: { email: "nour.desk@example.com", role: "specialist", invited: true } });
+    expect(mine[2]).toMatchObject({ actorEmail: "owner@example.com", applicantName: "Hadi" });
+    expect(mine[3].details).toEqual({ from: "admin", to: "customer" });
+    expect(mine[5]).toMatchObject({ actorEmail: "owner@example.com", details: { email: "nour.desk@example.com", role: "specialist", invited: true } });
     // The two-step reset earlier in this file is there too.
     expect(log.some((e) => e.action === "two_step_reset" && e.targetEmail === "desk@example.com")).toBe(true);
   });
@@ -306,21 +289,14 @@ describe("audit trail", () => {
       phone: "+961 70 321 654",
       email: "wael@example.com",
       trade: "cameras",
-      area: "Byblos",
-      experience: "5-10",
-      availability: "full_time",
-      hasTools: true,
       transport: "van",
-      workMode: "independent",
-      notes: "Security cameras and alarms",
-      ...documentKeys(),
+      photoKey: photoKey(),
       consent: true,
     });
     const d = await callerFor(desk);
     for (const call of [
       () => d.join.list(),
       () => d.join.documents({ id }),
-      () => d.join.bookMeeting({ id, ...meetingSlot() }),
       () => d.join.setStatus({ id, status: "rejected" }),
       () => d.join.hire({ id }),
     ]) {
@@ -328,15 +304,11 @@ describe("audit trail", () => {
     }
 
     const o = await callerFor(owner);
-    await o.join.bookMeeting({ id, ...meetingSlot() });
     await o.join.hire({ id });
     const wael = (await d.tech.list()).find((x) => x.email === "wael@example.com")!;
-    expect(wael).toMatchObject({ trade: "cameras", area: "Byblos" });
+    expect(wael).toMatchObject({ trade: "cameras" });
     await expect(d.tech.remove({ technicianId: wael.id })).rejects.toMatchObject({ code: "FORBIDDEN" });
     await expect(o.tech.remove({ technicianId: wael.id })).resolves.toMatchObject({ ok: true });
-    // A closed application can't get a meeting.
-    await o.join.setStatus({ id, status: "rejected" });
-    await expect(o.join.bookMeeting({ id, ...meetingSlot() })).rejects.toMatchObject({ code: "BAD_REQUEST" });
   });
 
   it("returns real dates for a customer's last request (Safari can't read Postgres' text dates)", async () => {
@@ -381,23 +353,16 @@ describe("safety nets", () => {
       phone: "+961 76 444 555",
       email: "sami@example.com",
       trade: "pest",
-      area: "Tyre",
-      experience: "1-3",
-      availability: "part_time",
-      hasTools: true,
       transport: "car",
-      workMode: "independent",
-      notes: "Pest control for restaurants",
-      ...documentKeys(),
+      photoKey: photoKey(),
       consent: true,
     });
-    await o.join.bookMeeting({ id, ...meetingSlot() });
     const withdrawnBefore = state.deletedAuthUsers.length;
     await withDatabaseDown("transaction", async () => {
       await expect(o.join.hire({ id })).rejects.toBeDefined();
     });
     expect(state.deletedAuthUsers.slice(withdrawnBefore)).toEqual([state.invitedIds.at(-1)]);
-    expect((await o.join.list()).find((a) => a.id === id)).toMatchObject({ status: "contacted", hiredUserId: null });
+    expect((await o.join.list()).find((a) => a.id === id)).toMatchObject({ status: "new", hiredUserId: null });
   });
 
   it("records staff areas refused for a missing role or password, once per visit", async () => {

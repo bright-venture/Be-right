@@ -10,7 +10,7 @@ import {
   callerFor,
   addJobPhoto,
   createTestDb,
-  documentKeys,
+  photoKey,
   futureDate,
   makeTechnician,
   makeUser,
@@ -186,50 +186,28 @@ describe("notification emails", () => {
     expect(emailTo("ali@example.com").text).toContain("No need to go");
   });
 
-  it("tells the admins about applications, the applicant about their meeting, and the specialists about new technicians", async () => {
+  it("tells the admins about applications (to call the applicant), and the specialists about new technicians", async () => {
     const boss = await makeAdmin("boss@example.com", "Boss");
     const { id } = await (await callerFor()).join.submit({
       name: "Samir",
       phone: "+961 71 222 333",
       email: "samir@example.com",
       trade: "electrical",
-      area: "Jounieh",
-      experience: "3-5",
-      availability: "full_time",
-      hasTools: true,
       transport: "van",
-      workMode: "independent",
-      notes: "Generators and inverters",
-      ...documentKeys(),
+      photoKey: photoKey(),
       consent: true,
     });
     expect(emailTo("boss@example.com").subject).toContain("Samir");
+    expect(emailTo("boss@example.com").text).toContain("+961 71 222 333");
     // Specialists don't handle applications.
     expect(state.sent.filter((m) => m.to.includes(SPECIALIST_EMAIL) && m.subject.includes("Samir"))).toHaveLength(0);
 
-    // The meeting: date, time (in the admin's time zone, shown) and place go to the applicant.
-    const b = await callerFor(boss);
-    await b.join.bookMeeting({
-      id,
-      at: new Date("2026-11-03T08:30:00Z"),
-      place: "Be Right office, Hamra",
-      note: "Ask for Rami",
-      timeZone: "Europe/Paris",
-    });
-    const invite = emailTo("samir@example.com");
-    expect(invite.subject).toContain("Your meeting with Be Right");
-    expect(invite.text).toContain("Tuesday 3 November at 09:30 CET");
-    expect(invite.text).toContain("Be Right office, Hamra");
-    expect(invite.text).toContain("Ask for Rami");
-    // Moving it sends the new time.
-    await b.join.bookMeeting({ id, at: new Date("2026-11-04T09:00:00Z"), place: "Be Right office, Hamra" });
-    const mails = state.sent.filter((m) => m.to.includes("samir@example.com"));
-    expect(mails).toHaveLength(2);
-    expect(mails[1].subject).toContain("New time for your meeting");
+    // The meeting is set up on the phone: the applicant gets no email for it.
+    expect(state.sent.filter((m) => m.to.includes("samir@example.com"))).toHaveLength(0);
 
-    // Approved: the specialists hear about their new technician (an existing account: no invitation).
+    // Accepted: the specialists hear about their new technician (an existing account: no invitation).
     await makeUser("samir@example.com", "Samir");
-    await b.join.hire({ id });
+    await (await callerFor(boss)).join.hire({ id });
     expect(emailTo(SPECIALIST_EMAIL).subject).toContain("New technician on the team: Samir");
   });
 

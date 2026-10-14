@@ -88,21 +88,6 @@ async function safely<T>(name: string, fn: () => Promise<T>): Promise<T | undefi
 
 /* ---------- data ---------- */
 
-/** A meeting's date and time in the time zone it was booked in, with that zone shown. */
-function meetingTime(at: Date, timeZone: string | null): Text {
-  const format = (locale: string) =>
-    new Intl.DateTimeFormat(locale, {
-      timeZone: timeZone ?? "UTC",
-      weekday: "long",
-      day: "numeric",
-      month: "long",
-      hour: "2-digit",
-      minute: "2-digit",
-      timeZoneName: "short",
-    }).format(at);
-  return { en: format("en-GB"), ar: format("ar") };
-}
-
 /** Everyone with one role (admins, or specialists only). */
 async function emailsOf(role: "admin" | "specialist") {
   const rows = await getDb().select({ email: users.email }).from(users).where(eq(users.role, role));
@@ -502,7 +487,7 @@ export const notify = {
       });
     }),
 
-  /** Someone applied to work as a technician: the admins review it first (step 1 of 2). */
+  /** Someone applied to work as a technician: an admin calls them to set up a meeting. */
   applicationSubmitted: (applicationId: number) =>
     safely("applicationSubmitted", async () => {
       const app = await getDb().query.technicianApplications.findFirst({
@@ -514,10 +499,10 @@ export const notify = {
         subject: both(`New technician application: ${app.name}`, `طلب توظيف فني جديد: ${app.name}`),
         title: both("Someone applied to work with us", "تقدّم شخص للعمل معنا"),
         lines: [
-          both(`${app.name}: ${trade.en}, ${app.area}.`, `${app.name}: ${trade.ar}، ${app.area}.`),
+          both(`${app.name}: ${trade.en}. Phone: ${app.phone}.`, `${app.name}: ${trade.ar}. الهاتف: ${app.phone}.`),
           both(
-            "Check the application and its documents, book an in-person meeting, then approve it.",
-            "راجع الطلب ومستنداته، واحجز مقابلة، ثم وافق عليه.",
+            "Call them to set up a meeting in person, then accept or reject the application.",
+            "اتصل به لتحديد مقابلة شخصية، ثم اقبل الطلب أو ارفضه.",
           ),
         ],
         path: "/admin?tab=applications",
@@ -525,41 +510,7 @@ export const notify = {
       });
     }),
 
-  /** The applicant's in-person meeting at the office: when and where (or its new time). Whether it was emailed. */
-  meetingBooked: (applicationId: number, rescheduled: boolean) =>
-    safely("meetingBooked", async () => {
-      const app = await getDb().query.technicianApplications.findFirst({
-        where: eq(technicianApplications.id, applicationId),
-      });
-      if (!app?.email || !app.meetingAt || !app.meetingPlace) return false;
-      const trade = local(CATEGORY_MAP[app.trade]?.name, app.trade);
-      const when = meetingTime(app.meetingAt, app.meetingTimeZone);
-      return send([app.email], {
-        subject: rescheduled
-          ? both("New time for your meeting with Be Right", "موعد جديد لمقابلتك مع بي رايت")
-          : both("Your meeting with Be Right", "مقابلتك مع بي رايت"),
-        title: rescheduled
-          ? both("Your meeting has a new time", "تم تحديد موعد جديد لمقابلتك")
-          : both("Let's meet in person", "لنلتقِ شخصياً"),
-        lines: [
-          both(
-            `Thanks for applying to work with Be Right (${trade.en}). We'd like to meet you in person.`,
-            `شكراً على تقديمك للعمل مع بي رايت (${trade.ar}). نودّ أن نلتقي بك شخصياً.`,
-          ),
-          both(`When: ${when.en}`, `الموعد: ${when.ar}`),
-          both(`Where: ${app.meetingPlace}`, `المكان: ${app.meetingPlace}`),
-          ...(app.meetingNote ? [both(app.meetingNote, app.meetingNote)] : []),
-          both(
-            "If this time doesn't work for you, reply to this email and we'll find another one.",
-            "إذا لم يناسبك هذا الموعد، ردّ على هذا البريد وسنجد موعداً آخر.",
-          ),
-        ],
-        path: "/",
-        button: both("Visit Be Right", "زيارة بي رايت"),
-      });
-    }),
-
-  /** An admin approved an applicant: the specialists have a new technician to assign jobs to. */
+  /** An admin accepted an applicant: the specialists have a new technician to assign jobs to. */
   technicianJoined: (applicationId: number) =>
     safely("technicianJoined", async () => {
       const app = await getDb().query.technicianApplications.findFirst({
@@ -571,8 +522,8 @@ export const notify = {
         subject: both(`New technician on the team: ${app.name}`, `فنّي جديد في الفريق: ${app.name}`),
         title: both("A new technician joined", "انضمّ فنّي جديد"),
         lines: [
-          both(`${app.name}: ${trade.en}, ${app.area}.`, `${app.name}: ${trade.ar}، ${app.area}.`),
-          both("An admin met them and approved them. You can now assign them jobs.", "قابلته الإدارة ووافقت عليه. يمكنك الآن إسناد المهام إليه."),
+          both(`${app.name}: ${trade.en}.`, `${app.name}: ${trade.ar}.`),
+          both("An admin met them and accepted them. You can now assign them jobs.", "قابلته الإدارة وقبلته. يمكنك الآن إسناد المهام إليه."),
         ],
         path: "/dashboard?tab=technicians",
         button: both("See the technicians", "عرض الفنيين"),

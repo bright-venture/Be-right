@@ -25,7 +25,7 @@ another role's page redirects back (enforced on the server too):
 | Specialist | Added by an admin in Admin → Team | `/dashboard` |
 | Admin | Email listed in `ADMIN_EMAILS` (applied on next sign-in), or made admin by another admin in Admin → Team. Can do everything a specialist can, plus figures, every customer, the team and the activity log | `/admin`, `/dashboard` |
 
-Technician applications from `/join` need no account and appear in the dashboard.
+Technician applications from `/join` need no account (name, phone, email, trade, transport, photo) and appear in Admin → Applications only. An admin calls the applicant to set up a meeting in person, then accepts or rejects them. Specialists only see the technicians (Dashboard → Technicians), without changing them.
 
 ## Setup
 
@@ -62,7 +62,7 @@ Auth emails (confirm sign-up, password reset, sign-in code) are sent by Supabase
 | Magic link | `magic-link.html` | Your Be Right sign-in code · رمز الدخول |
 | Invite user | `invite-technician.html` | You're on the Be Right team · أهلاً فيك بالفريق |
 
-Hiring an applicant (Dashboard → Technician applications → *Hire as technician*) promotes an
+Accepting an applicant (Admin → Applications → *Accept as technician*) promotes an
 existing account, or sends the *Invite user* email and creates the technician account at once.
 
 ## Notification emails
@@ -72,7 +72,7 @@ Sent through Resend's API (`RESEND_API_KEY`), in English and Arabic, from `serve
 | When | Who |
 | --- | --- |
 | A customer books, approves a price, cancels, asks to cancel or reports a problem (guarantee) | Specialists |
-| Someone applies as a technician | Specialists |
+| Someone applies as a technician | Admins |
 | A price is sent or changed, a guarantee visit is confirmed free, the visit is scheduled, the job is done, or our team cancels | Customer |
 | A job is assigned, reassigned away, scheduled or cancelled | Technician |
 
@@ -83,7 +83,7 @@ Staff emails go to every specialist and admin account. A failed email is logged
 
 | Job | When | What |
 | --- | --- | --- |
-| `cleanup-documents` (Netlify scheduled function) | daily | Deletes the documents (ID, criminal record, proof of address, photo) of applications rejected 90+ days ago (Privacy Policy). Period: `REJECTED_APPLICATION_RETENTION_DAYS` in `contracts/legal.ts`. Also deletes uploads never attached to an application or booking after 24 hours, and old rate-limit counters. |
+| `cleanup-documents` (Netlify scheduled function) | daily | Deletes the photo (and, on older applications, the ID, criminal record and proof of address) of applications rejected 90+ days ago (Privacy Policy). Period: `REJECTED_APPLICATION_RETENTION_DAYS` in `contracts/legal.ts`. Also deletes uploads never attached to an application or booking after 24 hours, and old rate-limit counters. |
 
 Public uploads and applications are rate-limited per IP, per customer and per day; the limits are in `server/lib/rateLimit.ts`.
 
