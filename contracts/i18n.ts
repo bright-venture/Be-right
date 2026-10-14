@@ -1299,6 +1299,8 @@ export const t = {
     yesSub: { en: "Pick what's wrong, then call our team now.", ar: "اختر ما حدث، ثم اتصل بفريقنا الآن." },
     noTitle: { en: "Not an emergency", ar: "ليست حالة طارئة" },
     noSub: { en: "Choose the service and book online.", ar: "اختر الخدمة واحجز عبر الإنترنت." },
+    yesAction: { en: "Call now", ar: "اتصل الآن" },
+    noAction: { en: "Book online", ar: "احجز الآن" },
     railLabel: { en: "Not an emergency? Choose a service", ar: "ليست حالة طارئة؟ اختر خدمة" },
     title: { en: "Emergency", ar: "طوارئ" },
     intro: { en: "Tell us what's wrong in two taps, then call our team.", ar: "أخبرنا بما حدث بنقرتين، ثم اتصل بفريقنا." },
