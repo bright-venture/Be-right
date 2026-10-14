@@ -1215,6 +1215,8 @@ export const t = {
       en: "Too many attempts right now. Please try again in an hour.",
       ar: "محاولات كثيرة جداً حالياً. يُرجى المحاولة بعد ساعة.",
     },
+    countryCode: { en: "Country code", ar: "رمز البلد" },
+    phoneLocalInvalid: { en: "Check the number: it looks incomplete.", ar: "تحقّق من الرقم: يبدو غير مكتمل." },
     phoneInvalid: {
       en: "Enter the full number with its country code, starting with +, e.g. +1 202 555 0123.",
       ar: "أدخل الرقم كاملاً مع رمز البلد، يبدأ بـ +، مثلاً +1 202 555 0123.",

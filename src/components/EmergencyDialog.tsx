@@ -7,7 +7,8 @@ import { isNetworkError, isRateLimited } from "@/lib/errors";
 import LocationPicker, { type Pin } from "@/components/map/LocationPicker";
 import { EmergencyLine } from "@/components/EmergencyLine";
 import { EMERGENCY_PROBLEM_MAP } from "@contracts/emergency";
-import { isValidPhone } from "@contracts/phone";
+import { DEFAULT_PHONE_COUNTRY, isValidLocalPhone, joinPhone, type PhoneCountry } from "@contracts/phone";
+import { PhoneInput } from "@/components/PhoneInput";
 
 /**
  * Priority dispatch, after picking the emergency: where you are and your phone, Send details, then the
@@ -18,9 +19,11 @@ export function EmergencyDialog({ problem, onClose }: { problem: string; onClose
   const { t, p } = useI18n();
   const dialogRef = useRef<HTMLDivElement>(null);
   const [pin, setPin] = useState<Pin | null>(null);
-  const [phone, setPhone] = useState("");
+  const [country, setCountry] = useState<PhoneCountry>(DEFAULT_PHONE_COUNTRY);
+  const [local, setLocal] = useState("");
   const [phoneTouched, setPhoneTouched] = useState(false);
-  const phoneOk = isValidPhone(phone);
+  const phone = joinPhone(country, local);
+  const phoneOk = isValidLocalPhone(country, local);
   const report = trpc.emergency.report.useMutation();
   const label = EMERGENCY_PROBLEM_MAP[problem]?.label;
   const showLine = report.isSuccess || report.isError;
@@ -40,7 +43,7 @@ export function EmergencyDialog({ problem, onClose }: { problem: string; onClose
 
   const send = () => {
     if (!pin || !phoneOk || report.isPending) return;
-    report.mutate({ problem, lat: pin.lat, lng: pin.lng, phone: phone.trim() });
+    report.mutate({ problem, lat: pin.lat, lng: pin.lng, phone });
   };
 
   return createPortal(
@@ -91,24 +94,23 @@ export function EmergencyDialog({ problem, onClose }: { problem: string; onClose
               <p className="mt-0.5 text-sm text-navy/65">{p(t.emergency.whereHint)}</p>
             </div>
             <LocationPicker value={pin} onChange={setPin} />
-            <label className="block">
-              <span className="font-display text-sm font-extrabold text-navy">{p(t.emergency.yourPhone)}</span>
-              <input
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+            <div>
+              <label htmlFor="emergency-phone" className="font-display text-sm font-extrabold text-navy">
+                {p(t.emergency.yourPhone)}
+              </label>
+              <PhoneInput
+                id="emergency-phone"
+                country={country}
+                onCountry={setCountry}
+                value={local}
+                onChange={setLocal}
                 onBlur={() => setPhoneTouched(true)}
-                type="tel"
-                inputMode="tel"
-                dir="ltr"
-                maxLength={32}
-                autoComplete="tel"
-                aria-invalid={phoneTouched && !phoneOk ? true : undefined}
-                className="mt-2 min-h-12 w-full rounded-2xl border-2 border-navy/30 bg-white px-4 font-semibold text-navy focus:border-flame focus:outline-none"
+                invalid={phoneTouched && local.trim() !== "" && !phoneOk}
               />
-              {phoneTouched && phone.trim() !== "" && !phoneOk && (
-                <span className="mt-1 block text-sm font-semibold text-red-700">{p(t.misc.phoneInvalid)}</span>
+              {phoneTouched && local.trim() !== "" && !phoneOk && (
+                <p className="mt-1 text-sm font-semibold text-red-700">{p(t.misc.phoneLocalInvalid)}</p>
               )}
-            </label>
+            </div>
             <button
               type="button"
               onClick={send}
