@@ -11,17 +11,16 @@ import { EMERGENCY_PROBLEM_MAP } from "@contracts/emergency";
 /**
  * Priority dispatch, after picking the emergency: where you are, Send details, then the
  * emergency line to call. The specialist who answers sees it and adds the rest on the phone.
- * Calling is never blocked: "Call without sending" goes straight to the number.
+ * The number shows once the details are sent (or if sending fails, so a call is still possible).
  */
 export function EmergencyDialog({ problem, onClose }: { problem: string; onClose: () => void }) {
   const { t, p } = useI18n();
   const dialogRef = useRef<HTMLDivElement>(null);
   const [pin, setPin] = useState<Pin | null>(null);
   const [address, setAddress] = useState("");
-  const [skipped, setSkipped] = useState(false);
   const report = trpc.emergency.report.useMutation();
   const label = EMERGENCY_PROBLEM_MAP[problem]?.label;
-  const showLine = report.isSuccess || report.isError || skipped;
+  const showLine = report.isSuccess || report.isError;
 
   // Escape closes; the page behind doesn't scroll.
   useEffect(() => {
@@ -108,13 +107,6 @@ export function EmergencyDialog({ problem, onClose }: { problem: string; onClose
             >
               {report.isPending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
               {p(t.emergency.sendDetails)}
-            </button>
-            <button
-              type="button"
-              onClick={() => setSkipped(true)}
-              className="min-h-11 self-center px-3 text-sm font-bold text-navy/70 underline underline-offset-4"
-            >
-              {p(t.emergency.callWithoutSending)}
             </button>
           </div>
         )}
