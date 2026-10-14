@@ -100,7 +100,7 @@ export default function Admin() {
     <StaffGate access={access} onSignOut={() => void otherAccount()}>
       <div className="flex min-h-screen flex-col bg-paper">
         <Navbar />
-        <main className="mx-auto w-full max-w-7xl flex-1 px-4 pb-20 pt-24 sm:px-6">
+        <main className="staff-ui mx-auto w-full max-w-7xl flex-1 px-4 pb-20 pt-24 sm:px-6">
           <h1 className="font-display text-3xl font-black text-navy sm:text-4xl">{p(t.admin.title)}</h1>
           <p className="mt-1 text-sm text-navy/60">{p(t.admin.sub)}</p>
 
@@ -120,15 +120,15 @@ export default function Admin() {
 
           {/* PC: every section as a tab, in one row. */}
           <div className="mt-6 hidden lg:block">
-            <div role="tablist" className="inline-flex gap-1 rounded-3xl border-2 border-navy bg-white p-1">
+            <div role="tablist" className="inline-flex gap-1 rounded-xl border border-navy/12 bg-white p-1 shadow-[0_1px_2px_rgb(12_43_92/0.06)]">
               {TABS.map((k) => (
                 <button
                   key={k}
                   role="tab"
                   aria-selected={tab === k}
                   onClick={() => setTab(k)}
-                  className={`inline-flex min-h-10 shrink-0 items-center gap-2 whitespace-nowrap rounded-full px-4 text-sm font-bold transition-colors ${
-                    tab === k ? "bg-navy text-paper" : "text-navy/70 hover:text-navy"
+                  className={`inline-flex h-9 shrink-0 items-center gap-2 whitespace-nowrap rounded-lg px-3.5 text-sm font-semibold transition-colors ${
+                    tab === k ? "bg-navy text-paper" : "text-navy/65 hover:bg-navy/5 hover:text-navy"
                   }`}
                 >
                   {p(t.admin.tabs[k])}

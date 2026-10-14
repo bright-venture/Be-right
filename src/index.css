@@ -464,3 +464,88 @@
 /* Phone app: the page is drawn edge to edge, so every screen starts below the status bar
    (its top bar grows by the same height, see AppTopBar). 0 where the system makes room. */
 html.native-app body { padding-top: env(safe-area-inset-top); }
+
+/* ---------- Staff areas (admin, specialist dashboard) ----------
+   A calmer, professional look for the tools the team works in all day: thin borders,
+   soft shadows, compact controls and sentence-case labels. Customer pages keep the brand
+   style (thick outlines, offset shadows, pill buttons). */
+.staff-ui .card-br {
+  border-radius: 16px;
+  border: 1px solid rgb(12 43 92 / 0.12);
+  box-shadow: 0 1px 2px rgb(12 43 92 / 0.06);
+}
+.staff-ui .rounded-3xl,
+.staff-ui .rounded-\[28px\],
+.staff-ui .rounded-\[26px\] {
+  border-radius: 16px;
+}
+.staff-ui .btn-pill-primary,
+.staff-ui .btn-pill-outline {
+  min-height: 40px;
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-family: Rubik, Archivo, sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: normal;
+  transform: none;
+}
+.staff-ui .btn-pill-primary {
+  box-shadow: none;
+}
+.staff-ui .btn-pill-primary:hover {
+  background: #c2410c;
+  box-shadow: none;
+  transform: none;
+}
+.staff-ui .btn-pill-outline {
+  border: 1px solid rgb(12 43 92 / 0.2);
+  background: white;
+}
+.staff-ui .btn-pill-outline:hover {
+  background: rgb(12 43 92 / 0.05);
+  color: #0c2b5c;
+}
+.staff-ui .btn-pill-primary:active,
+.staff-ui .btn-pill-outline:active {
+  transform: none;
+}
+/* Thick outlines and offset ("sticker") shadows become thin borders and soft shadows. */
+.staff-ui .border-2 {
+  border-width: 1px;
+}
+.staff-ui [class*="shadow-[0_"] {
+  box-shadow: 0 1px 2px rgb(12 43 92 / 0.06);
+}
+/* Form fields: thin borders, rounded rectangles, a soft focus ring. */
+.staff-ui input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+.staff-ui select,
+.staff-ui textarea {
+  border-width: 1px;
+  border-color: rgb(12 43 92 / 0.18);
+  border-radius: 10px;
+}
+.staff-ui input:not([type="checkbox"]):not([type="radio"]):focus,
+.staff-ui select:focus,
+.staff-ui textarea:focus {
+  border-color: rgb(12 43 92 / 0.45);
+  box-shadow: 0 0 0 3px rgb(244 83 9 / 0.15);
+}
+/* Spaced capitals ("NEXT STEP") read as normal labels; the display font stays for titles. */
+.staff-ui .uppercase {
+  text-transform: none;
+  letter-spacing: normal;
+}
+.staff-ui .font-display:not(h1) {
+  font-weight: 700;
+  letter-spacing: -0.005em;
+}
+.staff-ui .tech-label {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: normal;
+}
+.staff-ui .tech-label::before {
+  display: none;
+}
