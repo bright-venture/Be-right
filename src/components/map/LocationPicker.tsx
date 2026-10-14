@@ -8,14 +8,17 @@ export type Pin = { lat: number; lng: number };
 
 /**
  * Map where the customer drops a pin on their address: tap the map, drag the pin,
- * or use the phone's location.
+ * or use the phone's location. `staff`: a compact map for a specialist placing the
+ * customer's pin (no "use my location": the specialist isn't at the address).
  */
 export default function LocationPicker({
   value,
   onChange,
+  staff = false,
 }: {
   value: Pin | null;
   onChange: (pin: Pin) => void;
+  staff?: boolean;
 }) {
   const { t, p } = useI18n();
   const el = useRef<HTMLDivElement>(null);
@@ -101,15 +104,23 @@ export default function LocationPicker({
         ref={el}
         role="application"
         aria-label={p(t.map.pickerLabel)}
-        className="h-64 w-full overflow-hidden rounded-2xl border-2 border-navy/30 sm:h-72"
+        className={
+          staff
+            ? "h-56 w-full overflow-hidden rounded-xl border border-navy/15"
+            : "h-64 w-full overflow-hidden rounded-2xl border-2 border-navy/30 sm:h-72"
+        }
       />
-      <div className="mt-3 flex flex-wrap items-center gap-3">
-        <button type="button" onClick={useMyLocation} disabled={locating} className="btn-pill-outline !min-h-11 !py-2 text-sm">
-          {locating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Crosshair className="h-4 w-4" />}
-          {p(t.map.useMyLocation)}
-        </button>
-        <p className="text-xs text-navy/70">{value ? p(t.map.dragHint) : p(t.map.tapHint)}</p>
-      </div>
+      {staff ? (
+        <p className="mt-2 text-xs text-navy/55">{value ? p(t.map.staffDragHint) : p(t.map.staffTapHint)}</p>
+      ) : (
+        <div className="mt-3 flex flex-wrap items-center gap-3">
+          <button type="button" onClick={useMyLocation} disabled={locating} className="btn-pill-outline !min-h-11 !py-2 text-sm">
+            {locating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Crosshair className="h-4 w-4" />}
+            {p(t.map.useMyLocation)}
+          </button>
+          <p className="text-xs text-navy/70">{value ? p(t.map.dragHint) : p(t.map.tapHint)}</p>
+        </div>
+      )}
       {error && (
         <p role="alert" className="mt-2 text-sm font-semibold text-destructive">
           {error}

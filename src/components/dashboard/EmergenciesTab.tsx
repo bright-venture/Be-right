@@ -1,5 +1,5 @@
 import { useState, type FormEvent, type ReactNode } from "react";
-import { CircleCheck, Loader2, Phone, Send } from "lucide-react";
+import { CircleCheck, Clock, Loader2, Phone, PhoneIncoming, Send } from "lucide-react";
 import { ServiceIcon } from "@/components/ServiceIcon";
 import LocationPicker, { type Pin } from "@/components/map/LocationPicker";
 import { useI18n } from "@/i18n";
@@ -13,14 +13,28 @@ import { QUOTE_AMOUNT_PATTERN, todayHere } from "@contracts/workflow";
 import { useLiveQueue } from "./useLiveQueue";
 
 const INPUT =
-  "mt-1.5 min-h-11 w-full rounded-xl border border-navy/20 bg-white px-3 text-sm font-semibold text-navy placeholder:font-normal placeholder:text-navy/40 focus:border-flame focus:outline-none";
-const LABEL = "text-[11px] font-bold uppercase tracking-[0.1em] text-navy/55";
-const SECTION_TITLE = "font-display text-sm font-extrabold uppercase tracking-[0.12em] text-navy/60";
+  "mt-1.5 h-10 w-full rounded-lg border border-navy/15 bg-white px-3 text-sm text-navy placeholder:text-navy/35 transition-colors focus:border-navy/40 focus:outline-none focus:ring-2 focus:ring-flame/20";
+const LABEL = "text-xs font-medium text-navy/65";
+const SECTION_TITLE = "font-display text-base font-extrabold text-navy";
 const CLOSED: readonly RequestStatus[] = ["completed", "cancelled"];
 
 /** Now, as the visit's time of day. */
 function slotNow(hour = new Date().getHours()) {
   return hour < 12 ? "morning" : hour < 17 ? "afternoon" : "evening";
+}
+
+/** A numbered part of the form: 1 Customer, 2 Problem, 3 Location. */
+function Part({ n, title, aside, children }: { n: number; title: string; aside?: ReactNode; children: ReactNode }) {
+  return (
+    <div>
+      <div className="flex items-center gap-2">
+        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-navy text-[11px] font-bold text-white">{n}</span>
+        <h3 className="text-sm font-semibold text-navy">{title}</h3>
+        {aside && <div className="ms-auto">{aside}</div>}
+      </div>
+      <div className="mt-3 flex flex-col gap-3">{children}</div>
+    </div>
+  );
 }
 
 function Field({ label, children, className = "" }: { label: string; children: ReactNode; className?: string }) {
@@ -39,7 +53,7 @@ function Field({ label, children, className = "" }: { label: string; children: R
  */
 export function EmergenciesTab() {
   return (
-    <div className="mt-8 flex flex-col gap-8">
+    <div className="mt-8 flex flex-col gap-10">
       <EmergencyJobForm />
       <OpenEmergencies />
     </div>
@@ -137,122 +151,138 @@ function EmergencyJobForm() {
   const links = pin ? directionsLinks(pin.lat, pin.lng) : null;
 
   return (
-    <section>
-      <h2 className={SECTION_TITLE}>{p(t.emergency.formTitle)}</h2>
-      <p className="mt-1 text-sm text-navy/60">{p(t.emergency.formHint)}</p>
+    <section className="overflow-hidden rounded-2xl border border-navy/15 bg-white shadow-[0_1px_2px_rgb(12_43_92/0.06)]">
+      {/* Header */}
+      <div className="flex items-start gap-3 border-b border-navy/10 px-5 py-4">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-flame/10 text-flame">
+          <PhoneIncoming className="h-5 w-5" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <h2 className="font-display text-base font-extrabold text-navy">{p(t.emergency.formTitle)}</h2>
+          <p className="mt-0.5 text-sm text-navy/60">{p(t.emergency.formHint)}</p>
+        </div>
+        <span className="hidden shrink-0 items-center gap-1.5 rounded-md bg-navy/[0.06] px-2 py-1 text-xs font-semibold text-navy/70 sm:inline-flex">
+          <Clock className="h-3.5 w-3.5" />
+          {p(t.emergency.nowChip)}
+        </span>
+      </div>
 
       {sent && (
-        <p role="status" className="mt-3 flex items-center gap-2 rounded-2xl border border-green-700/25 bg-green-700/[0.06] p-3 text-sm font-semibold text-navy">
-          <CircleCheck className="h-5 w-5 shrink-0 text-green-700" />
+        <p role="status" className="flex items-center gap-2 border-b border-green-700/15 bg-green-700/[0.06] px-5 py-3 text-sm font-medium text-navy">
+          <CircleCheck className="h-4 w-4 shrink-0 text-green-700" />
           {p(t.emergency.sentTo).replace("{name}", sent.technician).replace("{id}", String(sent.id))}
         </p>
       )}
 
-      <form
-        key={formKey}
-        onSubmit={submit}
-        className="mt-3 grid gap-5 rounded-2xl border border-navy/15 bg-white p-4 shadow-[0_1px_2px_rgb(12_43_92/0.06)] sm:p-5 lg:grid-cols-2"
-      >
-        {/* What and who */}
-        <div className="flex flex-col gap-4">
-          <Field label={p(t.emergency.serviceLabel)}>
-            <select value={category} onChange={(e) => setCategory(e.target.value)} className={INPUT}>
-              <option value="">{p(t.emergency.chooseService)}</option>
-              {CATEGORIES.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {p(c.name)}
-                </option>
-              ))}
-            </select>
-          </Field>
-          <Field label={p(t.emergency.problemLabel)}>
-            <textarea
-              value={problem}
-              onChange={(e) => setProblem(e.target.value)}
-              rows={3}
-              maxLength={2000}
-              placeholder={p(t.emergency.problemPh)}
-              className={`${INPUT} py-2.5`}
-            />
-          </Field>
-          <div className="grid grid-cols-2 gap-3">
-            <Field label={p(t.emergency.contactName)}>
-              <input value={name} onChange={(e) => setName(e.target.value)} maxLength={255} className={INPUT} />
-            </Field>
-            <Field label={p(t.emergency.contactPhone)}>
-              <input value={phone} onChange={(e) => setPhone(e.target.value)} type="tel" dir="ltr" maxLength={32} placeholder={p(t.book.phonePh)} className={INPUT} />
-            </Field>
-          </div>
-        </div>
-
-        {/* Where */}
-        <div className="flex flex-col gap-3">
-          <div className="flex items-center justify-between gap-3">
-            <p className={LABEL}>{p(t.emergency.whereLabel)}</p>
-            {links && (
-              <p className="flex gap-3 text-xs font-bold text-flame-ink">
-                <a href={links.google} target="_blank" rel="noreferrer" className="underline underline-offset-2">
-                  Google Maps
-                </a>
-                <a href={links.waze} target="_blank" rel="noreferrer" className="underline underline-offset-2">
-                  Waze
-                </a>
-              </p>
-            )}
-          </div>
-          <LocationPicker value={pin} onChange={setPin} />
-          <Field label={p(t.book.address)}>
-            <input value={address} onChange={(e) => setAddress(e.target.value)} maxLength={1000} placeholder={p(t.book.addressPh)} className={INPUT} />
-          </Field>
-        </div>
-
-        {/* Who goes, for how much */}
-        <div className="grid gap-4 border-t border-navy/10 pt-4 sm:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] lg:col-span-2">
-          <Field label={p(t.emergency.technicianLabel)}>
-            <select value={technicianId} onChange={(e) => setTechnicianId(e.target.value)} className={INPUT} disabled={technicians.isLoading}>
-              <option value="">{technicians.isLoading ? "…" : sorted.length ? p(t.emergency.chooseTechnician) : p(t.emergency.noTechnicians)}</option>
-              {matching.length > 0 && (
-                <optgroup label={p(CATEGORY_MAP[category].name)}>
-                  {matching.map((x) => (
-                    <option key={x.id} value={x.id}>
-                      {techLabel(x)}
+      <form key={formKey} onSubmit={submit}>
+        <div className="grid gap-8 p-5 lg:grid-cols-2">
+          <div className="flex flex-col gap-8">
+            <Part n={1} title={p(t.emergency.partCustomer)}>
+              <div className="grid grid-cols-2 gap-3">
+                <Field label={p(t.emergency.fieldName)}>
+                  <input value={name} onChange={(e) => setName(e.target.value)} maxLength={255} autoComplete="off" className={INPUT} />
+                </Field>
+                <Field label={p(t.emergency.fieldPhone)}>
+                  <input value={phone} onChange={(e) => setPhone(e.target.value)} type="tel" dir="ltr" maxLength={32} autoComplete="off" placeholder={p(t.book.phonePh)} className={INPUT} />
+                </Field>
+              </div>
+            </Part>
+            <Part n={2} title={p(t.emergency.partProblem)}>
+              <Field label={p(t.emergency.serviceLabel)}>
+                <select value={category} onChange={(e) => setCategory(e.target.value)} className={INPUT}>
+                  <option value="">{p(t.emergency.chooseService)}</option>
+                  {CATEGORIES.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {p(c.name)}
                     </option>
                   ))}
-                </optgroup>
-              )}
-              {others.length > 0 && (
-                <optgroup label={p(matching.length ? t.emergency.otherTechnicians : t.emergency.allTechnicians)}>
-                  {others.map((x) => (
-                    <option key={x.id} value={x.id}>
-                      {techLabel(x)}
-                    </option>
-                  ))}
-                </optgroup>
-              )}
-            </select>
-          </Field>
-          <Field label={p(t.emergency.priceLabel)}>
-            <input value={amount} onChange={(e) => setAmount(e.target.value)} inputMode="decimal" dir="ltr" placeholder="45" className={INPUT} />
-          </Field>
-        </div>
+                </select>
+              </Field>
+              <Field label={p(t.emergency.problemLabel)}>
+                <textarea
+                  value={problem}
+                  onChange={(e) => setProblem(e.target.value)}
+                  rows={3}
+                  maxLength={2000}
+                  placeholder={p(t.emergency.problemPh)}
+                  className={`${INPUT} h-auto resize-none py-2`}
+                />
+              </Field>
+            </Part>
+          </div>
 
-        <div className="flex flex-col gap-3 lg:col-span-2 lg:flex-row lg:items-center lg:justify-between">
-          <p className="text-xs leading-relaxed text-navy/60">{p(t.emergency.dispatchNote)}</p>
-          <button
-            type="submit"
-            disabled={create.isPending}
-            className="inline-flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-xl bg-flame px-6 text-sm font-semibold text-white hover:bg-flame-ink disabled:opacity-50"
+          <Part
+            n={3}
+            title={p(t.emergency.partLocation)}
+            aside={
+              links && (
+                <span className="flex gap-3 text-xs font-semibold text-flame-ink">
+                  <a href={links.google} target="_blank" rel="noreferrer" className="hover:underline">
+                    Google Maps
+                  </a>
+                  <a href={links.waze} target="_blank" rel="noreferrer" className="hover:underline">
+                    Waze
+                  </a>
+                </span>
+              )
+            }
           >
-            {create.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-            {p(t.emergency.sendTech)}
-          </button>
+            <LocationPicker value={pin} onChange={setPin} staff />
+            <Field label={p(t.book.address)}>
+              <input value={address} onChange={(e) => setAddress(e.target.value)} maxLength={1000} placeholder={p(t.book.addressPh)} className={INPUT} />
+            </Field>
+          </Part>
         </div>
 
-        {(missing || create.error) && (
-          <p role="alert" className="text-sm font-semibold text-red-700 lg:col-span-2">
-            {missing ?? create.error?.message}
-          </p>
-        )}
+        {/* Dispatch bar */}
+        <div className="border-t border-navy/10 bg-paper/70 px-5 py-4">
+          <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_10rem_auto] sm:items-end">
+            <Field label={p(t.emergency.technicianLabel)}>
+              <select value={technicianId} onChange={(e) => setTechnicianId(e.target.value)} className={INPUT} disabled={technicians.isLoading}>
+                <option value="">{technicians.isLoading ? "…" : sorted.length ? p(t.emergency.chooseTechnician) : p(t.emergency.noTechnicians)}</option>
+                {matching.length > 0 && (
+                  <optgroup label={p(CATEGORY_MAP[category].name)}>
+                    {matching.map((x) => (
+                      <option key={x.id} value={x.id}>
+                        {techLabel(x)}
+                      </option>
+                    ))}
+                  </optgroup>
+                )}
+                {others.length > 0 && (
+                  <optgroup label={p(matching.length ? t.emergency.otherTechnicians : t.emergency.allTechnicians)}>
+                    {others.map((x) => (
+                      <option key={x.id} value={x.id}>
+                        {techLabel(x)}
+                      </option>
+                    ))}
+                  </optgroup>
+                )}
+              </select>
+            </Field>
+            <Field label={p(t.emergency.priceLabel)}>
+              <div className="relative">
+                <span className="pointer-events-none absolute inset-y-0 start-3 mt-1.5 flex items-center text-sm text-navy/45">$</span>
+                <input value={amount} onChange={(e) => setAmount(e.target.value)} inputMode="decimal" dir="ltr" placeholder="45" className={`${INPUT} ps-7`} />
+              </div>
+            </Field>
+            <button
+              type="submit"
+              disabled={create.isPending}
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-flame px-5 text-sm font-semibold text-white transition-colors hover:bg-flame-ink disabled:opacity-50"
+            >
+              {create.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+              {p(t.emergency.sendTech)}
+            </button>
+          </div>
+          {missing || create.error ? (
+            <p role="alert" className="mt-2 text-sm font-medium text-red-700">
+              {missing ?? create.error?.message}
+            </p>
+          ) : (
+            <p className="mt-2 text-xs text-navy/55">{p(t.emergency.dispatchNote)}</p>
+          )}
+        </div>
       </form>
     </section>
   );
