@@ -98,7 +98,10 @@ export const authRouter = createRouter({
           .where(and(inArray(requestEvents.requestId, ids), eq(requestEvents.actorId, user.id)));
       }
       // Emergency button entries keep what happened, not who.
-      await tx.update(emergencyCalls).set({ name: null, phone: null }).where(eq(emergencyCalls.userId, user.id));
+      await tx
+        .update(emergencyCalls)
+        .set({ name: null, phone: null, address: null, lat: null, lng: null })
+        .where(eq(emergencyCalls.userId, user.id));
       await tx
         .update(users)
         // deletedAt also shuts out the old sign-in while it is still valid (see findOrCreateUser).

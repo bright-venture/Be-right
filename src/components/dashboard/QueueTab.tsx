@@ -172,12 +172,17 @@ export function QueueTab({ onGoToApplications }: { onGoToApplications?: () => vo
                     #{r.id} · {CATEGORY_MAP[r.category] ? p(CATEGORY_MAP[r.category].name) : r.category}
                   </span>
                   <span className="block truncate text-xs text-navy/70">
-                    {customerName ?? customerEmail ?? "-"} · {r.area}
+                    {customerName ?? r.contactName ?? customerEmail ?? "-"} · {r.area}
                   </span>
                   <span className="mt-1 flex flex-wrap items-center gap-1.5">
                     <span className="rounded-full border border-navy/25 px-2 py-px text-[10px] font-bold text-navy">
                       {p(t.status[status])}
                     </span>
+                    {r.emergency && (
+                      <span className="rounded-full bg-flame px-2 py-px text-[10px] font-bold text-white">
+                        {p(t.emergency.badge)}
+                      </span>
+                    )}
                     {r.guaranteeFor && (
                       <span className="rounded-full bg-bird px-2 py-px text-[10px] font-bold text-white">
                         {p(t.requests.guaranteeBadge)}

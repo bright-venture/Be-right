@@ -151,6 +151,11 @@ export default function Tech() {
                       <p className="text-xs text-navy/70">
                         {p(t.tech.appointment)}: {r.preferredDate} · {r.timeSlot}
                       </p>
+                      {r.emergency && (
+                        <p className="mt-1 inline-flex rounded-full bg-flame px-2 py-px text-[11px] font-bold text-white">
+                          {p(t.emergency.badge)}
+                        </p>
+                      )}
                       {r.guaranteeFor && (
                         <p className="mt-1 text-xs font-bold text-bird">
                           {p(t.requests.guaranteeFor).replace("{id}", String(r.guaranteeFor))}
@@ -166,6 +171,7 @@ export default function Tech() {
                 <div className="mt-4 rounded-2xl border-2 border-navy/15 bg-paper p-4 text-sm text-navy/80">
                   <p className="font-bold text-navy">{r.area}</p>
                   <p>{r.address}</p>
+                  {r.contactName && <p className="mt-1 font-semibold text-navy">{r.contactName}</p>}
                   <p dir="ltr" className="mt-1 text-start">{r.phone}</p>
                   {r.notes && <p className="mt-1 italic">{r.notes}</p>}
                 </div>

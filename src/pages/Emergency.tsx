@@ -1,9 +1,10 @@
 import { useState, type FormEvent } from "react";
 import { useSearchParams } from "react-router";
-import { AlertTriangle, Check, Loader2, Phone, Siren } from "lucide-react";
+import { AlertTriangle, Check, Loader2, MapPin, Phone, Siren } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { ServiceIcon } from "@/components/ServiceIcon";
+import LocationPicker, { type Pin } from "@/components/map/LocationPicker";
 import { useAuth } from "@/hooks/useAuth";
 import { useI18n } from "@/i18n";
 import { trpc } from "@/providers/trpc";
@@ -21,9 +22,10 @@ const CHOICE =
   "flex min-h-16 items-center gap-3 rounded-[22px] border-[1.5px] border-navy/15 bg-white p-4 text-start font-display text-sm font-extrabold text-navy shadow-[0_3px_0_rgb(12_43_92/0.1)] transition-all hover:-translate-y-0.5 hover:border-navy hover:shadow-[0_5px_0_rgb(12_43_92/0.9)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-flame";
 
 /**
- * The Emergency button: pick the service, then what's wrong, then call the emergency line.
- * While there is no line yet (COMPANY.emergencyPhone), the customer asks to be called back.
- * Each step is in the address (?cat=…&problem=…), so the phone's Back button goes back a step.
+ * The Emergency button: pick the service, then what's wrong, then share where you are, then
+ * call the emergency line. While there is no line yet (COMPANY.emergencyPhone), the customer
+ * asks to be called back. Each step is in the address (?cat=…&problem=…&at=call), so the
+ * phone's Back button goes back a step.
  */
 export default function Emergency() {
   const { t, p } = useI18n();
@@ -34,12 +36,13 @@ export default function Emergency() {
   const asked = params.get("problem") ?? "";
   const problem =
     entry && (asked === OTHER_EMERGENCY || entry.problems.some((x) => x.id === asked)) ? asked : null;
-  const step = !category ? 1 : !problem ? 2 : 3;
+  const step = !category ? 1 : !problem ? 2 : params.get("at") !== "call" ? 3 : 4;
 
-  const go = (next: { cat?: string; problem?: string }) => {
+  const go = (next: { cat?: string; problem?: string; call?: boolean }) => {
     const updated = new URLSearchParams();
     if (next.cat) updated.set("cat", next.cat);
     if (next.problem) updated.set("problem", next.problem);
+    if (next.call) updated.set("at", "call");
     setParams(updated);
     window.scrollTo({ top: 0, behavior: "instant" });
   };
@@ -52,6 +55,11 @@ export default function Emergency() {
   const [phoneInput, setPhone] = useState<string | null>(null);
   const name = nameInput ?? user?.name ?? "";
   const phone = phoneInput ?? user?.phone ?? "";
+
+  // Where the customer is: the team sees it on the map and can send a technician at once.
+  const [pin, setPin] = useState<Pin | null>(null);
+  const [address, setAddress] = useState("");
+  const where = { lat: pin?.lat, lng: pin?.lng, address: address.trim() || undefined };
 
   const report = trpc.emergency.report.useMutation();
   const [sent, setSent] = useState(false);
@@ -68,6 +76,7 @@ export default function Emergency() {
       kind: "call",
       name: name.trim() || undefined,
       phone: isValidPhone(phone) ? phone.trim() : undefined,
+      ...where,
     });
   };
 
@@ -77,7 +86,7 @@ export default function Emergency() {
     if (!isValidPhone(phone)) return setError(p(t.misc.phoneInvalid));
     setError(null);
     report.mutate(
-      { category, problem, kind: "callback", name: name.trim(), phone: phone.trim() },
+      { category, problem, kind: "callback", name: name.trim(), phone: phone.trim(), ...where },
       { onSuccess: () => setSent(true), onError: (err) => setError(failure(err)) },
     );
   };
@@ -133,7 +142,7 @@ export default function Emergency() {
           {p(t.emergency.danger)}
         </p>
 
-        <p className="mt-6 font-display text-xs font-bold uppercase tracking-[0.2em] text-navy/60">{step} / 3</p>
+        <p className="mt-6 font-display text-xs font-bold uppercase tracking-[0.2em] text-navy/60">{step} / 4</p>
 
         {/* Step 1: the service. Six services: two rows of three (three rows of two on phones). */}
         {step === 1 && (
@@ -160,6 +169,12 @@ export default function Emergency() {
               {p(CATEGORY_MAP[category].name)}
               {problem && ` · ${p(emergencyLabel(category, problem))}`}
             </span>
+            {step === 4 && pin && (
+              <span className="inline-flex items-center gap-1 rounded-md bg-navy/[0.06] px-1.5 py-0.5 text-[11px] font-bold text-navy/70">
+                <MapPin className="h-3 w-3" />
+                {p(t.emergency.locationShared)}
+              </span>
+            )}
             <button
               type="button"
               onClick={() => go(problem ? { cat: category } : {})}
@@ -192,8 +207,46 @@ export default function Emergency() {
           </section>
         )}
 
-        {/* Step 3: call (or, without a line yet, ask to be called back). */}
-        {step === 3 && (
+        {/* Step 3: where you are. Skippable, so a map that won't load never blocks the call. */}
+        {step === 3 && category && problem && (
+          <section className="mt-5 flex flex-col gap-4 animate-rise-in">
+            <div>
+              <h2 className="font-display text-xl font-extrabold text-navy">{p(t.emergency.whereQ)}</h2>
+              <p className="mt-1 text-sm text-navy/70">{p(t.emergency.whereHint)}</p>
+            </div>
+            <LocationPicker value={pin} onChange={setPin} />
+            <label className="block">
+              <span className={LABEL}>{p(t.book.address)}</span>
+              <input
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                autoComplete="street-address"
+                maxLength={1000}
+                placeholder={p(t.book.addressPh)}
+                className={INPUT}
+              />
+            </label>
+            <button
+              type="button"
+              onClick={() => go({ cat: category, problem, call: true })}
+              disabled={!pin}
+              className="btn-pill-primary min-h-14 justify-center text-lg disabled:opacity-40"
+            >
+              <MapPin className="h-5 w-5" />
+              {p(t.emergency.shareAndContinue)}
+            </button>
+            <button
+              type="button"
+              onClick={() => go({ cat: category, problem, call: true })}
+              className="min-h-11 self-center px-3 text-sm font-bold text-navy/70 underline underline-offset-4"
+            >
+              {p(t.emergency.skipLocation)}
+            </button>
+          </section>
+        )}
+
+        {/* Step 4: call (or, without a line yet, ask to be called back). */}
+        {step === 4 && (
           <section className="mt-5 flex flex-col gap-4 animate-rise-in">
             {danger && (
               <p role="alert" className="flex items-start gap-2.5 rounded-2xl bg-red-700 p-4 text-sm font-bold text-white">

@@ -85,6 +85,9 @@ export function RequestDetail({
             </p>
           )}
         </div>
+        {r.emergency && (
+          <span className="rounded-full bg-flame px-3 py-1 text-xs font-bold text-white">{p(t.emergency.badge)}</span>
+        )}
         <span className="rounded-full border-2 border-navy/25 px-3 py-1 text-xs font-bold text-navy">
           {p(t.status[status])}
         </span>
@@ -104,7 +107,7 @@ export function RequestDetail({
         <div className="flex flex-col gap-5">
           <section className="rounded-2xl border-2 border-navy/15 bg-paper p-4 text-sm">
             <p className={LABEL}>{p(t.dash.customer)}</p>
-            <p className="mt-2 font-bold text-navy">{d.customer?.name ?? "-"}</p>
+            <p className="mt-2 font-bold text-navy">{d.customer?.name ?? r.contactName ?? "-"}</p>
             {d.customer?.email && <p className="text-navy/70">{d.customer.email}</p>}
             <p className="mt-1 text-navy/70" dir="ltr">
               {r.phone}

@@ -115,7 +115,7 @@ export const specialistRouter = createRouter({
     const row = await findRequest(db, input.id, "any");
     const active = ACTIVE_JOB_STATUSES.includes(row.status);
     const [customer, media, events, loc, tech] = await Promise.all([
-      db.query.users.findFirst({ where: eq(users.id, row.userId) }),
+      row.userId ? db.query.users.findFirst({ where: eq(users.id, row.userId) }) : undefined,
       db.select().from(requestMedia).where(eq(requestMedia.requestId, row.id)),
       db
         .select()

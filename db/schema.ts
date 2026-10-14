@@ -76,9 +76,12 @@ export const serviceRequests = pgTable(
   "service_requests",
   {
     id: serial("id").primaryKey(),
-    userId: integer("user_id")
-      .notNull()
-      .references(() => users.id),
+    /** The customer's account; empty for an emergency sent to someone without one. */
+    userId: integer("user_id").references(() => users.id),
+    /** The customer's name when there is no account (emergencies). */
+    contactName: varchar("contact_name", { length: 255 }),
+    /** Sent from the Emergency button: price agreed on the phone, technician sent at once. */
+    emergency: boolean("emergency").default(false).notNull(),
     technicianId: integer("technician_id").references(() => users.id),
     category: varchar("category", { length: 64 }).notNull(),
     answers: text("answers").notNull(), // JSON: Record<string, string>
@@ -302,6 +305,12 @@ export const emergencyCalls = pgTable(
     phone: varchar("phone", { length: 32 }),
     /** "call": they phoned the emergency line; "callback": they asked to be called. */
     kind: varchar("kind", { length: 16 }).$type<"call" | "callback">().notNull(),
+    /** Where the customer is: shared on the Emergency page, or set by the specialist. */
+    lat: doublePrecision("lat"),
+    lng: doublePrecision("lng"),
+    address: text("address"),
+    /** The job created when a technician was sent. */
+    requestId: integer("request_id").references(() => serviceRequests.id, { onDelete: "set null" }),
     handledAt: timestamp("handled_at", { withTimezone: true }),
     handledBy: integer("handled_by").references(() => users.id, { onDelete: "set null" }),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),

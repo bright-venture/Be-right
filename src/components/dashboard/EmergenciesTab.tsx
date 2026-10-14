@@ -1,8 +1,9 @@
-import type { ReactNode } from "react";
-import { Check, Loader2, MessageCircle, Phone, PhoneIncoming, PhoneOutgoing } from "lucide-react";
+import { useState, type ReactNode } from "react";
+import { Check, Loader2, MapPin, MessageCircle, Phone, PhoneIncoming, PhoneOutgoing, Send, Wrench } from "lucide-react";
 import type { inferRouterOutputs } from "@trpc/server";
 import type { AppRouter } from "../../../server/router";
 import { ServiceIcon } from "@/components/ServiceIcon";
+import { DispatchPanel } from "./DispatchPanel";
 import { useI18n } from "@/i18n";
 import { trpc } from "@/providers/trpc";
 import { telLink, whatsappLink } from "@/lib/contact";
@@ -79,6 +80,7 @@ function EmergencyRow({ e }: { e: Emergency }) {
   const { t, p, lang } = useI18n();
   const utils = trpc.useUtils();
   const markHandled = trpc.emergency.markHandled.useMutation({ onSettled: () => utils.emergency.list.invalidate() });
+  const [dispatching, setDispatching] = useState(false);
   const open = !e.handledAt;
   const callback = e.kind === "callback";
   const KindIcon = callback ? PhoneIncoming : PhoneOutgoing;
@@ -111,6 +113,12 @@ function EmergencyRow({ e }: { e: Emergency }) {
                 {p(callback ? t.emergency.callback : t.emergency.calling)}
               </span>
             </div>
+            {e.address && (
+              <p className="mt-1 flex items-start gap-1 text-xs text-navy/70">
+                <MapPin className="mt-px h-3.5 w-3.5 shrink-0 text-flame" />
+                <span className="line-clamp-2">{e.address}</span>
+              </p>
+            )}
             <p className="mt-0.5 text-xs text-navy/60">
               {service} · <time dateTime={new Date(e.createdAt).toISOString()} title={formatMoment(e.createdAt, lang)}>{timeAgo(e.createdAt, lang)}</time>
             </p>
@@ -129,9 +137,9 @@ function EmergencyRow({ e }: { e: Emergency }) {
           <p className="border-t border-navy/10 pt-3 text-sm text-navy/50 lg:border-0 lg:pt-0">{p(t.emergency.noContact)}</p>
         )}
 
-        {/* Actions: three even buttons on phones, a compact row on computers. */}
+        {/* Actions: two rows of two on phones, a compact row on computers. */}
         {open ? (
-          <div className="grid grid-cols-3 gap-2 lg:flex lg:justify-end">
+          <div className="grid grid-cols-2 gap-2 lg:flex lg:justify-end">
             {e.phone ? (
               <a href={telLink(e.phone)} className={`${ACTION} bg-flame text-white hover:bg-flame-ink`}>
                 <Phone className="h-4 w-4 shrink-0" />
@@ -161,6 +169,15 @@ function EmergencyRow({ e }: { e: Emergency }) {
             )}
             <button
               type="button"
+              onClick={() => setDispatching((v) => !v)}
+              aria-expanded={dispatching}
+              className={`${ACTION} ${dispatching ? "bg-navy/90" : "bg-navy"} text-white hover:bg-navy/90`}
+            >
+              <Send className="h-4 w-4 shrink-0" />
+              <span className="truncate">{p(t.emergency.sendTech)}</span>
+            </button>
+            <button
+              type="button"
               onClick={() => markHandled.mutate({ id: e.id })}
               disabled={markHandled.isPending}
               className={`${ACTION} border border-navy/15 text-navy hover:bg-navy/5`}
@@ -169,6 +186,13 @@ function EmergencyRow({ e }: { e: Emergency }) {
               <span className="truncate">{p(t.emergency.markHandled)}</span>
             </button>
           </div>
+        ) : e.requestId ? (
+          <p className="flex items-center gap-1.5 text-xs font-semibold text-navy/70 lg:justify-end">
+            <Wrench className="h-3.5 w-3.5 text-flame" />
+            {p(t.emergency.sentTo)
+              .replace("{name}", e.technicianName ?? "-")
+              .replace("{id}", String(e.requestId))}
+          </p>
         ) : (
           <p className="flex items-center gap-1.5 text-xs font-semibold text-navy/55 lg:justify-end">
             <Check className="h-3.5 w-3.5" />
@@ -176,6 +200,7 @@ function EmergencyRow({ e }: { e: Emergency }) {
           </p>
         )}
       </div>
+      {open && dispatching && <DispatchPanel e={e} onClose={() => setDispatching(false)} />}
     </li>
   );
 }

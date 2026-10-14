@@ -119,7 +119,7 @@ async function loadJob(id: number) {
   const request = await db.query.serviceRequests.findFirst({ where: eq(serviceRequests.id, id) });
   if (!request) throw new Error(`Request ${id} not found`);
   const [customer, technician] = await Promise.all([
-    db.query.users.findFirst({ where: eq(users.id, request.userId) }),
+    request.userId ? db.query.users.findFirst({ where: eq(users.id, request.userId) }) : undefined,
     request.technicianId ? db.query.users.findFirst({ where: eq(users.id, request.technicianId) }) : undefined,
   ]);
   return { request, customer, technician };
@@ -576,6 +576,42 @@ export const notify = {
       });
     }),
 
+  /** A technician was sent to an emergency: they go now; a signed-in customer is told who is coming. */
+  emergencyDispatched: (id: number) =>
+    safely("emergencyDispatched", async () => {
+      const job = await loadJob(id);
+      const d = describe(job);
+      const contact = job.customer?.name ?? job.request.contactName;
+      await send([job.technician?.email], {
+        subject: both(`Emergency job #${d.id}: ${d.category.en}, ${d.area}`, `مهمة طارئة #${d.id}: ${d.category.ar}، ${d.area}`),
+        title: both("Emergency: please go now", "حالة طارئة: يُرجى التوجّه الآن"),
+        lines: [
+          both(`${d.category.en} in ${d.area}. The price was agreed with the customer on the phone.`, `${d.category.ar} في ${d.area}. تم الاتفاق على السعر مع العميل عبر الهاتف.`),
+          both(
+            `The address, the map and the customer's number${contact ? ` (${contact})` : ""} are in your jobs.`,
+            `العنوان والخريطة ورقم العميل${contact ? ` (${contact})` : ""} موجودة في مهامك.`,
+          ),
+        ],
+        path: "/tech",
+        button: both("Open my jobs", "فتح مهامي"),
+      });
+      const techName = job.technician?.name;
+      await send([job.customer?.email], {
+        subject: both("A technician is on the way", "فنّي في الطريق إليك"),
+        title: both("Help is on the way", "المساعدة في الطريق"),
+        lines: [
+          both(`${d.category.en}: we're sending a technician now.`, `${d.category.ar}: نرسل إليك فنّياً الآن.`),
+          ...(techName ? [both(`Your technician: ${techName}.`, `الفنّي المكلّف: ${techName}.`)] : []),
+          both(
+            "When they're on the way, you can follow them on the map in your requests.",
+            "عندما يكون في الطريق، يمكنك متابعته على الخريطة في صفحة طلباتك.",
+          ),
+        ],
+        path: "/requests",
+        button: both("See my request", "عرض طلبي"),
+      });
+    }),
+
   /** Someone used the Emergency button: they are calling now, or want to be called back. */
   emergencyReported: (id: number) =>
     safely("emergencyReported", async () => {
@@ -593,6 +629,7 @@ export const notify = {
         lines: [
           both(`${service.en}: ${problem.en}.`, `${service.ar}: ${problem.ar}.`),
           ...(who ? [both(`Contact: ${who}.`, `جهة الاتصال: ${who}.`)] : []),
+          ...(call.address ? [both(`Address: ${call.address}.`, `العنوان: ${call.address}.`)] : []),
         ],
         path: "/dashboard?tab=emergencies",
         button: both("Open emergencies", "فتح حالات الطوارئ"),

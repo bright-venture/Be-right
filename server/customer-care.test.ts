@@ -228,6 +228,72 @@ describe("ratings", () => {
   });
 });
 
+describe("sending a technician to an emergency", () => {
+  const PIN = { lat: 51.5072, lng: -0.1276 };
+  const today = () => new Intl.DateTimeFormat("en-CA").format(new Date());
+  const dispatchInput = (id: number) => ({
+    id,
+    technicianId: tech.id,
+    amount: "60",
+    name: "Rami",
+    phone: "+44 20 7946 0123",
+    address: "221B Baker Street, London",
+    ...PIN,
+    visitDate: today(),
+    timeSlot: "evening" as const,
+  });
+
+  it("turns a guest's emergency into a scheduled job for the technician, followed by phone", async () => {
+    const { id } = await (await callerFor()).emergency.report({
+      category: "plumbing",
+      problem: "leak",
+      kind: "callback",
+      name: "Rami",
+      phone: "+44 20 7946 0123",
+      ...PIN,
+      address: "221B Baker Street, London",
+    });
+    state.sent.length = 0;
+    const s = await callerFor(admin);
+    const { requestId } = await s.emergency.dispatch(dispatchInput(id));
+
+    const job = (await s.specialist.detail({ id: requestId })).request;
+    expect(job).toMatchObject({
+      status: "scheduled",
+      emergency: true,
+      userId: null,
+      contactName: "Rami",
+      technicianId: tech.id,
+      quoteAmount: "60",
+      category: "plumbing",
+    });
+    expect((await (await callerFor(tech)).tech.myJobs()).map((j) => j.id)).toContain(requestId);
+    expect(state.sent.find((m) => m.to.includes("ali@example.com"))?.subject).toContain("Emergency job");
+    const entry = (await s.emergency.list()).find((e) => e.id === id);
+    expect(entry).toMatchObject({ requestId, technicianName: "Ali" });
+    expect(entry?.handledAt).toBeInstanceOf(Date);
+    // Once is enough.
+    await rejected(s.emergency.dispatch(dispatchInput(id)));
+  });
+
+  it("puts a signed-in customer's emergency in their requests", async () => {
+    const caller = await makeUser("emergency-account@example.com", "Lina");
+    const { id } = await (await callerFor(caller)).emergency.report({ category: "electrical", problem: "no-power", kind: "call" });
+    const { requestId } = await (await callerFor(admin)).emergency.dispatch(dispatchInput(id));
+    expect((await (await callerFor(caller)).requests.mine()).map((r) => r.id)).toContain(requestId);
+  });
+
+  it("only lets staff send, to a real technician, with a pin, a phone and a price", async () => {
+    const { id } = await (await callerFor()).emergency.report({ category: "locksmith", problem: "locked-out", kind: "call" });
+    await rejected((await callerFor(customer)).emergency.dispatch(dispatchInput(id)), "FORBIDDEN");
+    const s = await callerFor(admin);
+    await rejected(s.emergency.dispatch({ ...dispatchInput(id), technicianId: customer.id }));
+    await rejected(s.emergency.dispatch({ ...dispatchInput(id), lat: 0, lng: 0 }));
+    await rejected(s.emergency.dispatch({ ...dispatchInput(id), phone: "123" }));
+    await rejected(s.emergency.dispatch({ ...dispatchInput(id), amount: "a lot" }));
+  });
+});
+
 describe("the Emergency button", () => {
   it("logs a call for the team and emails the specialists", async () => {
     const visitor = await callerFor();
