@@ -2,8 +2,7 @@
 // Called by the routers after a change has been saved. A failed email is logged and
 // never undoes or blocks the change itself.
 import { and, count, eq, inArray } from "drizzle-orm";
-import { emergencyCalls, requestEvents, serviceRequests, technicianApplications, users } from "@db/schema";
-import { emergencyLabel } from "@contracts/emergency";
+import { requestEvents, serviceRequests, technicianApplications, users } from "@db/schema";
 import { CATEGORY_MAP, type LocalText } from "@contracts/services";
 import { arabicDays, WORKMANSHIP_GUARANTEE_DAYS } from "@contracts/legal";
 import { t } from "@contracts/i18n";
@@ -576,12 +575,12 @@ export const notify = {
       });
     }),
 
-  /** A technician was sent to an emergency: they go now; a signed-in customer is told who is coming. */
+  /** A specialist sent a technician to an emergency call: they go now. */
   emergencyDispatched: (id: number) =>
     safely("emergencyDispatched", async () => {
       const job = await loadJob(id);
       const d = describe(job);
-      const contact = job.customer?.name ?? job.request.contactName;
+      const contact = job.request.contactName;
       await send([job.technician?.email], {
         subject: both(`Emergency job #${d.id}: ${d.category.en}, ${d.area}`, `مهمة طارئة #${d.id}: ${d.category.ar}، ${d.area}`),
         title: both("Emergency: please go now", "حالة طارئة: يُرجى التوجّه الآن"),
@@ -594,45 +593,6 @@ export const notify = {
         ],
         path: "/tech",
         button: both("Open my jobs", "فتح مهامي"),
-      });
-      const techName = job.technician?.name;
-      await send([job.customer?.email], {
-        subject: both("A technician is on the way", "فنّي في الطريق إليك"),
-        title: both("Help is on the way", "المساعدة في الطريق"),
-        lines: [
-          both(`${d.category.en}: we're sending a technician now.`, `${d.category.ar}: نرسل إليك فنّياً الآن.`),
-          ...(techName ? [both(`Your technician: ${techName}.`, `الفنّي المكلّف: ${techName}.`)] : []),
-          both(
-            "When they're on the way, you can follow them on the map in your requests.",
-            "عندما يكون في الطريق، يمكنك متابعته على الخريطة في صفحة طلباتك.",
-          ),
-        ],
-        path: "/requests",
-        button: both("See my request", "عرض طلبي"),
-      });
-    }),
-
-  /** Someone used the Emergency button: they are calling now, or want to be called back. */
-  emergencyReported: (id: number) =>
-    safely("emergencyReported", async () => {
-      const call = await getDb().query.emergencyCalls.findFirst({ where: eq(emergencyCalls.id, id) });
-      if (!call) return;
-      const service = local(CATEGORY_MAP[call.category]?.name, call.category);
-      const problem = emergencyLabel(call.category, call.problem);
-      const who = call.name || call.phone ? `${call.name ?? ""}${call.name && call.phone ? ", " : ""}${call.phone ?? ""}` : null;
-      await send(await specialistEmails(), {
-        subject: both(`Emergency: ${problem.en} (${service.en})`, `طوارئ: ${problem.ar} (${service.ar})`),
-        title:
-          call.kind === "callback"
-            ? both("Someone needs a call back now", "شخص بحاجة إلى معاودة الاتصال الآن")
-            : both("Someone is calling the emergency line", "شخص يتصل بخط الطوارئ"),
-        lines: [
-          both(`${service.en}: ${problem.en}.`, `${service.ar}: ${problem.ar}.`),
-          ...(who ? [both(`Contact: ${who}.`, `جهة الاتصال: ${who}.`)] : []),
-          ...(call.address ? [both(`Address: ${call.address}.`, `العنوان: ${call.address}.`)] : []),
-        ],
-        path: "/dashboard?tab=emergencies",
-        button: both("Open emergencies", "فتح حالات الطوارئ"),
       });
     }),
 };

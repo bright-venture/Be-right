@@ -5,7 +5,6 @@ import Home from './pages/Home'
 import { isAppUi } from './lib/native'
 
 const Book = lazy(() => import('./pages/Book'))
-const Emergency = lazy(() => import('./pages/Emergency'))
 const Requests = lazy(() => import('./pages/Requests'))
 const Dashboard = lazy(() => import('./pages/Dashboard'))
 const Admin = lazy(() => import('./pages/Admin'))
@@ -47,7 +46,6 @@ export default function App() {
         <Route path="/" element={isAppUi ? <AppHome /> : <Home />} />
         {isAppUi && <Route path="/services" element={<AppServices />} />}
         <Route path="/book" element={<Book />} />
-        <Route path="/emergency" element={<Emergency />} />
         <Route path="/requests" element={isAppUi ? <AppRequests /> : <Requests />} />
         {isAppUi && <Route path="/requests/:id" element={<AppRequest />} />}
         <Route path="/dashboard" element={<Dashboard />} />

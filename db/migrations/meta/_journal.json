@@ -183,6 +183,13 @@
       "when": 1791960776285,
       "tag": "0025_emergency_dispatch",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1791965668608,
+      "tag": "0026_drop_emergency_calls",
+      "breakpoints": true
     }
   ]
 }

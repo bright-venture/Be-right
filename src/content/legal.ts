@@ -8,7 +8,6 @@ import {
   WORKMANSHIP_GUARANTEE_DAYS as GUARANTEE_DAYS,
   arabicDays,
 } from "@contracts/legal";
-import { EMERGENCY_RETENTION_DAYS as EMERGENCY_DAYS } from "@contracts/emergency";
 import type { LocalText } from "@contracts/services";
 
 export type LegalSection = { title: LocalText; paragraphs: LocalText[] };
@@ -31,8 +30,8 @@ export const TERMS: LegalDocument = {
           "بي رايت خدمة صيانة منزلية مُدارة. تصف المشكلة عبر أسئلة موجّهة وصور؛ يراجعها مختص من بي رايت، ويعدّ عرض سعر، ويعيّن فنياً مؤهلاً متعاقداً يتولّى تنفيذ العمل.",
         ),
         t(
-          "For urgent repairs, the Emergency button puts you in touch with our team by phone; we send help as fast as we can but can't promise an arrival time. Be Right is not an emergency service: if there is fire, a gas smell, sparks or any immediate danger, leave the area and call your local emergency number before contacting us.",
-          "للإصلاحات العاجلة، يتيح لك زر «طوارئ» التواصل مع فريقنا عبر الهاتف؛ نرسل المساعدة بأسرع ما يمكن لكن لا يمكننا ضمان موعد الوصول. بي رايت ليست خدمة طوارئ: في حال وجود حريق أو رائحة غاز أو شرر أو أي خطر فوري، ابتعد عن المكان واتصل برقم الطوارئ المحلي قبل التواصل معنا.",
+          "For urgent repairs, call our emergency line (the Emergency button shows the number); we send a technician as fast as we can but can't promise an arrival time. Be Right is not an emergency service: if there is fire, a gas smell, sparks or any immediate danger, leave the area and call your local emergency number before contacting us.",
+          "للإصلاحات العاجلة، اتصل بخط الطوارئ (يعرض زر «طوارئ» الرقم)؛ نرسل فنّياً بأسرع ما يمكن لكن لا يمكننا ضمان موعد الوصول. بي رايت ليست خدمة طوارئ: في حال وجود حريق أو رائحة غاز أو شرر أو أي خطر فوري، ابتعد عن المكان واتصل برقم الطوارئ المحلي قبل التواصل معنا.",
         ),
       ],
     },
@@ -155,8 +154,8 @@ export const PRIVACY: LegalDocument = {
           "الحجوزات: الخدمة المطلوبة وأجوبتك على الأسئلة الموجّهة والصور والفيديوهات التي ترفعها، وصور مكان العمل التي يلتقطها الفني قبل المهمة وبعدها، وعنوان الزيارة وموقعه على الخريطة والتاريخ المفضل والملاحظات، وسجل حالة كل طلب، وأي تقييم أو تعليق تتركه بعد إنجاز المهمة.",
         ),
         t(
-          "Emergency button: the service and what's wrong that you pick, whether you called or asked to be called back, and the name and phone number you give (optional when you call).",
-          "زر الطوارئ: الخدمة وما حدث كما تختاره، وما إذا اتصلت أو طلبت معاودة الاتصال، والاسم ورقم الهاتف اللذان تقدّمهما (اختياريان عند الاتصال).",
+          "Emergency calls: when you call our emergency line, the specialist records your name, phone number, the address and what's wrong, to send a technician. This becomes a job like any booking.",
+          "مكالمات الطوارئ: عند اتصالك بخط الطوارئ، يسجّل المختص اسمك ورقم هاتفك والعنوان وما حدث، لإرسال فنّي. ويصبح ذلك مهمة مثل أي حجز.",
         ),
         t(
           "Technician location: only while a job is active and only after the technician turns on location sharing; we keep the latest position for that job.",
@@ -202,8 +201,8 @@ export const PRIVACY: LegalDocument = {
       title: t("4. How long we keep it", "٤. مدة الاحتفاظ بها"),
       paragraphs: [
         t(
-          `Account and booking records: while your account is open and afterwards as long as needed for warranty, accounting and legal purposes. Emergency button entries: deleted after ${EMERGENCY_DAYS} days. Documents of rejected applicants: deleted within ${REJECT_DAYS} days. Documents of technicians who work with us: kept while they work with us and as required by law afterwards.`,
-          `سجلات الحساب والحجوزات: طوال فترة فتح حسابك، وبعدها للمدة اللازمة لأغراض الضمان والمحاسبة والقانون. بيانات زر الطوارئ: تُحذف بعد ${EMERGENCY_DAYS} يوماً. مستندات المتقدّمين المرفوضين: تُحذف خلال ${REJECT_DAYS} يوماً. مستندات الفنيين العاملين معنا: يُحتفظ بها طوال فترة عملهم معنا وبعدها وفق ما يفرضه القانون.`,
+          `Account and booking records: while your account is open and afterwards as long as needed for warranty, accounting and legal purposes. Documents of rejected applicants: deleted within ${REJECT_DAYS} days. Documents of technicians who work with us: kept while they work with us and as required by law afterwards.`,
+          `سجلات الحساب والحجوزات: طوال فترة فتح حسابك، وبعدها للمدة اللازمة لأغراض الضمان والمحاسبة والقانون. مستندات المتقدّمين المرفوضين: تُحذف خلال ${REJECT_DAYS} يوماً. مستندات الفنيين العاملين معنا: يُحتفظ بها طوال فترة عملهم معنا وبعدها وفق ما يفرضه القانون.`,
         ),
       ],
     },

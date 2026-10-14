@@ -7,11 +7,11 @@ import {
   RotateCcw,
   Search,
   ShieldCheck,
+  Siren,
 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { ServiceIcon } from "@/components/ServiceIcon";
-import { EmergencyChoice } from "@/components/EmergencyChoice";
 import { AccountDeletedNotice } from "@/components/AccountDeletedNotice";
 import { useAuth } from "@/hooks/useAuth";
 import { useI18n } from "@/i18n";
@@ -23,6 +23,7 @@ import {
   STATUS_ORDER,
   type RequestStatus,
 } from "@contracts/services";
+import { EmergencyLine } from "@/components/EmergencyLine";
 import { WORKMANSHIP_GUARANTEE_DAYS, arabicDigits } from "@contracts/legal";
 import { HOME_BY_ROLE, type Role } from "@contracts/roles";
 
@@ -121,8 +122,22 @@ export default function AppHome() {
           </section>
         )}
 
-        {/* The two ways in: an emergency (call the team) or a normal booking. */}
-        <EmergencyChoice bookHref="/services" />
+        {/* emergency shortcut */}
+        <section className="rounded-3xl bg-flame p-5 text-white shadow-[0_10px_24px_rgb(244_83_9/0.28)]">
+          <div className="flex items-start gap-3">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/20">
+              <Siren className="h-6 w-6" />
+            </span>
+            <div>
+              <h2 className="font-display text-lg font-black">{p(t.app.emergencyTitle)}</h2>
+              <p className="text-sm text-white/90">{p(t.app.emergencySub)}</p>
+            </div>
+          </div>
+          {/* The emergency line: the specialist who answers sends a technician. */}
+          <div className="mt-4">
+            <EmergencyLine tone="onFlame" />
+          </div>
+        </section>
 
         {/* services */}
         <section>

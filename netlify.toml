@@ -58,11 +58,6 @@
   from = "/book"
   to = "/index.html"
   status = 200
-[[redirects]]
-  from = "/emergency"
-  to = "/index.html"
-  status = 200
-
 
 [[redirects]]
   from = "/requests"

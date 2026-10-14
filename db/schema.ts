@@ -285,35 +285,3 @@ export const auditLog = pgTable(
   },
   (t) => [index("audit_log_created_idx").on(t.createdAt)],
 ).enableRLS();
-
-/**
- * Emergencies reported through the Emergency button: the customer picks the service and
- * what is wrong, then calls (or asks to be called back). Specialists see them in the
- * dashboard and mark them handled. Name and phone are erased with the account, and every
- * entry is deleted after EMERGENCY_RETENTION_DAYS (contracts/emergency.ts).
- */
-export const emergencyCalls = pgTable(
-  "emergency_calls",
-  {
-    id: serial("id").primaryKey(),
-    /** Signed-in customer, if any. */
-    userId: integer("user_id").references(() => users.id, { onDelete: "set null" }),
-    category: varchar("category", { length: 64 }).notNull(),
-    /** One of the category's emergencies, or "other". */
-    problem: varchar("problem", { length: 64 }).notNull(),
-    name: varchar("name", { length: 255 }),
-    phone: varchar("phone", { length: 32 }),
-    /** "call": they phoned the emergency line; "callback": they asked to be called. */
-    kind: varchar("kind", { length: 16 }).$type<"call" | "callback">().notNull(),
-    /** Where the customer is: shared on the Emergency page, or set by the specialist. */
-    lat: doublePrecision("lat"),
-    lng: doublePrecision("lng"),
-    address: text("address"),
-    /** The job created when a technician was sent. */
-    requestId: integer("request_id").references(() => serviceRequests.id, { onDelete: "set null" }),
-    handledAt: timestamp("handled_at", { withTimezone: true }),
-    handledBy: integer("handled_by").references(() => users.id, { onDelete: "set null" }),
-    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-  },
-  (t) => [index("emergency_calls_created_idx").on(t.createdAt)],
-).enableRLS();

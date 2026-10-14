@@ -2,19 +2,23 @@ import { Fragment, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router";
 import {
+  ChevronDown,
   ChevronRight,
   ChevronLeft,
   MapPin,
+  Siren,
   X,
 } from "lucide-react";
 import { ServiceIcon } from "@/components/ServiceIcon";
 import { useI18n } from "@/i18n";
 import { CATEGORY_MAP, FACILITY_GROUP, FACILITY_SERVICES, SERVICES_IN_ORDER, type LocalText } from "@contracts/services";
 import { CATEGORY_PROBLEMS, PROBLEM_MAP } from "@contracts/picker";
+import { EmergencyLine } from "@/components/EmergencyLine";
 
 /**
  * Checkatrade-inspired category pill row in Be Right branding:
- * - The non-emergency way in: emergencies have their own button above (EmergencyChoice).
+ * - Emergency pill first (flame, siren, chevron): drops down the emergency line to call.
+ *   The specialist who answers takes the details and sends a technician.
  * - Other pills are rounded white with the Be Right service icons.
  * - A pill click opens a centered white modal over a blurred/dimmed backdrop:
  *   problem -> location -> the existing booking flow.
@@ -34,6 +38,53 @@ export function CategoryPicker() {
   const rowRef = useRef<HTMLDivElement>(null);
   const [canPrev, setCanPrev] = useState(false);
   const [canNext, setCanNext] = useState(false);
+  const [openDropdown, setOpenDropdown] = useState(false);
+  const emergencyBtnRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const [dropPos, setDropPos] = useState<{ top: number; left: number; flip: boolean } | null>(null);
+
+  // The Emergency dropdown is portaled to <body> (fixed), so the rail's horizontal
+  // scrolling can never clip it; its position follows the pill.
+  useEffect(() => {
+    if (!openDropdown) return;
+    const update = () => {
+      const btn = emergencyBtnRef.current;
+      if (!btn) return;
+      const r = btn.getBoundingClientRect();
+      const W = Math.min(320, window.innerWidth - 16); // w-80
+      let left = dir === "rtl" ? r.right - W : r.left;
+      left = Math.max(8, Math.min(left, window.innerWidth - W - 8));
+      const below = window.innerHeight - r.bottom;
+      const flip = below < 360 && r.top > below;
+      setDropPos({ top: flip ? r.top - 8 : r.bottom + 8, left, flip });
+    };
+    update();
+    window.addEventListener("resize", update);
+    window.addEventListener("scroll", update, true);
+    return () => {
+      window.removeEventListener("resize", update);
+      window.removeEventListener("scroll", update, true);
+    };
+  }, [openDropdown, dir]);
+
+  // Close the Emergency dropdown on an outside click or Escape.
+  useEffect(() => {
+    if (!openDropdown) return;
+    const onDoc = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (dropdownRef.current?.contains(target) || emergencyBtnRef.current?.contains(target)) return;
+      setOpenDropdown(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpenDropdown(false);
+    };
+    document.addEventListener("mousedown", onDoc);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDoc);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [openDropdown]);
 
   const openWizard = (w: NonNullable<Wizard>, preselect = "") => {
     setWizard(w);
@@ -145,7 +196,6 @@ export function CategoryPicker() {
 
   return (
     <div className="category-rail hero-enter hero-d6 relative z-10 mt-10 w-full">
-      <p className="mb-2 font-display text-sm font-extrabold text-navy">{p(t.emergency.railLabel)}</p>
       {/* ---- Pill rail: full-width, arrows OUTSIDE the clipped strip ---- */}
       <div className="flex items-center gap-2">
         <button
@@ -178,6 +228,21 @@ export function CategoryPicker() {
           }}
           className="flex flex-1 snap-x snap-mandatory gap-2.5 overflow-x-auto rounded-2xl py-2 [-ms-overflow-style:none] [scrollbar-width:none] focus-visible:outline-2 focus-visible:outline-flame [&::-webkit-scrollbar]:hidden"
         >
+          {/* Emergency, highlighted with the siren and chevron: tap toggles the dropdown. */}
+          <div ref={emergencyBtnRef} className="relative shrink-0 snap-start">
+            <button
+              type="button"
+              onClick={() => setOpenDropdown((v) => !v)}
+              aria-expanded={openDropdown}
+              aria-haspopup="menu"
+              className="flex items-center gap-2 rounded-full border-2 border-flame bg-flame px-4 py-2.5 font-display text-sm font-black text-white shadow-[0_3px_0_#081E42] transition-transform hover:-translate-y-0.5 active:translate-y-0"
+            >
+              <Siren className="h-4 w-4" />
+              {p(t.picker.emergency)}
+              <ChevronDown className={`h-4 w-4 transition-transform ${openDropdown ? "rotate-180" : ""}`} />
+            </button>
+          </div>
+
           {/* Category pills, rounded white with Be Right icons; the facility services follow
               their group name. */}
           {SERVICES_IN_ORDER.map(id => (
@@ -218,6 +283,28 @@ export function CategoryPicker() {
           )}
         </button>
       </div>
+
+      {/* ---- Emergency dropdown: portaled out of the rail (no clipping) ---- */}
+      {openDropdown &&
+        dropPos &&
+        createPortal(
+          <div
+            ref={dropdownRef}
+            role="dialog"
+            aria-label={p(t.picker.emergency)}
+            style={{
+              position: "fixed",
+              top: dropPos.top,
+              left: dropPos.left,
+              transform: dropPos.flip ? "translateY(-100%)" : undefined,
+            }}
+            className="z-[80] w-80 max-w-[calc(100vw-16px)] overflow-hidden rounded-2xl border-2 border-navy bg-white p-4 shadow-[0_8px_0_rgb(12_43_92/0.25)]"
+          >
+            <p className="mb-3 font-display text-[11px] font-black uppercase tracking-[0.18em] text-flame">{p(t.emergency.callTitle)}</p>
+            <EmergencyLine />
+          </div>,
+          document.body,
+        )}
 
       {/* ---- Guided modal: portaled to <body> too. The rail keeps a transform from its
            entrance animation, which would otherwise trap this "fixed" overlay inside it. ---- */}

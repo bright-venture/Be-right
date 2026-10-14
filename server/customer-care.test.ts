@@ -212,132 +212,54 @@ describe("ratings", () => {
     await (await callerFor(leaving)).auth.deleteAccount();
     expect((await (await callerFor(admin)).specialist.detail({ id: done })).review).toMatchObject({ rating: 3, comment: null });
   });
-
-  it("erases the name and phone of their emergencies when the customer deletes their account", async () => {
-    const leaving = await makeUser("emergency-and-left@example.com");
-    const { id } = await (await callerFor(leaving)).emergency.report({
-      category: "plumbing",
-      problem: "leak",
-      name: "Rami",
-      phone: "+1 202 555 0123",
-    });
-    await (await callerFor(leaving)).auth.deleteAccount();
-    const entry = (await (await callerFor(admin)).emergency.list()).find((e) => e.id === id);
-    expect(entry).toMatchObject({ category: "plumbing", problem: "leak", name: null, phone: null });
-  });
 });
 
-describe("sending a technician to an emergency", () => {
-  const PIN = { lat: 51.5072, lng: -0.1276 };
-  const today = () => new Intl.DateTimeFormat("en-CA").format(new Date());
-  const dispatchInput = (id: number) => ({
-    id,
-    technicianId: tech.id,
-    amount: "60",
+describe("emergency calls", () => {
+  const call = (
+    overrides: Partial<{ category: string; lat: number; lng: number; technicianId: number; phone: string; amount: string }> = {},
+  ) => ({
+    category: "plumbing",
+    problem: "Water coming through the kitchen ceiling",
     name: "Rami",
     phone: "+44 20 7946 0123",
     address: "221B Baker Street, London",
-    ...PIN,
-    visitDate: today(),
+    lat: 51.5072,
+    lng: -0.1276,
+    technicianId: tech.id,
+    amount: "60",
+    visitDate: new Intl.DateTimeFormat("en-CA").format(new Date()),
     timeSlot: "evening" as const,
+    ...overrides,
   });
 
-  it("turns a guest's emergency into a scheduled job for the technician, followed by phone", async () => {
-    const { id } = await (await callerFor()).emergency.report({
-      category: "plumbing",
-      problem: "leak",
-      name: "Rami",
-      phone: "+44 20 7946 0123",
-      ...PIN,
-      address: "221B Baker Street, London",
-    });
+  it("let the specialist send a technician at once, from the details taken on the phone", async () => {
     state.sent.length = 0;
     const s = await callerFor(admin);
-    const { requestId } = await s.emergency.dispatch(dispatchInput(id));
-
-    const job = (await s.specialist.detail({ id: requestId })).request;
-    expect(job).toMatchObject({
+    const { requestId } = await s.emergency.create(call());
+    const created = (await s.specialist.detail({ id: requestId })).request;
+    expect(created).toMatchObject({
       status: "scheduled",
       emergency: true,
       userId: null,
       contactName: "Rami",
+      phone: "+44 20 7946 0123",
       technicianId: tech.id,
       quoteAmount: "60",
-      category: "plumbing",
+      notes: "Water coming through the kitchen ceiling",
     });
     expect((await (await callerFor(tech)).tech.myJobs()).map((j) => j.id)).toContain(requestId);
     expect(state.sent.find((m) => m.to.includes("ali@example.com"))?.subject).toContain("Emergency job");
-    const entry = (await s.emergency.list()).find((e) => e.id === id);
-    expect(entry).toMatchObject({ requestId, technicianName: "Ali" });
-    expect(entry?.handledAt).toBeInstanceOf(Date);
-    // Once is enough.
-    await rejected(s.emergency.dispatch(dispatchInput(id)));
+    expect((await s.specialist.queue()).find((x) => x.request.id === requestId)?.request.emergency).toBe(true);
   });
 
-  it("puts a signed-in customer's emergency in their requests", async () => {
-    const caller = await makeUser("emergency-account@example.com", "Lina");
-    const { id } = await (await callerFor(caller)).emergency.report({ category: "electrical", problem: "no-power", name: "Rami", phone: "+44 20 7946 0201" });
-    const { requestId } = await (await callerFor(admin)).emergency.dispatch(dispatchInput(id));
-    expect((await (await callerFor(caller)).requests.mine()).map((r) => r.id)).toContain(requestId);
-  });
-
-  it("only lets staff send, to a real technician, with a pin, a phone and a price", async () => {
-    const { id } = await (await callerFor()).emergency.report({ category: "locksmith", problem: "locked-out", name: "Rami", phone: "+44 20 7946 0202" });
-    await rejected((await callerFor(customer)).emergency.dispatch(dispatchInput(id)), "FORBIDDEN");
+  it("are for staff only, to a real technician, with a service, a pin, a phone and a price", async () => {
+    await rejected((await callerFor(customer)).emergency.create(call()), "FORBIDDEN");
     const s = await callerFor(admin);
-    await rejected(s.emergency.dispatch({ ...dispatchInput(id), technicianId: customer.id }));
-    await rejected(s.emergency.dispatch({ ...dispatchInput(id), lat: 0, lng: 0 }));
-    await rejected(s.emergency.dispatch({ ...dispatchInput(id), phone: "123" }));
-    await rejected(s.emergency.dispatch({ ...dispatchInput(id), amount: "a lot" }));
-  });
-});
-
-describe("the Emergency button", () => {
-  it("logs a call for the team and emails the specialists", async () => {
-    const visitor = await callerFor();
-    await visitor.emergency.report({ category: "plumbing", problem: "leak", name: "Rami", phone: "+44 20 7946 0203" });
-    const mail = state.sent.find((m) => m.to.includes(SPECIALIST_EMAIL));
-    expect(mail?.subject).toContain("Water leaking or flooding");
-    const list = await (await callerFor(admin)).emergency.list();
-    expect(list[0]).toMatchObject({ category: "plumbing", problem: "leak", kind: "call", name: "Rami", phone: "+44 20 7946 0203", handledAt: null });
-  });
-
-  it("needs a name, a valid phone and a known emergency", async () => {
-    const visitor = await callerFor();
-    await rejected(visitor.emergency.report({ category: "plumbing", problem: "leak", name: "", phone: "+44 20 7946 0123" }));
-    await rejected(visitor.emergency.report({ category: "plumbing", problem: "leak", name: "Rami", phone: "123" }));
-    await rejected(visitor.emergency.report({ category: "painting", problem: "other", name: "Rami", phone: "+44 20 7946 0123" }));
-    await rejected(visitor.emergency.report({ category: "plumbing", problem: "nope", name: "Rami", phone: "+44 20 7946 0123" }));
-    const { id } = await visitor.emergency.report({
-      category: "electrical",
-      problem: "sparks",
-      name: "Rami",
-      phone: "+1 202 555 0123",
-    });
-    expect(id).toBeGreaterThan(0);
-  });
-
-  it("is only listed and handled by staff, once", async () => {
-    const { id } = await (await callerFor(customer)).emergency.report({ category: "locksmith", problem: "other", name: "Rami", phone: "+44 20 7946 0204" });
-    await rejected((await callerFor(customer)).emergency.list(), "FORBIDDEN");
-    await rejected((await callerFor(customer)).emergency.markHandled({ id }), "FORBIDDEN");
-    const s = await callerFor(admin);
-    await s.emergency.markHandled({ id });
-    await rejected(s.emergency.markHandled({ id }), "NOT_FOUND");
-    expect((await s.emergency.list()).find((e) => e.id === id)?.handledBy).toBe(admin.id);
-  });
-
-  it("is limited per caller, and loosely per connection", async () => {
-    // One caller: three an hour, whatever connection they use.
-    const caller = { category: "plumbing", problem: "other", name: "Rami", phone: "+44 20 7946 0999" };
-    for (let i = 0; i < 3; i++) await (await callerFor()).emergency.report(caller);
-    await rejected((await callerFor()).emergency.report({ ...caller, phone: "0044 20 7946 0999" }), "TOO_MANY_REQUESTS");
-    // One connection (a mobile network shares one IP): many different callers still get through.
-    const shared = await callerFor(undefined, { ip: "203.0.113.9" });
-    for (let i = 0; i < 30; i++) {
-      await shared.emergency.report({ ...caller, phone: `+1 202 555 ${String(1000 + i)}` });
-    }
-    await rejected(shared.emergency.report({ ...caller, phone: "+1 202 555 2000" }), "TOO_MANY_REQUESTS");
+    await rejected(s.emergency.create(call({ technicianId: customer.id })));
+    await rejected(s.emergency.create(call({ category: "nope" })));
+    await rejected(s.emergency.create(call({ lat: 0, lng: 0 })));
+    await rejected(s.emergency.create(call({ phone: "123" })));
+    await rejected(s.emergency.create(call({ amount: "a lot" })));
   });
 });
 

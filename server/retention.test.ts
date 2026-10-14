@@ -1,8 +1,7 @@
 // Privacy Policy: rejected applicants' documents are deleted after the retention period.
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import { eq } from "drizzle-orm";
-import { emergencyCalls, technicianApplications } from "@db/schema";
-import { EMERGENCY_RETENTION_DAYS } from "@contracts/emergency";
+import { technicianApplications } from "@db/schema";
 import { REJECTED_APPLICATION_RETENTION_DAYS as DAYS } from "@contracts/legal";
 import {
   callerFor,
@@ -106,22 +105,6 @@ describe("rejected-applicant document clean-up", () => {
       criminalRecordKey: expect.any(String),
       proofOfAddressKey: expect.any(String),
     });
-  });
-
-  it("deletes Emergency button entries after the retention period", async () => {
-    const { purgeOldEmergencies } = await import("./jobs/purgeOldEmergencies");
-    const at = (days: number) => new Date(Date.now() - days * DAY);
-    const [old, recent] = await db
-      .insert(emergencyCalls)
-      .values([
-        { category: "plumbing", problem: "leak", kind: "callback", name: "Old", phone: "+1 202 555 0100", createdAt: at(EMERGENCY_RETENTION_DAYS + 1) },
-        { category: "plumbing", problem: "leak", kind: "call", createdAt: at(EMERGENCY_RETENTION_DAYS - 1) },
-      ])
-      .returning({ id: emergencyCalls.id });
-    await purgeOldEmergencies();
-    const left = (await db.select({ id: emergencyCalls.id }).from(emergencyCalls)).map((r) => r.id);
-    expect(left).not.toContain(old.id);
-    expect(left).toContain(recent.id);
   });
 
   it("starts the clock when a specialist rejects, and stops it if they change their mind", async () => {
