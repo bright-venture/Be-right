@@ -209,8 +209,8 @@ export const t = {
       {
         title: { en: "We confirm someone can come", ar: "نؤكّد أن أحداً يستطيع الحضور" },
         body: {
-          en: "Before you approve anything, a specialist confirms a vetted technician near you is available.",
-          ar: "قبل أن توافق على أي شيء، يؤكّد مختص توفّر فنّي موثوق بالقرب منك.",
+          en: "Before you approve anything, a specialist confirms an approved technician near you is available.",
+          ar: "قبل أن توافق على أي شيء، يؤكّد مختص توفّر فنّي معتمد بالقرب منك.",
         },
       },
       {
@@ -324,8 +324,8 @@ export const t = {
       {
         title: { en: "Safe", ar: "أمان" },
         body: {
-          en: "Verified technicians only, and guided photos mean you never open a live panel or touch a gas line just to explain the problem.",
-          ar: "فنيون موثّقون فقط، والتصوير الموجّه يعني أنك لن تفتح لوحة كهرباء أو تقترب من خط غاز أبداً لتشرح المشكلة.",
+          en: "Only technicians we've met in person and approved, and guided photos mean you never open a live panel or touch a gas line just to explain the problem.",
+          ar: "فقط فنيون قابلناهم شخصياً واعتمدناهم، والتصوير الموجّه يعني أنك لن تفتح لوحة كهرباء أو تقترب من خط غاز أبداً لتشرح المشكلة.",
         },
       },
       {
@@ -561,8 +561,8 @@ export const t = {
     somethingElse: { en: "Something else", ar: "شيء آخر" },
     allServices: { en: "All services", ar: "كل الخدمات" },
     whyTitle: { en: "Why Be Right", ar: "لماذا بي رايت" },
-    whyChecked: { en: "Checked technicians", ar: "فنيون موثّقون" },
-    whyCheckedSub: { en: "ID, record and trade verified", ar: "تم التحقق من الهوية والسجل والمهنة" },
+    whyChecked: { en: "Approved technicians", ar: "فنيون معتمدون" },
+    whyCheckedSub: { en: "Met in person before they join", ar: "نقابلهم شخصياً قبل انضمامهم" },
     whyPrice: { en: "You approve the price", ar: "أنت توافق على السعر" },
     whyPriceSub: { en: "Nothing starts before you say yes", ar: "لا يبدأ شيء قبل موافقتك" },
     whyGuarantee: { en: "{days}-day guarantee", ar: "ضمان {days} أيام" },
@@ -1240,8 +1240,8 @@ export const t = {
   trustRow: {
     checksTitle: { en: "Technician checks", ar: "التحقق من الفنيين" },
     checksBody: {
-      en: "Identity, trade experience and references, reviewed before a technician's first job.",
-      ar: "الهوية والخبرة المهنية والمراجع، تُراجَع قبل أول مهمة للفنّي.",
+      en: "Every technician is called and met in person by our team, and approved before their first job.",
+      ar: "يتصل فريقنا بكل فنّي ويقابله شخصياً، ويعتمده قبل أول مهمة له.",
     },
     checksCta: { en: "Learn more", ar: "اعرف المزيد" },
     clientsTitle: { en: "Our clients", ar: "عملاؤنا" },
@@ -1259,25 +1259,25 @@ export const t = {
   },
   checksPage: {
     kicker: { en: "(Technician checks)", ar: "(التحقق من الفنيين)" },
-    title: { en: "Every technician is checked before their first job.", ar: "نتحقّق من كل فنّي قبل أول مهمة له." },
+    title: { en: "Every technician is met in person before their first job.", ar: "نقابل كل فنّي شخصياً قبل أول مهمة له." },
     sub: {
-      en: "Be Right technicians are our own team and vetted partners. Here's what we review before anyone is sent to your home.",
-      ar: "فنيّو بي رايت هم فريقنا وشركاء موثوقون. إليك ما نراجعه قبل إرسال أي شخص إلى منزلك.",
+      en: "Be Right technicians are our own team and partners we've approved. Here's how someone joins before they're sent to your home.",
+      ar: "فنيّو بي رايت هم فريقنا وشركاء اعتمدناهم. إليك كيف ينضمّ أي شخص قبل أن نرسله إلى منزلك.",
     },
-    s1t: { en: "Identity verified", ar: "الهوية موثّقة" },
+    s1t: { en: "A call from our team", ar: "اتصال من فريقنا" },
     s1b: {
-      en: "Government ID on file for every technician and partner.",
-      ar: "هوية رسمية محفوظة في الملف لكل فنّي وشريك.",
+      en: "Our hiring team calls every applicant to talk about their trade and set up a meeting.",
+      ar: "يتصل فريق التوظيف بكل متقدّم للحديث عن مهنته وتحديد موعد مقابلة.",
     },
-    s2t: { en: "Trade & experience reviewed", ar: "مراجعة المهنة والخبرة" },
+    s2t: { en: "Met in person", ar: "مقابلة شخصية" },
     s2b: {
-      en: "We look at each technician's trade background and hands-on experience before they join.",
-      ar: "نراجع الخلفية المهنية لكل فنّي وخبرته العملية قبل انضمامه.",
+      en: "We meet each technician face to face before they join. Nobody is approved without it.",
+      ar: "نقابل كل فنّي وجهاً لوجه قبل انضمامه. لا نعتمد أحداً من دونها.",
     },
-    s3t: { en: "References checked", ar: "التحقق من المراجع" },
+    s3t: { en: "Trade & experience reviewed", ar: "مراجعة المهنة والخبرة" },
     s3b: {
-      en: "Previous employers or clients are contacted for a reference.",
-      ar: "نتواصل مع أصحاب العمل أو العملاء السابقين للحصول على مرجع.",
+      en: "In the meeting we go through their trade and hands-on experience, and only then approve them.",
+      ar: "خلال المقابلة نراجع مهنته وخبرته العملية، وبعدها فقط نعتمده.",
     },
     s4t: { en: "Onboarding & supervision", ar: "التأهيل والإشراف" },
     s4b: {
@@ -1289,7 +1289,7 @@ export const t = {
       en: "The full checklist and standards are being finalised with our operations team and will be published here.",
       ar: "يجري إعداد القائمة الكاملة والمعايير مع فريق العمليات، وستُنشر هنا.",
     },
-    cta: { en: "Book a checked technician", ar: "احجز فنّياً موثوقاً" },
+    cta: { en: "Book an approved technician", ar: "احجز فنّياً معتمداً" },
   },
   emergency: {
     // priority dispatch (home page pill, app home box): pick, where, send, then call

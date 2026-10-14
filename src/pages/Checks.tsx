@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import { ArrowRight, ClipboardCheck, FileCheck, HardHat, SearchCheck } from "lucide-react";
+import { ArrowRight, ClipboardCheck, Handshake, HardHat, PhoneCall } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { useI18n } from "@/i18n";
@@ -8,9 +8,9 @@ import { useI18n } from "@/i18n";
 export default function Checks() {
   const { t, p } = useI18n();
   const items = [
-    { icon: FileCheck, title: t.checksPage.s1t, body: t.checksPage.s1b },
-    { icon: HardHat, title: t.checksPage.s2t, body: t.checksPage.s2b },
-    { icon: SearchCheck, title: t.checksPage.s3t, body: t.checksPage.s3b },
+    { icon: PhoneCall, title: t.checksPage.s1t, body: t.checksPage.s1b },
+    { icon: Handshake, title: t.checksPage.s2t, body: t.checksPage.s2b },
+    { icon: HardHat, title: t.checksPage.s3t, body: t.checksPage.s3b },
     { icon: ClipboardCheck, title: t.checksPage.s4t, body: t.checksPage.s4b },
   ];
   return (

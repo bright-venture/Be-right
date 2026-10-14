@@ -176,8 +176,8 @@ export const PRIVACY: LegalDocument = {
       title: t("2. Why we use it", "٢. لماذا نستخدمها"),
       paragraphs: [
         t(
-          "To provide the service you ask for (review, quote, dispatch, follow-up and support); to keep customers and technicians safe (vetting technicians, verifying identities); to communicate with you about your requests and account; and to meet legal and accounting obligations.",
-          "لتقديم الخدمة التي تطلبها (المراجعة والتسعير والإرسال والمتابعة والدعم)؛ وللحفاظ على سلامة العملاء والفنيين (تدقيق الفنيين والتحقق من الهويات)؛ وللتواصل معك بشأن طلباتك وحسابك؛ وللوفاء بالالتزامات القانونية والمحاسبية.",
+          "To provide the service you ask for (review, quote, dispatch, follow-up and support); to keep customers and technicians safe (calling and meeting technicians in person before approving them); to communicate with you about your requests and account; and to meet legal and accounting obligations.",
+          "لتقديم الخدمة التي تطلبها (المراجعة والتسعير والإرسال والمتابعة والدعم)؛ وللحفاظ على سلامة العملاء والفنيين (الاتصال بالفنيين ومقابلتهم شخصياً قبل اعتمادهم)؛ وللتواصل معك بشأن طلباتك وحسابك؛ وللوفاء بالالتزامات القانونية والمحاسبية.",
         ),
       ],
     },
