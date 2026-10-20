@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Loader2, MapPin, Navigation } from "lucide-react";
+import { ChevronDown, Loader2, MapPin, Navigation } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { ServiceIcon } from "@/components/ServiceIcon";
@@ -105,6 +105,8 @@ export default function Tech() {
   // A visit without a repair goes to the specialist, who decides about the visit fee.
   const reportVisit = trpc.tech.reportVisit.useMutation();
   const [reported, setReported] = useState<Record<number, boolean>>({});
+  // Jobs fold to one line each; until the technician opens or closes one, the next active job is open.
+  const [openIds, setOpenIds] = useState<Set<number> | null>(null);
 
   if (authLoading || !isTech) {
     return (
@@ -130,16 +132,25 @@ export default function Tech() {
           </div>
         )}
 
-        <div className="mt-8 flex flex-col gap-4">
+        <div className="mt-8 flex flex-col gap-3">
           {rows.map((r) => {
             const active = ACTIVE_JOB_STATUSES.includes(r.status as RequestStatus);
+            const firstActive = rows.find((x) => ACTIVE_JOB_STATUSES.includes(x.status as RequestStatus))?.id;
+            const isOpen = openIds ? openIds.has(r.id) : r.id === firstActive;
+            const toggle = () =>
+              setOpenIds((prev) => {
+                const next = new Set(prev ?? (firstActive ? [firstActive] : []));
+                if (next.has(r.id)) next.delete(r.id);
+                else next.add(r.id);
+                return next;
+              });
             const sharing = sharingFor === r.id;
             const customerPhotos = r.media.filter((m) => m.kind === "customer");
             const hasBefore = r.media.some((m) => m.kind === "before");
             const hasAfter = r.media.some((m) => m.kind === "after");
             return (
-              <div key={r.id} className="card-br p-5">
-                <div className="flex items-start justify-between gap-3">
+              <div key={r.id} className={`card-br p-4 sm:p-5 ${active ? "" : "bg-white/70"}`}>
+                <button type="button" onClick={toggle} aria-expanded={isOpen} className="flex w-full items-start justify-between gap-3 text-start">
                   <div className="flex items-center gap-3">
                     <span className="flex h-12 w-12 items-center justify-center rounded-2xl border-2 border-navy/15 bg-paper text-bird">
                       <ServiceIcon id={r.category} className="h-6 w-6" />
@@ -157,6 +168,11 @@ export default function Tech() {
                       <p className="text-xs text-navy/60">
                         {p(t.requests.requestedOn)}: {formatDay(r.createdAt, lang)}
                       </p>
+                      {!isOpen && r.area && r.area !== "-" && (
+                        <p className="mt-0.5 flex items-center gap-1 text-xs text-navy/60">
+                          <MapPin className="h-3 w-3 shrink-0" aria-hidden /> {r.area}
+                        </p>
+                      )}
                       {r.emergency && (
                         <p className="mt-1 inline-flex rounded-full bg-flame px-2 py-px text-[11px] font-bold text-white">
                           {p(t.emergency.badge)}
@@ -169,11 +185,16 @@ export default function Tech() {
                       )}
                     </div>
                   </div>
-                  <span className="rounded-full border-2 border-navy/25 px-3 py-1 text-xs font-bold text-navy">
-                    {p(t.status[r.status as RequestStatus])}
+                  <span className="flex shrink-0 items-center gap-2">
+                    <span className="rounded-full border-2 border-navy/25 px-3 py-1 text-xs font-bold text-navy">
+                      {p(t.status[r.status as RequestStatus])}
+                    </span>
+                    <ChevronDown className={`h-5 w-5 text-navy/50 transition-transform ${isOpen ? "rotate-180" : ""}`} aria-hidden />
                   </span>
-                </div>
+                </button>
 
+                {isOpen && (
+                <>
                 <div className="mt-4 rounded-2xl border-2 border-navy/15 bg-paper p-4 text-sm text-navy/80">
                   <p className="font-bold text-navy">{r.area}</p>
                   <p>{r.address}</p>
@@ -399,6 +420,8 @@ export default function Tech() {
                       </p>
                     )}
                   </div>
+                )}
+                </>
                 )}
               </div>
             );
