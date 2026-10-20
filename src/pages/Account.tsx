@@ -12,6 +12,7 @@ import { isValidPhone } from "@contracts/phone";
 import { canDispatch, ROLES } from "@contracts/roles";
 import { siteOrigin } from "@/lib/native";
 import { useConfirm } from "@/hooks/useConfirm";
+import { ProfileCard } from "@/components/account/ProfileCard";
 
 const INPUT =
   "mt-2 min-h-12 w-full rounded-2xl border-2 border-navy/30 bg-white px-4 font-semibold text-navy placeholder:font-normal placeholder:text-navy/40 focus:border-flame focus:outline-none";
@@ -37,16 +38,24 @@ export default function Account() {
   return (
     <div className="flex min-h-screen flex-col bg-paper">
       <Navbar />
-      <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-4 pb-20 pt-24 sm:px-6">
+      <main className="mx-auto w-full max-w-5xl flex-1 px-4 pb-20 pt-24 sm:px-6">
         <h1 className="font-display text-3xl font-black text-navy sm:text-4xl">{p(t.account.title)}</h1>
-        <Details key={user.id} name={user.name ?? ""} phone={user.phone ?? ""} />
-        <EmailChange current={user.email ?? ""} />
-        <PasswordChange email={user.email ?? ""} />
-        {user.role === "customer" || canDispatch(user.role) ? (
-          <DeleteAccount staff={canDispatch(user.role)} />
-        ) : (
-          <p className="text-sm text-navy/70">{p(t.account.staffNote)}</p>
-        )}
+        {/* the profile on the left (on top on phones), the settings beside it */}
+        <div className="mt-6 grid items-start gap-6 lg:grid-cols-[320px_minmax(0,1fr)]">
+          <div className="lg:sticky lg:top-24">
+            <ProfileCard me={user} />
+          </div>
+          <div className="flex min-w-0 flex-col gap-6">
+            <Details key={user.id} name={user.name ?? ""} phone={user.phone ?? ""} />
+            <EmailChange current={user.email ?? ""} />
+            <PasswordChange email={user.email ?? ""} />
+            {user.role === "customer" || canDispatch(user.role) ? (
+              <DeleteAccount staff={canDispatch(user.role)} />
+            ) : (
+              <p className="text-sm text-navy/70">{p(t.account.staffNote)}</p>
+            )}
+          </div>
+        </div>
       </main>
       <Footer />
     </div>

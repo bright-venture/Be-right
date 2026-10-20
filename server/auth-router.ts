@@ -1,14 +1,24 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { and, eq, inArray, isNull } from "drizzle-orm";
+import { and, count, eq, inArray, isNull } from "drizzle-orm";
 import { createRouter, authedQuery, customerQuery, publicQuery, specialistQuery } from "./middleware";
 import { getDb } from "./queries/connection";
-import { emergencyRequests, requestEvents, requestMedia, reviews, serviceRequests, technicianLocations, users } from "../db/schema";
+import {
+  emergencyRequests,
+  requestEvents,
+  requestMedia,
+  reviews,
+  serviceRequests,
+  technicianApplications,
+  technicianLocations,
+  users,
+} from "../db/schema";
 import { LEGAL_VERSION } from "@contracts/legal";
 import { isValidPhone } from "@contracts/phone";
-import { canTransition } from "@contracts/workflow";
+import { ACTIVE_JOB_STATUSES, canTransition } from "@contracts/workflow";
 import type { RequestStatus } from "@contracts/services";
-import { deleteFiles } from "./lib/storage";
+import { deleteFiles, profilePhotoUrl } from "./lib/storage";
+import { ratingFor } from "./queries/ratings";
 import { deleteAuthUser } from "./lib/accounts";
 import { audit } from "./lib/audit";
 import { isAdminEmail } from "./queries/users";
@@ -40,6 +50,54 @@ export const authRouter = createRouter({
       .set({ termsAcceptedAt: new Date(), termsVersion: LEGAL_VERSION })
       .where(eq(users.id, ctx.user.id));
     return { ok: true, version: LEGAL_VERSION };
+  }),
+
+  /**
+   * The summary at the top of My account: the photo (technicians), when they joined, and
+   * their figures: a technician's rating, trade and jobs; a customer's requests.
+   */
+  profile: authedQuery.query(async ({ ctx }) => {
+    const db = getDb();
+    const user = ctx.user;
+    const base = { photoUrl: await profilePhotoUrl(user.avatar).catch(() => null), memberSince: user.createdAt };
+    if (user.role === "technician") {
+      const [jobs, rating, application] = await Promise.all([
+        db
+          .select({ status: serviceRequests.status, n: count() })
+          .from(serviceRequests)
+          .where(eq(serviceRequests.technicianId, user.id))
+          .groupBy(serviceRequests.status),
+        ratingFor(user.id),
+        db.query.technicianApplications.findFirst({ where: eq(technicianApplications.hiredUserId, user.id) }),
+      ]);
+      const sum = (statuses: readonly string[]) => jobs.filter((j) => statuses.includes(j.status)).reduce((a, j) => a + j.n, 0);
+      return {
+        ...base,
+        technician: {
+          rating,
+          trade: application?.trade ?? null,
+          completedJobs: sum(["completed"]),
+          activeJobs: sum(ACTIVE_JOB_STATUSES),
+        },
+        customer: null,
+      };
+    }
+    if (user.role === "customer") {
+      const rows = await db
+        .select({ status: serviceRequests.status, n: count() })
+        .from(serviceRequests)
+        .where(eq(serviceRequests.userId, user.id))
+        .groupBy(serviceRequests.status);
+      return {
+        ...base,
+        technician: null,
+        customer: {
+          requests: rows.reduce((a, r) => a + r.n, 0),
+          completed: rows.filter((r) => r.status === "completed").reduce((a, r) => a + r.n, 0),
+        },
+      };
+    }
+    return { ...base, technician: null, customer: null };
   }),
 
   /** Name and phone, as shown to the team and used to fill in bookings. */

@@ -21,6 +21,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useRoleGate } from "@/hooks/useRoleGate";
 import { canDispatch, ROLES } from "@contracts/roles";
 import { DeleteAccount, Details, EmailChange, PasswordChange } from "./Account";
+import { ProfileAvatar, RatingLine } from "@/components/account/ProfileCard";
+import { trpc } from "@/providers/trpc";
 
 /** Screens one level down (/account/details …): each one is the same form as the website's. */
 const SECTIONS = ["details", "email", "password", "delete"] as const;
@@ -28,16 +30,6 @@ type Section = (typeof SECTIONS)[number];
 
 const GROUP = "overflow-hidden rounded-3xl border border-navy/10 bg-white";
 const GROUP_TITLE = "mb-2 px-1 text-xs font-bold uppercase tracking-[0.14em] text-navy/50";
-
-function initials(name: string | null | undefined, email: string | null | undefined) {
-  const source = name?.trim() || email || "BR";
-  return source
-    .split(/[\s@.]+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((w) => w[0]!.toUpperCase())
-    .join("");
-}
 
 /** One row of a settings group: an icon, a label, maybe a value, and where it leads. */
 function Row({
@@ -83,6 +75,7 @@ export default function AppAccount() {
   const { user, isLoading } = useRoleGate(ROLES, { requireSignIn: true });
   const { logout, isLoading: signingOut } = useAuth();
   const section = useParams().section as Section | undefined;
+  const profile = trpc.auth.profile.useQuery(undefined, { enabled: !!user && !section, staleTime: 60_000 });
   const canDelete = !!user && (user.role === "customer" || canDispatch(user.role));
 
   if (isLoading || !user) {
@@ -130,9 +123,7 @@ export default function AppAccount() {
 
         {/* who you are */}
         <section className="-mt-2 flex items-center gap-4 rounded-3xl bg-navy p-5 text-white">
-          <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-flame font-display text-xl font-black">
-            {initials(user.name, user.email)}
-          </span>
+          <ProfileAvatar me={user} photoUrl={profile.data?.photoUrl} size="h-16 w-16 text-xl" />
           <div className="min-w-0 flex-1">
             <p className="truncate font-display text-lg font-extrabold">{user.name || user.email}</p>
             <p className="truncate text-xs text-white/70 rtl:text-right" dir="ltr">
@@ -147,8 +138,30 @@ export default function AppAccount() {
               <BadgeCheck className="h-3.5 w-3.5" />
               {p(role)}
             </span>
+            {profile.data?.technician && <RatingLine rating={profile.data.technician.rating} className="mt-2 block text-white" />}
           </div>
         </section>
+
+        {/* figures: a technician's jobs, a customer's requests */}
+        {(profile.data?.technician || profile.data?.customer) && (
+          <dl className="-mt-2 grid grid-cols-2 gap-2">
+            {(profile.data.technician
+              ? [
+                  [p(t.account.statDone), profile.data.technician.completedJobs],
+                  [p(t.account.statActive), profile.data.technician.activeJobs],
+                ]
+              : [
+                  [p(t.account.statRequests), profile.data.customer!.requests],
+                  [p(t.account.statCompleted), profile.data.customer!.completed],
+                ]
+            ).map(([label, value]) => (
+              <div key={label} className="rounded-2xl border border-navy/10 bg-white px-4 py-3">
+                <dd className="font-display text-xl font-black text-navy">{value}</dd>
+                <dt className="text-xs font-medium text-navy/60">{label}</dt>
+              </div>
+            ))}
+          </dl>
+        )}
 
         {/* account */}
         <section>

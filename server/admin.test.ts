@@ -484,3 +484,14 @@ describe("parts shops", () => {
     await expect((await callerFor(tech)).shops.save(shop)).rejects.toMatchObject({ code: "FORBIDDEN" });
   });
 });
+
+describe("my profile", () => {
+  it("gives a technician their rating and jobs, a customer their requests, staff the basics", async () => {
+    const mine = await (await callerFor(tech)).auth.profile();
+    expect(mine).toMatchObject({ customer: null, technician: { rating: { count: expect.any(Number) }, completedJobs: expect.any(Number), activeJobs: expect.any(Number) } });
+    expect(mine.memberSince).toBeInstanceOf(Date);
+    const theirs = await (await callerFor(customer)).auth.profile();
+    expect(theirs).toMatchObject({ technician: null, customer: { requests: expect.any(Number), completed: expect.any(Number) } });
+    expect(await (await callerFor(owner)).auth.profile()).toMatchObject({ technician: null, customer: null, photoUrl: null });
+  });
+});
