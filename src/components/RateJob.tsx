@@ -17,8 +17,8 @@ export function RateJob({ requestId, rated }: { requestId: number; rated: boolea
 
   if (rated) {
     return (
-      <p className="mt-6 inline-flex items-center gap-2 rounded-full border-2 border-green-700 bg-green-700/10 px-4 py-2 text-sm font-bold text-green-800">
-        <Star className="h-4 w-4" fill="currentColor" aria-hidden />
+      <p className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-green-800">
+        <Star className="h-4 w-4 text-flame" fill="currentColor" aria-hidden />
         {p(t.rating.thanks)}
       </p>
     );

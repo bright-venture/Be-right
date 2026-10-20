@@ -240,11 +240,15 @@ export default function AppRequest() {
               <BeforeAfter media={media} forCustomer />
             </div>
             <RateJob key={`rate-${r.id}`} requestId={r.id} rated={!!review} />
-            {guarantee && <ReportProblem key={r.id} requestId={r.id} guarantee={guarantee} onReported={refresh} />}
-            <Link to={`/book?cat=${r.category}`} className="btn-pill-outline w-full justify-center !min-h-12 text-sm">
-              <Repeat className="h-4 w-4" aria-hidden />
-              {p(t.rebook)}
-            </Link>
+            <div className="flex flex-wrap gap-2">
+              <Link to={`/book?cat=${r.category}`} className="btn-pill-outline w-full justify-center !min-h-12 text-sm">
+                <Repeat className="h-4 w-4" aria-hidden />
+                {p(t.rebook)}
+              </Link>
+              {guarantee && (
+                <ReportProblem key={r.id} requestId={r.id} guarantee={guarantee} onReported={refresh} buttonClassName="w-full justify-center !min-h-12" />
+              )}
+            </div>
           </section>
         )}
 

@@ -459,16 +459,12 @@ export const t = {
       ar: "الزيارة مخطّطة مسبقاً. سيتصل بك مختص لتأكيد الإلغاء.",
     },
     keepVisit: { en: "Keep my visit", ar: "الإبقاء على زيارتي" },
-    coveredUntil: {
-      en: "Covered by our {days}-day guarantee until {date}.",
-      ar: "مشمول بضماننا لمدة {days} حتى {date}.",
-    },
     reportProblem: { en: "Something not right? Report a problem", ar: "هل هناك ما ليس على ما يرام؟ أبلغ عن مشكلة" },
     whatsappUs: { en: "WhatsApp us about this job", ar: "راسلنا عبر واتساب بشأن هذا الطلب" },
     reportTitle: { en: "What isn't right?", ar: "ما المشكلة؟" },
     reportHint: {
-      en: "Tell us what happened. Our specialist reviews it and we come back; if it's covered by the guarantee, there's nothing to pay.",
-      ar: "أخبرنا بما حدث. يراجعه المختص ونعود إليك؛ وإذا كان مشمولاً بالضمان، فلا شيء عليك دفعه.",
+      en: "Tell us what happened. Our specialist reviews it and arranges a visit to put it right.",
+      ar: "أخبرنا بما حدث. يراجعه المختص ويرتّب زيارة لإصلاحه.",
     },
     reportPh: { en: "e.g. The leak under the sink came back", ar: "مثلاً: عاد التسرّب تحت المغسلة" },
     reportTooShort: { en: "Tell us a bit more (at least 10 characters).", ar: "أخبرنا بالمزيد قليلاً (١٠ أحرف على الأقل)." },

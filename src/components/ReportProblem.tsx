@@ -1,11 +1,10 @@
 import { useRef, useState } from "react";
-import { ImagePlus, Loader2, ShieldCheck, X } from "lucide-react";
+import { CheckCircle2, Flag, ImagePlus, Loader2, X } from "lucide-react";
 import { useI18n } from "@/i18n";
 import { trpc } from "@/providers/trpc";
 import { uploadToSignedTarget } from "@/lib/upload";
 import { shrinkImage } from "@/lib/shrinkImage";
 import { isNetworkError, isRateLimited, refusalMessage } from "@/lib/errors";
-import { arabicDays, WORKMANSHIP_GUARANTEE_DAYS } from "@contracts/legal";
 import { isValidVisitDate, MAX_BOOKING_VIDEOS, MAX_PROBLEM_FILES, TIME_SLOTS, todayHere, type TimeSlot } from "@contracts/workflow";
 import { MEDIA_ACCEPT } from "@contracts/uploads";
 
@@ -14,19 +13,22 @@ const FIELD =
   "mt-2 w-full rounded-2xl border-2 border-navy/30 bg-white px-4 font-semibold text-navy placeholder:font-normal placeholder:text-navy/40 focus:border-flame focus:outline-none";
 
 /**
- * The workmanship guarantee on a completed job: how long it's covered, and a form to
- * report that something isn't right (which opens a linked return visit).
+ * "Something not right? Report a problem" on a completed job, for a few days after it (the
+ * guarantee window): a button that sits in a row of actions, and the form opening on the
+ * next line (it takes the full width of a wrapping row). A report opens a linked return visit.
  */
 export function ReportProblem({
   requestId,
   guarantee,
   onReported,
+  buttonClassName = "",
 }: {
   requestId: number;
   guarantee: { endsAt: Date | null; openClaimId: number | null };
   onReported: (claimId: number) => void;
+  buttonClassName?: string;
 }) {
-  const { t, p, lang } = useI18n();
+  const { t, p } = useI18n();
   const [open, setOpen] = useState(false);
   const [description, setDescription] = useState("");
   const [files, setFiles] = useState<File[]>([]);
@@ -50,7 +52,6 @@ export function ReportProblem({
   // eslint-disable-next-line react-hooks/purity -- compared once per render; a stale minute doesn't matter
   if (!endsAt || endsAt.getTime() < Date.now()) return null;
 
-  const until = endsAt.toLocaleDateString(lang === "ar" ? "ar" : "en-GB", { day: "numeric", month: "long" });
   const descriptionOk = description.trim().length >= 10;
   const dateOk = !!date && isValidVisitDate(date, todayHere());
   const slots: Record<TimeSlot, { en: string; ar: string }> = {
@@ -116,20 +117,18 @@ export function ReportProblem({
   }
 
   return (
-    <div className="mt-6 rounded-2xl border-2 border-bird bg-bird/5 p-4">
-      <p className="flex items-center gap-2 text-sm font-semibold text-navy">
-        <ShieldCheck className="h-5 w-5 shrink-0 text-bird" />
-        {p(t.requests.coveredUntil)
-          .replace("{days}", lang === "ar" ? arabicDays(WORKMANSHIP_GUARANTEE_DAYS) : String(WORKMANSHIP_GUARANTEE_DAYS))
-          .replace("{date}", until)}
-      </p>
-
-      {!open ? (
-        <button onClick={() => setOpen(true)} className="btn-pill-outline mt-3">
-          {p(t.requests.reportProblem)}
-        </button>
-      ) : (
-        <div className="mt-4 flex flex-col gap-4">
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className={`btn-pill-outline !min-h-11 !px-5 !py-2 text-sm ${open ? "!border-navy !bg-navy !text-paper" : ""} ${buttonClassName}`}
+      >
+        <Flag className="h-4 w-4" aria-hidden />
+        {p(t.requests.reportProblem)}
+      </button>
+      {open && (
+        <div className="flex basis-full flex-col gap-4 rounded-2xl border border-navy/12 bg-white p-4 sm:p-5">
           <div>
             <label htmlFor={`problem-${requestId}`} className="font-display text-base font-extrabold text-navy">
               {p(t.requests.reportTitle)}
@@ -229,14 +228,14 @@ export function ReportProblem({
           )}
         </div>
       )}
-    </div>
+    </>
   );
 }
 
 function Box({ children }: { children: React.ReactNode }) {
   return (
-    <p className="mt-6 flex items-center gap-2 rounded-2xl border-2 border-bird bg-bird/5 p-4 text-sm font-semibold text-navy">
-      <ShieldCheck className="h-5 w-5 shrink-0 text-bird" />
+    <p className="flex basis-full items-center gap-2 rounded-xl bg-navy/[0.04] px-4 py-3 text-sm font-semibold text-navy">
+      <CheckCircle2 className="h-5 w-5 shrink-0 text-green-700" />
       {children}
     </p>
   );

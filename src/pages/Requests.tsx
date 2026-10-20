@@ -313,13 +313,26 @@ export default function Requests() {
                       </button>
                     )}
                     {detail.data.request.status === "completed" && (
-                      <>
+                      <div className="mt-6 flex flex-col gap-4 border-t border-navy/10 pt-5 [&>*]:!mt-0">
                         <RateJob key={`rate-${r.id}`} requestId={r.id} rated={!!detail.data.review} />
-                        <Link to={`/book?cat=${detail.data.request.category}`} className="btn-pill-outline mt-4 !px-5 !py-2">
-                          <Repeat className="h-4 w-4" aria-hidden />
-                          {p(t.rebook)}
-                        </Link>
-                      </>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Link to={`/book?cat=${detail.data.request.category}`} className="btn-pill-outline !min-h-11 !px-5 !py-2 text-sm">
+                            <Repeat className="h-4 w-4" aria-hidden />
+                            {p(t.rebook)}
+                          </Link>
+                          {detail.data.guarantee && (
+                            <ReportProblem
+                              key={r.id}
+                              requestId={r.id}
+                              guarantee={detail.data.guarantee}
+                              onReported={() => {
+                                void utils.requests.mine.invalidate();
+                                void utils.requests.get.invalidate();
+                              }}
+                            />
+                          )}
+                        </div>
+                      </div>
                     )}
 
                     {/* WhatsApp about this job: only once the business number is set (contracts/legal.ts). */}
@@ -333,18 +346,6 @@ export default function Requests() {
                         <MessageCircle className="h-4 w-4" aria-hidden />
                         {p(t.requests.whatsappUs)}
                       </a>
-                    )}
-
-                    {detail.data.guarantee && (
-                      <ReportProblem
-                        key={r.id}
-                        requestId={r.id}
-                        guarantee={detail.data.guarantee}
-                        onReported={() => {
-                          void utils.requests.mine.invalidate();
-                          void utils.requests.get.invalidate();
-                        }}
-                      />
                     )}
 
                     {/* after scheduling: ask a specialist to cancel */}
