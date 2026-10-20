@@ -59,14 +59,24 @@ export const specialistRouter = createRouter({
   }),
 
   /**
-   * Did anything change since the queue was loaded? The dashboard asks this every 30 seconds
-   * (two numbers from an index) and reloads the whole queue only when the answer changes.
+   * Did anything change since the dashboard loaded? It asks every 10 seconds (four numbers,
+   * each from an index) and reloads the queue and the open request only when one changes:
+   * a request changed or was booked, something was logged on one (a technician arrived),
+   * or a photo was added.
    */
   queueVersion: specialistQuery.query(async () => {
-    const [row] = await getDb()
-      .select({ updatedAt: max(serviceRequests.updatedAt), latestId: max(serviceRequests.id) })
-      .from(serviceRequests);
-    return { updatedAt: row?.updatedAt ?? null, latestId: row?.latestId ?? null };
+    const db = getDb();
+    const [[requests], [events], [media]] = await Promise.all([
+      db.select({ updatedAt: max(serviceRequests.updatedAt), latestId: max(serviceRequests.id) }).from(serviceRequests),
+      db.select({ latestEventId: max(requestEvents.id) }).from(requestEvents),
+      db.select({ latestMediaId: max(requestMedia.id) }).from(requestMedia),
+    ]);
+    return {
+      updatedAt: requests?.updatedAt ?? null,
+      latestId: requests?.latestId ?? null,
+      latestEventId: events?.latestEventId ?? null,
+      latestMediaId: media?.latestMediaId ?? null,
+    };
   }),
 
   /** Closed requests older than the live queue, newest first, a page at a time. */

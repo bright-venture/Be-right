@@ -2,7 +2,7 @@
 // open requests and those closed recently. Older ones load on demand.
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import { eq } from "drizzle-orm";
-import { serviceRequests, type User } from "@db/schema";
+import { serviceRequests, type User, requestEvents } from "@db/schema";
 import { BEIRUT_PIN, callerFor, createTestDb, futureDate, makeSpecialist, makeUser, type TestDb } from "./test/harness";
 
 const state = vi.hoisted(() => ({ db: undefined as unknown }));
@@ -120,7 +120,11 @@ describe("dashboard queue", () => {
     // So does any change to a request.
     const [{ id }] = await db.select({ id: serviceRequests.id }).from(serviceRequests).limit(1);
     await db.update(serviceRequests).set({ area: "Hamra", updatedAt: new Date(Date.now() + 1000) }).where(eq(serviceRequests.id, id));
-    expect(await d.specialist.queueVersion()).not.toEqual(afterBooking);
+    const afterChange = await d.specialist.queueVersion();
+    expect(afterChange).not.toEqual(afterBooking);
+    // And something logged on a request without changing it (a technician arrived).
+    await db.insert(requestEvents).values({ requestId: id, status: "arrived", actorId: desk.id });
+    expect(await d.specialist.queueVersion()).not.toEqual(afterChange);
   });
 
   it("is for staff only", async () => {
