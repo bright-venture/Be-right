@@ -12,6 +12,7 @@ import { RateJob } from "@/components/RateJob";
 import { StatusBadge, TechnicianCard } from "@/components/requests/RequestParts";
 import { COMPANY } from "@contracts/legal";
 import { useI18n } from "@/i18n";
+import { useConfirm } from "@/hooks/useConfirm";
 import { formatDay, formatVisitDay } from "@/lib/time";
 import { useRoleGate } from "@/hooks/useRoleGate";
 import { trpc } from "@/providers/trpc";
@@ -25,6 +26,7 @@ import { CANCEL_REQUESTABLE_STATUSES, canTransition } from "@contracts/workflow"
 
 export default function Requests() {
   const { t, p, lang } = useI18n();
+  const [confirm, confirmDialog] = useConfirm();
   const { role, isLoading: authLoading } = useRoleGate(["customer"], { requireSignIn: true });
   const isAuthenticated = role === "customer";
   // ?open=12 (from the app home screen) opens that request straight away.
@@ -59,6 +61,30 @@ export default function Requests() {
       utils.requests.get.invalidate();
     },
   });
+  /** "Are you sure?" before each way a customer cancels. */
+  const confirmCancel = (id: number) =>
+    confirm({
+      title: p(t.requests.cancelAskTitle).replace("{id}", String(id)),
+      message: p(t.requests.cancelAskNote),
+      confirmLabel: p(t.requests.cancel),
+      cancelLabel: p(t.requests.keepRequest),
+      tone: "danger",
+    });
+  const confirmDecline = (id: number) =>
+    confirm({
+      title: p(t.requests.declineAskTitle),
+      message: p(t.requests.declineAskNote).replace("{id}", String(id)),
+      confirmLabel: p(t.requests.declineQuote),
+      cancelLabel: p(t.requests.goBack),
+      tone: "danger",
+    });
+  const confirmAskCancel = () =>
+    confirm({
+      title: p(t.requests.askCancelTitle),
+      message: p(t.requests.askCancelNote),
+      confirmLabel: p(t.requests.askCancelSend),
+      cancelLabel: p(t.requests.keepVisit),
+    });
   const requestCancel = trpc.requests.requestCancel.useMutation({
     onSuccess: () => {
       setAskingCancel(null);
@@ -81,6 +107,7 @@ export default function Requests() {
     <div className="flex min-h-screen flex-col bg-paper">
       <Navbar />
       <main className="mx-auto w-full max-w-4xl flex-1 px-4 pb-20 pt-24 sm:px-6">
+        {confirmDialog}
         <div className="flex items-end justify-between gap-4">
           <h1 className="font-display text-3xl font-black text-navy sm:text-4xl">
             {p(t.requests.title)}
@@ -222,7 +249,9 @@ export default function Requests() {
                           {p(t.requests.approveQuote)}
                         </button>
                         <button
-                          onClick={() => cancel.mutate({ id: r.id })}
+                          onClick={async () => {
+                            if (await confirmDecline(r.id)) cancel.mutate({ id: r.id });
+                          }}
                           disabled={cancel.isPending}
                           className="btn-pill-outline"
                         >
@@ -274,7 +303,9 @@ export default function Requests() {
                     {detail.data.request.status !== "quote_ready" &&
                       canTransition("cancel", detail.data.request.status as RequestStatus) && (
                       <button
-                        onClick={() => cancel.mutate({ id: r.id })}
+                        onClick={async () => {
+                          if (await confirmCancel(r.id)) cancel.mutate({ id: r.id });
+                        }}
                         disabled={cancel.isPending}
                         className="mt-6 text-sm font-bold text-destructive underline underline-offset-4"
                       >
@@ -341,7 +372,9 @@ export default function Requests() {
                             className="w-full rounded-2xl border-2 border-navy/30 bg-white px-4 py-2 text-sm font-semibold text-navy placeholder:font-normal placeholder:text-navy/40 focus:border-flame focus:outline-none"
                           />
                           <button
-                            onClick={() => requestCancel.mutate({ id: r.id, reason: cancelReason.trim() || undefined })}
+                            onClick={async () => {
+                              if (await confirmAskCancel()) requestCancel.mutate({ id: r.id, reason: cancelReason.trim() || undefined });
+                            }}
                             disabled={requestCancel.isPending}
                             className="btn-pill-outline self-start"
                           >

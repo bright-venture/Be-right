@@ -10,6 +10,8 @@ export type ConfirmOptions = {
   confirmLabel: string;
   /** Red for what can't be undone. */
   tone?: "danger" | "default";
+  /** The button that goes back, when "Cancel" would be confusing (e.g. next to "Cancel request"). */
+  cancelLabel?: string;
 };
 
 /**
@@ -17,7 +19,14 @@ export type ConfirmOptions = {
  * looks foreign, and on phones shows the site's address). Cancel has the focus, so Enter
  * or Escape never goes ahead by accident.
  */
-export function ConfirmDialog({ title, message, confirmLabel, tone = "default", onAnswer }: ConfirmOptions & { onAnswer: (ok: boolean) => void }) {
+export function ConfirmDialog({
+  title,
+  message,
+  confirmLabel,
+  tone = "default",
+  cancelLabel,
+  onAnswer,
+}: ConfirmOptions & { onAnswer: (ok: boolean) => void }) {
   const { t, p } = useI18n();
   const cancelRef = useRef<HTMLButtonElement>(null);
   const danger = tone === "danger";
@@ -77,7 +86,7 @@ export function ConfirmDialog({ title, message, confirmLabel, tone = "default", 
             onClick={() => onAnswer(false)}
             className="inline-flex h-11 items-center justify-center rounded-lg border border-navy/15 px-4 text-sm font-semibold text-navy hover:bg-navy/5"
           >
-            {p(t.confirm.cancel)}
+            {cancelLabel ?? p(t.confirm.cancel)}
           </button>
           <button
             type="button"

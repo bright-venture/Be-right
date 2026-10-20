@@ -440,6 +440,25 @@ export const t = {
     approveQuote: { en: "Approve quote", ar: "وافق على العرض" },
     declineQuote: { en: "Decline", ar: "ارفض" },
     cancel: { en: "Cancel request", ar: "إلغاء الطلب" },
+    // "are you sure" before the customer cancels
+    cancelAskTitle: { en: "Cancel request #{id}?", ar: "إلغاء الطلب رقم #{id}؟" },
+    cancelAskNote: {
+      en: "Nothing is charged. This can't be undone: to have it done later, you'll need to book again.",
+      ar: "لن يُحتسب أي مبلغ. لا يمكن التراجع عن ذلك: إذا احتجت إلى الخدمة لاحقاً، عليك الحجز من جديد.",
+    },
+    keepRequest: { en: "Keep my request", ar: "الإبقاء على طلبي" },
+    declineAskTitle: { en: "Decline the price?", ar: "رفض السعر؟" },
+    declineAskNote: {
+      en: "Request #{id} is cancelled and nothing is charged. To have it done later, you'll need to book again.",
+      ar: "سيُلغى الطلب رقم #{id} ولن يُحتسب أي مبلغ. إذا احتجت إلى الخدمة لاحقاً، عليك الحجز من جديد.",
+    },
+    goBack: { en: "Go back", ar: "رجوع" },
+    askCancelTitle: { en: "Ask to cancel this visit?", ar: "طلب إلغاء هذه الزيارة؟" },
+    askCancelNote: {
+      en: "The visit is already planned. A specialist will call you to confirm the cancellation.",
+      ar: "الزيارة مخطّطة مسبقاً. سيتصل بك مختص لتأكيد الإلغاء.",
+    },
+    keepVisit: { en: "Keep my visit", ar: "الإبقاء على زيارتي" },
     coveredUntil: {
       en: "Covered by our {days}-day guarantee until {date}.",
       ar: "مشمول بضماننا لمدة {days} حتى {date}.",
