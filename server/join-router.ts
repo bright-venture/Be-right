@@ -9,6 +9,8 @@ import {
   APPLICATION_DOCUMENTS,
   DOCUMENT_FIELD,
   MANUAL_APPLICATION_STATUSES,
+  OFFICE_DOCUMENTS,
+  officeDocuments,
   TRANSPORT,
   type ApplicationDocument,
 } from "@contracts/applications";
@@ -62,6 +64,11 @@ export const joinRouter = createRouter({
         transport: z.enum(TRANSPORT),
         // The profile photo, uploaded first via storage.createDocumentUpload.
         photoKey: documentKey,
+        // Yes or no for each paper they will bring to the office (the vehicle's only with a vehicle).
+        documents: z.object(Object.fromEntries(OFFICE_DOCUMENTS.map((kind) => [kind, z.boolean().optional()])) as Record<
+          (typeof OFFICE_DOCUMENTS)[number],
+          z.ZodOptional<z.ZodBoolean>
+        >),
         // Privacy Policy.
         consent: z.literal(true),
       }),
@@ -72,6 +79,11 @@ export const joinRouter = createRouter({
       if (!documentKeyMatches(input.photoKey, "photo") || !(await documentsExist([input.photoKey]))) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "Please upload your photo" });
       }
+      const asked = officeDocuments(input.transport);
+      if (asked.some((kind) => input.documents[kind] === undefined)) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Please answer yes or no for each document" });
+      }
+      const documentsDeclared = Object.fromEntries(asked.map((kind) => [kind, input.documents[kind]!]));
       // \`consent\` is validated above (must be true); what's stored is when and which version.
       const [res] = await getDb()
         .insert(technicianApplications)
@@ -83,6 +95,7 @@ export const joinRouter = createRouter({
           hasTransport: input.transport !== "none",
           transport: input.transport,
           photoKey: input.photoKey,
+          documentsDeclared,
           consentAt: new Date(),
           consentVersion: LEGAL_VERSION,
         })

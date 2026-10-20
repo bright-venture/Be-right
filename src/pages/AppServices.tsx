@@ -5,7 +5,7 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { ServiceIcon } from "@/components/ServiceIcon";
 import { useI18n } from "@/i18n";
-import { CATEGORY_MAP, CATEGORY_TINT, FACILITY_GROUP, FACILITY_SERVICES, SERVICES_IN_ORDER } from "@contracts/services";
+import { CATEGORY_MAP, CATEGORY_TINT, FACILITY_GROUP, FACILITY_SERVICES, CUSTOMER_SERVICES } from "@contracts/services";
 import { CATEGORY_PROBLEMS, bookingHref } from "@contracts/picker";
 
 /**
@@ -39,7 +39,7 @@ export default function AppServices() {
           {/* Every service in one list: the trades, then the facility services under their own
               heading. Services with common problems open to them; the others go straight to the
               booking form. */}
-          {SERVICES_IN_ORDER.map((id) => {
+          {CUSTOMER_SERVICES.map((id) => {
             const c = CATEGORY_MAP[id];
             if (!c) return null;
             const tint = CATEGORY_TINT[id] ?? { bg: "#ECEFF4", ink: "#0C2B5C" };

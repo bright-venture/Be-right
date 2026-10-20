@@ -12,6 +12,11 @@ export function formatVisitDay(day: string, lang: string) {
   return date.toLocaleDateString(locale(lang), { weekday: "short", day: "numeric", month: "short" });
 }
 
+/** The day something happened: "14 Oct 2026". */
+export function formatDay(when: Date | string, lang: string) {
+  return new Date(when).toLocaleDateString(locale(lang), { day: "numeric", month: "short", year: "numeric" });
+}
+
 /** When something happened: "7 Oct, 14:05". */
 export function formatMoment(when: Date | string, lang: string) {
   return new Date(when).toLocaleString(locale(lang), {

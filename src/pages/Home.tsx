@@ -18,6 +18,7 @@ import { HeroBird } from "@/components/HeroBird";
 import { ClientCarousel } from "@/components/ClientCarousel";
 import { CategoryPicker } from "@/components/CategoryPicker";
 import { ServiceIcon } from "@/components/ServiceIcon";
+import { OtherServiceBar } from "@/components/OtherServiceBar";
 import { useI18n } from "@/i18n";
 import {
   CATEGORY_MAP,
@@ -25,6 +26,8 @@ import {
   COVERAGE_NOTE,
   FACILITY_GROUP,
   FACILITY_SERVICES,
+  OTHER_FACILITY,
+  OTHER_TRADE,
   TRADE_SERVICES,
 } from "@contracts/services";
 import { INTRO_DONE_EVENT } from "@/lib/intro";
@@ -234,6 +237,7 @@ export default function Home() {
           <div className="mt-8 grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-5">
             {trades.map((c, i) => renderTile(c, i))}
           </div>
+          <OtherServiceBar id={OTHER_TRADE} to={`/book?cat=${OTHER_TRADE}`} />
 
           {/* Facility Services: the six services for running a place, as one group
               (one row of six on computers, two of three on tablets, three of two on phones). */}
@@ -250,6 +254,7 @@ export default function Home() {
             <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-6">
               {facility.map((c, i) => renderTile(c, trades.length + i))}
             </div>
+            <OtherServiceBar id={OTHER_FACILITY} to={`/book?cat=${OTHER_FACILITY}`} />
           </div>
 
           <div className="mt-4 grid sm:mt-5">

@@ -1,0 +1,1 @@
+ALTER TABLE "technician_applications" ADD COLUMN "documents_declared" jsonb;

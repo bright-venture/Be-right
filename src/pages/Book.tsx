@@ -12,6 +12,7 @@ import {
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { ServiceIcon } from "@/components/ServiceIcon";
+import { OtherServiceBar } from "@/components/OtherServiceBar";
 import { AuthPanel } from "@/components/AuthPanel";
 import { AgreeCheckbox } from "@/components/AgreeCheckbox";
 import { useI18n } from "@/i18n";
@@ -33,6 +34,8 @@ import {
   TRADE_SERVICES,
   FACILITY_GROUP,
   FACILITY_SERVICES,
+  OTHER_FACILITY,
+  OTHER_TRADE,
   CATEGORY_MAP,
   CATEGORY_TINT,
 } from "@contracts/services";
@@ -330,8 +333,8 @@ export default function Book() {
               {/* The ten trades in two rows of five, then the six facility services in two rows
                   of three (on phones, every row holds two). */}
               {[
-                { ids: TRADE_SERVICES, cols: "sm:grid-cols-5", title: null },
-                { ids: FACILITY_SERVICES, cols: "sm:grid-cols-3", title: FACILITY_GROUP.name },
+                { ids: TRADE_SERVICES, cols: "sm:grid-cols-5", title: null, other: OTHER_TRADE },
+                { ids: FACILITY_SERVICES, cols: "sm:grid-cols-3", title: FACILITY_GROUP.name, other: OTHER_FACILITY },
               ].map((group) => (
                 <div key={group.cols}>
                   {group.title && (
@@ -370,6 +373,15 @@ export default function Book() {
                       );
                     })}
                   </div>
+                  <OtherServiceBar
+                    id={group.other}
+                    active={category === group.other}
+                    onPick={() => {
+                      setCategory(group.other);
+                      setAnswers({});
+                      setStep(1);
+                    }}
+                  />
                 </div>
               ))}
             </>
@@ -392,6 +404,16 @@ export default function Book() {
                       <p className="mb-3 text-xs font-medium text-flame">
                         {p(q.hint)}
                       </p>
+                    )}
+                    {q.kind === "text" && (
+                      <textarea
+                        value={answers[q.id] ?? ""}
+                        onChange={(e) => setAnswers((a) => ({ ...a, [q.id]: e.target.value }))}
+                        maxLength={500}
+                        rows={4}
+                        aria-label={p(q.label)}
+                        className="w-full rounded-2xl border-2 border-navy/30 bg-white px-4 py-3 font-semibold text-navy focus:border-flame focus:outline-none"
+                      />
                     )}
                     <div className="flex flex-wrap gap-2">
                       {q.options?.map((o) => {

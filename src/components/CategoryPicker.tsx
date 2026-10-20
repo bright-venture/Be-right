@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { ServiceIcon } from "@/components/ServiceIcon";
 import { useI18n } from "@/i18n";
-import { CATEGORY_MAP, FACILITY_GROUP, FACILITY_SERVICES, SERVICES_IN_ORDER } from "@contracts/services";
+import { CATEGORY_MAP, FACILITY_GROUP, FACILITY_SERVICES, CUSTOMER_SERVICES } from "@contracts/services";
 import { EmergencyDialog } from "@/components/EmergencyDialog";
 import { EMERGENCY_PROBLEMS } from "@contracts/emergency";
 
@@ -165,7 +165,7 @@ export function CategoryPicker() {
 
           {/* Category pills, rounded white with Be Right icons; the facility services follow
               their group name. */}
-          {SERVICES_IN_ORDER.map(id => (
+          {CUSTOMER_SERVICES.map(id => (
             <Fragment key={id}>
               {id === FACILITY_SERVICES[0] && (
                 <span className="flex shrink-0 snap-start items-center gap-2.5 ps-2 font-display text-xs font-black uppercase tracking-[0.14em] text-navy/60">

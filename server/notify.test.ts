@@ -195,6 +195,7 @@ describe("notification emails", () => {
       trade: "electrical",
       transport: "van",
       photoKey: photoKey(),
+      documents: { idDocument: true, criminalRecord: true, proofOfAddress: true, vehicleRegistration: true },
       consent: true,
     });
     expect(emailTo("boss@example.com").subject).toContain("Samir");

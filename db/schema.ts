@@ -16,7 +16,7 @@ import {
 } from "drizzle-orm/pg-core";
 import type { MediaKind, VisitFeeReason } from "../contracts/workflow";
 import type { AuditAction, AuditDetails } from "../contracts/audit";
-import type { Transport, WorkMode } from "../contracts/applications";
+import type { DocumentsDeclared, Transport, WorkMode } from "../contracts/applications";
 import type { EmergencyStatus } from "../contracts/emergency";
 
 // Every table enables Row Level Security with no policies. The app server talks to
@@ -190,6 +190,8 @@ export const technicianApplications = pgTable("technician_applications", {
   /** The vehicle's registration papers (only when the applicant works with a vehicle). */
   vehicleRegistrationKey: varchar("vehicle_registration_key", { length: 512 }),
   photoKey: varchar("photo_key", { length: 512 }),
+  /** Whether the applicant has each paper to bring to the office (see contracts/applications.ts). */
+  documentsDeclared: jsonb("documents_declared").$type<DocumentsDeclared>(),
   /** Applicant consented to the Privacy Policy and document review (version accepted). */
   consentAt: timestamp("consent_at", { withTimezone: true }),
   consentVersion: varchar("consent_version", { length: 32 }),

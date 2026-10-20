@@ -97,8 +97,12 @@ export const TERMS: LegalDocument = {
       title: t("7. Technicians", "٧. الفنيون"),
       paragraphs: [
         t(
-          "Technicians are vetted and contracted by Be Right. Their own engagement is governed by a separate agreement with us. Technicians must use the app honestly, record arrival and progress, and only share their location while a job is active.",
-          "يخضع الفنيون للتدقيق ويتعاقدون مع بي رايت، ويحكم عملهم اتفاق منفصل معنا. على الفنيين استخدام التطبيق بأمانة وتسجيل الوصول وسير العمل، ومشاركة موقعهم فقط أثناء تنفيذ المهمة.",
+          "Technicians are vetted and contracted by Be Right. Their own engagement is governed by a separate agreement with us. Technicians must use the app honestly, record arrival and progress, take photos before and after each job, and only share their location while a job is active.",
+          "يخضع الفنيون للتدقيق ويتعاقدون مع بي رايت، ويحكم عملهم اتفاق منفصل معنا. على الفنيين استخدام التطبيق بأمانة وتسجيل الوصول وسير العمل، والتقاط صور قبل كل مهمة وبعدها، ومشاركة موقعهم فقط أثناء تنفيذ المهمة.",
+        ),
+        t(
+          "A technician is responsible for mistakes and damage caused during their work, and must put them right.",
+          "الفني مسؤول عن الأخطاء والأضرار التي يتسبّب بها أثناء عمله، وعليه إصلاحها.",
         ),
       ],
     },
@@ -117,6 +121,10 @@ export const TERMS: LegalDocument = {
         t(
           `We are responsible for doing the work with reasonable care and skill. To the extent ${COMPANY.governingLaw.en} allows, we are not liable for indirect losses, and our liability for a job is limited to the amount paid for it. Nothing here limits rights you have as a consumer under the law that applies to you.`,
           `نحن مسؤولون عن تنفيذ العمل بعناية ومهارة معقولتين. وبالقدر الذي يسمح به ${COMPANY.governingLaw.ar}، لا نتحمّل مسؤولية الخسائر غير المباشرة، وتقتصر مسؤوليتنا عن أي مهمة على المبلغ المدفوع لها. ولا يحدّ أي من ذلك من حقوقك كمستهلك بموجب القانون الذي يسري عليك.`,
+        ),
+        t(
+          "Damage during a job: report it from your request page (Report a problem) or by contacting us. The technician who caused it repairs it first. If they don't, Be Right handles it: we arrange the repair or agree a fair settlement with you.",
+          "الأضرار أثناء المهمة: أبلغ عنها من صفحة طلبك (الإبلاغ عن مشكلة) أو بالتواصل معنا. يصلحها أولاً الفني الذي تسبّب بها، وإن لم يفعل تتولّى بي رايت الأمر: نرتّب الإصلاح أو نتّفق معك على تسوية عادلة.",
         ),
       ],
     },
@@ -163,8 +171,8 @@ export const PRIVACY: LegalDocument = {
           "موقع الفني: فقط أثناء تنفيذ المهمة وبعد أن يفعّل الفني مشاركة الموقع؛ ونحتفظ بآخر موقع لتلك المهمة فقط.",
         ),
         t(
-          "Technician applicants: name, phone, email, trade, transport and a profile photo. Our team calls applicants and meets them in person before accepting them. Applications sent before this form changed may also include experience, availability and vetting papers (ID card or passport, criminal record, proof of address, vehicle registration).",
-          "المتقدّمون للعمل كفنيين: الاسم والهاتف والبريد الإلكتروني والمهنة ووسيلة النقل وصورة شخصية. يتصل فريقنا بالمتقدّمين ويلتقي بهم شخصياً قبل قبولهم. وقد تتضمّن الطلبات المرسلة قبل تغيير هذا النموذج أيضاً الخبرة وأوقات العمل ومستندات التدقيق (الهوية أو جواز السفر، والسجل الجنائي، وإثبات العنوان، وأوراق تسجيل المركبة).",
+          "Technician applicants: name, phone, email, trade, transport, a profile photo, and whether they have their ID, criminal record, proof of address and vehicle papers. They show these papers at the office; we don't collect copies online. Our team calls applicants and meets them in person before accepting them. Applications sent before this form changed may also include experience, availability and vetting papers (ID card or passport, criminal record, proof of address, vehicle registration).",
+          "المتقدّمون للعمل كفنيين: الاسم والهاتف والبريد الإلكتروني والمهنة ووسيلة النقل وصورة شخصية، وما إذا كانت لديهم الهوية والسجل الجنائي وإثبات العنوان وأوراق المركبة. يُبرزون هذه المستندات في المكتب؛ ولا نجمع نسخاً منها عبر الإنترنت. يتصل فريقنا بالمتقدّمين ويلتقي بهم شخصياً قبل قبولهم. وقد تتضمّن الطلبات المرسلة قبل تغيير هذا النموذج أيضاً الخبرة وأوقات العمل ومستندات التدقيق (الهوية أو جواز السفر، والسجل الجنائي، وإثبات العنوان، وأوراق تسجيل المركبة).",
         ),
         t(
           "On your device we store only what the site needs to work: your sign-in session, language choice and an unfinished booking draft. We don't use advertising or tracking cookies.",

@@ -168,6 +168,7 @@ describe("admin area", () => {
       trade: "plumbing",
       transport: "car",
       photoKey: photoKey(),
+      documents: { idDocument: true, criminalRecord: true, proofOfAddress: true, vehicleRegistration: true },
       consent: true,
     });
     await makeUser("rawad@example.com", "Rawad");
@@ -250,6 +251,7 @@ describe("audit trail", () => {
       trade: "locksmith",
       transport: "motorcycle",
       photoKey: photoKey(),
+      documents: { idDocument: true, criminalRecord: true, proofOfAddress: true, vehicleRegistration: true },
       consent: true,
     });
     await o.join.documents({ id });
@@ -291,6 +293,7 @@ describe("audit trail", () => {
       trade: "cameras",
       transport: "van",
       photoKey: photoKey(),
+      documents: { idDocument: true, criminalRecord: true, proofOfAddress: true, vehicleRegistration: true },
       consent: true,
     });
     const d = await callerFor(desk);
@@ -355,6 +358,7 @@ describe("safety nets", () => {
       trade: "pest",
       transport: "car",
       photoKey: photoKey(),
+      documents: { idDocument: true, criminalRecord: true, proofOfAddress: true, vehicleRegistration: true },
       consent: true,
     });
     const withdrawnBefore = state.deletedAuthUsers.length;

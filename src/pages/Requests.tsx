@@ -12,6 +12,7 @@ import { RateJob } from "@/components/RateJob";
 import { StatusBadge, TechnicianCard } from "@/components/requests/RequestParts";
 import { COMPANY } from "@contracts/legal";
 import { useI18n } from "@/i18n";
+import { formatDay, formatVisitDay } from "@/lib/time";
 import { useRoleGate } from "@/hooks/useRoleGate";
 import { trpc } from "@/providers/trpc";
 import {
@@ -120,7 +121,8 @@ export default function Requests() {
                       )}
                     </span>
                     <span className="mt-0.5 block text-xs text-navy/70">
-                      {p(t.requests.preferred)}: {r.preferredDate} · {r.area}
+                      {p(t.requests.requestedOn)}: {formatDay(r.createdAt, lang)} · {p(t.requests.preferred)}:{" "}
+                      {formatVisitDay(r.preferredDate, lang)} · {r.area}
                     </span>
                   </span>
                   <StatusBadge status={r.status as RequestStatus} />

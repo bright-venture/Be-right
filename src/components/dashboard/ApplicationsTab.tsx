@@ -11,6 +11,7 @@ import { CATEGORY_MAP } from "@contracts/services";
 import {
   APPLICATION_DOCUMENTS,
   AVAILABILITY_LABELS,
+  officeDocuments,
   EXPERIENCE_LABELS,
   TRANSPORT_LABELS,
   WORK_MODE_STAFF_LABELS,
@@ -215,6 +216,26 @@ function ApplicationCard({
                   ))}
               </dl>
               {app.notes && <p className="mt-3 rounded-lg bg-navy/[0.04] p-3 text-sm text-navy/80">{app.notes}</p>}
+
+              {/* the papers they said they have, to bring to the office */}
+              {app.documentsDeclared && (
+                <div className="mt-4">
+                  <p className="text-xs font-medium text-navy/65">{p(t.dash3.toBring)}</p>
+                  <ul className="mt-1.5 flex flex-wrap gap-2">
+                    {officeDocuments(app.transport).map((kind) => {
+                      const has = app.documentsDeclared?.[kind];
+                      return (
+                        <li
+                          key={kind}
+                          className={`rounded-md px-2 py-1 text-xs font-semibold ${has ? "bg-green-700/10 text-green-800" : "bg-red-700/10 text-red-700"}`}
+                        >
+                          {p(t.docs[kind])}: {p(has ? t.join.yes : t.join.no)}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              )}
 
               {/* papers sent with older applications (the short form only asks for the photo) */}
               {papers.length > 0 && (

@@ -9,6 +9,7 @@ import { BeforeAfter, JobPhotoUpload } from "@/components/JobPhotos";
 import JobMap from "@/components/map/JobMap";
 import { DirectionsLinks } from "@/components/map/DirectionsLinks";
 import { useI18n } from "@/i18n";
+import { formatDay, formatVisitDay } from "@/lib/time";
 import { telLink } from "@/lib/contact";
 import { useRoleGate } from "@/hooks/useRoleGate";
 import { trpc } from "@/providers/trpc";
@@ -85,7 +86,7 @@ function useLocationSharing(activeJobIds: readonly number[] | undefined) {
 }
 
 export default function Tech() {
-  const { t, p } = useI18n();
+  const { t, p, lang } = useI18n();
   const { role, isLoading: authLoading } = useRoleGate(["technician"], { requireSignIn: true });
   const utils = trpc.useUtils();
   const isTech = role === "technician";
@@ -150,7 +151,10 @@ export default function Tech() {
                           : r.category}
                       </p>
                       <p className="text-xs text-navy/70">
-                        {p(t.tech.appointment)}: {r.preferredDate} · {r.timeSlot}
+                        {p(t.tech.appointment)}: {formatVisitDay(r.preferredDate, lang)} · {r.timeSlot}
+                      </p>
+                      <p className="text-xs text-navy/60">
+                        {p(t.requests.requestedOn)}: {formatDay(r.createdAt, lang)}
                       </p>
                       {r.emergency && (
                         <p className="mt-1 inline-flex rounded-full bg-flame px-2 py-px text-[11px] font-bold text-white">

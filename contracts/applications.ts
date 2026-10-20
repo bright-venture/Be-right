@@ -79,6 +79,18 @@ export const DOCUMENT_TYPES: Record<ApplicationDocument, readonly string[]> = {
   photo: PHOTO_TYPES,
 };
 
+/**
+ * Papers an applicant brings to the office for the meeting. The form only asks whether they
+ * have each one (yes or no); the vehicle's papers only when they work with a vehicle.
+ */
+export const OFFICE_DOCUMENTS = ["idDocument", "criminalRecord", "proofOfAddress", "vehicleRegistration"] as const;
+export type OfficeDocument = (typeof OFFICE_DOCUMENTS)[number];
+export type DocumentsDeclared = Partial<Record<OfficeDocument, boolean>>;
+
+export function officeDocuments(transport: Transport | null | undefined): OfficeDocument[] {
+  return OFFICE_DOCUMENTS.filter((kind) => kind !== "vehicleRegistration" || (!!transport && transport !== "none"));
+}
+
 /** What an applicant uploads: a profile photo, which customers see once they work with us. */
 export const REQUIRED_DOCUMENTS = ["photo"] as const satisfies readonly ApplicationDocument[];
 /** Largest file accepted per document (photos are shrunk in the browser before this check). */

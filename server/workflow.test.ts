@@ -53,6 +53,7 @@ const application = {
   trade: "electrical",
   transport: "car" as const,
   photoKey: photoKey(),
+  documents: { idDocument: true, criminalRecord: true, proofOfAddress: true, vehicleRegistration: true },
   consent: true as const,
 };
 
@@ -163,6 +164,22 @@ describe("technician applications (public)", () => {
     const row = (await (await callerFor(boss)).join.list()).find((a) => a.id === id);
     expect(row).toMatchObject({ area: null, notes: null, workMode: null, idDocumentKey: null, criminalRecordKey: null });
     expect(row?.photoKey).toMatch(/photo/);
+  });
+
+  it("asks yes or no for each paper to bring to the office, the vehicle's only with a vehicle", async () => {
+    const c = await callerFor();
+    await expect(
+      c.join.submit({ ...application, email: "no-answer@example.com", documents: { idDocument: true, criminalRecord: true, proofOfAddress: true } }),
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    const { id } = await c.join.submit({
+      ...application,
+      email: "walker@example.com",
+      transport: "none",
+      documents: { idDocument: true, criminalRecord: false, proofOfAddress: true, vehicleRegistration: true },
+    });
+    const row = (await (await callerFor(boss)).join.list()).find((a) => a.id === id);
+    // No vehicle: its papers aren't asked about, and an answer sent anyway isn't kept.
+    expect(row?.documentsDeclared).toEqual({ idDocument: true, criminalRecord: false, proofOfAddress: true });
   });
 });
 

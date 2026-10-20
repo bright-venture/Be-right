@@ -158,6 +158,17 @@ export function ServiceIcon({
           <path d="M10 14H5M10 19H4M11 24l-4 3M22 14h5M22 19h6M21 24l4 3" />
         </svg>
       );
+    case "other":
+    case "other-facility":
+      return (
+        <svg {...common}>
+          <rect x="5" y="5" width="22" height="22" rx="6" />
+          <circle cx="12" cy="12" r="1.6" />
+          <circle cx="20" cy="12" r="1.6" />
+          <circle cx="12" cy="20" r="1.6" />
+          <circle cx="20" cy="20" r="1.6" />
+        </svg>
+      );
     default:
       return (
         <svg {...common}>

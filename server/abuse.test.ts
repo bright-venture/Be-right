@@ -85,6 +85,7 @@ describe("rate limits", () => {
         trade: "plumbing",
         transport: "motorcycle",
         photoKey: photoKey(),
+        documents: { idDocument: true, criminalRecord: true, proofOfAddress: true, vehicleRegistration: true },
         consent: true,
       });
     for (let i = 0; i < 5; i++) await apply(i);

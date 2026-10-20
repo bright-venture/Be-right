@@ -8,7 +8,7 @@ import { StatusBadge } from "@/components/requests/RequestParts";
 import { useI18n } from "@/i18n";
 import { useRoleGate } from "@/hooks/useRoleGate";
 import { trpc } from "@/providers/trpc";
-import { formatVisitDay } from "@/lib/time";
+import { formatDay, formatVisitDay } from "@/lib/time";
 import { CATEGORY_MAP, CATEGORY_TINT, STATUS_ORDER, type RequestStatus } from "@contracts/services";
 
 /** Requests that are finished one way or another: they go under "Past". */
@@ -120,7 +120,10 @@ export default function AppRequests() {
                         <span className="text-xs font-bold text-navy/50">#{r.id}</span>
                       </span>
                       <span className="mt-0.5 block text-xs text-navy/60">
-                        {formatVisitDay(r.preferredDate, lang)} · {slot[r.timeSlot] ?? r.timeSlot}
+                        {p(t.requests.preferred)}: {formatVisitDay(r.preferredDate, lang)} · {slot[r.timeSlot] ?? r.timeSlot}
+                      </span>
+                      <span className="block text-xs text-navy/60">
+                        {p(t.requests.requestedOn)}: {formatDay(r.createdAt, lang)}
                       </span>
                       <span className="flex items-center gap-1 text-xs text-navy/60">
                         <MapPin className="h-3 w-3 shrink-0" aria-hidden />

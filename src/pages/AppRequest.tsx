@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
-import { CalendarDays, Check, Loader2, MapPin, MessageCircle, Repeat, XCircle } from "lucide-react";
+import { CalendarDays, Check, ClipboardList, Loader2, MapPin, MessageCircle, Repeat, XCircle } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { ServiceIcon } from "@/components/ServiceIcon";
@@ -13,7 +13,7 @@ import { StatusBadge, TechnicianCard } from "@/components/requests/RequestParts"
 import { useI18n } from "@/i18n";
 import { useRoleGate } from "@/hooks/useRoleGate";
 import { trpc } from "@/providers/trpc";
-import { formatMoment, formatVisitDay } from "@/lib/time";
+import { formatDay, formatMoment, formatVisitDay } from "@/lib/time";
 import { COMPANY } from "@contracts/legal";
 import {
   CATEGORY_MAP,
@@ -134,6 +134,13 @@ export default function AppRequest() {
         {/* visit */}
         <section className={`${CARD} flex flex-col gap-3 !py-4`}>
           <div className="flex items-center gap-3">
+            <ClipboardList className="h-5 w-5 shrink-0 text-navy/50" />
+            <div className="min-w-0">
+              <p className="text-xs text-navy/60">{p(t.requests.requestedOn)}</p>
+              <p className="text-sm font-bold text-navy">{formatDay(r.createdAt, lang)}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 border-t border-navy/10 pt-3">
             <CalendarDays className="h-5 w-5 shrink-0 text-navy/50" />
             <div className="min-w-0">
               <p className="text-xs text-navy/60">{p(t.app.visit)}</p>

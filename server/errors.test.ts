@@ -59,6 +59,7 @@ describe("API errors in production", () => {
         trade: "plumbing",
         transport: "car",
         photoKey: key("photo"),
+        documents: { idDocument: true, criminalRecord: true, proofOfAddress: true, vehicleRegistration: true },
         consent: true,
       },
     });
