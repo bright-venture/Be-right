@@ -918,13 +918,15 @@ export const t = {
     transport: { en: "Transport", ar: "وسيلة النقل" },
     notProvided: { en: "Not provided", ar: "غير محدّد" },
     // admins meet each applicant in person, then approve (adds them to the technicians) or reject
-    nextTitle: { en: "Next steps", ar: "الخطوات التالية" },
-    nextHint: {
-      en: "1. Call the applicant to set up a meeting in person. 2. After the meeting, accept or reject the application.",
-      ar: "١. اتصل بالمتقدّم لتحديد مقابلة شخصية. ٢. بعد المقابلة، اقبل الطلب أو ارفضه.",
+    step1Title: { en: "Call the applicant", ar: "اتصل بالمتقدّم" },
+    step1Hint: { en: "Set up a meeting in person.", ar: "حدّد معه مقابلة شخصية." },
+    step2Title: { en: "Decide after the meeting", ar: "قرّر بعد المقابلة" },
+    step2Hint: {
+      en: "Accepting creates their technician account and emails them an invitation.",
+      ar: "يُنشئ القبول حساب الفنّي ويرسل إليه دعوة بالبريد الإلكتروني.",
     },
     markCalled: { en: "Mark as called", ar: "تحديد كتمّ الاتصال" },
-    called: { en: "Called: meeting being set up", ar: "تمّ الاتصال: يجري تحديد المقابلة" },
+    called: { en: "Called", ar: "تمّ الاتصال" },
     undo: { en: "Undo", ar: "تراجع" },
     accept: { en: "Accept as technician", ar: "قبوله كفنّي" },
     reject: { en: "Reject", ar: "رفض" },

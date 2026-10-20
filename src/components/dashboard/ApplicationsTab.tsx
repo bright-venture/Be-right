@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { BadgeCheck, ChevronDown, FileText, Loader2, Mail, MessageCircle, Phone, PhoneCall, UserCheck, X } from "lucide-react";
+import { useState, type ReactNode } from "react";
+import { BadgeCheck, Check, ChevronDown, FileText, Loader2, Mail, MessageCircle, Phone, PhoneCall, UserCheck, X } from "lucide-react";
 import type { inferRouterOutputs } from "@trpc/server";
 import type { AppRouter } from "../../../server/router";
 import { ServiceIcon } from "@/components/ServiceIcon";
@@ -93,6 +93,7 @@ function ApplicationCard({
   // "hired" by hand without an account ever being created.
   const hired = app.status === "hired" && app.hiredUserId != null;
   const rejected = app.status === "rejected";
+  const called = app.status === "contacted";
   const hireEmail = app.email ?? email.trim();
   const canHire = !hired && EMAIL_PATTERN.test(hireEmail);
   // Short-lived links, fetched only when the card is open.
@@ -276,84 +277,98 @@ function ApplicationCard({
             </div>
           </div>
 
-          {/* the decision */}
+          {/* the decision: call, meet, then accept or reject */}
           <div className="mt-5 border-t border-navy/10 pt-4">
             {hired ? (
-              <p className="inline-flex items-center gap-2 text-sm font-bold text-navy">
-                <UserCheck className="h-5 w-5 text-green-700" /> {p(t.dash3.technicianAccount)}
+              <p className="flex items-center gap-3 rounded-xl border border-green-700/25 bg-green-700/[0.06] p-4 text-sm font-semibold text-navy">
+                <UserCheck className="h-5 w-5 shrink-0 text-green-700" /> {p(t.dash3.technicianAccount)}
               </p>
             ) : rejected ? (
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <p className="text-sm font-semibold text-red-700">{p(t.dash3.rejectedNote)}</p>
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-700/20 bg-red-700/[0.04] p-4">
+                <p className="flex items-center gap-2 text-sm font-semibold text-red-700">
+                  <X className="h-4 w-4 shrink-0" /> {p(t.dash3.rejectedNote)}
+                </p>
                 <button
                   type="button"
                   onClick={() => setStatus.mutate({ id: app.id, status: "new" })}
                   disabled={setStatus.isPending}
-                  className={OUTLINE}
+                  className={`${OUTLINE} bg-white`}
                 >
                   {p(t.dash3.reopen)}
                 </button>
               </div>
             ) : (
-              <>
-                <p className="font-display text-sm font-extrabold text-navy">{p(t.dash3.nextTitle)}</p>
-                <p className="mt-0.5 text-xs text-navy/65">{p(t.dash3.nextHint)}</p>
-                <div className="mt-3 flex flex-wrap items-center gap-2">
-                  {app.status === "contacted" ? (
-                    <span className="inline-flex h-10 items-center gap-2 rounded-lg bg-navy/[0.05] px-3 text-sm font-semibold text-navy">
-                      <PhoneCall className="h-4 w-4 text-green-700" /> {p(t.dash3.called)}
+              <ol className="divide-y divide-navy/10 overflow-hidden rounded-xl border border-navy/12">
+                <DecisionStep
+                  n={1}
+                  done={called}
+                  title={p(t.dash3.step1Title)}
+                  hint={p(t.dash3.step1Hint)}
+                  action={
+                    called ? (
+                      <span className="inline-flex h-10 items-center gap-3 text-sm font-semibold text-green-800">
+                        {p(t.dash3.called)}
+                        <button
+                          type="button"
+                          onClick={() => setStatus.mutate({ id: app.id, status: "new" })}
+                          disabled={setStatus.isPending}
+                          className="text-xs font-semibold text-navy/60 underline underline-offset-2 hover:text-navy"
+                        >
+                          {p(t.dash3.undo)}
+                        </button>
+                      </span>
+                    ) : (
                       <button
                         type="button"
-                        onClick={() => setStatus.mutate({ id: app.id, status: "new" })}
+                        onClick={() => setStatus.mutate({ id: app.id, status: "contacted" })}
                         disabled={setStatus.isPending}
-                        className="text-xs font-semibold text-navy/60 underline underline-offset-2 hover:text-navy"
+                        className={OUTLINE}
                       >
-                        {p(t.dash3.undo)}
+                        <PhoneCall className="h-4 w-4" /> {p(t.dash3.markCalled)}
                       </button>
-                    </span>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => setStatus.mutate({ id: app.id, status: "contacted" })}
-                      disabled={setStatus.isPending}
-                      className={OUTLINE}
-                    >
-                      <PhoneCall className="h-4 w-4" /> {p(t.dash3.markCalled)}
-                    </button>
+                    )
+                  }
+                />
+                <DecisionStep
+                  n={2}
+                  title={p(t.dash3.step2Title)}
+                  hint={p(t.dash3.step2Hint)}
+                  action={
+                    <>
+                      <button
+                        type="button"
+                        onClick={onReject}
+                        disabled={setStatus.isPending}
+                        className={`${BTN} border border-red-700/40 text-red-700 hover:bg-red-700/5`}
+                      >
+                        <X className="h-4 w-4" /> {p(t.dash3.reject)}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={onHire}
+                        disabled={!canHire || hire.isPending}
+                        className={`${BTN} bg-green-700 text-white hover:bg-green-800`}
+                      >
+                        {hire.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <BadgeCheck className="h-4 w-4" />}
+                        {p(t.dash3.accept)}
+                      </button>
+                    </>
+                  }
+                >
+                  {!app.email && (
+                    <label className="mt-3 flex max-w-sm flex-col text-xs font-medium text-navy/65">
+                      {p(t.dash3.hireEmail)}
+                      <input
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        dir="ltr"
+                        className="mt-1 h-10 rounded-lg border border-navy/20 bg-white px-3 text-sm font-semibold text-navy focus:border-navy focus:outline-none"
+                      />
+                    </label>
                   )}
-                </div>
-                {!app.email && (
-                  <label className="mt-3 flex max-w-sm flex-col text-xs font-medium text-navy/65">
-                    {p(t.dash3.hireEmail)}
-                    <input
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      dir="ltr"
-                      className="mt-1 h-10 rounded-lg border border-navy/20 bg-white px-3 text-sm font-semibold text-navy focus:border-navy focus:outline-none"
-                    />
-                  </label>
-                )}
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    onClick={onHire}
-                    disabled={!canHire || hire.isPending}
-                    className={`${BTN} bg-green-700 text-white hover:bg-green-800`}
-                  >
-                    {hire.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <BadgeCheck className="h-4 w-4" />}
-                    {p(t.dash3.accept)}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={onReject}
-                    disabled={setStatus.isPending}
-                    className={`${BTN} border border-red-700/40 text-red-700 hover:bg-red-700/5`}
-                  >
-                    <X className="h-4 w-4" /> {p(t.dash3.reject)}
-                  </button>
-                </div>
-              </>
+                </DecisionStep>
+              </ol>
             )}
           </div>
 
@@ -365,5 +380,40 @@ function ApplicationCard({
         </div>
       )}
     </div>
+  );
+}
+
+/** One numbered step of the decision: what to do on the left, its buttons on the right. */
+function DecisionStep({
+  n,
+  done = false,
+  title,
+  hint,
+  action,
+  children,
+}: {
+  n: number;
+  done?: boolean;
+  title: string;
+  hint: string;
+  action: ReactNode;
+  children?: ReactNode;
+}) {
+  return (
+    <li className="grid gap-3 bg-white p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+      <div className="flex items-start gap-3">
+        <span
+          className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white ${done ? "bg-green-700" : "bg-navy"}`}
+        >
+          {done ? <Check className="h-4 w-4" /> : n}
+        </span>
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-navy">{title}</p>
+          <p className="text-xs text-navy/60">{hint}</p>
+          {children}
+        </div>
+      </div>
+      <div className="flex flex-wrap gap-2 ps-10 sm:justify-end sm:ps-0">{action}</div>
+    </li>
   );
 }
