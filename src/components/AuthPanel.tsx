@@ -12,6 +12,15 @@ import { siteOrigin } from "@/lib/native";
 const INPUT =
   "mt-2 min-h-12 w-full rounded-2xl border-2 border-navy/30 bg-white px-4 font-semibold text-navy placeholder:font-normal placeholder:text-navy/40 focus:border-flame focus:outline-none";
 const LABEL = "font-display text-base font-extrabold text-navy";
+
+/** Every field of the sign-up form is required: each label carries this mark. */
+function Req() {
+  return (
+    <span aria-hidden className="text-flame-ink">
+      {"\u00a0*"}
+    </span>
+  );
+}
 const LINK = "text-sm font-bold text-navy/70 underline underline-offset-4 hover:text-navy";
 const MIN_PASSWORD = 8;
 
@@ -117,6 +126,7 @@ export function AuthPanel({
 
   const onSignUp = (e: FormEvent) => {
     e.preventDefault();
+    if (name.trim().length < 2) return setError(p(t.account.nameTooShort));
     if (!isValidPhone(phone)) return setError(p(t.misc.phoneInvalid));
     if (password.length < MIN_PASSWORD) return setError(p(t.auth.errWeak));
     if (!agreed) return setError(p(t.legal.mustAgree));
@@ -169,6 +179,7 @@ export function AuthPanel({
     <div>
       <label htmlFor="auth-email" className={LABEL}>
         {p(t.auth.email)}
+        {view === "signup" && <Req />}
       </label>
       <input
         id="auth-email"
@@ -285,9 +296,13 @@ export function AuthPanel({
 
       {view === "signup" && (
         <form onSubmit={onSignUp} className="mt-5 space-y-4">
+          <p className="text-sm font-semibold text-navy/70">
+            <span className="text-flame-ink">*</span> {p(t.join.allRequired)}
+          </p>
           <div>
             <label htmlFor="auth-name" className={LABEL}>
               {p(t.auth.name)}
+              <Req />
             </label>
             <input
               id="auth-name"
@@ -303,6 +318,7 @@ export function AuthPanel({
           <div>
             <label htmlFor="auth-phone" className={LABEL}>
               {p(t.auth.phone)}
+              <Req />
             </label>
             <input
               id="auth-phone"
@@ -317,7 +333,13 @@ export function AuthPanel({
             />
             <p className="mt-1 text-xs text-navy/70">{p(t.auth.phoneHint)}</p>
           </div>
-          {passwordField("new-password", p(t.auth.password))}
+          {passwordField(
+            "new-password",
+            <>
+              {p(t.auth.password)}
+              <Req />
+            </>,
+          )}
           <AgreeCheckbox id="auth-agree" text={t.legal.agreeSignup} checked={agreed} onChange={setAgreed} />
           {submit(p(t.auth.signUp))}
         </form>
