@@ -1173,6 +1173,7 @@ export const t = {
     title: { en: "My account", ar: "حسابي" },
     memberSince: { en: "Member since {date}", ar: "عضو منذ {date}" },
     ratingCount: { en: "{n} ratings", ar: "{n} تقييم" },
+    ratingOne: { en: "1 rating", ar: "تقييم واحد" },
     noRatings: { en: "No ratings yet", ar: "لا تقييمات بعد" },
     statDone: { en: "Jobs done", ar: "مهام منجزة" },
     statActive: { en: "Active jobs", ar: "مهام جارية" },

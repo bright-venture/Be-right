@@ -7,6 +7,7 @@ import {
 } from "react";
 import type { Lang } from "@contracts/services";
 import { t, type Dict } from "@contracts/i18n";
+import { isNativeApp } from "@/lib/native";
 
 interface I18nCtx {
   lang: Lang;
@@ -22,7 +23,9 @@ const Ctx = createContext<I18nCtx | null>(null);
 export function I18nProvider({ children }: { children: ReactNode }) {
   const [lang, setLangState] = useState<Lang>(() => {
     const saved = localStorage.getItem("br-lang");
-    return saved === "ar" ? "ar" : "en";
+    if (saved === "ar" || saved === "en") return saved;
+    // The phone app has no language button outside My account: start in the phone's language.
+    return isNativeApp && navigator.language.toLowerCase().startsWith("ar") ? "ar" : "en";
   });
 
   useEffect(() => {

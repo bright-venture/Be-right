@@ -2,7 +2,6 @@ import { Link, useLocation, useNavigate } from "react-router";
 import {
   ChevronLeft,
   ClipboardList,
-  Globe,
   House,
   LayoutDashboard,
   LayoutGrid,
@@ -38,9 +37,9 @@ function useTabs(): Tab[] {
 
 const isActive = (pathname: string, to: string) => (to === "/" ? pathname === "/" : pathname.startsWith(to));
 
-/** App top bar: the logo on main screens, a back button everywhere else, and the language switch. */
+/** App top bar: the logo on main screens, a back button everywhere else (the language is in My account). */
 export function AppTopBar() {
-  const { lang, setLang, t, p } = useI18n();
+  const { t, p } = useI18n();
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const tabs = useTabs();
@@ -66,15 +65,6 @@ export function AppTopBar() {
             {p(t.app.back)}
           </button>
         )}
-        <button
-          type="button"
-          onClick={() => setLang(lang === "en" ? "ar" : "en")}
-          lang={lang === "en" ? "ar" : "en"}
-          className="flex min-h-11 items-center gap-1.5 rounded-full border border-navy/15 px-3.5 text-sm font-bold text-navy active:bg-navy/5"
-        >
-          <Globe className="h-4 w-4" aria-hidden />
-          {p(t.misc.langName)}
-        </button>
       </div>
     </header>
   );

@@ -38,7 +38,7 @@ export function RatingLine({ rating, className = "" }: { rating: { average: numb
     <p className={`inline-flex items-center gap-1.5 text-sm ${className}`}>
       <Star className="h-4 w-4 text-flame" fill="currentColor" aria-hidden />
       <span className="font-display text-base font-black">{rating.average.toLocaleString(lang === "ar" ? "ar" : "en-GB", { maximumFractionDigits: 1, minimumFractionDigits: 1 })}</span>
-      <span className="opacity-70">· {p(t.account.ratingCount).replace("{n}", String(rating.count))}</span>
+      <span className="opacity-70">· {rating.count === 1 ? p(t.account.ratingOne) : p(t.account.ratingCount).replace("{n}", String(rating.count))}</span>
     </p>
   );
 }
