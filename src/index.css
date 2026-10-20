@@ -549,3 +549,10 @@ html.native-app body { padding-top: env(safe-area-inset-top); }
 .staff-ui .tech-label::before {
   display: none;
 }
+
+/* Maps keep their layers inside their own box: Leaflet gives its panes and zoom buttons
+   z-indexes of 400 to 1000, which otherwise draw over the fixed navigation bar (z-50)
+   and over dialogs when the page scrolls. */
+.leaflet-container {
+  isolation: isolate;
+}
