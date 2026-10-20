@@ -34,8 +34,7 @@ import {
   TRADE_SERVICES,
   FACILITY_GROUP,
   FACILITY_SERVICES,
-  OTHER_FACILITY,
-  OTHER_TRADE,
+  OTHER_SERVICE,
   CATEGORY_MAP,
   CATEGORY_TINT,
 } from "@contracts/services";
@@ -333,8 +332,8 @@ export default function Book() {
               {/* The ten trades in two rows of five, then the six facility services in two rows
                   of three (on phones, every row holds two). */}
               {[
-                { ids: TRADE_SERVICES, cols: "sm:grid-cols-5", title: null, other: OTHER_TRADE },
-                { ids: FACILITY_SERVICES, cols: "sm:grid-cols-3", title: FACILITY_GROUP.name, other: OTHER_FACILITY },
+                { ids: TRADE_SERVICES, cols: "sm:grid-cols-5", title: null },
+                { ids: FACILITY_SERVICES, cols: "sm:grid-cols-3", title: FACILITY_GROUP.name },
               ].map((group) => (
                 <div key={group.cols}>
                   {group.title && (
@@ -373,17 +372,18 @@ export default function Book() {
                       );
                     })}
                   </div>
-                  <OtherServiceBar
-                    id={group.other}
-                    active={category === group.other}
-                    onPick={() => {
-                      setCategory(group.other);
-                      setAnswers({});
-                      setStep(1);
-                    }}
-                  />
                 </div>
               ))}
+              {/* Anything else, once, after every service. */}
+              <OtherServiceBar
+                id={OTHER_SERVICE}
+                active={category === OTHER_SERVICE}
+                onPick={() => {
+                  setCategory(OTHER_SERVICE);
+                  setAnswers({});
+                  setStep(1);
+                }}
+              />
             </>
           )}
 

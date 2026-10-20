@@ -159,7 +159,6 @@ export function ServiceIcon({
         </svg>
       );
     case "other":
-    case "other-facility":
       return (
         <svg {...common}>
           <rect x="5" y="5" width="22" height="22" rx="6" />

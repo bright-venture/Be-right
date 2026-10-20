@@ -754,23 +754,7 @@ export const CATEGORIES: ServiceCategory[] = [
   {
     id: "other",
     name: { en: "Other", ar: "أخرى" },
-    blurb: { en: "Not on the list? Describe it and we find the right technician.", ar: "غير موجود في القائمة؟ صِفه ونجد الفنّي المناسب." },
-    questions: [
-      {
-        id: "describe",
-        kind: "text",
-        label: { en: "What do you need?", ar: "ماذا تحتاج؟" },
-        hint: {
-          en: "Describe the problem or the service in a few words. A specialist finds the right technician.",
-          ar: "صِف المشكلة أو الخدمة ببضع كلمات. يجد المختص الفنّي المناسب.",
-        },
-      },
-    ],
-  },
-  {
-    id: "other-facility",
-    name: { en: "Other facility service", ar: "خدمة مرافق أخرى" },
-    blurb: { en: "Another service for your place? Describe it and we arrange it.", ar: "خدمة أخرى لمكانك؟ صِفها ونتولّى تنظيمها." },
+    blurb: { en: "Not on the list? Describe what you need and we find the right person.", ar: "غير موجود في القائمة؟ صِف ما تحتاجه ونجد الشخص المناسب." },
     questions: [
       {
         id: "describe",
@@ -809,7 +793,6 @@ export const CATEGORY_TINT: Record<string, { bg: string; ink: string }> = {
   cameras: { bg: "#E9EAF3", ink: "#3A4270" },
   pest: { bg: "#EDF3E0", ink: "#55701F" },
   other: { bg: "#ECEFF4", ink: "#0C2B5C" },
-  "other-facility": { bg: "#ECEFF4", ink: "#0C2B5C" },
 };
 
 // ---------- the Be Right Guarantee ----------
@@ -871,12 +854,11 @@ export const FACILITY_GROUP: { name: LocalText; blurb: LocalText } = {
 /** Every service: the trades first, then the facility services (the trades technicians apply for). */
 export const SERVICES_IN_ORDER = [...TRADE_SERVICES, ...FACILITY_SERVICES];
 
-/** "Other", at the end of each group: the customer describes what they need. */
-export const OTHER_TRADE = "other";
-export const OTHER_FACILITY = "other-facility";
+/** "Other", once, after every service: the customer describes what they need. */
+export const OTHER_SERVICE = "other";
 
-/** What customers pick from: each group ends with its "Other". */
-export const CUSTOMER_SERVICES = [...TRADE_SERVICES, OTHER_TRADE, ...FACILITY_SERVICES, OTHER_FACILITY];
+/** What customers pick from: the trades, the facility services, then "Other". */
+export const CUSTOMER_SERVICES = [...TRADE_SERVICES, ...FACILITY_SERVICES, OTHER_SERVICE];
 
 // ---------- verified client list (owner-supplied) ----------
 // Owner-supplied clients; logos collected from official brand sources.

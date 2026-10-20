@@ -5,7 +5,7 @@ import { trpc } from "@/providers/trpc";
 import { telLink } from "@/lib/contact";
 import { DirectionsLinks } from "@/components/map/DirectionsLinks";
 import { distanceKm } from "@contracts/geo";
-import { OTHER_FACILITY, OTHER_TRADE } from "@contracts/services";
+import { OTHER_SERVICE } from "@contracts/services";
 
 const ShopsMap = lazy(() => import("@/components/map/ShopsMap"));
 
@@ -22,7 +22,7 @@ export function PartsShopsNearJob({ trade, home }: { trade: string; home: { lat:
   const [open, setOpen] = useState(false);
   const shops = trpc.shops.list.useQuery(undefined, { enabled: open, staleTime: 5 * 60_000 });
   const forTrade = (shops.data ?? [])
-    .filter((s) => trade === OTHER_TRADE || trade === OTHER_FACILITY || s.trades.length === 0 || s.trades.includes(trade))
+    .filter((s) => trade === OTHER_SERVICE || s.trades.length === 0 || s.trades.includes(trade))
     .map((s) => ({ ...s, km: home ? distanceKm(home, s) : null }))
     .sort((a, b) => (a.km ?? 0) - (b.km ?? 0));
   const km = (n: number) =>
