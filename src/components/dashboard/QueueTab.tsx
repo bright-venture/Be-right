@@ -140,7 +140,7 @@ export function QueueTab({ onGoToApplications }: { onGoToApplications?: () => vo
         <div className="flex flex-col gap-2 p-1 lg:max-h-[calc(100vh-9rem)] lg:overflow-y-auto">
           {queue.isLoading && <Loader2 className="mx-auto mt-6 h-6 w-6 animate-spin text-navy" />}
           {!queue.isLoading && listed.length === 0 && !(older && history.isLoading) && (
-            <div className="card-br p-8 text-center text-sm font-semibold text-navy/70">
+            <div className="card-br flex min-h-60 items-center justify-center p-8 text-center text-sm font-semibold text-navy/70">
               {rows.length === 0 ? p(t.dash.empty) : p(t.dash4.noMatches)}
             </div>
           )}
@@ -230,7 +230,7 @@ export function QueueTab({ onGoToApplications }: { onGoToApplications?: () => vo
               onGoToApplications={onGoToApplications}
             />
           ) : (
-            <div className="card-br hidden min-h-60 items-center justify-center p-8 text-center text-sm font-semibold text-navy/70 lg:flex">
+            <div className="card-br hidden min-h-60 items-center justify-center p-8 text-center text-sm font-semibold text-navy/70 lg:m-1 lg:flex">
               {p(t.dash4.selectRequest)}
             </div>
           )}
