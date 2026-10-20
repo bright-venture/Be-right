@@ -120,16 +120,16 @@ export default function Admin() {
             />
           </div>
 
-          {/* PC: every section as a tab, in one row. */}
+          {/* PC: every section as a tab, in one row across the full width. */}
           <div className="mt-6 hidden lg:block">
-            <div role="tablist" className="inline-flex gap-1 rounded-xl border border-navy/12 bg-white p-1 shadow-[0_1px_2px_rgb(12_43_92/0.06)]">
+            <div role="tablist" className="flex w-full gap-1 rounded-xl border border-navy/12 bg-white p-1 shadow-[0_1px_2px_rgb(12_43_92/0.06)]">
               {TABS.map((k) => (
                 <button
                   key={k}
                   role="tab"
                   aria-selected={tab === k}
                   onClick={() => setTab(k)}
-                  className={`inline-flex h-9 shrink-0 items-center gap-2 whitespace-nowrap rounded-lg px-3.5 text-sm font-semibold transition-colors ${
+                  className={`inline-flex h-9 flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-lg px-3.5 text-sm font-semibold transition-colors ${
                     tab === k ? "bg-navy text-paper" : "text-navy/65 hover:bg-navy/5 hover:text-navy"
                   }`}
                 >
