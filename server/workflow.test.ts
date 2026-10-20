@@ -51,6 +51,10 @@ const application = {
   phone: "+961 71 111 111",
   email: "hassan@example.com",
   trade: "electrical",
+  area: "Beirut",
+  experience: "5-10" as const,
+  hasTools: true,
+  workMode: "independent" as const,
   transport: "car" as const,
   photoKey: photoKey(),
   documents: { idDocument: true, criminalRecord: true, proofOfAddress: true, vehicleRegistration: true },
@@ -154,16 +158,26 @@ describe("technician applications (public)", () => {
     ).rejects.toMatchObject({ code: "BAD_REQUEST" });
   });
 
-  it("keeps only what the short form asks: no papers, experience or work mode", async () => {
+  it("keeps the answers the form asks, but no papers or notes from older forms", async () => {
     const { id } = await (await callerFor()).join.submit({
       ...application,
       email: "short.form@example.com",
       // Sent by an older version of the form: ignored.
-      ...({ notes: "Old field", workMode: "company", ...documentKeys() } as object),
+      ...({ notes: "Old field", ...documentKeys() } as object),
     });
     const row = (await (await callerFor(boss)).join.list()).find((a) => a.id === id);
-    expect(row).toMatchObject({ area: null, notes: null, workMode: null, idDocumentKey: null, criminalRecordKey: null });
+    expect(row).toMatchObject({ area: "Beirut", experience: "5-10", hasTools: true, workMode: "independent", companyName: null });
+    expect(row).toMatchObject({ notes: null, idDocumentKey: null, criminalRecordKey: null });
     expect(row?.photoKey).toMatch(/photo/);
+  });
+
+  it("needs the areas, the experience, the tools answer and, with a company, its name", async () => {
+    const c = await callerFor();
+    await expect(c.join.submit({ ...application, area: " " })).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    await expect(c.join.submit({ ...application, experience: "forever" as never })).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    await expect(c.join.submit({ ...application, workMode: "company" })).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    const { id } = await c.join.submit({ ...application, email: "company.tech@example.com", workMode: "company", companyName: "Haddad Electric SARL" });
+    expect((await (await callerFor(boss)).join.list()).find((a) => a.id === id)).toMatchObject({ workMode: "company", companyName: "Haddad Electric SARL" });
   });
 
   it("asks yes or no for each paper to bring to the office, the vehicle's only with a vehicle", async () => {

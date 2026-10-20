@@ -499,7 +499,10 @@ export const notify = {
         subject: both(`New technician application: ${app.name}`, `طلب توظيف فني جديد: ${app.name}`),
         title: both("Someone applied to work with us", "تقدّم شخص للعمل معنا"),
         lines: [
-          both(`${app.name}: ${trade.en}. Phone: ${app.phone}.`, `${app.name}: ${trade.ar}. الهاتف: ${app.phone}.`),
+          both(
+            `${app.name}: ${trade.en}${app.area ? `, ${app.area}` : ""}. Phone: ${app.phone}.`,
+            `${app.name}: ${trade.ar}${app.area ? `، ${app.area}` : ""}. الهاتف: ${app.phone}.`,
+          ),
           both(
             "Call them to set up a meeting in person, then accept or reject the application.",
             "اتصل به لتحديد مقابلة شخصية، ثم اقبل الطلب أو ارفضه.",

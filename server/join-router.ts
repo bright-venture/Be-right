@@ -8,7 +8,9 @@ import { CATEGORIES } from "../contracts/services";
 import {
   APPLICATION_DOCUMENTS,
   DOCUMENT_FIELD,
+  EXPERIENCE_LEVELS,
   MANUAL_APPLICATION_STATUSES,
+  WORK_MODES,
   OFFICE_DOCUMENTS,
   officeDocuments,
   TRANSPORT,
@@ -61,6 +63,12 @@ export const joinRouter = createRouter({
         phone: z.string().trim().max(64).refine(isValidPhone, "Invalid phone number"),
         email,
         trade: z.enum(TRADE_IDS),
+        area: z.string().trim().min(2).max(255),
+        experience: z.enum(EXPERIENCE_LEVELS),
+        hasTools: z.boolean(),
+        workMode: z.enum(WORK_MODES),
+        // Required when they work with a company.
+        companyName: z.string().trim().max(255).optional(),
         transport: z.enum(TRANSPORT),
         // The profile photo, uploaded first via storage.createDocumentUpload.
         photoKey: documentKey,
@@ -74,6 +82,9 @@ export const joinRouter = createRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
+      if (input.workMode === "company" && (input.companyName ?? "").length < 2) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Please give the company's name" });
+      }
       await rateLimit(`apply:ip:${clientIp(ctx.req)}`, LIMITS.applicationPerIp);
       // The photo must be a real upload made for the photo.
       if (!documentKeyMatches(input.photoKey, "photo") || !(await documentsExist([input.photoKey]))) {
@@ -92,6 +103,11 @@ export const joinRouter = createRouter({
           phone: input.phone,
           email: input.email,
           trade: input.trade,
+          area: input.area,
+          experience: input.experience,
+          hasTools: input.hasTools,
+          workMode: input.workMode,
+          companyName: input.workMode === "company" ? input.companyName : null,
           hasTransport: input.transport !== "none",
           transport: input.transport,
           photoKey: input.photoKey,
