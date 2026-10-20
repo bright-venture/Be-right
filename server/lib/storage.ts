@@ -165,7 +165,24 @@ export async function profilePhotoUrl(avatarKey: string | null | undefined) {
 /** Several people's profile photos in one storage call (for lists), by avatar key. */
 export async function profilePhotoUrls(avatarKeys: (string | null | undefined)[]) {
   const keys = [...new Set(avatarKeys.filter((k): k is string => !!k?.startsWith(DOCUMENT_PREFIX)))];
-  return keys.length ? signedUrls("docs", keys, SIGNED_URL_TTL_SECONDS) : ({} as Record<string, string>);
+  if (!keys.length) return {} as Record<string, string>;
+  // Photos are a nicety: if storage is slow or down, the list still loads (initials instead).
+  try {
+    return await withTimeout(signedUrls("docs", keys, SIGNED_URL_TTL_SECONDS), PHOTO_LINKS_TIMEOUT_MS);
+  } catch (error) {
+    console.error("[storage] profile photo links skipped", error);
+    return {} as Record<string, string>;
+  }
+}
+
+const PHOTO_LINKS_TIMEOUT_MS = 6000;
+
+function withTimeout<T>(work: Promise<T>, ms: number): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`timed out after ${ms} ms`)), ms);
+  });
+  return Promise.race([work, timeout]).finally(() => clearTimeout(timer));
 }
 
 /* ---------- clean-up ---------- */

@@ -1078,6 +1078,7 @@ export const t = {
     techArea: { en: "Area", ar: "المنطقة" },
     techExperience: { en: "Experience", ar: "الخبرة" },
     techColumn: { en: "Technician", ar: "الفني" },
+    queueFailed: { en: "The requests couldn't be loaded.", ar: "تعذّر تحميل الطلبات." },
     techActions: { en: "Actions", ar: "إجراءات" },
     techCount: { en: "{n} technicians", ar: "عدد الفنيين: {n}" },
     techSearch: { en: "Search name, trade, area or phone", ar: "ابحث بالاسم أو المهنة أو المنطقة أو الهاتف" },

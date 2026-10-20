@@ -1,5 +1,5 @@
 import { createTRPCReact } from "@trpc/react-query";
-import { httpBatchLink } from "@trpc/client";
+import { httpBatchLink, httpLink, splitLink, type HTTPHeaders } from "@trpc/client";
 import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import superjson from "superjson";
 import type { AppRouter } from "../../server/router";
@@ -42,17 +42,26 @@ const queryClient: QueryClient = new QueryClient({
   queryCache: new QueryCache({ onError: (error, query) => recheckStaffAccess(error, query) }),
   mutationCache: new MutationCache({ onError: (error) => recheckStaffAccess(error) }),
 });
+async function authHeaders(): Promise<HTTPHeaders> {
+  // Visitors who never signed in skip loading Supabase just to find no token.
+  if (!mightBeSignedIn()) return {};
+  const token = await (await loadSupabase()).getAccessToken();
+  return token ? { authorization: `Bearer ${token}` } : {};
+}
+
+/**
+ * The dashboard's live data (the queue, the open request, waiting emergencies) goes in its
+ * own request. A batch answers only when its slowest call is done, so these would otherwise
+ * wait on whatever loads beside them (the technicians list and its photo links).
+ */
+const LIVE = new Set(["specialist.queue", "specialist.queueVersion", "specialist.detail", "emergency.waiting"]);
+
 const trpcClient = trpc.createClient({
   links: [
-    httpBatchLink({
-      url: apiUrl("/api/trpc"),
-      transformer: superjson,
-      async headers() {
-        // Visitors who never signed in skip loading Supabase just to find no token.
-        if (!mightBeSignedIn()) return {};
-        const token = await (await loadSupabase()).getAccessToken();
-        return token ? { authorization: `Bearer ${token}` } : {};
-      },
+    splitLink({
+      condition: (op) => LIVE.has(op.path),
+      true: httpLink({ url: apiUrl("/api/trpc"), transformer: superjson, headers: authHeaders }),
+      false: httpBatchLink({ url: apiUrl("/api/trpc"), transformer: superjson, headers: authHeaders }),
     }),
   ],
 });

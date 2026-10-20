@@ -139,7 +139,21 @@ export function QueueTab({ onGoToApplications }: { onGoToApplications?: () => vo
         {/* p-1: room for borders and focus outlines inside the scroll box */}
         <div className="flex flex-col gap-2 p-1 lg:max-h-[calc(100vh-9rem)] lg:overflow-y-auto">
           {queue.isLoading && <Loader2 className="mx-auto mt-6 h-6 w-6 animate-spin text-navy" />}
-          {!queue.isLoading && listed.length === 0 && !(older && history.isLoading) && (
+          {queue.isError && !queue.data && (
+            <div role="alert" className="card-br flex min-h-60 flex-col items-center justify-center gap-3 p-8 text-center">
+              <p className="text-sm font-semibold text-navy/70">{p(t.dash4.queueFailed)}</p>
+              <button
+                type="button"
+                onClick={() => void queue.refetch()}
+                disabled={queue.isFetching}
+                className="inline-flex h-10 items-center gap-1.5 rounded-lg border border-navy/15 px-4 text-sm font-semibold text-navy hover:bg-navy/5 disabled:opacity-50"
+              >
+                {queue.isFetching && <Loader2 className="h-4 w-4 animate-spin" />}
+                {p(t.admin.retry)}
+              </button>
+            </div>
+          )}
+          {!queue.isLoading && !(queue.isError && !queue.data) && listed.length === 0 && !(older && history.isLoading) && (
             <div className="card-br flex min-h-60 items-center justify-center p-8 text-center text-sm font-semibold text-navy/70">
               {rows.length === 0 ? p(t.dash.empty) : p(t.dash4.noMatches)}
             </div>
