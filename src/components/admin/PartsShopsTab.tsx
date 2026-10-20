@@ -1,5 +1,5 @@
 import { useState, type FormEvent, type ReactNode } from "react";
-import { Clock, Loader2, MapPin, Pencil, Phone, Plus, Trash2, Wrench } from "lucide-react";
+import { Clock, Loader2, MapPin, Pencil, Phone, Plus, Search, Trash2, Wrench } from "lucide-react";
 import type { inferRouterOutputs } from "@trpc/server";
 import type { AppRouter } from "../../../server/router";
 import { useI18n } from "@/i18n";
@@ -28,16 +28,33 @@ function Field({ label, children, className = "" }: { label: string; children: R
   );
 }
 
+/** Columns on a computer: shop, parts for, hours, phone, status, and the buttons (fixed width,
+ * so the headings line up with every row). */
+const COLUMNS = "lg:grid-cols-[minmax(0,2.2fr)_minmax(0,2fr)_minmax(0,1.2fr)_minmax(0,1.2fr)_5.5rem_8rem]";
+const HEAD = "text-[11px] font-semibold uppercase tracking-wide text-navy/50";
+const ICON_BTN =
+  "inline-flex h-9 w-9 items-center justify-center rounded-lg border border-navy/15 text-navy transition-colors hover:bg-navy/5 disabled:opacity-40";
+
 /**
  * Admin → Parts shops: the partner shops technicians can pick parts up from (for free, under
- * a written agreement; Be Right pays them monthly outside the app). Add, change, hide, delete.
+ * a written agreement; Be Right pays them monthly outside the app). One row per shop, as in
+ * the Technicians tab. Add, change, hide, delete.
  */
 export function PartsShopsTab() {
   const { t, p } = useI18n();
   const shops = trpc.shops.all.useQuery();
   // null: closed; "new": adding; a shop: editing it.
   const [editing, setEditing] = useState<Shop | "new" | null>(null);
+  const [search, setSearch] = useState("");
   const rows = shops.data ?? [];
+  const term = search.trim().toLowerCase();
+  const shown = term
+    ? rows.filter((s) =>
+        [s.name, s.address, s.phone, ...s.trades.map((id) => (CATEGORY_MAP[id] ? p(CATEGORY_MAP[id].name) : id))].some((v) =>
+          v.toLowerCase().includes(term),
+        ),
+      )
+    : rows;
 
   return (
     <div className="mt-8">
@@ -62,81 +79,132 @@ export function PartsShopsTab() {
       ) : rows.length === 0 ? (
         editing === null && <p className="mt-6 rounded-2xl border border-dashed border-navy/20 bg-white p-8 text-center text-sm text-navy/60">{p(t.parts.empty)}</p>
       ) : (
-        <ul className="mt-5 grid gap-3 md:grid-cols-2">
-          {rows.map((s) => (
-            <ShopCard key={s.id} shop={s} onEdit={() => setEditing(s)} />
-          ))}
-        </ul>
+        <>
+          <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+            <p className="text-sm font-semibold text-navy">{p(t.parts.count).replace("{n}", String(rows.length))}</p>
+            <label className="relative w-full sm:w-72">
+              <Search className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-navy/40" />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder={p(t.parts.search)}
+                aria-label={p(t.parts.search)}
+                className="h-10 w-full rounded-lg border border-navy/15 bg-white ps-9 pe-3 text-sm text-navy placeholder:text-navy/40 focus:border-navy/40 focus:outline-none"
+              />
+            </label>
+          </div>
+          <div className="mt-3 overflow-hidden rounded-2xl border border-navy/12 bg-white">
+            {/* column headings, computers only */}
+            <div className={`hidden gap-4 border-b border-navy/10 bg-navy/[0.03] px-4 py-2.5 lg:grid ${COLUMNS}`}>
+              <span className={HEAD}>{p(t.parts.colShop)}</span>
+              <span className={HEAD}>{p(t.parts.trades)}</span>
+              <span className={HEAD}>{p(t.parts.hours)}</span>
+              <span className={HEAD}>{p(t.parts.phone)}</span>
+              <span className={HEAD}>{p(t.parts.colStatus)}</span>
+              <span className={`${HEAD} text-end`}>{p(t.dash4.techActions)}</span>
+            </div>
+            {shown.length === 0 ? (
+              <p className="p-6 text-center text-sm text-navy/60">{p(t.parts.noMatch)}</p>
+            ) : (
+              <ul className="divide-y divide-navy/10">
+                {shown.map((s) => (
+                  <ShopRow key={s.id} shop={s} onEdit={() => setEditing(s)} />
+                ))}
+              </ul>
+            )}
+          </div>
+        </>
       )}
     </div>
   );
 }
 
-function ShopCard({ shop: s, onEdit }: { shop: Shop; onEdit: () => void }) {
+function ShopRow({ shop: s, onEdit }: { shop: Shop; onEdit: () => void }) {
   const { t, p } = useI18n();
   const [confirm, confirmDialog] = useConfirm();
   const utils = trpc.useUtils();
   const remove = trpc.shops.remove.useMutation({ onSuccess: () => utils.shops.all.invalidate() });
+  // On phones each value carries its own label (the headings row is for computers).
+  const label = (text: string) => <span className="text-xs text-navy/55 lg:hidden">{text}</span>;
 
   return (
-    <li className={`flex flex-col gap-2 rounded-2xl border border-navy/12 bg-white p-4 ${s.active ? "" : "opacity-60"}`}>
+    <li>
       {confirmDialog}
-      <div className="flex items-start gap-3">
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-navy/[0.06] text-navy">
-          <Wrench className="h-5 w-5" />
-        </span>
-        <div className="min-w-0 flex-1">
-          <p className="flex flex-wrap items-center gap-2 font-display text-[15px] font-extrabold text-navy">
-            {s.name}
-            {!s.active && <span className="rounded-md bg-navy/[0.06] px-1.5 py-0.5 text-[11px] font-bold text-navy/70">{p(t.parts.paused)}</span>}
-          </p>
-          <p className="flex items-start gap-1 text-xs text-navy/70">
-            <MapPin className="mt-px h-3.5 w-3.5 shrink-0" /> {s.address}
-          </p>
-          {s.hours && (
-            <p className="flex items-center gap-1 text-xs text-navy/70">
-              <Clock className="h-3.5 w-3.5 shrink-0" /> {s.hours}
+      <div className={`grid gap-2 px-4 py-3.5 lg:items-center lg:gap-4 ${COLUMNS} ${s.active ? "" : "bg-navy/[0.02]"}`}>
+        <div className="flex min-w-0 items-start gap-3">
+          <span
+            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${s.active ? "bg-navy/[0.06] text-navy" : "bg-navy/[0.04] text-navy/40"}`}
+          >
+            <Wrench className="h-5 w-5" />
+          </span>
+          <div className="min-w-0">
+            <p className={`truncate font-display text-sm font-extrabold ${s.active ? "text-navy" : "text-navy/50"}`}>{s.name}</p>
+            <p className="flex items-start gap-1 text-xs text-navy/60">
+              <MapPin className="mt-px h-3.5 w-3.5 shrink-0" /> <span className="line-clamp-1">{s.address}</span>
             </p>
-          )}
+            {s.note && <p className="line-clamp-1 text-xs italic text-navy/50">{s.note}</p>}
+          </div>
+        </div>
+        <div className="flex min-w-0 flex-col gap-1 lg:block">
+          {label(p(t.parts.trades))}
+          <p className="flex flex-wrap gap-1">
+            {s.trades.length === 0 ? (
+              <span className="rounded-md bg-navy/[0.06] px-2 py-0.5 text-xs font-semibold text-navy/80">{p(t.parts.allTrades)}</span>
+            ) : (
+              s.trades.map((id) => (
+                <span key={id} className="rounded-md bg-navy/[0.06] px-2 py-0.5 text-xs font-semibold text-navy/80">
+                  {CATEGORY_MAP[id] ? p(CATEGORY_MAP[id].name) : id}
+                </span>
+              ))
+            )}
+          </p>
+        </div>
+        <div className="flex min-w-0 justify-between gap-3 text-sm lg:block">
+          {label(p(t.parts.hours))}
+          <span className="flex items-center gap-1 font-semibold text-navy">
+            <Clock className="hidden h-3.5 w-3.5 shrink-0 text-navy/45 lg:block" /> {s.hours || "-"}
+          </span>
+        </div>
+        <div className="flex min-w-0 justify-between gap-3 text-sm lg:block">
+          {label(p(t.parts.phone))}
+          <span className="truncate font-semibold text-navy" dir="ltr">
+            {s.phone}
+          </span>
+        </div>
+        <div className="flex justify-between gap-3 text-sm lg:block">
+          {label(p(t.parts.colStatus))}
+          <span className={`rounded-md px-2 py-0.5 text-xs font-bold ${s.active ? "bg-green-700/10 text-green-800" : "bg-navy/[0.06] text-navy/60"}`}>
+            {p(s.active ? t.parts.shown : t.parts.paused)}
+          </span>
+        </div>
+        <div className="flex flex-wrap items-center gap-1.5 pt-1 lg:justify-end lg:pt-0">
+          <a href={telLink(s.phone)} className={ICON_BTN} title={p(t.parts.call)} aria-label={`${p(t.parts.call)} ${s.name}`}>
+            <Phone className="h-4 w-4" />
+          </a>
+          <button type="button" onClick={onEdit} className={ICON_BTN} title={p(t.parts.edit)} aria-label={`${p(t.parts.edit)} ${s.name}`}>
+            <Pencil className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            disabled={remove.isPending}
+            onClick={async () => {
+              const ok = await confirm({
+                title: p(t.parts.removeAsk).replace("{name}", s.name),
+                message: p(t.parts.removeNote),
+                confirmLabel: p(t.parts.remove),
+                tone: "danger",
+              });
+              if (ok) remove.mutate({ id: s.id });
+            }}
+            className={`${ICON_BTN} border-red-700/30 text-red-700 hover:bg-red-700/5`}
+            title={p(t.parts.remove)}
+            aria-label={`${p(t.parts.remove)} ${s.name}`}
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
         </div>
       </div>
-      <p className="flex flex-wrap gap-1.5">
-        {s.trades.length === 0 ? (
-          <span className="rounded-md bg-navy/[0.06] px-2 py-0.5 text-xs font-semibold text-navy/80">{p(t.parts.allTrades)}</span>
-        ) : (
-          s.trades.map((id) => (
-            <span key={id} className="rounded-md bg-navy/[0.06] px-2 py-0.5 text-xs font-semibold text-navy/80">
-              {CATEGORY_MAP[id] ? p(CATEGORY_MAP[id].name) : id}
-            </span>
-          ))
-        )}
-      </p>
-      {s.note && <p className="rounded-lg bg-navy/[0.04] px-3 py-2 text-xs text-navy/80">{s.note}</p>}
-      <div className="mt-1 flex flex-wrap gap-2">
-        <a href={telLink(s.phone)} className={`${BTN} border border-navy/15 text-navy hover:bg-navy/5`}>
-          <Phone className="h-4 w-4" /> <span dir="ltr">{s.phone}</span>
-        </a>
-        <button type="button" onClick={onEdit} className={`${BTN} border border-navy/15 text-navy hover:bg-navy/5`}>
-          <Pencil className="h-4 w-4" /> {p(t.parts.edit)}
-        </button>
-        <button
-          type="button"
-          disabled={remove.isPending}
-          onClick={async () => {
-            const ok = await confirm({
-              title: p(t.parts.removeAsk).replace("{name}", s.name),
-              message: p(t.parts.removeNote),
-              confirmLabel: p(t.parts.remove),
-              tone: "danger",
-            });
-            if (ok) remove.mutate({ id: s.id });
-          }}
-          className={`${BTN} border border-red-700/40 text-red-700 hover:bg-red-700/5`}
-        >
-          <Trash2 className="h-4 w-4" /> {p(t.parts.remove)}
-        </button>
-      </div>
-      {remove.error && <p className="text-xs font-semibold text-red-700">{remove.error.message}</p>}
+      {remove.error && <p className="px-4 pb-3 text-xs font-semibold text-red-700">{remove.error.message}</p>}
     </li>
   );
 }
