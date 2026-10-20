@@ -9,16 +9,19 @@ export type Pin = { lat: number; lng: number };
 /**
  * Map where the customer drops a pin on their address: tap the map, drag the pin,
  * or use the phone's location. `staff`: a compact map for a specialist placing the
- * customer's pin (no "use my location": the specialist isn't at the address).
+ * customer's pin (no "use my location": the specialist isn't at the address). `tapHint`
+ * replaces its "tap the customer's building" (for a place that isn't a customer's).
  */
 export default function LocationPicker({
   value,
   onChange,
   staff = false,
+  tapHint,
 }: {
   value: Pin | null;
   onChange: (pin: Pin) => void;
   staff?: boolean;
+  tapHint?: string;
 }) {
   const { t, p } = useI18n();
   const el = useRef<HTMLDivElement>(null);
@@ -111,7 +114,7 @@ export default function LocationPicker({
         }
       />
       {staff ? (
-        <p className="mt-2 text-xs text-navy/55">{value ? p(t.map.staffDragHint) : p(t.map.staffTapHint)}</p>
+        <p className="mt-2 text-xs text-navy/55">{value ? p(t.map.staffDragHint) : (tapHint ?? p(t.map.staffTapHint))}</p>
       ) : (
         <div className="mt-3 flex flex-wrap items-center gap-3">
           <button type="button" onClick={useMyLocation} disabled={locating} className="btn-pill-outline !min-h-11 !py-2 text-sm">

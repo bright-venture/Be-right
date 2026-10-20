@@ -317,3 +317,29 @@ export const emergencyRequests = pgTable(
   },
   (t) => [index("emergency_requests_created_idx").on(t.createdAt)],
 ).enableRLS();
+
+/**
+ * Partner spare-parts shops (Admin → Parts shops). Be Right has a written agreement with
+ * each: a technician picks up a part for free and Be Right pays the shop at the end of the
+ * month, outside the app. The app only shows technicians where the shops are.
+ */
+export const partsShops = pgTable("parts_shops", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  phone: varchar("phone", { length: 64 }).notNull(),
+  address: text("address").notNull(),
+  lat: doublePrecision("lat").notNull(),
+  lng: doublePrecision("lng").notNull(),
+  /** The trades it supplies (service ids); empty = every trade. */
+  trades: jsonb("trades").$type<string[]>().default([]).notNull(),
+  /** Opening hours as the shop gives them, e.g. "Mon–Sat 8:00–18:00". */
+  hours: varchar("hours", { length: 255 }),
+  /** For technicians: who to ask, what to show. */
+  note: text("note"),
+  /** Off: hidden from technicians (agreement paused or ended), kept on record. */
+  active: boolean("active").default(true).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+}).enableRLS();
+
+export type PartsShop = typeof partsShops.$inferSelect;

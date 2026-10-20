@@ -7,6 +7,7 @@ import { joinRouter } from "./join-router";
 import { reviewsRouter } from "./reviews-router";
 import { adminRouter } from "./admin-router";
 import { emergencyRouter } from "./emergency-router";
+import { shopsRouter } from "./shops-router";
 import { createRouter, publicQuery } from "./middleware";
 
 export const appRouter = createRouter({
@@ -20,6 +21,7 @@ export const appRouter = createRouter({
   reviews: reviewsRouter,
   admin: adminRouter,
   emergency: emergencyRouter,
+  shops: shopsRouter,
 });
 
 export type AppRouter = typeof appRouter;

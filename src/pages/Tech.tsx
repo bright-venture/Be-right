@@ -9,6 +9,7 @@ import { BeforeAfter, JobPhotoUpload } from "@/components/JobPhotos";
 import JobMap from "@/components/map/JobMap";
 import { DirectionsLinks } from "@/components/map/DirectionsLinks";
 import { useI18n } from "@/i18n";
+import { PartsShopsNearJob } from "@/components/PartsShopsNearJob";
 import { formatDay, formatVisitDay } from "@/lib/time";
 import { telLink } from "@/lib/contact";
 import { useRoleGate } from "@/hooks/useRoleGate";
@@ -278,6 +279,9 @@ export default function Tech() {
                         </span>
                       )}
                     </div>
+
+                    {/* partner shops to pick a part up from, nearest to this job first */}
+                    <PartsShopsNearJob trade={r.category} home={r.lat != null && r.lng != null ? { lat: r.lat, lng: r.lng } : null} />
 
                     {/* before/after photos: needed to start and to complete the work */}
                     <JobPhotoUpload requestId={r.id} kind="before" media={r.media} />

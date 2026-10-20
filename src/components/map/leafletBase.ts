@@ -21,12 +21,14 @@ export function addBaseTiles(map: L.Map) {
 }
 
 /** Brand-coloured pins drawn with HTML, so no marker image files are needed. */
-export function pinIcon(kind: "home" | "tech", label?: string) {
-  const color = kind === "home" ? "#F45309" : "#0B63CE";
+export function pinIcon(kind: "home" | "tech" | "shop", label?: string) {
+  const color = kind === "home" ? "#F45309" : kind === "shop" ? "#0C2B5C" : "#0B63CE";
   const inner =
     kind === "home"
       ? `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#fff" stroke-width="2.5"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>`
-      : `<span style="color:#fff;font:700 12px/1 Arial">${label ?? ""}</span>`;
+      : kind === "shop"
+        ? `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.4-.6-.6-2.4z"/></svg>`
+        : `<span style="color:#fff;font:700 12px/1 Arial">${label ?? ""}</span>`;
   return L.divIcon({
     className: "",
     iconSize: [34, 34],

@@ -417,3 +417,54 @@ describe("safety nets", () => {
     expect(state.emails.slice(before).some((e) => e.subject.startsWith("Server errors"))).toBe(false);
   });
 });
+
+describe("parts shops", () => {
+  const shop = {
+    name: "Hamra Plumbing Supplies",
+    phone: "+961 1 345 678",
+    address: "Hamra Street, Beirut",
+    lat: 33.8966,
+    lng: 35.4823,
+    trades: ["plumbing"],
+    hours: "Mon-Sat 8:00-18:00",
+    note: "Ask for Karim",
+    active: true,
+  };
+
+  it("are kept by admins, and technicians see only the active ones", async () => {
+    const o = await callerFor(owner);
+    const { id } = await o.shops.save(shop);
+    const { id: hidden } = await o.shops.save({ ...shop, name: "Closed shop", active: false });
+    expect((await o.shops.all()).map((s) => s.id)).toEqual(expect.arrayContaining([id, hidden]));
+
+    const seen = await (await callerFor(tech)).shops.list();
+    expect(seen.map((s) => s.id)).toContain(id);
+    expect(seen.map((s) => s.id)).not.toContain(hidden);
+    expect(seen.find((s) => s.id === id)).toMatchObject({ name: shop.name, trades: ["plumbing"], note: "Ask for Karim" });
+
+    await o.shops.save({ ...shop, id, name: "Hamra Plumbing", trades: [] });
+    expect((await (await callerFor(tech)).shops.list()).find((s) => s.id === id)).toMatchObject({ name: "Hamra Plumbing", trades: [] });
+    await o.shops.remove({ id: hidden });
+    expect((await o.shops.all()).map((s) => s.id)).not.toContain(hidden);
+  });
+
+  it("need a name, a valid phone, an address, a real pin and known trades", async () => {
+    const o = await callerFor(owner);
+    for (const bad of [
+      { ...shop, phone: "3432" },
+      { ...shop, lat: 0, lng: 0 },
+      { ...shop, trades: ["hacking"] },
+      { ...shop, name: " " },
+    ]) {
+      await expect(o.shops.save(bad)).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    }
+  });
+
+  it("can't be changed by specialists, and customers can't see them", async () => {
+    const d = await callerFor(desk);
+    await expect(d.shops.save(shop)).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(d.shops.all()).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect((await callerFor(customer)).shops.list()).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect((await callerFor(tech)).shops.save(shop)).rejects.toMatchObject({ code: "FORBIDDEN" });
+  });
+});
