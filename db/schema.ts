@@ -359,3 +359,21 @@ export const pricingSettings = pgTable("pricing_settings", {
   updatedBy: integer("updated_by").references(() => users.id, { onDelete: "set null" }),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 }).enableRLS();
+
+/**
+ * Whether each technician is Available, and where they are while they are (see
+ * contracts/presence.ts). Going offline clears the position: none is kept while offline.
+ */
+export const technicianPresence = pgTable("technician_presence", {
+  technicianId: integer("technician_id")
+    .primaryKey()
+    .references(() => users.id, { onDelete: "cascade" }),
+  /** When they went online; null = offline. */
+  availableSince: timestamp("available_since", { withTimezone: true }),
+  lat: doublePrecision("lat"),
+  lng: doublePrecision("lng"),
+  /** Metres. */
+  accuracy: integer("accuracy"),
+  /** The last position received (or the last change). */
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+}).enableRLS();

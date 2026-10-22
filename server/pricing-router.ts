@@ -2,7 +2,8 @@ import { z } from "zod";
 import { and, eq, inArray, sql } from "drizzle-orm";
 import { adminQuery, createRouter, specialistQuery } from "./middleware";
 import { getDb } from "./queries/connection";
-import { pricingSettings, serviceRequests, technicianApplications, users } from "../db/schema";
+import { pricingSettings, serviceRequests, technicianApplications, technicianPresence, users } from "../db/schema";
+import { isOnline } from "@contracts/presence";
 import { ACTIVE_JOB_STATUSES } from "@contracts/workflow";
 import { CUSTOMER_SERVICES } from "@contracts/services";
 import { TRANSPORT } from "@contracts/applications";
@@ -35,8 +36,9 @@ export async function loadPricing(db: Db = getDb()): Promise<PricingSettings> {
 }
 
 /**
- * Every technician with a suggested price for one request (see contracts/pricing.ts): their
- * trade first, then those within reach of their transport, nearest first.
+ * Every technician with a suggested price for one request (see contracts/pricing.ts), the
+ * distance measured from where they are if Available, else from their starting point: their
+ * trade first, then Available, then within reach of their transport, nearest first.
  */
 export async function priceTechnicians(
   db: Db,
@@ -49,7 +51,7 @@ export async function priceTechnicians(
     .where(eq(users.role, "technician"));
   if (!techs.length) return [];
   const ids = techs.map((x) => x.id);
-  const [apps, active, ratings, photos] = await Promise.all([
+  const [apps, active, ratings, photos, presence] = await Promise.all([
     db
       .select({ hiredUserId: technicianApplications.hiredUserId, trade: technicianApplications.trade, transport: technicianApplications.transport })
       .from(technicianApplications)
@@ -61,12 +63,18 @@ export async function priceTechnicians(
       .groupBy(serviceRequests.technicianId),
     ratingsFor(ids),
     profilePhotoUrls(techs.map((x) => x.avatar)),
+    db.select().from(technicianPresence).where(inArray(technicianPresence.technicianId, ids)),
   ]);
   const pin = job.lat != null && job.lng != null ? { lat: job.lat, lng: job.lng } : null;
   const rows = techs.map((x) => {
     const app = apps.find((a) => a.hiredUserId === x.id);
     const base = x.baseLat != null && x.baseLng != null ? { lat: x.baseLat, lng: x.baseLng } : null;
-    const straightKm = pin && base ? distanceKm(base, pin) : null;
+    // Available: where they are now (like a ride app); otherwise where they start from.
+    const now = presence.find((p) => p.technicianId === x.id);
+    const online = isOnline(now);
+    const live = online && now?.lat != null && now.lng != null ? { lat: now.lat, lng: now.lng } : null;
+    const origin = live ?? base;
+    const straightKm = pin && origin ? distanceKm(origin, pin) : null;
     const transport = app?.transport ?? null;
     return {
       id: x.id,
@@ -75,15 +83,21 @@ export async function priceTechnicians(
       trade: app?.trade ?? null,
       sameTrade: app?.trade === job.category,
       transport,
+      online,
+      /** Where the distance is measured from. */
+      from: live ? ("live" as const) : base ? ("start" as const) : null,
+      /** How long ago the live position was received, in minutes. */
+      seenMinutesAgo: live ? Math.round((Date.now() - now!.updatedAt.getTime()) / 60_000) : null,
       activeJobs: active.find((a) => a.technicianId === x.id)?.n ?? 0,
       rating: ratings.get(x.id) ?? { average: null, count: 0 },
       price: suggestPrice(settings, job, { transport, straightKm }),
     };
   });
-  const order = (r: (typeof rows)[number]) => [r.sameTrade ? 0 : 1, r.price.tooFar ? 1 : 0, r.price.roadKm ?? Infinity];
+  // Their trade, then Available, then within reach, then nearest.
+  const order = (r: (typeof rows)[number]) => [r.sameTrade ? 0 : 1, r.online ? 0 : 1, r.price.tooFar ? 1 : 0, r.price.roadKm ?? Infinity];
   return rows.sort((a, b) => {
     const [x, y] = [order(a), order(b)];
-    return x[0] - y[0] || x[1] - y[1] || x[2] - y[2];
+    return x[0] - y[0] || x[1] - y[1] || x[2] - y[2] || x[3] - y[3];
   });
 }
 

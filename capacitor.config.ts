@@ -12,6 +12,9 @@ const config: CapacitorConfig = {
   // iOS: the page leaves room for the status bar and the home indicator itself (CSS
   // env(safe-area-inset-*), like Android), so the web view isn't inset as well.
   ios: { contentInset: "never" },
+  // The background location plugin needs it: with the newer bridge, Android stops location
+  // updates after 5 minutes in the background. The app only loads its own pages.
+  android: { useLegacyBridge: true },
   plugins: {
     // Android: edge to edge with viewport-fit=cover; the page leaves room for the bars
     // (see src/lib/native.ts).

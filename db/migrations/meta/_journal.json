@@ -239,6 +239,13 @@
       "when": 1792660865688,
       "tag": "0033_drop_region",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1792665834751,
+      "tag": "0034_technician_presence",
+      "breakpoints": true
     }
   ]
 }

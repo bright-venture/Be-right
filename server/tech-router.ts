@@ -8,6 +8,7 @@ import {
   serviceRequests,
   technicianApplications,
   technicianLocations,
+  technicianPresence,
   users,
 } from "../db/schema";
 import {
@@ -27,6 +28,7 @@ import { audit } from "./lib/audit";
 import { isPhotoType } from "@contracts/uploads";
 import { isValidPin } from "@contracts/geo";
 import { TRANSPORT } from "@contracts/applications";
+import { isOnline } from "@contracts/presence";
 import { LIMITS, rateLimit } from "./lib/rateLimit";
 
 type Db = Parameters<typeof findRequest>[0];
@@ -44,6 +46,22 @@ const PHOTO_REQUIRED: Record<"start" | "complete", { kind: JobPhotoKind; message
   start: { kind: "before", message: "Add at least one before photo to start the work" },
   complete: { kind: "after", message: "Add at least one after photo to complete the job" },
 };
+
+const position = z.object({
+  lat: z.number().min(-90).max(90),
+  lng: z.number().min(-180).max(180),
+  accuracy: z.number().nonnegative().max(100_000).optional(),
+});
+
+function checkPosition(input: z.infer<typeof position>) {
+  if (!isValidPin(input.lat, input.lng)) throw new TRPCError({ code: "BAD_REQUEST", message: "Location unavailable" });
+}
+
+const positionValues = (input: z.infer<typeof position>) => ({
+  lat: input.lat,
+  lng: input.lng,
+  accuracy: input.accuracy != null ? Math.round(input.accuracy) : null,
+});
 
 export const techRouter = createRouter({
   /**
@@ -67,7 +85,7 @@ export const techRouter = createRouter({
       .where(eq(users.role, "technician"));
     if (!techs.length) return [];
     const ids = techs.map((x) => x.id);
-    const [apps, counts, ratings, photos] = await Promise.all([
+    const [apps, counts, ratings, photos, presence] = await Promise.all([
       db
         .select({
           id: technicianApplications.id,
@@ -94,6 +112,7 @@ export const techRouter = createRouter({
       ratingsFor(ids),
       // Every photo link in one storage call, not one per technician.
       profilePhotoUrls(techs.map((x) => x.avatar)),
+      db.select().from(technicianPresence).where(inArray(technicianPresence.technicianId, ids)),
     ]);
     return techs.map((x) => {
         const app = apps.find((a) => a.hiredUserId === x.id);
@@ -115,6 +134,7 @@ export const techRouter = createRouter({
           companyName: app?.companyName ?? null,
           transport: app?.transport ?? null,
           base: x.baseLat != null && x.baseLng != null ? { lat: x.baseLat, lng: x.baseLng } : null,
+          online: isOnline(presence.find((row) => row.technicianId === x.id)),
           activeJobs: sum(ACTIVE_JOB_STATUSES),
           completedJobs: sum(["completed"]),
           rating: ratings.get(x.id) ?? { average: null, count: 0 },
@@ -197,6 +217,46 @@ export const techRouter = createRouter({
       await getDb().update(users).set({ baseLat: input.lat, baseLng: input.lng }).where(eq(users.id, ctx.user.id));
       return { ok: true };
     }),
+
+  /** Technician: am I Available? (The app picks location back up when it opens.) */
+  presence: technicianQuery.query(async ({ ctx }) => {
+    const row = await getDb().query.technicianPresence.findFirst({ where: eq(technicianPresence.technicianId, ctx.user.id) });
+    return { online: isOnline(row), since: row?.availableSince ?? null };
+  }),
+
+  /** Technician: go Available. Needs their position: no location, no work offered. */
+  goOnline: technicianQuery.input(position).mutation(async ({ ctx, input }) => {
+    checkPosition(input);
+    const now = new Date();
+    const values = { ...positionValues(input), availableSince: now, updatedAt: now };
+    await getDb()
+      .insert(technicianPresence)
+      .values({ technicianId: ctx.user.id, ...values })
+      .onConflictDoUpdate({ target: technicianPresence.technicianId, set: values });
+    return { ok: true };
+  }),
+
+  /** Technician, while Available: where they are now. Refused once they're offline. */
+  ping: technicianQuery.input(position).mutation(async ({ ctx, input }) => {
+    checkPosition(input);
+    const db = getDb();
+    const row = await db.query.technicianPresence.findFirst({ where: eq(technicianPresence.technicianId, ctx.user.id) });
+    if (!row?.availableSince) throw new TRPCError({ code: "BAD_REQUEST", message: "You're offline" });
+    await db
+      .update(technicianPresence)
+      .set({ ...positionValues(input), updatedAt: new Date() })
+      .where(eq(technicianPresence.technicianId, ctx.user.id));
+    return { ok: true };
+  }),
+
+  /** Technician: go offline. Their position is wiped. */
+  goOffline: technicianQuery.mutation(async ({ ctx }) => {
+    await getDb()
+      .update(technicianPresence)
+      .set({ availableSince: null, lat: null, lng: null, accuracy: null, updatedAt: new Date() })
+      .where(eq(technicianPresence.technicianId, ctx.user.id));
+    return { ok: true };
+  }),
 
   /** Admin: how a technician travels (the rate per km in suggested prices). */
   setTransport: adminQuery

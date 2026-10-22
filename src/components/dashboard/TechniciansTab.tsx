@@ -139,7 +139,14 @@ function TechnicianRow({ tech: x }: { tech: Technician }) {
         <div className="flex min-w-0 items-center gap-3">
           <Avatar name={x.name} photoUrl={x.photoUrl} size="h-10 w-10" />
           <div className="min-w-0">
-            <p className="truncate font-display text-sm font-extrabold text-navy">{x.name ?? "-"}</p>
+            <p className="flex min-w-0 items-center gap-1.5 font-display text-sm font-extrabold text-navy">
+              <span
+                className={`h-2 w-2 shrink-0 rounded-full ${x.online ? "bg-green-600" : "bg-navy/25"}`}
+                title={p(x.online ? t.prices.available : t.prices.offline)}
+                aria-label={p(x.online ? t.prices.available : t.prices.offline)}
+              />
+              <span className="truncate">{x.name ?? "-"}</span>
+            </p>
             {trade && (
               <p className="flex items-center gap-1 text-xs font-semibold text-bird">
                 <ServiceIcon id={x.trade!} className="h-3.5 w-3.5" /> {p(trade.name)}

@@ -66,5 +66,13 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Be Right uses your location to pin your address when you book, and, for technicians, to find jobs near you and show customers that you are on the way.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>While you are Available, Be Right keeps sharing your location with the team with the screen locked, so they can offer you jobs nearby. Go offline to stop.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>location</string>
+	</array>
 </dict>
 </plist>

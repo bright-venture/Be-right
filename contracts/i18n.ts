@@ -542,6 +542,42 @@ export const t = {
       en: "The customer sees your location while the job is active. Keep this page open on the way: sharing pauses while your screen is locked.",
       ar: "يرى العميل موقعك طالما المهمة جارية. أبقِ هذه الصفحة مفتوحة في الطريق: تتوقف المشاركة عند قفل الشاشة.",
     },
+    shareHintApp: {
+      en: "The customer sees your location while the job is active. It keeps going with the screen locked.",
+      ar: "يرى العميل موقعك طالما المهمة جارية. تستمر المشاركة حتى مع قفل الشاشة.",
+    },
+    // Available / offline, like a ride app
+    availOn: { en: "You're Available", ar: "أنت متاح" },
+    availOff: { en: "You're offline", ar: "أنت غير متصل" },
+    availOnHint: {
+      en: "The team sees where you are and offers you jobs nearby, priced from here. It keeps going with the screen locked; a notification shows it's on.",
+      ar: "يرى الفريق مكانك ويعرض عليك المهام القريبة، بأسعار محسوبة من هنا. يستمر ذلك مع قفل الشاشة، ويظهر إشعار بأنه مفعّل.",
+    },
+    availOnHintWeb: {
+      en: "The team sees where you are and offers you jobs nearby, priced from here. Keep this page open: closing it stops your location. The Be Right app keeps going with the screen locked.",
+      ar: "يرى الفريق مكانك ويعرض عليك المهام القريبة، بأسعار محسوبة من هنا. أبقِ هذه الصفحة مفتوحة: إغلاقها يوقف موقعك. أما تطبيق بي رايت فيستمر مع قفل الشاشة.",
+    },
+    availOffHint: {
+      en: "Go online to get jobs near you. Your location is needed while you're Available; nothing is shared while you're offline.",
+      ar: "اتصل لتحصل على مهام قريبة منك. موقعك مطلوب طالما أنت متاح، ولا يُشارك شيء وأنت غير متصل.",
+    },
+    goOnline: { en: "Go online", ar: "اتصل الآن" },
+    goOffline: { en: "Go offline", ar: "قطع الاتصال" },
+    goingOnline: { en: "Finding your location", ar: "جارٍ تحديد موقعك" },
+    locDenied: {
+      en: "Location is required to go online. Allow it for Be Right in your phone's settings.",
+      ar: "الموقع مطلوب للاتصال. اسمح به لتطبيق بي رايت في إعدادات هاتفك.",
+    },
+    locUnavailable: {
+      en: "Couldn't find your location. Turn on location (GPS) and try again.",
+      ar: "تعذّر تحديد موقعك. فعّل الموقع (GPS) وحاول مرة أخرى.",
+    },
+    openSettings: { en: "Open settings", ar: "فتح الإعدادات" },
+    noticeTitle: { en: "Be Right: sharing your location", ar: "بي رايت: مشاركة موقعك" },
+    noticeMessage: {
+      en: "While you're Available or on the way to a job. Go offline or stop sharing in the app to stop.",
+      ar: "طالما أنت متاح أو في الطريق إلى مهمة. اقطع الاتصال أو أوقف المشاركة في التطبيق للإيقاف.",
+    },
     geoError: {
       en: "Location unavailable. Allow location access and try again.",
       ar: "الموقع غير متاح. اسمح بالوصول إلى الموقع وحاول مرة أخرى.",
@@ -1465,6 +1501,12 @@ export const t = {
     missingHintStaff: { en: "An admin sets them in Admin → Prices. Meanwhile, type the price yourself.", ar: "يحدّدها المدير في الإدارة ← الأسعار. في الأثناء، اكتب السعر بنفسك." },
     openPrices: { en: "Open Prices", ar: "فتح الأسعار" },
     noPrice: { en: "No price", ar: "بلا سعر" },
+    available: { en: "Available", ar: "متاح" },
+    offline: { en: "Offline", ar: "غير متصل" },
+    liveAgo: { en: "where they are, {time}", ar: "من مكانه الحالي، {time}" },
+    fromStart: { en: "from their starting point", ar: "من نقطة انطلاقه" },
+    justNow: { en: "just now", ar: "الآن" },
+    minAgo: { en: "{n} min ago", ar: "منذ {n} د" },
     suggested: { en: "Priced for {name}", ar: "السعر محسوب لـ{name}" },
     // Technicians tab
     start: { en: "Starting point", ar: "نقطة الانطلاق" },

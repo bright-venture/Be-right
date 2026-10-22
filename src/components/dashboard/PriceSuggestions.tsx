@@ -127,9 +127,17 @@ function Row({
   const trade = x.trade ? CATEGORY_MAP[x.trade] : null;
   // Only part of the price: travel is missing (no starting point or no rate for their transport).
   const partial = price.total != null && price.travel == null;
+  // Where the distance comes from: where they are now (Available), or their starting point.
+  const minutes = x.seenMinutesAgo;
+  const origin =
+    x.from === "live"
+      ? p(t.prices.liveAgo).replace("{time}", minutes != null && minutes >= 1 ? p(t.prices.minAgo).replace("{n}", String(minutes)) : p(t.prices.justNow))
+      : x.from === "start"
+        ? p(t.prices.fromStart)
+        : null;
   const facts = [
     x.transport ? p(TRANSPORT_LABELS[x.transport]) : null,
-    price.roadKm != null ? p(t.prices.km).replace("{n}", String(price.roadKm)) : null,
+    price.roadKm != null ? `${p(t.prices.km).replace("{n}", String(price.roadKm))}${origin ? ` (${origin})` : ""}` : null,
     `${p(t.dash4.activeJobs)}: ${x.activeJobs}`,
   ].filter(Boolean);
   const parts = price.service != null ? price.service + (price.travel ?? 0) : null;
@@ -142,6 +150,14 @@ function Row({
         <div className="min-w-0">
           <p className="flex flex-wrap items-center gap-x-2 text-sm font-bold text-navy">
             <span className="truncate">{x.name ?? "-"}</span>
+            <span
+              className={`inline-flex items-center gap-1 rounded-full px-2 py-px text-[11px] font-bold ${
+                x.online ? "bg-green-700/10 text-green-800" : "bg-navy/[0.06] text-navy/55"
+              }`}
+            >
+              <span className={`h-1.5 w-1.5 rounded-full ${x.online ? "bg-green-600" : "bg-navy/30"}`} />
+              {p(x.online ? t.prices.available : t.prices.offline)}
+            </span>
             {x.rating.average !== null && (
               <span className="inline-flex items-center gap-0.5 text-xs font-semibold text-navy/70">
                 <Star className="h-3 w-3 text-flame" fill="currentColor" aria-hidden /> {x.rating.average.toFixed(1)}

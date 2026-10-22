@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ChevronDown, Loader2, MapPin, Navigation } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
@@ -14,7 +14,10 @@ import { formatDay, formatVisitDay } from "@/lib/time";
 import { telLink } from "@/lib/contact";
 import { useRoleGate } from "@/hooks/useRoleGate";
 import { Link } from "react-router";
-import { isAppUi } from "@/lib/native";
+import { isAppUi, isNativeApp } from "@/lib/native";
+import { startJobLocation, stopJobLocation, usePresence } from "@/lib/presence";
+import { useTrackingNotice } from "@/hooks/useTrackingNotice";
+import { Availability } from "@/components/tech/Availability";
 import { trpc } from "@/providers/trpc";
 import {
   CATEGORY_MAP,
@@ -23,68 +26,32 @@ import {
 import { ACTIVE_JOB_STATUSES, VISIT_REPORTS } from "@contracts/workflow";
 
 /**
- * Watches GPS and reports position for the given active job. Stops by itself once
- * that job is no longer active for this technician (completed, cancelled, reassigned).
+ * A job's live location for its customer, through the shared tracker (src/lib/presence.ts):
+ * in the phone app it keeps going with the screen locked. Stops by itself once that job is no
+ * longer active for this technician (completed, cancelled, reassigned).
  */
 function useLocationSharing(activeJobIds: readonly number[] | undefined) {
-  const watchRef = useRef<number | null>(null);
-  const lastSent = useRef(0);
-  const [sharingFor, setSharingFor] = useState<number | null>(null);
-  const [geoError, setGeoError] = useState(false);
-
-  const stop = useCallback(() => {
-    if (watchRef.current !== null) {
-      navigator.geolocation.clearWatch(watchRef.current);
-      watchRef.current = null;
-    }
-    setSharingFor(null);
-  }, []);
-
-  const report = trpc.tech.reportLocation.useMutation({
-    // The server refuses once the job isn't ours or isn't active any more.
-    onError: (error) => {
-      if (error.data?.code === "BAD_REQUEST" || error.data?.code === "NOT_FOUND") stop();
-    },
-  });
+  const presence = usePresence();
+  const notice = useTrackingNotice();
+  // The job the technician last tried to share: a problem shows on that job's card.
+  const [triedFor, setTriedFor] = useState<number | null>(null);
+  const sharingFor = presence.sharedJob;
 
   // The jobs list refreshes every minute and after each field action.
   const jobGone = sharingFor !== null && activeJobIds !== undefined && !activeJobIds.includes(sharingFor);
   useEffect(() => {
-    if (jobGone && watchRef.current !== null) {
-      navigator.geolocation.clearWatch(watchRef.current);
-      watchRef.current = null;
-    }
+    if (jobGone) stopJobLocation();
   }, [jobGone]);
 
-  function start(requestId: number) {
-    setGeoError(false);
-    if (!("geolocation" in navigator)) {
-      setGeoError(true);
-      return;
-    }
-    stop();
-    setSharingFor(requestId);
-    watchRef.current = navigator.geolocation.watchPosition(
-      (pos) => {
-        const now = Date.now();
-        if (now - lastSent.current < 15000) return; // throttle 15s
-        lastSent.current = now;
-        report.mutate({
-          requestId,
-          lat: pos.coords.latitude,
-          lng: pos.coords.longitude,
-          accuracy: pos.coords.accuracy,
-        });
-      },
-      () => {
-        setGeoError(true);
-        stop();
-      },
-      { enableHighAccuracy: true, maximumAge: 10000 },
-    );
-  }
-
-  useEffect(() => stop, [stop]);
+  const start = (requestId: number) => {
+    setTriedFor(requestId);
+    void startJobLocation(requestId, notice);
+  };
+  const stop = () => {
+    setTriedFor(null);
+    stopJobLocation();
+  };
+  const geoError = triedFor !== null && sharingFor === null && !!presence.problem;
   return { sharingFor: jobGone ? null : sharingFor, geoError, start, stop };
 }
 
@@ -130,6 +97,8 @@ export default function Tech() {
         <h1 className="font-display text-3xl font-black text-navy sm:text-4xl">
           {p(t.tech.title)}
         </h1>
+
+        <Availability />
 
         {needsStart && (
           <div className="card-br mt-6 flex flex-wrap items-center gap-3 border-flame bg-flame/5 p-4">
@@ -287,7 +256,7 @@ export default function Tech() {
                         {p(t.tracking.liveLocation)}
                       </div>
                       <p className="mt-1 text-xs text-navy/70">
-                        {p(t.tech.shareHint)}
+                        {p(isNativeApp ? t.tech.shareHintApp : t.tech.shareHint)}
                       </p>
                       {geoError && (
                         <p className="mt-2 text-xs font-semibold text-destructive">

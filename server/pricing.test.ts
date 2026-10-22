@@ -2,9 +2,10 @@
 // (service + travel by distance), and the technician priced for is ready once the customer approves.
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import { eq } from "drizzle-orm";
-import { auditLog, serviceRequests, technicianApplications, users, type User } from "@db/schema";
+import { auditLog, serviceRequests, technicianApplications, technicianPresence, users, type User } from "@db/schema";
 import { distanceKm } from "@contracts/geo";
 import { EMPTY_PRICING, ROAD_FACTOR, suggestPrice, type PricingSettings } from "@contracts/pricing";
+import { ONLINE_TIMEOUT_MINUTES } from "@contracts/presence";
 import {
   BEIRUT_PIN,
   callerFor,
@@ -182,5 +183,51 @@ describe("prices", () => {
     expect(typed).toMatchObject({ suggestedTechnicianId: null, priceBreakdown: null, quoteAmount: "60" });
 
     await expect(s.specialist.sendQuote({ id, amount: "60", technicianId: customer.id })).rejects.toMatchObject({ code: "BAD_REQUEST" });
+  });
+  it("go Available with their position, which prices count from until they go offline", async () => {
+    const t = await callerFor(far); // starts from Tripoli, far from the Beirut pin
+    const presenceOf = async () => (await db.select().from(technicianPresence).where(eq(technicianPresence.technicianId, far.id)))[0];
+    expect(await t.tech.presence()).toMatchObject({ online: false });
+    await expect(t.tech.ping(BEIRUT_PIN)).rejects.toMatchObject({ code: "BAD_REQUEST" }); // offline: refused
+    await expect(t.tech.goOnline({ lat: 0, lng: 0 })).rejects.toMatchObject({ code: "BAD_REQUEST" }); // no real position
+
+    // Online in Achrafieh, next to the customer.
+    await t.tech.goOnline({ ...BEIRUT_PIN, accuracy: 12 });
+    expect(await t.tech.presence()).toMatchObject({ online: true });
+    await t.tech.ping({ lat: BEIRUT_PIN.lat + 0.001, lng: BEIRUT_PIN.lng, accuracy: 8 });
+    expect(await presenceOf()).toMatchObject({ lat: BEIRUT_PIN.lat + 0.001, accuracy: 8 });
+
+    const s = await callerFor(desk);
+    const { id } = await (await callerFor(customer)).requests.create(booking);
+    let row = (await s.pricing.suggest({ id })).technicians.find((x) => x.id === far.id)!;
+    expect(row).toMatchObject({ online: true, from: "live", seenMinutesAgo: 0, price: { tooFar: false } });
+    expect(row.price.roadKm).toBeLessThan(1);
+    // Available technicians of the trade come first.
+    expect((await s.pricing.suggest({ id })).technicians[0].id).toBe(far.id);
+    expect((await s.tech.list()).find((x) => x.id === far.id)).toMatchObject({ online: true });
+
+    // No position for longer than the timeout (app closed): offline, back to the starting point.
+    await db
+      .update(technicianPresence)
+      .set({ updatedAt: new Date(Date.now() - (ONLINE_TIMEOUT_MINUTES + 1) * 60_000) })
+      .where(eq(technicianPresence.technicianId, far.id));
+    row = (await s.pricing.suggest({ id })).technicians.find((x) => x.id === far.id)!;
+    expect(row).toMatchObject({ online: false, from: "start", seenMinutesAgo: null, price: { tooFar: true } });
+    expect(await t.tech.presence()).toMatchObject({ online: false });
+
+    // Going offline wipes the position.
+    await t.tech.goOnline(BEIRUT_PIN);
+    await t.tech.goOffline();
+    expect(await presenceOf()).toMatchObject({ availableSince: null, lat: null, lng: null, accuracy: null });
+    expect((await s.pricing.suggest({ id })).technicians.find((x) => x.id === far.id)).toMatchObject({ online: false, from: "start" });
+  });
+
+  it("availability is for technicians only", async () => {
+    for (const who of [desk, admin, customer]) {
+      const c = await callerFor(who);
+      await expect(c.tech.goOnline(BEIRUT_PIN)).rejects.toMatchObject({ code: "FORBIDDEN" });
+      await expect(c.tech.ping(BEIRUT_PIN)).rejects.toMatchObject({ code: "FORBIDDEN" });
+      await expect(c.tech.goOffline()).rejects.toMatchObject({ code: "FORBIDDEN" });
+    }
   });
 });
