@@ -6,6 +6,7 @@ import { emergencyRequests, requestEvents, serviceRequests, technicianApplicatio
 import { EMERGENCY_PROBLEM_MAP } from "@contracts/emergency";
 import { directionsLinks } from "@contracts/geo";
 import { CATEGORY_MAP, type LocalText } from "@contracts/services";
+import { DISTRICT_INFO } from "@contracts/districts";
 import { arabicDays, WORKMANSHIP_GUARANTEE_DAYS } from "@contracts/legal";
 import { t } from "@contracts/i18n";
 import { getDb } from "./queries/connection";
@@ -495,13 +496,19 @@ export const notify = {
       });
       if (!app) return;
       const trade = local(CATEGORY_MAP[app.trade]?.name, app.trade);
+      // Newer applications name districts; older ones wrote an area.
+      const where = app.districts?.length
+        ? { en: app.districts.map((d) => DISTRICT_INFO[d].name.en).join(", "), ar: app.districts.map((d) => DISTRICT_INFO[d].name.ar).join("، ") }
+        : app.area
+          ? { en: app.area, ar: app.area }
+          : null;
       await send(await emailsOf("admin"), {
         subject: both(`New technician application: ${app.name}`, `طلب توظيف فني جديد: ${app.name}`),
         title: both("Someone applied to work with us", "تقدّم شخص للعمل معنا"),
         lines: [
           both(
-            `${app.name}: ${trade.en}${app.area ? `, ${app.area}` : ""}. Phone: ${app.phone}.`,
-            `${app.name}: ${trade.ar}${app.area ? `، ${app.area}` : ""}. الهاتف: ${app.phone}.`,
+            `${app.name}: ${trade.en}${where ? `, ${where.en}` : ""}. Phone: ${app.phone}.`,
+            `${app.name}: ${trade.ar}${where ? `، ${where.ar}` : ""}. الهاتف: ${app.phone}.`,
           ),
           both(
             "Call them to set up a meeting in person, then accept or reject the application.",

@@ -4,6 +4,8 @@ import { adminQuery, createRouter, specialistQuery } from "./middleware";
 import { getDb } from "./queries/connection";
 import { pricingSettings, serviceRequests, technicianApplications, technicianPresence, users } from "../db/schema";
 import { isOnline } from "@contracts/presence";
+import { worksIn } from "@contracts/districts";
+import { requestDistrict } from "./lib/districts";
 import { ACTIVE_JOB_STATUSES } from "@contracts/workflow";
 import { CUSTOMER_SERVICES } from "@contracts/services";
 import { TRANSPORT } from "@contracts/applications";
@@ -42,11 +44,19 @@ export async function loadPricing(db: Db = getDb()): Promise<PricingSettings> {
  */
 export async function priceTechnicians(
   db: Db,
-  job: { category: string; lat: number | null; lng: number | null },
+  job: { category: string; district?: string | null; lat: number | null; lng: number | null },
   settings: PricingSettings,
 ) {
   const techs = await db
-    .select({ id: users.id, name: users.name, email: users.email, avatar: users.avatar, baseLat: users.baseLat, baseLng: users.baseLng })
+    .select({
+      id: users.id,
+      name: users.name,
+      email: users.email,
+      avatar: users.avatar,
+      baseLat: users.baseLat,
+      baseLng: users.baseLng,
+      districts: users.districts,
+    })
     .from(users)
     .where(eq(users.role, "technician"));
   if (!techs.length) return [];
@@ -66,6 +76,7 @@ export async function priceTechnicians(
     db.select().from(technicianPresence).where(inArray(technicianPresence.technicianId, ids)),
   ]);
   const pin = job.lat != null && job.lng != null ? { lat: job.lat, lng: job.lng } : null;
+  const district = requestDistrict(job);
   const rows = techs.map((x) => {
     const app = apps.find((a) => a.hiredUserId === x.id);
     const base = x.baseLat != null && x.baseLng != null ? { lat: x.baseLat, lng: x.baseLng } : null;
@@ -82,6 +93,9 @@ export async function priceTechnicians(
       photoUrl: (x.avatar && photos[x.avatar]) || null,
       trade: app?.trade ?? null,
       sameTrade: app?.trade === job.category,
+      districts: x.districts,
+      /** Works in the request's district (or there's nothing to check). */
+      inArea: worksIn(x.districts, district),
       transport,
       online,
       /** Where the distance is measured from. */
@@ -93,11 +107,17 @@ export async function priceTechnicians(
       price: suggestPrice(settings, job, { transport, straightKm }),
     };
   });
-  // Their trade, then Available, then within reach, then nearest.
-  const order = (r: (typeof rows)[number]) => [r.sameTrade ? 0 : 1, r.online ? 0 : 1, r.price.tooFar ? 1 : 0, r.price.roadKm ?? Infinity];
+  // In their districts, then their trade, then Available, then within reach, then nearest.
+  const order = (r: (typeof rows)[number]) => [
+    r.inArea ? 0 : 1,
+    r.sameTrade ? 0 : 1,
+    r.online ? 0 : 1,
+    r.price.tooFar ? 1 : 0,
+    r.price.roadKm ?? Infinity,
+  ];
   return rows.sort((a, b) => {
     const [x, y] = [order(a), order(b)];
-    return x[0] - y[0] || x[1] - y[1] || x[2] - y[2] || x[3] - y[3];
+    return x.reduce((diff, v, i) => diff || v - y[i], 0);
   });
 }
 
@@ -123,6 +143,6 @@ export const pricingRouter = createRouter({
     const db = getDb();
     const [row, settings] = await Promise.all([findRequest(db, input.id, "any"), loadPricing(db)]);
     const technicians = await priceTechnicians(db, row, settings);
-    return { hasPin: row.lat != null && row.lng != null, technicians };
+    return { hasPin: row.lat != null && row.lng != null, district: requestDistrict(row), technicians };
   }),
 });

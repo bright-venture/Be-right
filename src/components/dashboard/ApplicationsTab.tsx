@@ -8,6 +8,7 @@ import { useConfirm } from "@/hooks/useConfirm";
 import { trpc } from "@/providers/trpc";
 import { telLink, whatsappLink } from "@/lib/contact";
 import { CATEGORY_MAP } from "@contracts/services";
+import { DISTRICT_INFO } from "@contracts/districts";
 import {
   APPLICATION_DOCUMENTS,
   AVAILABILITY_LABELS,
@@ -106,7 +107,10 @@ function ApplicationCard({
   const details: [string, string | null][] = [
     [p(t.join.email), app.email],
     [p(t.dash3.transport), app.transport ? p(TRANSPORT_LABELS[app.transport]) : null],
-    [p(t.join.area), app.area],
+    [
+      p(app.districts?.length ? t.districts.edit : t.join.area),
+      app.districts?.length ? app.districts.map((d) => p(DISTRICT_INFO[d].name)).join(", ") : app.area,
+    ],
     [p(t.join.experience), app.experience ? p(EXPERIENCE_LABELS[app.experience as ExperienceLevel]) : null],
     [p(t.join.availability), app.availability ? p(AVAILABILITY_LABELS[app.availability as Availability]) : null],
     [p(t.dash3.tools), app.hasTools === null ? null : p(app.hasTools ? t.join.yes : t.join.no)],

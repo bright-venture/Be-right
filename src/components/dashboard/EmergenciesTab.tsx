@@ -13,6 +13,8 @@ import { CATEGORIES, CATEGORY_MAP, type RequestStatus } from "@contracts/service
 import { QUOTE_AMOUNT_PATTERN, todayHere } from "@contracts/workflow";
 import { useLiveQueue } from "./useLiveQueue";
 import { EMERGENCY_PROBLEM_MAP } from "@contracts/emergency";
+import { DISTRICT_INFO, worksIn } from "@contracts/districts";
+import { useAuth } from "@/hooks/useAuth";
 
 /** How often the list checks for newly sent emergencies (the customer is calling). */
 export const EMERGENCY_REFRESH_MS = 15_000;
@@ -146,9 +148,17 @@ function EmergencyJobForm({
     },
   });
 
-  // Technicians of the chosen trade first, then the least busy.
+  // The pin's district: technicians only work in theirs (an admin can still make an exception).
+  const { user } = useAuth();
+  const place = trpc.emergency.districtOf.useQuery(pin ?? { lat: 0, lng: 0 }, { enabled: !!pin, staleTime: Infinity });
+  const district = pin ? (place.data?.district ?? null) : null;
+  const outsideOf = (x: { districts: string[] }) => !worksIn(x.districts, district);
+  // In their districts first, then the chosen trade, then the least busy.
   const sorted = [...(technicians.data ?? [])].sort(
-    (a, b) => Number(b.trade === category) - Number(a.trade === category) || a.activeJobs - b.activeJobs,
+    (a, b) =>
+      Number(outsideOf(a)) - Number(outsideOf(b)) ||
+      Number(b.trade === category) - Number(a.trade === category) ||
+      a.activeJobs - b.activeJobs,
   );
   const matching = category ? sorted.filter((x) => x.trade === category) : [];
   const others = sorted.filter((x) => !matching.includes(x));
@@ -156,11 +166,13 @@ function EmergencyJobForm({
     [
       x.name ?? x.email,
       x.trade && CATEGORY_MAP[x.trade] ? p(CATEGORY_MAP[x.trade].name) : null,
-      x.area,
+      x.districts.length ? x.districts.map((d) => p(DISTRICT_INFO[d].name)).join(", ") : x.area,
       p(t.emergency.activeJobs).replace("{n}", String(x.activeJobs)),
+      outsideOf(x) ? p(t.districts.outside) : null,
     ]
       .filter(Boolean)
       .join(" · ");
+  const locked = (x: (typeof sorted)[number]) => outsideOf(x) && user?.role !== "admin";
 
   function submit(event: FormEvent) {
     event.preventDefault();
@@ -298,7 +310,7 @@ function EmergencyJobForm({
                 {matching.length > 0 && (
                   <optgroup label={p(CATEGORY_MAP[category].name)}>
                     {matching.map((x) => (
-                      <option key={x.id} value={x.id}>
+                      <option key={x.id} value={x.id} disabled={locked(x)}>
                         {techLabel(x)}
                       </option>
                     ))}
@@ -307,7 +319,7 @@ function EmergencyJobForm({
                 {others.length > 0 && (
                   <optgroup label={p(matching.length ? t.emergency.otherTechnicians : t.emergency.allTechnicians)}>
                     {others.map((x) => (
-                      <option key={x.id} value={x.id}>
+                      <option key={x.id} value={x.id} disabled={locked(x)}>
                         {techLabel(x)}
                       </option>
                     ))}

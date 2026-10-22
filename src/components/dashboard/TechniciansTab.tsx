@@ -1,5 +1,5 @@
 import { Fragment, useState } from "react";
-import { Car, FileText, Loader2, Mail, MessageCircle, Phone, Search, Star, UserMinus } from "lucide-react";
+import { Car, FileText, Loader2, Mail, Map, MessageCircle, Phone, Search, Star, UserMinus } from "lucide-react";
 import type { inferRouterOutputs } from "@trpc/server";
 import type { AppRouter } from "../../../server/router";
 import { ServiceIcon } from "@/components/ServiceIcon";
@@ -16,15 +16,17 @@ import {
   type ExperienceLevel,
 } from "@contracts/applications";
 import { TransportEditor } from "./TransportEditor";
+import { DistrictsEditor } from "./DistrictsEditor";
+import { DISTRICT_INFO } from "@contracts/districts";
 import { Avatar } from "./RequestDetail";
 import { useAuth } from "@/hooks/useAuth";
 
 type Technician = inferRouterOutputs<AppRouter>["tech"]["list"][number];
 
 /** The table's columns on a computer: technician, area, experience, works, transport, 3 figures,
- * and the buttons (fixed: room for all six, so the headings line up with every row). */
+ * and the buttons (fixed: room for all seven, so the headings line up with every row). */
 const COLUMNS =
-  "lg:grid-cols-[minmax(0,2.2fr)_minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,1.1fr)_minmax(0,1.2fr)_4.5rem_5.5rem_4.5rem_15.5rem]";
+  "lg:grid-cols-[minmax(0,2.2fr)_minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,1.1fr)_minmax(0,1.2fr)_4.5rem_5.5rem_4.5rem_18rem]";
 const ICON_BTN =
   "inline-flex h-9 w-9 items-center justify-center rounded-lg border border-navy/15 text-navy transition-colors hover:bg-navy/5 disabled:opacity-40";
 const HEAD = "text-[11px] font-semibold uppercase tracking-wide text-navy/50";
@@ -112,6 +114,9 @@ function TechnicianRow({ tech: x }: { tech: Technician }) {
   const utils = trpc.useUtils();
   const [showDocs, setShowDocs] = useState(false);
   const [editingTransport, setEditingTransport] = useState(false);
+  const [editingDistricts, setEditingDistricts] = useState(false);
+  // Their districts; older technicians who haven't any yet: the area they wrote.
+  const where = x.districts.length ? x.districts.map((d) => p(DISTRICT_INFO[d].name)).join(", ") : (x.area ?? p(t.districts.none));
   const { user } = useAuth();
   const isAdmin = user?.role === "admin";
   const remove = trpc.tech.remove.useMutation({
@@ -157,7 +162,7 @@ function TechnicianRow({ tech: x }: { tech: Technician }) {
             </p>
           </div>
         </div>
-        {cell(p(t.dash4.techArea), x.area ?? "-")}
+        {cell(p(t.dash4.techArea), where)}
         {cell(p(t.dash4.techExperience), x.experience ? p(EXPERIENCE_LABELS[x.experience as ExperienceLevel]) : "-")}
         {cell(p(t.dash3.workMode), works)}
         <div className="flex min-w-0 justify-between gap-3 text-sm lg:block">
@@ -209,6 +214,18 @@ function TechnicianRow({ tech: x }: { tech: Technician }) {
           {isAdmin && (
             <button
               type="button"
+              onClick={() => setEditingDistricts((v) => !v)}
+              aria-expanded={editingDistricts}
+              className={`${ICON_BTN} ${editingDistricts ? "bg-navy text-white hover:bg-navy" : ""}`}
+              title={p(t.districts.edit)}
+              aria-label={`${p(t.districts.edit)} ${x.name ?? ""}`}
+            >
+              <Map className="h-4 w-4" />
+            </button>
+          )}
+          {isAdmin && (
+            <button
+              type="button"
               onClick={() => setEditingTransport((v) => !v)}
               aria-expanded={editingTransport}
               className={`${ICON_BTN} ${editingTransport ? "bg-navy text-white hover:bg-navy" : ""}`}
@@ -255,6 +272,7 @@ function TechnicianRow({ tech: x }: { tech: Technician }) {
       {remove.error && <p className="px-4 pb-3 text-xs font-semibold text-red-700">{remove.error.message}</p>}
 
       {editingTransport && <TransportEditor tech={x} onDone={() => setEditingTransport(false)} />}
+      {editingDistricts && <DistrictsEditor tech={x} onDone={() => setEditingDistricts(false)} />}
 
       {showDocs && (
         <div className="border-t border-navy/10 bg-navy/[0.02] px-4 py-3">

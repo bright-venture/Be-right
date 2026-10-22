@@ -21,6 +21,8 @@ import {
 } from "@contracts/workflow";
 import { cancelPending } from "./queueMeta";
 import { PriceSuggestions } from "./PriceSuggestions";
+import { DISTRICT_INFO, worksIn } from "@contracts/districts";
+import { useAuth } from "@/hooks/useAuth";
 
 type Outputs = inferRouterOutputs<AppRouter>;
 type Technician = Outputs["tech"]["list"][number];
@@ -134,7 +136,7 @@ export function RequestDetail({
             </div>
             <p className={`${LABEL} mt-4`}>{p(t.dash4.visit)}</p>
             <p className="mt-1 text-navy/80">
-              {r.area} · {r.address}
+              {[r.district && p(DISTRICT_INFO[r.district].name), r.area, r.address].filter(Boolean).join(" · ")}
             </p>
             <p className="mt-1 text-navy/80">
               {r.preferredDate} ·{" "}
@@ -339,8 +341,11 @@ function NextStep({
   onGoToApplications?: () => void;
 }) {
   const { t, p } = useI18n();
+  const { user } = useAuth();
   const [confirm, confirmDialog] = useConfirm();
   const status = r.status as RequestStatus;
+  // Technicians only work in their districts; an admin can still make an exception.
+  const outsideOf = (x: Technician) => !worksIn(x.districts, r.district);
   const [amount, setAmount] = useState("");
   const [quoteNote, setQuoteNote] = useState("");
   const [note, setNote] = useState("");
@@ -507,12 +512,15 @@ function NextStep({
                 className="min-h-11 rounded-2xl border-2 border-navy/30 bg-white px-4 text-sm font-semibold text-navy focus:border-flame focus:outline-none"
               >
                 <option value="">{p(t.dash2.chooseTech)}</option>
-                {technicians.map((x) => (
-                  <option key={x.id} value={x.id}>
-                    {x.name ?? x.email}
-                    {x.trade && CATEGORY_MAP[x.trade] ? ` · ${p(CATEGORY_MAP[x.trade].name)}` : ""} · {x.activeJobs}
-                  </option>
-                ))}
+                {[...technicians]
+                  .sort((a, b) => Number(outsideOf(a)) - Number(outsideOf(b)))
+                  .map((x) => (
+                    <option key={x.id} value={x.id} disabled={outsideOf(x) && user?.role !== "admin"}>
+                      {x.name ?? x.email}
+                      {x.trade && CATEGORY_MAP[x.trade] ? ` · ${p(CATEGORY_MAP[x.trade].name)}` : ""} · {x.activeJobs}
+                      {outsideOf(x) ? ` · ${p(t.districts.outside)}` : ""}
+                    </option>
+                  ))}
               </select>
               <button
                 onClick={() => assign.mutate({ requestId: r.id, technicianId: Number(chosenTech) })}

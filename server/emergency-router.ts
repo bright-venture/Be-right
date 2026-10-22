@@ -12,6 +12,7 @@ import { CATEGORY_MAP } from "@contracts/services";
 import { earliestTodayAnywhere, isValidVisitDate, QUOTE_AMOUNT_PATTERN, TIME_SLOTS } from "@contracts/workflow";
 import { clientIp, LIMITS, rateLimit } from "./lib/rateLimit";
 import { logEvent } from "./lib/workflow";
+import { checkWorksIn, districtAt, OUTSIDE_DISTRICTS_NOTE } from "./lib/districts";
 import { notify } from "./notify";
 
 export const emergencyRouter = createRouter({
@@ -47,14 +48,21 @@ export const emergencyRouter = createRouter({
     }),
 
   /** Sent emergencies waiting for the call, newest first (who is calling comes with the call). */
-  waiting: specialistQuery.query(() =>
-    getDb()
+  waiting: specialistQuery.query(async () => {
+    const rows = await getDb()
       .select()
       .from(emergencyRequests)
       .where(eq(emergencyRequests.status, "open"))
       .orderBy(desc(emergencyRequests.createdAt))
-      .limit(100),
-  ),
+      .limit(100);
+    // Its district, to send only technicians who work there.
+    return rows.map((row) => ({ ...row, district: districtAt(row.lat, row.lng) }));
+  }),
+
+  /** The district of a pin the specialist placed (to offer only technicians who work there). */
+  districtOf: specialistQuery
+    .input(z.object({ lat: z.number().min(-90).max(90), lng: z.number().min(-180).max(180) }))
+    .query(({ input }) => ({ district: districtAt(input.lat, input.lng) })),
 
   /** Not a real emergency, or handled without a technician: take it off the list. */
   dismiss: specialistQuery.input(z.object({ id: z.number().int() })).mutation(async ({ ctx, input }) => {
@@ -103,6 +111,8 @@ export const emergencyRouter = createRouter({
       if (!tech || tech.role !== "technician" || tech.deletedAt) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "Not a technician" });
       }
+      const district = districtAt(input.lat, input.lng);
+      const exception = checkWorksIn(ctx.user.role, tech.districts, district);
       const requestId = await db.transaction(async (tx) => {
         let customerId: number | null = null;
         if (input.emergencyId) {
@@ -127,6 +137,7 @@ export const emergencyRouter = createRouter({
             preferredDate: input.visitDate,
             timeSlot: input.timeSlot,
             area: address.split(",")[0].trim().slice(0, 255) || address.slice(0, 255),
+            district,
             address,
             lat: input.lat,
             lng: input.lng,
@@ -146,7 +157,13 @@ export const emergencyRouter = createRouter({
           ctx.user.id,
           input.amount ? `Price agreed on the phone: $${input.amount}` : "Price to be agreed on the phone",
         );
-        await logEvent(tx, job.id, "assigned", ctx.user.id, `Technician: ${tech.name ?? tech.email ?? tech.id}`);
+        await logEvent(
+          tx,
+          job.id,
+          "assigned",
+          ctx.user.id,
+          `Technician: ${tech.name ?? tech.email ?? tech.id}${exception ? `, ${OUTSIDE_DISTRICTS_NOTE}` : ""}`,
+        );
         await logEvent(tx, job.id, "scheduled", ctx.user.id, "Emergency: sent now");
         if (input.emergencyId) {
           await tx

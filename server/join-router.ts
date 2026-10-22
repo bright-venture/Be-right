@@ -5,6 +5,7 @@ import { adminQuery, createRouter, publicQuery } from "./middleware";
 import { getDb } from "./queries/connection";
 import { serviceRequests, technicianApplications, users } from "../db/schema";
 import { CATEGORIES } from "../contracts/services";
+import { DISTRICTS } from "../contracts/districts";
 import {
   APPLICATION_DOCUMENTS,
   DOCUMENT_FIELD,
@@ -63,7 +64,8 @@ export const joinRouter = createRouter({
         phone: z.string().trim().max(64).refine(isValidPhone, "Invalid phone number"),
         email,
         trade: z.enum(TRADE_IDS),
-        area: z.string().trim().min(2).max(255),
+        /** Where they work: they're only offered jobs there. */
+        districts: z.array(z.enum(DISTRICTS)).min(1, "Pick at least one district").max(DISTRICTS.length),
         experience: z.enum(EXPERIENCE_LEVELS),
         hasTools: z.boolean(),
         workMode: z.enum(WORK_MODES),
@@ -103,7 +105,7 @@ export const joinRouter = createRouter({
           phone: input.phone,
           email: input.email,
           trade: input.trade,
-          area: input.area,
+          districts: DISTRICTS.filter((d) => input.districts.includes(d)),
           experience: input.experience,
           hasTools: input.hasTools,
           workMode: input.workMode,
@@ -237,6 +239,7 @@ export const joinRouter = createRouter({
               phone: existing.phone ?? app.phone,
               name: existing.name ?? app.name,
               avatar: app.photoKey,
+              ...(app.districts?.length && { districts: app.districts }),
             })
             .where(eq(users.id, existing.id));
           return existing.id;
@@ -269,8 +272,12 @@ export const joinRouter = createRouter({
                 phone: app.phone,
                 role: "technician",
                 avatar: app.photoKey,
+                districts: app.districts ?? [],
               })
-              .onConflictDoUpdate({ target: users.authId, set: { role: "technician", avatar: app.photoKey } })
+              .onConflictDoUpdate({
+                target: users.authId,
+                set: { role: "technician", avatar: app.photoKey, ...(app.districts?.length && { districts: app.districts }) },
+              })
               .returning({ id: users.id });
             return created.id;
           }),

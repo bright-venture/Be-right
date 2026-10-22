@@ -19,6 +19,7 @@ import type { AuditAction, AuditDetails } from "../contracts/audit";
 import type { DocumentsDeclared, Transport, WorkMode } from "../contracts/applications";
 import type { EmergencyStatus } from "../contracts/emergency";
 import type { PriceBreakdown, PricingSettings } from "../contracts/pricing";
+import type { District } from "../contracts/districts";
 
 // Every table enables Row Level Security with no policies. The app server talks to
 // Postgres directly (bypassing RLS), while Supabase's public REST API — reachable with
@@ -66,6 +67,8 @@ export const users = pgTable("users", {
   /** A technician's starting point (home or base), set by an admin: the distance in suggested prices. */
   baseLat: doublePrecision("base_lat"),
   baseLng: doublePrecision("base_lng"),
+  /** A technician's districts: they are only suggested and assigned for jobs there. */
+  districts: jsonb("districts").$type<District[]>().default([]).notNull(),
   /** The customer deleted their account: personal details were erased (see auth.deleteAccount). */
   deletedAt: timestamp("deleted_at", { withTimezone: true }),
   ...timestamps,
@@ -94,6 +97,8 @@ export const serviceRequests = pgTable(
     preferredDate: varchar("preferred_date", { length: 32 }).notNull(),
     timeSlot: varchar("time_slot", { length: 32 }).notNull(),
     area: varchar("area", { length: 255 }).notNull(),
+    /** From the map pin (server/lib/districts.ts); null without a pin or outside Lebanon. */
+    district: varchar("district", { length: 32 }).$type<District>(),
     address: text("address").notNull(),
     /** Map pin dropped by the customer (required for new requests). */
     lat: doublePrecision("lat"),
@@ -181,6 +186,8 @@ export const technicianApplications = pgTable("technician_applications", {
   trade: varchar("trade", { length: 64 }).notNull(),
   /** Older applications only, like experience, availability, tools, work mode, notes and the papers below. */
   area: varchar("area", { length: 255 }),
+  /** The districts they work in (newer applications); copied to their account when hired. */
+  districts: jsonb("districts").$type<District[]>(),
   notes: text("notes"),
   /** Contact + login email; required for new applications (older ones may lack it). */
   email: varchar("email", { length: 320 }),

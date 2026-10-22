@@ -29,6 +29,8 @@ import { isPhotoType } from "@contracts/uploads";
 import { isValidPin } from "@contracts/geo";
 import { TRANSPORT } from "@contracts/applications";
 import { isOnline } from "@contracts/presence";
+import { DISTRICTS } from "@contracts/districts";
+import { checkWorksIn, OUTSIDE_DISTRICTS_NOTE, requestDistrict } from "./lib/districts";
 import { LIMITS, rateLimit } from "./lib/rateLimit";
 
 type Db = Parameters<typeof findRequest>[0];
@@ -80,6 +82,7 @@ export const techRouter = createRouter({
         avatar: users.avatar,
         baseLat: users.baseLat,
         baseLng: users.baseLng,
+        districts: users.districts,
       })
       .from(users)
       .where(eq(users.role, "technician"));
@@ -135,6 +138,7 @@ export const techRouter = createRouter({
           transport: app?.transport ?? null,
           base: x.baseLat != null && x.baseLng != null ? { lat: x.baseLat, lng: x.baseLng } : null,
           online: isOnline(presence.find((row) => row.technicianId === x.id)),
+          districts: x.districts,
           activeJobs: sum(ACTIVE_JOB_STATUSES),
           completedJobs: sum(["completed"]),
           rating: ratings.get(x.id) ?? { average: null, count: 0 },
@@ -258,6 +262,26 @@ export const techRouter = createRouter({
     return { ok: true };
   }),
 
+  /** Admin: the districts a technician works in (they're only suggested and assigned there). */
+  setDistricts: adminQuery
+    .input(z.object({ technicianId: z.number().int(), districts: z.array(z.enum(DISTRICTS)).min(1).max(DISTRICTS.length) }))
+    .mutation(async ({ ctx, input }) => {
+      const districts = DISTRICTS.filter((d) => input.districts.includes(d));
+      await getDb().transaction(async (tx) => {
+        const [tech] = await tx
+          .update(users)
+          .set({ districts })
+          .where(and(eq(users.id, input.technicianId), eq(users.role, "technician")))
+          .returning({ id: users.id });
+        if (!tech) throw new TRPCError({ code: "NOT_FOUND", message: "Technician not found" });
+        await audit(
+          { actorId: ctx.user.id, action: "technician_districts_set", targetUserId: tech.id, details: { districts: districts.join(", ") } },
+          tx,
+        );
+      });
+      return { ok: true };
+    }),
+
   /** Admin: how a technician travels (the rate per km in suggested prices). */
   setTransport: adminQuery
     .input(z.object({ technicianId: z.number().int(), transport: z.enum(TRANSPORT) }))
@@ -298,6 +322,7 @@ export const techRouter = createRouter({
             message: "A technician can be assigned once the customer approves the quote",
           });
         }
+        const exception = checkWorksIn(ctx.user.role, tech.districts, requestDistrict(job));
         await tx
           .update(serviceRequests)
           .set({ technicianId: tech.id })
@@ -306,7 +331,13 @@ export const techRouter = createRouter({
         if (job.technicianId !== tech.id) {
           await tx.delete(technicianLocations).where(eq(technicianLocations.requestId, job.id));
         }
-        await logEvent(tx, job.id, "assigned", ctx.user.id, `Technician: ${tech.name ?? tech.email ?? tech.id}`);
+        await logEvent(
+          tx,
+          job.id,
+          "assigned",
+          ctx.user.id,
+          `Technician: ${tech.name ?? tech.email ?? tech.id}${exception ? `, ${OUTSIDE_DISTRICTS_NOTE}` : ""}`,
+        );
         return job.technicianId;
       });
       await notify.assigned(input.requestId, previousTechnicianId);

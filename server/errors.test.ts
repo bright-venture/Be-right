@@ -57,7 +57,7 @@ describe("API errors in production", () => {
         phone: "+961 70 123 456",
         email: "applicant@example.com",
         trade: "plumbing",
-        area: "Beirut",
+        districts: ["beirut"],
         experience: "1-3",
         hasTools: true,
         workMode: "independent",

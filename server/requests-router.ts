@@ -26,6 +26,7 @@ import {
 } from "@contracts/workflow";
 import { isOwnUploadKey, profilePhotoUrl } from "./lib/storage";
 import { isValidPin } from "@contracts/geo";
+import { districtAt } from "./lib/districts";
 import { isValidPhone } from "@contracts/phone";
 import { applyTransition, findRequest, logEvent, type RequestScope } from "./lib/workflow";
 import { notify } from "./notify";
@@ -121,6 +122,7 @@ export const requestsRouter = createRouter({
             preferredDate: input.preferredDate,
             timeSlot: input.timeSlot,
             area: input.area,
+            district: districtAt(input.lat, input.lng),
             address: input.address,
             lat: input.lat,
             lng: input.lng,

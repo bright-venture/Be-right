@@ -193,7 +193,7 @@ describe("notification emails", () => {
       phone: "+961 71 222 333",
       email: "samir@example.com",
       trade: "electrical",
-      area: "Beirut",
+      districts: ["beirut", "metn"],
       experience: "3-5",
       hasTools: true,
       workMode: "independent",

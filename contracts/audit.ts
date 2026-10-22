@@ -28,6 +28,8 @@ export const AUDIT_ACTIONS = [
   "technician_base_set",
   /** An admin changed how a technician travels (details: transport). */
   "technician_transport_set",
+  /** An admin changed the districts a technician works in (details: districts). */
+  "technician_districts_set",
   /**
    * A staff area refused someone (details: reason, path): "password" when the session didn't
    * start with a password, "role" when the account isn't staff. Not recorded: sessions still

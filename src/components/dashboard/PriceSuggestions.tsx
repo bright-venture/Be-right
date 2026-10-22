@@ -9,6 +9,7 @@ import { trpc } from "@/providers/trpc";
 import { CATEGORY_MAP } from "@contracts/services";
 import { TRANSPORT_LABELS } from "@contracts/applications";
 import { Avatar } from "./RequestDetail";
+import { DISTRICT_INFO } from "@contracts/districts";
 import { useAuth } from "@/hooks/useAuth";
 
 export type Suggestion = inferRouterOutputs<AppRouter>["pricing"]["suggest"]["technicians"][number];
@@ -32,23 +33,37 @@ export function PriceSuggestions({
   onPick: (tech: Suggestion) => void;
 }) {
   const { t, p } = useI18n();
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
   const [showOthers, setShowOthers] = useState(false);
+  const [showOutside, setShowOutside] = useState(false);
   const suggest = trpc.pricing.suggest.useQuery({ id: requestId });
   const data = suggest.data;
-  const techs = data?.technicians ?? [];
+  const all = data?.technicians ?? [];
+  // Technicians only work in their districts: the others come last, apart (an admin can still
+  // pick one for an exception; a specialist can't).
+  const techs = all.filter((x) => x.inArea);
+  const outside = all.filter((x) => !x.inArea);
   const same = techs.filter((x) => x.sameTrade);
   // No one in this trade (or an "Other" request): everyone is a candidate.
   const main = same.length ? same : techs;
   const others = same.length ? techs.filter((x) => !x.sameTrade) : [];
   // What's missing for everyone is said once, above the list, not on every row.
-  const missingService = techs.length > 0 && techs[0].price.gaps.includes("service");
-  const missingTravel = techs.length > 0 && techs.every((x) => x.price.gaps.includes("transport"));
+  const missingService = all.length > 0 && all[0].price.gaps.includes("service");
+  const missingTravel = all.length > 0 && all.every((x) => x.price.gaps.includes("transport"));
   const shared = [...(missingService ? (["service"] as const) : []), ...(missingTravel ? (["transport"] as const) : [])];
 
   return (
     <div className="mt-3 rounded-2xl border-2 border-navy/15 bg-white">
       <div className="border-b border-navy/10 px-4 py-3">
-        <p className="font-display text-sm font-extrabold text-navy">{p(t.prices.suggestTitle)}</p>
+        <p className="flex flex-wrap items-baseline justify-between gap-x-3 font-display text-sm font-extrabold text-navy">
+          {p(t.prices.suggestTitle)}
+          {data?.district && (
+            <span className="font-sans text-xs font-bold text-bird">
+              {p(t.districts.jobIn).replace("{name}", p(DISTRICT_INFO[data.district].name))}
+            </span>
+          )}
+        </p>
         <p className="mt-0.5 text-xs text-navy/60">{p(t.prices.suggestHint)}</p>
       </div>
 
@@ -56,7 +71,7 @@ export function PriceSuggestions({
         <Loader2 className="mx-auto my-6 h-5 w-5 animate-spin text-navy" />
       ) : suggest.error ? (
         <p className="px-4 py-3 text-xs font-semibold text-destructive">{suggest.error.message}</p>
-      ) : techs.length === 0 ? (
+      ) : all.length === 0 ? (
         <p className="px-4 py-4 text-sm text-navy/60">{p(t.prices.noTechnicians)}</p>
       ) : (
         <>
@@ -77,6 +92,31 @@ export function PriceSuggestions({
             >
               {showOthers ? p(t.prices.hideOthers) : p(t.prices.showOthers).replace("{n}", String(others.length))}
             </button>
+          )}
+          {outside.length > 0 && (
+            <>
+              {showOutside && (
+                <ul className="divide-y divide-navy/10 border-t border-navy/10 bg-navy/[0.02]">
+                  {outside.map((x) => (
+                    <Row
+                      key={x.id}
+                      tech={x}
+                      hide={shared}
+                      chosen={chosenId === x.id}
+                      onPick={() => onPick(x)}
+                      locked={!isAdmin}
+                    />
+                  ))}
+                </ul>
+              )}
+              <button
+                type="button"
+                onClick={() => setShowOutside((v) => !v)}
+                className="w-full border-t border-navy/10 px-4 py-2.5 text-start text-xs font-bold text-navy/55 hover:bg-navy/[0.03]"
+              >
+                {showOutside ? p(t.districts.hideOutside) : p(t.districts.showOutside).replace("{n}", String(outside.length))}
+              </button>
+            </>
           )}
         </>
       )}
@@ -115,12 +155,15 @@ function Row({
   hide,
   chosen,
   onPick,
+  locked = false,
 }: {
   tech: Suggestion;
   /** Gaps already said above the list. */
   hide: readonly string[];
   chosen: boolean;
   onPick: () => void;
+  /** Outside their districts, for a specialist: shown, not pickable. */
+  locked?: boolean;
 }) {
   const { t, p } = useI18n();
   const price = x.price;
@@ -168,6 +211,9 @@ function Row({
                 <ServiceIcon id={x.trade!} className="h-3 w-3" /> {p(trade.name)}
               </span>
             )}
+            {!x.inArea && (
+              <span className="rounded-full bg-red-700/10 px-2 py-px text-[11px] font-bold text-red-700">{p(t.districts.outside)}</span>
+            )}
             {price.tooFar && (
               <span className="rounded-full bg-flame/10 px-2 py-px text-[11px] font-bold text-flame-ink">{p(t.prices.tooFar)}</span>
             )}
@@ -187,10 +233,11 @@ function Row({
         <button
           type="button"
           onClick={onPick}
+          disabled={locked}
           aria-pressed={chosen}
           className={`inline-flex h-9 min-w-[4.5rem] items-center justify-center gap-1 rounded-lg px-3 text-xs font-bold ${
             chosen ? "bg-navy text-white" : "border border-navy/25 text-navy hover:bg-navy/5"
-          }`}
+          } disabled:cursor-not-allowed disabled:opacity-40`}
         >
           {chosen && <Check className="h-3.5 w-3.5" />}
           {p(chosen ? t.prices.picked : t.prices.pick)}
@@ -205,6 +252,7 @@ function Row({
             {price.total != null && parts != null && price.total > Math.ceil(parts) && ` (${p(t.prices.raisedToMinimum)})`}
           </>
         )}
+        {!x.inArea && !locked && <span className="block font-semibold text-red-700">{p(t.districts.adminException)}</span>}
         {gaps.map((g) => (
           <span key={g} className="block font-semibold text-flame-ink">
             {p(t.prices.gaps[g])}

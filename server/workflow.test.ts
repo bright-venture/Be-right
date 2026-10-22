@@ -51,7 +51,7 @@ const application = {
   phone: "+961 71 111 111",
   email: "hassan@example.com",
   trade: "electrical",
-  area: "Beirut",
+  districts: ["beirut", "metn"] as ("beirut" | "metn")[],
   experience: "5-10" as const,
   hasTools: true,
   workMode: "independent" as const,
@@ -166,14 +166,14 @@ describe("technician applications (public)", () => {
       ...({ notes: "Old field", ...documentKeys() } as object),
     });
     const row = (await (await callerFor(boss)).join.list()).find((a) => a.id === id);
-    expect(row).toMatchObject({ area: "Beirut", experience: "5-10", hasTools: true, workMode: "independent", companyName: null });
+    expect(row).toMatchObject({ districts: ["beirut", "metn"], experience: "5-10", hasTools: true, workMode: "independent", companyName: null });
     expect(row).toMatchObject({ notes: null, idDocumentKey: null, criminalRecordKey: null });
     expect(row?.photoKey).toMatch(/photo/);
   });
 
   it("needs the areas, the experience, the tools answer and, with a company, its name", async () => {
     const c = await callerFor();
-    await expect(c.join.submit({ ...application, area: " " })).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    await expect(c.join.submit({ ...application, districts: [] })).rejects.toMatchObject({ code: "BAD_REQUEST" });
     await expect(c.join.submit({ ...application, experience: "forever" as never })).rejects.toMatchObject({ code: "BAD_REQUEST" });
     await expect(c.join.submit({ ...application, workMode: "company" })).rejects.toMatchObject({ code: "BAD_REQUEST" });
     const { id } = await c.join.submit({ ...application, email: "company.tech@example.com", workMode: "company", companyName: "Haddad Electric SARL" });

@@ -10,6 +10,8 @@ import { useI18n } from "@/i18n";
 import { trpc } from "@/providers/trpc";
 import { CATEGORY_MAP, SERVICES_IN_ORDER, type LocalText } from "@contracts/services";
 import { isValidPhone } from "@contracts/phone";
+import { DistrictPicker } from "@/components/DistrictPicker";
+import type { District } from "@contracts/districts";
 import { isRateLimited } from "@/lib/errors";
 import {
   EXPERIENCE_LABELS,
@@ -88,7 +90,7 @@ export default function Join() {
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [trade, setTrade] = useState("");
-  const [area, setArea] = useState("");
+  const [districts, setDistricts] = useState<District[]>([]);
   const [experience, setExperience] = useState<ExperienceLevel | null>(null);
   const [hasTools, setHasTools] = useState<"yes" | "no" | null>(null);
   const [workMode, setWorkMode] = useState<WorkMode | null>(null);
@@ -118,7 +120,7 @@ export default function Join() {
     isValidPhone(phone) &&
     EMAIL_PATTERN.test(email.trim()) &&
     trade !== "" &&
-    area.trim().length >= 2 &&
+    districts.length > 0 &&
     experience !== null &&
     hasTools !== null &&
     workMode !== null &&
@@ -137,7 +139,7 @@ export default function Join() {
         phone: phone.trim(),
         email: email.trim(),
         trade,
-        area: area.trim(),
+        districts,
         experience: experience!,
         hasTools: hasTools === "yes",
         workMode: workMode!,
@@ -284,19 +286,12 @@ export default function Join() {
                 </div>
 
                 <div>
-                  <label htmlFor="join-area" className={LABEL}>
-                    {p(t.join.area)}
+                  <p id="join-districts" className={LABEL}>
+                    {p(t.districts.pick)}
                     <Req />
-                  </label>
-                  <input
-                    id="join-area"
-                    required
-                    maxLength={255}
-                    value={area}
-                    onChange={(e) => setArea(e.target.value)}
-                    placeholder={p(t.join.areaPh)}
-                    className={INPUT}
-                  />
+                  </p>
+                  <p className="mb-2 text-sm text-navy/60">{p(t.districts.pickHint)}</p>
+                  <DistrictPicker value={districts} onChange={setDistricts} labelledBy="join-districts" />
                 </div>
 
                 <div>

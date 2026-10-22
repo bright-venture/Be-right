@@ -828,6 +828,7 @@ export const t = {
       prices_changed: { en: "Changed the prices", ar: "غيّر الأسعار" },
       technician_base_set: { en: "Set {target}'s starting point and transport", ar: "حدّد نقطة انطلاق {target} ووسيلة نقله" },
       technician_transport_set: { en: "Changed how {target} travels", ar: "غيّر وسيلة تنقّل {target}" },
+      technician_districts_set: { en: "Changed the districts {target} works in", ar: "غيّر المناطق التي يعمل فيها {target}" },
       application_approved: { en: "Approved {applicant}'s application", ar: "وافق على طلب {applicant}" },
       meeting_booked: { en: "Booked a meeting with {applicant}: {date}", ar: "حجز مقابلة مع {applicant}: {date}" },
       meeting_moved: { en: "Moved the meeting with {applicant} to {date}", ar: "غيّر موعد المقابلة مع {applicant} إلى {date}" },
@@ -1438,6 +1439,31 @@ export const t = {
     km: { en: "{n} km", ar: "{n} كم" },
     call: { en: "Call", ar: "اتصال" },
     mapLabel: { en: "Map of the job and nearby parts shops", ar: "خريطة المهمة ومتاجر القطع القريبة" },
+  },
+  /** The districts technicians work in (contracts/districts.ts). */
+  districts: {
+    pick: { en: "Districts you work in", ar: "المناطق (الأقضية) التي تعمل فيها" },
+    pickHint: {
+      en: "You're only offered jobs in these districts. Pick at least one; each shows a few of its towns.",
+      ar: "تُعرض عليك المهام في هذه المناطق فقط. اختر واحدة على الأقل؛ تظهر تحت كل منها بعض بلداتها.",
+    },
+    none: { en: "No districts set", ar: "لا مناطق محدّدة" },
+    outside: { en: "Outside their districts", ar: "خارج مناطقه" },
+    showOutside: { en: "Outside their districts ({n})", ar: "خارج مناطقهم ({n})" },
+    hideOutside: { en: "Hide technicians outside their districts", ar: "إخفاء الفنيين خارج مناطقهم" },
+    adminException: {
+      en: "Outside their districts: as an admin you can still pick them for an exception.",
+      ar: "خارج مناطقه: بصفتك مديراً يمكنك اختياره كاستثناء.",
+    },
+    edit: { en: "Districts", ar: "المناطق" },
+    editTitle: { en: "Where {name} works", ar: "أين يعمل {name}" },
+    editHint: {
+      en: "They're only suggested and assigned for jobs in these districts. Admins can still make an exception.",
+      ar: "لا يُقترح ولا يُسند إلا لمهام في هذه المناطق. ويمكن للمدير إجراء استثناء.",
+    },
+    save: { en: "Save districts", ar: "حفظ المناطق" },
+    cancel: { en: "Cancel", ar: "إلغاء" },
+    jobIn: { en: "District: {name}", ar: "المنطقة: {name}" },
   },
   /** Admin → Prices, and the suggested prices specialists pick from. */
   prices: {

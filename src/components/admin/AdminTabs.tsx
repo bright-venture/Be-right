@@ -597,6 +597,7 @@ const AUDIT_ICON: Record<AuditAction, LucideIcon> = {
   prices_changed: Tag,
   technician_base_set: MapPin,
   technician_transport_set: Car,
+  technician_districts_set: MapPin,
   staff_access_refused: ShieldAlert,
 };
 

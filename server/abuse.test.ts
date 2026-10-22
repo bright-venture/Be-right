@@ -83,7 +83,7 @@ describe("rate limits", () => {
         phone: "+961 70 123 456",
         email: `applicant${n}@example.com`,
         trade: "plumbing",
-        area: "Beirut",
+        districts: ["beirut", "metn"],
         experience: "3-5",
         hasTools: true,
         workMode: "independent",
