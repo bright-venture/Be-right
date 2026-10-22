@@ -1517,6 +1517,7 @@ export const t = {
     hideOthers: { en: "Hide other trades", ar: "إخفاء المهن الأخرى" },
     pick: { en: "Use", ar: "اختيار" },
     picked: { en: "Chosen", ar: "مُختار" },
+    unpick: { en: "Remove", ar: "إزالة" },
     gaps: {
       service: { en: "No price for this service yet (Admin → Prices)", ar: "لا يوجد سعر لهذه الخدمة بعد (الإدارة ← الأسعار)" },
       start: {

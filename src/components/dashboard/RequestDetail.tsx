@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Loader2, Mail, MessageCircle, Phone } from "lucide-react";
 import type { inferRouterOutputs } from "@trpc/server";
 import type { AppRouter } from "../../../server/router";
@@ -352,6 +352,8 @@ function NextStep({
   // The technician the price was worked out for is ready to assign once the customer approves.
   const [chosenTech, setChosenTech] = useState(String(r.technicianId ?? r.suggestedTechnicianId ?? ""));
   const [pricedFor, setPricedFor] = useState<number | null>(r.suggestedTechnicianId);
+  // The price each pick filled in, to clear it again when the pick is undone.
+  const suggestedFor = useRef<Record<number, string>>({});
   const [changingQuote, setChangingQuote] = useState(false);
   const askedToCancel = cancelPending(r);
   // A customer's cancellation request opens the cancel form, ready to confirm.
@@ -456,8 +458,18 @@ function NextStep({
           category={r.category}
           chosenId={pricedFor}
           onPick={(x) => {
+            if (!x) {
+              // Choice removed: the price it filled in goes too (a typed one stays).
+              const chosen = pricedFor;
+              setPricedFor(null);
+              if (chosen !== null && amount === suggestedFor.current[chosen]) setAmount("");
+              return;
+            }
             setPricedFor(x.id);
-            if (x.price.total != null) setAmount(String(x.price.total));
+            if (x.price.total != null) {
+              suggestedFor.current[x.id] = String(x.price.total);
+              setAmount(String(x.price.total));
+            }
           }}
         />
       )}

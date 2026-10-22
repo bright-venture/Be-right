@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router";
-import { Check, Info, Loader2, Star } from "lucide-react";
+import { Check, Info, Loader2, Star, X } from "lucide-react";
 import type { inferRouterOutputs } from "@trpc/server";
 import type { AppRouter } from "../../../server/router";
 import { ServiceIcon } from "@/components/ServiceIcon";
@@ -30,7 +30,8 @@ export function PriceSuggestions({
   requestId: number;
   category: string;
   chosenId: number | null;
-  onPick: (tech: Suggestion) => void;
+  /** A technician picked, or null when the chosen one is pressed again (choice removed). */
+  onPick: (tech: Suggestion | null) => void;
 }) {
   const { t, p } = useI18n();
   const { user } = useAuth();
@@ -79,10 +80,12 @@ export function PriceSuggestions({
           {data && !data.hasPin && <p className="px-4 pt-3 text-xs font-semibold text-flame-ink">{p(t.prices.noPin)}</p>}
           <ul className="divide-y divide-navy/10">
             {main.map((x) => (
-              <Row key={x.id} tech={x} hide={shared} chosen={chosenId === x.id} onPick={() => onPick(x)} />
+              <Row key={x.id} tech={x} hide={shared} chosen={chosenId === x.id} onPick={() => onPick(chosenId === x.id ? null : x)} />
             ))}
             {showOthers &&
-              others.map((x) => <Row key={x.id} tech={x} hide={shared} chosen={chosenId === x.id} onPick={() => onPick(x)} />)}
+              others.map((x) => (
+                <Row key={x.id} tech={x} hide={shared} chosen={chosenId === x.id} onPick={() => onPick(chosenId === x.id ? null : x)} />
+              ))}
           </ul>
           {others.length > 0 && (
             <button
@@ -103,7 +106,7 @@ export function PriceSuggestions({
                       tech={x}
                       hide={shared}
                       chosen={chosenId === x.id}
-                      onPick={() => onPick(x)}
+                      onPick={() => onPick(chosenId === x.id ? null : x)}
                       locked={!isAdmin}
                     />
                   ))}
@@ -233,14 +236,26 @@ function Row({
         <button
           type="button"
           onClick={onPick}
-          disabled={locked}
+          disabled={locked && !chosen}
           aria-pressed={chosen}
-          className={`inline-flex h-9 min-w-[4.5rem] items-center justify-center gap-1 rounded-lg px-3 text-xs font-bold ${
-            chosen ? "bg-navy text-white" : "border border-navy/25 text-navy hover:bg-navy/5"
+          title={chosen ? p(t.prices.unpick) : undefined}
+          className={`group inline-flex h-9 min-w-[5.5rem] items-center justify-center gap-1 rounded-lg px-3 text-xs font-bold ${
+            chosen ? "bg-navy text-white hover:bg-red-700" : "border border-navy/25 text-navy hover:bg-navy/5"
           } disabled:cursor-not-allowed disabled:opacity-40`}
         >
-          {chosen && <Check className="h-3.5 w-3.5" />}
-          {p(chosen ? t.prices.picked : t.prices.pick)}
+          {chosen ? (
+            <>
+              {/* pressing it again removes the choice; the mouse shows it first */}
+              <span className="inline-flex items-center gap-1 group-hover:hidden">
+                <Check className="h-3.5 w-3.5" /> {p(t.prices.picked)}
+              </span>
+              <span className="hidden items-center gap-1 group-hover:inline-flex">
+                <X className="h-3.5 w-3.5" /> {p(t.prices.unpick)}
+              </span>
+            </>
+          ) : (
+            p(t.prices.pick)
+          )}
         </button>
       </div>
       <p className="col-span-2 text-xs text-navy/60 empty:hidden">
