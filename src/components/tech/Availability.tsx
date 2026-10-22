@@ -1,15 +1,17 @@
 import { useEffect } from "react";
-import { Loader2, MapPinOff, Power } from "lucide-react";
+import { Link } from "react-router";
+import { Home, Loader2, MapPinOff, Power } from "lucide-react";
 import { useI18n } from "@/i18n";
 import { useAuth } from "@/hooks/useAuth";
 import { useTrackingNotice } from "@/hooks/useTrackingNotice";
 import { trpc } from "@/providers/trpc";
-import { isNativeApp } from "@/lib/native";
+import { isAppUi, isNativeApp } from "@/lib/native";
 import { goOffline, goOnline, openLocationSettings, resumeOnline, usePresence } from "@/lib/presence";
 
 /**
  * The top of My jobs, like a ride app's "Go online": Available or offline. Going online needs
- * location; while Available the team gets the technician's position.
+ * location; while Available the team gets the technician's position and prices count travel
+ * from there. Offline, they count from the starting point, set in My account (shown below).
  */
 export function Availability() {
   const { t, p } = useI18n();
@@ -17,6 +19,8 @@ export function Availability() {
   const utils = trpc.useUtils();
   const presence = usePresence();
   const busy = presence.starting;
+  const profile = trpc.auth.profile.useQuery(undefined, { staleTime: 60_000 });
+  const hasStart = !!profile.data?.technician?.base;
 
   async function toggle() {
     if (presence.online) await goOffline();
@@ -53,6 +57,22 @@ export function Availability() {
           {busy ? p(t.tech.goingOnline) : p(presence.online ? t.tech.goOffline : t.tech.goOnline)}
         </button>
       </div>
+      {/* the other half: where prices count from while offline */}
+      {profile.data?.technician && (
+        <div
+          className={`mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 border-t pt-3 ${
+            presence.online ? "border-green-700/20" : "border-navy/10"
+          }`}
+        >
+          <Home className={`h-4 w-4 shrink-0 ${hasStart ? "text-navy/50" : "text-flame"}`} aria-hidden />
+          <p className={`min-w-0 flex-1 text-sm ${hasStart ? "text-navy/70" : "font-semibold text-flame-ink"}`}>
+            {p(hasStart ? t.tech.startLine : t.tech.startMissingLine)}
+          </p>
+          <Link to={isAppUi ? "/account/start" : "/account"} className="text-sm font-bold text-navy underline underline-offset-4">
+            {p(hasStart ? t.tech.startChange : t.tech.startSet)}
+          </Link>
+        </div>
+      )}
       {presence.problem && !presence.online && (
         <div role="alert" className="mt-4 flex flex-wrap items-center gap-3 rounded-2xl bg-red-700/[0.07] px-4 py-3">
           <MapPinOff className="h-4 w-4 shrink-0 text-red-700" />

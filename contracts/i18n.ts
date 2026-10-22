@@ -528,10 +528,15 @@ export const t = {
     fromSpecialist: { en: "From your specialist", ar: "من المختص" },
     photos: { en: "Customer photos", ar: "صور العميل" },
     empty: { en: "No jobs assigned to you yet.", ar: "لا توجد مهام مسندة إليك بعد." },
-    startReminder: {
-      en: "Set where you start from (home or work). The team uses it to price jobs near you.",
-      ar: "حدّد مكان انطلاقك (المنزل أو العمل). يستخدمه الفريق لتسعير المهام القريبة منك.",
+    startLine: {
+      en: "When you're offline, prices count from your starting point.",
+      ar: "عندما تكون غير متصل، تُحسب الأسعار من نقطة انطلاقك.",
     },
+    startMissingLine: {
+      en: "No starting point yet: when you're offline, your jobs can't include travel.",
+      ar: "لا توجد نقطة انطلاق بعد: عندما تكون غير متصل، لا يمكن احتساب تنقّلك في المهام.",
+    },
+    startChange: { en: "Change", ar: "تغيير" },
     startSet: { en: "Set it now", ar: "حدّده الآن" },
     customer: { en: "Customer", ar: "العميل" },
     appointment: { en: "Appointment", ar: "الموعد" },
@@ -1218,8 +1223,8 @@ export const t = {
     title: { en: "My account", ar: "حسابي" },
     startTitle: { en: "Where you start from", ar: "مكان انطلاقك" },
     startHint: {
-      en: "Your home or work base. The team prices your jobs with the distance from here to the customer. Only the Be Right team sees it.",
-      ar: "منزلك أو مقرّ عملك. يسعّر الفريق مهامك حسب المسافة من هنا إلى العميل. لا يراه إلا فريق بي رايت.",
+      en: "Your home or work base, used when you're offline: the team prices your jobs with the distance from here to the customer. While you're Available, they count from where you are. Only the Be Right team sees it.",
+      ar: "منزلك أو مقرّ عملك، يُستخدم عندما تكون غير متصل: يسعّر الفريق مهامك حسب المسافة من هنا إلى العميل. وطالما أنت متاح، تُحسب من مكانك الحالي. لا يراه إلا فريق بي رايت.",
     },
     startMissing: { en: "Not set yet: jobs can't include your travel.", ar: "غير محدّد بعد: لا يمكن احتساب تنقّلك في المهام." },
     startSave: { en: "Save starting point", ar: "حفظ مكان الانطلاق" },
