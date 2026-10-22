@@ -11,6 +11,8 @@ function required(name: string): string {
 export const env = {
   isProduction: process.env.NODE_ENV === "production",
   databaseUrl: required("DATABASE_URL"),
+  /** Session pooler or direct connection (port 5432): migrations, and long-running servers. */
+  directDatabaseUrl: process.env.DIRECT_DATABASE_URL || "",
   supabaseUrl: required("SUPABASE_URL"),
   supabaseServiceRoleKey: required("SUPABASE_SERVICE_ROLE_KEY"),
   storageBucket: process.env.SUPABASE_STORAGE_BUCKET || "request-media",
