@@ -40,6 +40,9 @@ function update(patch: Partial<PresenceState>) {
   listeners.forEach((listener) => listener());
 }
 
+/** The current state, outside React (after an await). */
+export const getPresence = () => state;
+
 export function usePresence() {
   return useSyncExternalStore(
     (listener) => {

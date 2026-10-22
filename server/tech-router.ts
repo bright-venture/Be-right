@@ -4,6 +4,7 @@ import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { adminQuery, createRouter, technicianQuery, specialistQuery } from "./middleware";
 import { getDb } from "./queries/connection";
 import {
+  requestEvents,
   requestMedia,
   serviceRequests,
   technicianApplications,
@@ -352,13 +353,22 @@ export const techRouter = createRouter({
       .from(serviceRequests)
       .where(eq(serviceRequests.technicianId, ctx.user.id))
       .orderBy(desc(serviceRequests.createdAt));
-    const media = jobs.length
-      ? await db
-          .select()
-          .from(requestMedia)
-          .where(inArray(requestMedia.requestId, jobs.map((j) => j.id)))
-      : [];
-    return jobs.map((job) => ({ ...job, media: media.filter((m) => m.requestId === job.id) }));
+    const ids = jobs.map((j) => j.id);
+    const [media, arrivals] = jobs.length
+      ? await Promise.all([
+          db.select().from(requestMedia).where(inArray(requestMedia.requestId, ids)),
+          db
+            .select({ requestId: requestEvents.requestId })
+            .from(requestEvents)
+            .where(and(inArray(requestEvents.requestId, ids), eq(requestEvents.status, "arrived"))),
+        ])
+      : [[], []];
+    return jobs.map((job) => ({
+      ...job,
+      media: media.filter((m) => m.requestId === job.id),
+      /** Pressed Arrived: no more "on my way" for this job. */
+      arrived: arrivals.some((a) => a.requestId === job.id),
+    }));
   }),
 
   /** Technician: field events — arrived / start work / complete */
@@ -378,6 +388,8 @@ export const techRouter = createRouter({
           throw new TRPCError({ code: "BAD_REQUEST", message: "Job is not scheduled" });
         }
         await logEvent(getDb(), job.id, "arrived", ctx.user.id, input.note);
+        // There now: the customer stops seeing them on the map.
+        await getDb().delete(technicianLocations).where(eq(technicianLocations.requestId, job.id));
       } else {
         const required = PHOTO_REQUIRED[input.action];
         if ((await jobPhotoCount(getDb(), input.requestId, required.kind)) === 0) {
@@ -390,6 +402,9 @@ export const techRouter = createRouter({
           scope,
           note: input.note,
         });
+        if (input.action === "start") {
+          await getDb().delete(technicianLocations).where(eq(technicianLocations.requestId, input.requestId));
+        }
         if (input.action === "complete") await notify.completed(input.requestId);
       }
       return { ok: true };
@@ -499,7 +514,7 @@ export const techRouter = createRouter({
       return { ok: true };
     }),
 
-  /** Technician: report current position for an active job */
+  /** Technician, on the way to a job ("On my way"): where they are, for that job's customer. */
   reportLocation: technicianQuery
     .input(
       z.object({
@@ -512,8 +527,14 @@ export const techRouter = createRouter({
     .mutation(async ({ ctx, input }) => {
         const db = getDb();
       const job = await findRequest(db, input.requestId, { technicianId: ctx.user.id });
-      if (!ACTIVE_JOB_STATUSES.includes(job.status)) {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "Job is not active" });
+      // Only on the way: scheduled, and not arrived yet (then the customer stops seeing them).
+      const [arrived] = await db
+        .select({ id: requestEvents.id })
+        .from(requestEvents)
+        .where(and(eq(requestEvents.requestId, job.id), eq(requestEvents.status, "arrived")))
+        .limit(1);
+      if (job.status !== "scheduled" || arrived) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Not on the way to this job" });
       }
       const values = {
         requestId: job.id,

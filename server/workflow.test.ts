@@ -454,7 +454,7 @@ describe("full repair workflow", () => {
       other.tech.fieldEvent({ requestId, action: "arrived" }),
     ).rejects.toMatchObject({ code: "NOT_FOUND" });
 
-    await t.tech.fieldEvent({ requestId, action: "arrived" });
+    // On my way: the customer follows the technician on the map.
     await t.tech.reportLocation({ requestId, lat: 33.8886, lng: 35.4955, accuracy: 12 });
     await t.tech.reportLocation({ requestId, lat: 33.889, lng: 35.496 });
 
@@ -462,6 +462,14 @@ describe("full repair workflow", () => {
     expect(seen.technician?.name).toBe("Tina");
     expect(seen.request.lat).toBeCloseTo(BEIRUT_PIN.lat);
     expect(Number(seen.location?.lat)).toBeCloseTo(33.889);
+    expect(seen.arrived).toBe(false);
+
+    // Arrived: the map stops, and no more positions are taken for this job.
+    await t.tech.fieldEvent({ requestId, action: "arrived" });
+    const there = await (await callerFor(alice)).requests.get({ id: requestId });
+    expect(there).toMatchObject({ arrived: true, location: null });
+    expect((await t.tech.myJobs()).find((r) => r.id === requestId)?.arrived).toBe(true);
+    await expect(t.tech.reportLocation({ requestId, lat: 33.889, lng: 35.496 })).rejects.toMatchObject({ code: "BAD_REQUEST" });
 
     expect((await t.storage.urls({ keys: [aliceKey()] })).urls[aliceKey()]).toBeTruthy();
 

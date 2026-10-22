@@ -197,8 +197,10 @@ export const requestsRouter = createRouter({
           }
         : null,
       review: row.status === "completed" ? await reviewOf(row.id) : null,
-      // Live location is only shared while the job is active.
+      // Live location is only shared while the technician is on the way.
       location: loc ? { lat: loc.lat, lng: loc.lng, updatedAt: loc.updatedAt } : null,
+      /** The technician pressed Arrived (or started the work). */
+      arrived: row.status === "in_progress" || events.some((e) => e.status === "arrived"),
       guarantee: row.status === "completed" ? await guaranteeStatus(db, row.id) : null,
     };
   }),

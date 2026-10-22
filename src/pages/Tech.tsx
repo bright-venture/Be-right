@@ -14,7 +14,7 @@ import { formatDay, formatVisitDay } from "@/lib/time";
 import { telLink } from "@/lib/contact";
 import { useRoleGate } from "@/hooks/useRoleGate";
 import { isNativeApp } from "@/lib/native";
-import { startJobLocation, stopJobLocation, usePresence } from "@/lib/presence";
+import { getPresence, goOnline, startJobLocation, stopJobLocation, usePresence } from "@/lib/presence";
 import { useTrackingNotice } from "@/hooks/useTrackingNotice";
 import { Availability } from "@/components/tech/Availability";
 import { trpc } from "@/providers/trpc";
@@ -42,9 +42,12 @@ function useLocationSharing(activeJobIds: readonly number[] | undefined) {
     if (jobGone) stopJobLocation();
   }, [jobGone]);
 
-  const start = (requestId: number) => {
+  // On my way: the customer sees them, and they go online if they weren't (one GPS for both).
+  const start = async (requestId: number) => {
     setTriedFor(requestId);
-    void startJobLocation(requestId, notice);
+    await startJobLocation(requestId, notice);
+    const now = getPresence();
+    if (!now.online && now.sharedJob === requestId) void goOnline(notice);
   };
   const stop = () => {
     setTriedFor(null);
@@ -235,11 +238,12 @@ export default function Tech() {
 
                 {active && (
                   <div className="mt-4 flex flex-col gap-3">
-                    {/* live location */}
-                    <div className="rounded-2xl border-2 border-dashed border-bird/50 bg-bird/5 p-4">
+                    {/* on my way: the customer follows them until they press Arrived */}
+                    {r.status === "scheduled" && !r.arrived && (
+                      <div className="rounded-2xl border-2 border-dashed border-bird/50 bg-bird/5 p-4">
                       <div className="flex items-center gap-2 text-sm font-bold text-navy">
                         <Navigation className="h-4 w-4 text-bird" />
-                        {p(t.tracking.liveLocation)}
+                        {p(t.tech.onTheWayTitle)}
                       </div>
                       <p className="mt-1 text-xs text-navy/70">
                         {p(isNativeApp ? t.tech.shareHintApp : t.tech.shareHint)}
@@ -250,14 +254,14 @@ export default function Tech() {
                         </p>
                       )}
                       <button
-                        onClick={() => (sharing ? stop() : start(r.id))}
+                        onClick={() => (sharing ? stop() : void start(r.id))}
                         className={`btn-pill mt-3 w-full sm:w-auto ${
                           sharing
                             ? "border-flame bg-flame text-white"
                             : "border-bird bg-bird text-white"
                         }`}
                       >
-                        <MapPin className="h-4 w-4" />
+                        {sharing ? <MapPin className="h-4 w-4" /> : <Navigation className="h-4 w-4" />}
                         {sharing ? p(t.tech.shareStop) : p(t.tech.shareStart)}
                       </button>
                       {sharing && (
@@ -269,7 +273,8 @@ export default function Tech() {
                           {p(t.tech.sharing)}
                         </span>
                       )}
-                    </div>
+                      </div>
+                    )}
 
                     {/* partner shops to pick a part up from, nearest to this job first */}
                     <PartsShopsNearJob trade={r.category} home={r.lat != null && r.lng != null ? { lat: r.lat, lng: r.lng } : null} />
@@ -297,11 +302,11 @@ export default function Tech() {
                         <>
                           <button
                             onClick={() =>
-                              fieldEvent.mutate({
-                                requestId: r.id,
-                                action: "arrived",
-                                note: notes[r.id] || undefined,
-                              })
+                              fieldEvent.mutate(
+                                { requestId: r.id, action: "arrived", note: notes[r.id] || undefined },
+                                // There: the customer stops seeing them on the map.
+                                { onSuccess: () => sharing && stop() },
+                              )
                             }
                             disabled={fieldEvent.isPending}
                             className="btn-pill-outline"

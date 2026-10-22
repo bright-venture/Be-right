@@ -540,16 +540,17 @@ export const t = {
     startSet: { en: "Set it now", ar: "حدّده الآن" },
     customer: { en: "Customer", ar: "العميل" },
     appointment: { en: "Appointment", ar: "الموعد" },
-    shareStart: { en: "Start live location", ar: "بدء مشاركة الموقع" },
+    onTheWayTitle: { en: "Going to this job", ar: "التوجّه إلى هذه المهمة" },
+    shareStart: { en: "On my way", ar: "أنا في الطريق" },
     shareStop: { en: "Stop sharing", ar: "إيقاف المشاركة" },
-    sharing: { en: "Live location on", ar: "الموقع المباشر مُفعّل" },
+    sharing: { en: "The customer sees you on the map", ar: "يراك العميل على الخريطة" },
     shareHint: {
-      en: "The customer sees your location while the job is active. Keep this page open on the way: sharing pauses while your screen is locked.",
-      ar: "يرى العميل موقعك طالما المهمة جارية. أبقِ هذه الصفحة مفتوحة في الطريق: تتوقف المشاركة عند قفل الشاشة.",
+      en: "Press it when you leave: the customer sees you on the map until you press Arrived, and you go online if you're offline. Keep this page open on the way.",
+      ar: "اضغطه عند انطلاقك: يراك العميل على الخريطة حتى تضغط «وصلتُ»، وتصبح متصلاً إن لم تكن. أبقِ هذه الصفحة مفتوحة في الطريق.",
     },
     shareHintApp: {
-      en: "The customer sees your location while the job is active. It keeps going with the screen locked.",
-      ar: "يرى العميل موقعك طالما المهمة جارية. تستمر المشاركة حتى مع قفل الشاشة.",
+      en: "Press it when you leave: the customer sees you on the map until you press Arrived, and you go online if you're offline. It keeps going with the screen locked.",
+      ar: "اضغطه عند انطلاقك: يراك العميل على الخريطة حتى تضغط «وصلتُ»، وتصبح متصلاً إن لم تكن. يستمر ذلك حتى مع قفل الشاشة.",
     },
     // Available / offline, like a ride app
     availOn: { en: "You're Available", ar: "أنت متاح" },
@@ -693,11 +694,13 @@ export const t = {
   tracking: {
     techOnWay: { en: "Your technician", ar: "الفنّي الخاص بك" },
     liveLocation: { en: "Live location", ar: "الموقع المباشر" },
+    onTheWay: { en: "On the way", ar: "في الطريق" },
+    arrived: { en: "Your technician has arrived.", ar: "وصل الفنّي." },
     lastUpdate: { en: "Last update", ar: "آخر تحديث" },
     lastSeen: { en: "Last seen here at {time}", ar: "شوهد هنا آخر مرة الساعة {time}" },
     noLocationYet: {
-      en: "The technician hasn't shared their location yet.",
-      ar: "لم يشارك الفنّي موقعه بعد.",
+      en: "You'll see your technician on the map once they're on the way.",
+      ar: "سترى الفنّي على الخريطة عندما يكون في الطريق إليك.",
     },
   },
   /** The admin area (/admin). */

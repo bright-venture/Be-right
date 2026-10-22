@@ -116,7 +116,7 @@ export default function AppRequest() {
     );
   }
 
-  const { request: r, media, events, technician, location, review, guarantee } = detail.data;
+  const { request: r, media, events, technician, location, arrived, review, guarantee } = detail.data;
   const status = r.status as RequestStatus;
   const cat = CATEGORY_MAP[r.category];
   const tint = CATEGORY_TINT[r.category] ?? { bg: "#ECEFF4", ink: "#0C2B5C" };
@@ -228,6 +228,7 @@ export default function AppRequest() {
               rating={technician.rating}
               home={r.lat != null && r.lng != null ? { lat: r.lat, lng: r.lng } : null}
               location={location}
+              arrived={arrived}
             />
           </section>
         )}

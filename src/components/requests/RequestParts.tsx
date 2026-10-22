@@ -45,12 +45,15 @@ export function TechnicianCard({
   rating,
   home,
   location,
+  arrived = false,
 }: {
   name: string | null;
   photoUrl: string | null;
   rating: { average: number | null; count: number };
   home: { lat: number; lng: number } | null;
   location: { lat: string; lng: string; updatedAt: Date } | null;
+  /** The technician pressed Arrived (or started): no more map following. */
+  arrived?: boolean;
 }) {
   const { t, p } = useI18n();
   const lat = location ? Number(location.lat) : NaN;
@@ -95,12 +98,16 @@ export function TechnicianCard({
           </span>
         </div>
       </div>
-      {(home || live) && (
+      {arrived ? (
+        <p className="mt-3 flex items-center gap-2 rounded-xl bg-green-700/10 px-3 py-2 text-sm font-bold text-green-800">
+          <MapPin className="h-4 w-4" /> {p(t.tracking.arrived)}
+        </p>
+      ) : (home || live) && (
         <div className="mt-3">
           <JobMap home={home} technician={live} technicianLabel={initials(name)} />
         </div>
       )}
-      {live ? (
+      {arrived ? null : live ? (
         <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
           <p className="text-xs text-navy/70">
             {fresh ? `${p(t.tracking.lastUpdate)}: ${time}` : p(t.tracking.lastSeen).replace("{time}", time)}
@@ -111,7 +118,7 @@ export function TechnicianCard({
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-70" />
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-white" />
               </span>
-              {p(t.tracking.liveLocation)}
+              {p(t.tracking.onTheWay)}
             </span>
           )}
         </div>

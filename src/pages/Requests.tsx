@@ -272,6 +272,7 @@ export default function Requests() {
                             : null
                         }
                         location={detail.data.location}
+                        arrived={detail.data.arrived}
                       />
                     )}
 
