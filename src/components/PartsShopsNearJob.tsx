@@ -17,9 +17,18 @@ const LIST_LIMIT = 5;
  * (a shop with no trades listed supplies every trade; an "Other" job sees every shop). The technician takes the part for free
  * under Be Right's agreement with the shop; nothing is paid or recorded in the app.
  */
-export function PartsShopsNearJob({ trade, home }: { trade: string; home: { lat: number; lng: number } | null }) {
+export function PartsShopsNearJob({
+  trade,
+  home,
+  defaultOpen = false,
+}: {
+  trade: string;
+  home: { lat: number; lng: number } | null;
+  /** Open from the start (its own tab on the job). */
+  defaultOpen?: boolean;
+}) {
   const { t, p, lang } = useI18n();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(defaultOpen);
   const shops = trpc.shops.list.useQuery(undefined, { enabled: open, staleTime: 5 * 60_000 });
   const forTrade = (shops.data ?? [])
     .filter((s) => trade === OTHER_SERVICE || s.trades.length === 0 || s.trades.includes(trade))
