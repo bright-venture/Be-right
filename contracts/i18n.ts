@@ -1445,6 +1445,12 @@ export const t = {
       transport: { en: "No travel rate for their transport", ar: "لا يوجد سعر تنقّل لوسيلة نقله" },
     },
     noPin: { en: "This request has no map pin: no distance.", ar: "لا يوجد دبوس على الخريطة لهذا الطلب: لا مسافة." },
+    missingService: { en: "No price set for {service} yet.", ar: "لم يُحدَّد سعر لـ{service} بعد." },
+    missingTravel: { en: "No travel rates set yet: travel isn't counted.", ar: "لم تُحدَّد أسعار التنقّل بعد: التنقّل غير محسوب." },
+    missingHintAdmin: { en: "Set them once and every request gets suggested prices.", ar: "حدّدها مرة واحدة فتحصل كل الطلبات على أسعار مقترحة." },
+    missingHintStaff: { en: "An admin sets them in Admin → Prices. Meanwhile, type the price yourself.", ar: "يحدّدها المدير في الإدارة ← الأسعار. في الأثناء، اكتب السعر بنفسك." },
+    openPrices: { en: "Open Prices", ar: "فتح الأسعار" },
+    noPrice: { en: "No price", ar: "بلا سعر" },
     suggested: { en: "Priced for {name}", ar: "السعر محسوب لـ{name}" },
     // Technicians tab
     start: { en: "Starting point", ar: "نقطة الانطلاق" },

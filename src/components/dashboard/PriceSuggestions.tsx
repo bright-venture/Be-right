@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Check, Loader2, Star } from "lucide-react";
+import { Link } from "react-router";
+import { Check, Info, Loader2, Star } from "lucide-react";
 import type { inferRouterOutputs } from "@trpc/server";
 import type { AppRouter } from "../../../server/router";
 import { ServiceIcon } from "@/components/ServiceIcon";
@@ -9,6 +10,7 @@ import { CATEGORY_MAP } from "@contracts/services";
 import { TRANSPORT_LABELS } from "@contracts/applications";
 import { REGION_LABELS, REGIONS, type Region } from "@contracts/pricing";
 import { Avatar } from "./RequestDetail";
+import { useAuth } from "@/hooks/useAuth";
 
 export type Suggestion = inferRouterOutputs<AppRouter>["pricing"]["suggest"]["technicians"][number];
 
@@ -21,12 +23,14 @@ const money = (n: number) => `$${Number.isInteger(n) ? n : n.toFixed(2)}`;
  */
 export function PriceSuggestions({
   requestId,
+  category,
   region,
   onRegion,
   chosenId,
   onPick,
 }: {
   requestId: number;
+  category: string;
   region: Region | "";
   onRegion: (r: Region) => void;
   chosenId: number | null;
@@ -41,6 +45,10 @@ export function PriceSuggestions({
   // No one in this trade (or an "Other" request): everyone is a candidate.
   const main = same.length ? same : techs;
   const others = same.length ? techs.filter((x) => !x.sameTrade) : [];
+  // What's missing for everyone is said once, above the list, not on every row.
+  const missingService = techs.length > 0 && techs[0].price.gaps.includes("service");
+  const missingTravel = techs.length > 0 && techs.every((x) => x.price.gaps.includes("transport"));
+  const shared = [...(missingService ? (["service"] as const) : []), ...(missingTravel ? (["transport"] as const) : [])];
 
   return (
     <div className="mt-3 rounded-2xl border-2 border-navy/15 bg-white">
@@ -76,12 +84,14 @@ export function PriceSuggestions({
         <p className="px-4 py-4 text-sm text-navy/60">{p(t.prices.noTechnicians)}</p>
       ) : (
         <>
+          {(missingService || missingTravel) && <MissingPrices category={category} service={missingService} travel={missingTravel} />}
           {data && !data.hasPin && <p className="px-4 pt-3 text-xs font-semibold text-flame-ink">{p(t.prices.noPin)}</p>}
           <ul className="divide-y divide-navy/10">
             {main.map((x) => (
-              <Row key={x.id} tech={x} chosen={chosenId === x.id} onPick={() => onPick(x)} />
+              <Row key={x.id} tech={x} hide={shared} chosen={chosenId === x.id} onPick={() => onPick(x)} />
             ))}
-            {showOthers && others.map((x) => <Row key={x.id} tech={x} chosen={chosenId === x.id} onPick={() => onPick(x)} />)}
+            {showOthers &&
+              others.map((x) => <Row key={x.id} tech={x} hide={shared} chosen={chosenId === x.id} onPick={() => onPick(x)} />)}
           </ul>
           {others.length > 0 && (
             <button
@@ -98,7 +108,44 @@ export function PriceSuggestions({
   );
 }
 
-function Row({ tech: x, chosen, onPick }: { tech: Suggestion; chosen: boolean; onPick: () => void }) {
+/** The price table isn't filled in yet: one note for the whole list, with the way to fix it. */
+function MissingPrices({ category, service, travel }: { category: string; service: boolean; travel: boolean }) {
+  const { t, p } = useI18n();
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
+  const name = CATEGORY_MAP[category] ? p(CATEGORY_MAP[category].name) : category;
+  return (
+    <div className="mx-4 mt-3 flex flex-wrap items-center gap-3 rounded-xl border border-flame/30 bg-flame/[0.06] px-3 py-2.5">
+      <Info className="h-4 w-4 shrink-0 text-flame-ink" aria-hidden />
+      <div className="min-w-0 flex-1 text-xs text-navy">
+        {service && <p className="font-bold">{p(t.prices.missingService).replace("{service}", name)}</p>}
+        {travel && <p className="font-bold">{p(t.prices.missingTravel)}</p>}
+        <p className="mt-0.5 text-navy/65">{p(isAdmin ? t.prices.missingHintAdmin : t.prices.missingHintStaff)}</p>
+      </div>
+      {isAdmin && (
+        <Link
+          to="/admin?tab=prices"
+          className="inline-flex h-8 items-center rounded-lg bg-navy px-3 text-xs font-bold text-white hover:bg-navy/90"
+        >
+          {p(t.prices.openPrices)}
+        </Link>
+      )}
+    </div>
+  );
+}
+
+function Row({
+  tech: x,
+  hide,
+  chosen,
+  onPick,
+}: {
+  tech: Suggestion;
+  /** Gaps already said above the list. */
+  hide: readonly string[];
+  chosen: boolean;
+  onPick: () => void;
+}) {
   const { t, p } = useI18n();
   const price = x.price;
   const trade = x.trade ? CATEGORY_MAP[x.trade] : null;
@@ -109,7 +156,7 @@ function Row({ tech: x, chosen, onPick }: { tech: Suggestion; chosen: boolean; o
   ].filter(Boolean);
   const parts = price.service != null ? price.service + price.region + (price.travel ?? 0) : null;
   // The gaps that matter here: a missing region shows on the region box above.
-  const gaps = price.gaps.filter((g) => g !== "region");
+  const gaps = price.gaps.filter((g) => g !== "region" && !hide.includes(g));
 
   return (
     <li className={`grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 px-4 py-3 ${chosen ? "bg-bird/[0.06]" : ""}`}>
@@ -136,7 +183,11 @@ function Row({ tech: x, chosen, onPick }: { tech: Suggestion; chosen: boolean; o
         </div>
       </div>
       <div className="flex items-center gap-2">
-        <span className="font-display text-lg font-black text-navy">{price.total != null ? money(price.total) : "-"}</span>
+        {price.total != null ? (
+          <span className="font-display text-lg font-black text-navy">{money(price.total)}</span>
+        ) : (
+          <span className="text-xs font-semibold text-navy/45">{p(t.prices.noPrice)}</span>
+        )}
         <button
           type="button"
           onClick={onPick}
@@ -149,7 +200,7 @@ function Row({ tech: x, chosen, onPick }: { tech: Suggestion; chosen: boolean; o
           {p(chosen ? t.prices.picked : t.prices.pick)}
         </button>
       </div>
-      <p className="col-span-2 text-xs text-navy/60">
+      <p className="col-span-2 text-xs text-navy/60 empty:hidden">
         {price.service != null && (
           <>
             {p(t.prices.breakdown)

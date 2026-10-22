@@ -450,6 +450,7 @@ function NextStep({
       {(status === "in_review" || changingQuote) && (
         <PriceSuggestions
           requestId={r.id}
+          category={r.category}
           region={region}
           onRegion={setRegion}
           chosenId={pricedFor}
