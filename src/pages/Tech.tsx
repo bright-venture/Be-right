@@ -13,6 +13,8 @@ import { PartsShopsNearJob } from "@/components/PartsShopsNearJob";
 import { formatDay, formatVisitDay } from "@/lib/time";
 import { telLink } from "@/lib/contact";
 import { useRoleGate } from "@/hooks/useRoleGate";
+import { Link } from "react-router";
+import { isAppUi } from "@/lib/native";
 import { trpc } from "@/providers/trpc";
 import {
   CATEGORY_MAP,
@@ -93,6 +95,9 @@ export default function Tech() {
   const isTech = role === "technician";
 
   const jobs = trpc.tech.myJobs.useQuery(undefined, { enabled: !!isTech, refetchInterval: 60_000 });
+  // Until they set where they start from, the team can't count travel in their prices.
+  const profile = trpc.auth.profile.useQuery(undefined, { enabled: !!isTech, staleTime: 60_000 });
+  const needsStart = !!profile.data?.technician && !profile.data.technician.base;
   const fieldEvent = trpc.tech.fieldEvent.useMutation({
     onSuccess: () => utils.tech.myJobs.invalidate(),
   });
@@ -125,6 +130,16 @@ export default function Tech() {
         <h1 className="font-display text-3xl font-black text-navy sm:text-4xl">
           {p(t.tech.title)}
         </h1>
+
+        {needsStart && (
+          <div className="card-br mt-6 flex flex-wrap items-center gap-3 border-flame bg-flame/5 p-4">
+            <MapPin className="h-5 w-5 shrink-0 text-flame" aria-hidden />
+            <p className="min-w-0 flex-1 text-sm font-semibold text-navy">{p(t.tech.startReminder)}</p>
+            <Link to={isAppUi ? "/account/start" : "/account"} className="btn-pill-primary !min-h-10 !py-1.5 text-sm">
+              {p(t.tech.startSet)}
+            </Link>
+          </div>
+        )}
 
         {rows.length === 0 && !jobs.isLoading && (
           <div className="card-br mt-10 p-10 text-center font-semibold text-navy/70">

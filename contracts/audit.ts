@@ -24,8 +24,10 @@ export const AUDIT_ACTIONS = [
   "staff_account_deleted",
   /** An admin changed the price table (Admin → Prices). */
   "prices_changed",
-  /** An admin set a technician's starting point or transport (details: transport). */
+  /** Older entries, from when admins set a technician's starting point (details: transport). */
   "technician_base_set",
+  /** An admin changed how a technician travels (details: transport). */
+  "technician_transport_set",
   /**
    * A staff area refused someone (details: reason, path): "password" when the session didn't
    * start with a password, "role" when the account isn't staff. Not recorded: sessions still

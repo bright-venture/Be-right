@@ -2,7 +2,7 @@
 // (service + travel by distance), and the technician priced for is ready once the customer approves.
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import { eq } from "drizzle-orm";
-import { auditLog, serviceRequests, technicianApplications, type User } from "@db/schema";
+import { auditLog, serviceRequests, technicianApplications, users, type User } from "@db/schema";
 import { distanceKm } from "@contracts/geo";
 import { EMPTY_PRICING, ROAD_FACTOR, suggestPrice, type PricingSettings } from "@contracts/pricing";
 import {
@@ -120,16 +120,28 @@ describe("prices", () => {
     }
   });
 
-  it("use each technician's starting point and transport, which admins set", async () => {
+  it("use the starting point each technician sets, and the transport admins can change", async () => {
+    // Technicians set where they start from themselves.
+    await (await callerFor(near)).tech.setMyBase(JOUNIEH);
+    await (await callerFor(far)).tech.setMyBase({ lat: 34.4367, lng: 35.8497 }); // Tripoli
+    await (await callerFor(painter)).tech.setMyBase(JOUNIEH);
+    await expect((await callerFor(near)).tech.setMyBase({ lat: 0, lng: 0 })).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    // Each request loads the account afresh, as the server does.
+    const fresh = async (u: User) => (await db.select().from(users).where(eq(users.id, u.id)))[0];
+    expect((await (await callerFor(await fresh(near))).auth.profile()).technician).toMatchObject({ base: JOUNIEH, transport: "car" });
+    expect((await (await callerFor(noStart)).auth.profile()).technician).toMatchObject({ base: null });
+    // Staff can't set anyone's place.
+    await expect((await callerFor(admin)).tech.setMyBase(JOUNIEH)).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect((await callerFor(desk)).tech.setMyBase(JOUNIEH)).rejects.toMatchObject({ code: "FORBIDDEN" });
+
+    // Admins change transport; specialists can't.
     const a = await callerFor(admin);
-    await a.tech.setBase({ technicianId: near.id, ...JOUNIEH, transport: "car" });
-    await a.tech.setBase({ technicianId: far.id, lat: 34.4367, lng: 35.8497, transport: "motorcycle" }); // Tripoli
-    await a.tech.setBase({ technicianId: painter.id, ...JOUNIEH, transport: "car" });
-    await expect((await callerFor(desk)).tech.setBase({ technicianId: near.id, ...JOUNIEH, transport: "car" })).rejects.toMatchObject({
-      code: "FORBIDDEN",
-    });
-    await expect(a.tech.setBase({ technicianId: near.id, lat: 0, lng: 0, transport: "car" })).rejects.toMatchObject({ code: "BAD_REQUEST" });
-    await expect(a.tech.setBase({ technicianId: customer.id, ...JOUNIEH, transport: "car" })).rejects.toMatchObject({ code: "NOT_FOUND" });
+    await a.tech.setTransport({ technicianId: painter.id, transport: "van" });
+    await a.tech.setTransport({ technicianId: painter.id, transport: "car" });
+    await expect((await callerFor(desk)).tech.setTransport({ technicianId: near.id, transport: "van" })).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(a.tech.setTransport({ technicianId: customer.id, transport: "van" })).rejects.toMatchObject({ code: "NOT_FOUND" });
+    expect(await db.select().from(auditLog).where(eq(auditLog.action, "technician_transport_set"))).toHaveLength(2);
+
     const listed = (await (await callerFor(desk)).tech.list()).find((x) => x.id === near.id);
     expect(listed).toMatchObject({ transport: "car", base: JOUNIEH });
   });

@@ -7,6 +7,7 @@ import {
   ClipboardCheck,
   FileText,
   KeyRound,
+  Car,
   Loader2,
   MapPin,
   Search,
@@ -595,6 +596,7 @@ const AUDIT_ICON: Record<AuditAction, LucideIcon> = {
   staff_account_deleted: UserX,
   prices_changed: Tag,
   technician_base_set: MapPin,
+  technician_transport_set: Car,
   staff_access_refused: ShieldAlert,
 };
 

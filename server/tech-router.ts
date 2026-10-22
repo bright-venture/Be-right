@@ -185,35 +185,36 @@ export const techRouter = createRouter({
     }),
 
   /**
-   * Admin: where a technician starts from (home or base) and how they travel: the distance
-   * and the travel part of suggested prices.
+   * Technician: where they start from (home or work base), set by themselves in My account.
+   * The team prices their jobs with the distance from here to the customer.
    */
-  setBase: adminQuery
-    .input(
-      z.object({
-        technicianId: z.number().int(),
-        lat: z.number().min(-90).max(90),
-        lng: z.number().min(-180).max(180),
-        transport: z.enum(TRANSPORT),
-      }),
-    )
+  setMyBase: technicianQuery
+    .input(z.object({ lat: z.number().min(-90).max(90), lng: z.number().min(-180).max(180) }))
     .mutation(async ({ ctx, input }) => {
       if (!isValidPin(input.lat, input.lng)) {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "Place the pin on where they start from" });
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Place the pin on where you start from" });
       }
+      await getDb().update(users).set({ baseLat: input.lat, baseLng: input.lng }).where(eq(users.id, ctx.user.id));
+      return { ok: true };
+    }),
+
+  /** Admin: how a technician travels (the rate per km in suggested prices). */
+  setTransport: adminQuery
+    .input(z.object({ technicianId: z.number().int(), transport: z.enum(TRANSPORT) }))
+    .mutation(async ({ ctx, input }) => {
       await getDb().transaction(async (tx) => {
-        const [tech] = await tx
-          .update(users)
-          .set({ baseLat: input.lat, baseLng: input.lng })
-          .where(and(eq(users.id, input.technicianId), eq(users.role, "technician")))
-          .returning({ id: users.id });
+        const tech = await tx.query.users.findFirst({
+          where: and(eq(users.id, input.technicianId), eq(users.role, "technician")),
+        });
         if (!tech) throw new TRPCError({ code: "NOT_FOUND", message: "Technician not found" });
-        await tx
+        const changed = await tx
           .update(technicianApplications)
           .set({ transport: input.transport })
-          .where(eq(technicianApplications.hiredUserId, tech.id));
+          .where(eq(technicianApplications.hiredUserId, tech.id))
+          .returning({ id: technicianApplications.id });
+        if (!changed.length) throw new TRPCError({ code: "BAD_REQUEST", message: "This technician has no application to update" });
         await audit(
-          { actorId: ctx.user.id, action: "technician_base_set", targetUserId: tech.id, details: { transport: input.transport } },
+          { actorId: ctx.user.id, action: "technician_transport_set", targetUserId: tech.id, details: { transport: input.transport } },
           tx,
         );
       });

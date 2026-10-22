@@ -1,5 +1,5 @@
 import { Fragment, useState } from "react";
-import { FileText, Loader2, Mail, MapPin, MessageCircle, Phone, Search, Star, UserMinus } from "lucide-react";
+import { Car, FileText, Loader2, Mail, MessageCircle, Phone, Search, Star, UserMinus } from "lucide-react";
 import type { inferRouterOutputs } from "@trpc/server";
 import type { AppRouter } from "../../../server/router";
 import { ServiceIcon } from "@/components/ServiceIcon";
@@ -11,13 +11,11 @@ import { CATEGORY_MAP } from "@contracts/services";
 import {
   APPLICATION_DOCUMENTS,
   EXPERIENCE_LABELS,
-  TRANSPORT,
   TRANSPORT_LABELS,
   WORK_MODE_STAFF_LABELS,
   type ExperienceLevel,
-  type Transport,
 } from "@contracts/applications";
-import LocationPicker, { type Pin } from "@/components/map/LocationPicker";
+import { TransportEditor } from "./TransportEditor";
 import { Avatar } from "./RequestDetail";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -113,7 +111,7 @@ function TechnicianRow({ tech: x }: { tech: Technician }) {
   const [confirm, confirmDialog] = useConfirm();
   const utils = trpc.useUtils();
   const [showDocs, setShowDocs] = useState(false);
-  const [editingStart, setEditingStart] = useState(false);
+  const [editingTransport, setEditingTransport] = useState(false);
   const { user } = useAuth();
   const isAdmin = user?.role === "admin";
   const remove = trpc.tech.remove.useMutation({
@@ -204,13 +202,13 @@ function TechnicianRow({ tech: x }: { tech: Technician }) {
           {isAdmin && (
             <button
               type="button"
-              onClick={() => setEditingStart((v) => !v)}
-              aria-expanded={editingStart}
-              className={`${ICON_BTN} ${editingStart ? "bg-navy text-white hover:bg-navy" : ""}`}
-              title={p(t.prices.start)}
-              aria-label={`${p(t.prices.start)} ${x.name ?? ""}`}
+              onClick={() => setEditingTransport((v) => !v)}
+              aria-expanded={editingTransport}
+              className={`${ICON_BTN} ${editingTransport ? "bg-navy text-white hover:bg-navy" : ""}`}
+              title={p(t.prices.colTransport)}
+              aria-label={`${p(t.prices.colTransport)} ${x.name ?? ""}`}
             >
-              <MapPin className="h-4 w-4" />
+              <Car className="h-4 w-4" />
             </button>
           )}
           {isAdmin && x.applicationId && (
@@ -249,7 +247,7 @@ function TechnicianRow({ tech: x }: { tech: Technician }) {
 
       {remove.error && <p className="px-4 pb-3 text-xs font-semibold text-red-700">{remove.error.message}</p>}
 
-      {editingStart && <StartPoint tech={x} onDone={() => setEditingStart(false)} />}
+      {editingTransport && <TransportEditor tech={x} onDone={() => setEditingTransport(false)} />}
 
       {showDocs && (
         <div className="border-t border-navy/10 bg-navy/[0.02] px-4 py-3">
@@ -289,65 +287,3 @@ function TechnicianRow({ tech: x }: { tech: Technician }) {
   );
 }
 
-/** Admin: where the technician starts from and how they travel (the distance in suggested prices). */
-function StartPoint({ tech: x, onDone }: { tech: Technician; onDone: () => void }) {
-  const { t, p } = useI18n();
-  const utils = trpc.useUtils();
-  const [pin, setPin] = useState<Pin | null>(x.base);
-  const [transport, setTransport] = useState<Transport | "">(x.transport ?? "");
-  const save = trpc.tech.setBase.useMutation({
-    onSuccess: () => {
-      void utils.tech.list.invalidate();
-      void utils.pricing.suggest.invalidate();
-      onDone();
-    },
-  });
-
-  return (
-    <div className="border-t border-navy/10 bg-navy/[0.02] px-4 py-4">
-      <p className="font-display text-sm font-extrabold text-navy">{p(t.prices.startTitle).replace("{name}", x.name ?? x.email ?? "")}</p>
-      <p className="mt-0.5 text-xs text-navy/60">{p(t.prices.startHint)}</p>
-      <div className="mt-3 grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-        <LocationPicker value={pin} onChange={setPin} staff tapHint={p(t.prices.startTap)} />
-        <div className="flex flex-col gap-3">
-          <label className="block">
-            <span className="text-xs font-medium text-navy/65">{p(t.prices.colTransport)}</span>
-            <select
-              value={transport}
-              onChange={(e) => setTransport(e.target.value as Transport)}
-              className="mt-1.5 h-10 w-full rounded-lg border border-navy/15 bg-white px-3 text-sm font-semibold text-navy focus:border-navy/40 focus:outline-none"
-            >
-              <option value="" disabled>
-                {p(t.prices.colTransport)}
-              </option>
-              {TRANSPORT.map((m) => (
-                <option key={m} value={m}>
-                  {p(TRANSPORT_LABELS[m])}
-                </option>
-              ))}
-            </select>
-          </label>
-          <div className="mt-auto grid grid-cols-2 gap-2">
-            <button
-              type="button"
-              onClick={onDone}
-              className="inline-flex h-10 items-center justify-center rounded-lg border border-navy/15 px-3 text-sm font-semibold text-navy hover:bg-navy/5"
-            >
-              {p(t.prices.cancel)}
-            </button>
-            <button
-              type="button"
-              disabled={!pin || !transport || save.isPending}
-              onClick={() => pin && transport && save.mutate({ technicianId: x.id, lat: pin.lat, lng: pin.lng, transport })}
-              className="inline-flex h-10 items-center justify-center gap-1.5 rounded-lg bg-navy px-3 text-sm font-semibold text-white hover:bg-navy/90 disabled:opacity-50"
-            >
-              {save.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-              {p(t.prices.saveStart)}
-            </button>
-          </div>
-          {save.error && <p className="text-xs font-semibold text-red-700">{save.error.message}</p>}
-        </div>
-      </div>
-    </div>
-  );
-}

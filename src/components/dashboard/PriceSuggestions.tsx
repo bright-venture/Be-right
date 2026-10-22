@@ -125,6 +125,8 @@ function Row({
   const { t, p } = useI18n();
   const price = x.price;
   const trade = x.trade ? CATEGORY_MAP[x.trade] : null;
+  // Only part of the price: travel is missing (no starting point or no rate for their transport).
+  const partial = price.total != null && price.travel == null;
   const facts = [
     x.transport ? p(TRANSPORT_LABELS[x.transport]) : null,
     price.roadKm != null ? p(t.prices.km).replace("{n}", String(price.roadKm)) : null,
@@ -159,7 +161,10 @@ function Row({
       </div>
       <div className="flex items-center gap-2">
         {price.total != null ? (
-          <span className="font-display text-lg font-black text-navy">{money(price.total)}</span>
+          <span className="text-end leading-tight">
+            <span className={`block font-display text-lg font-black ${partial ? "text-navy/55" : "text-navy"}`}>{money(price.total)}</span>
+            {partial && <span className="block text-[11px] font-semibold text-navy/50">{p(t.prices.withoutTravel)}</span>}
+          </span>
         ) : (
           <span className="text-xs font-semibold text-navy/45">{p(t.prices.noPrice)}</span>
         )}
@@ -178,9 +183,9 @@ function Row({
       <p className="col-span-2 text-xs text-navy/60 empty:hidden">
         {price.service != null && (
           <>
-            {p(t.prices.breakdown)
-              .replace("{service}", money(price.service))
-              .replace("{travel}", price.travel != null ? money(price.travel) : "-")}
+            {price.travel != null
+              ? p(t.prices.breakdown).replace("{service}", money(price.service)).replace("{travel}", money(price.travel))
+              : p(t.prices.serviceOnly).replace("{service}", money(price.service))}
             {price.total != null && parts != null && price.total > Math.ceil(parts) && ` (${p(t.prices.raisedToMinimum)})`}
           </>
         )}

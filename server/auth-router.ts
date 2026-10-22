@@ -76,6 +76,9 @@ export const authRouter = createRouter({
         technician: {
           rating,
           trade: application?.trade ?? null,
+          transport: application?.transport ?? null,
+          /** Where they start from (they set it in My account); null until then. */
+          base: user.baseLat != null && user.baseLng != null ? { lat: user.baseLat, lng: user.baseLng } : null,
           completedJobs: sum(["completed"]),
           activeJobs: sum(ACTIVE_JOB_STATUSES),
         },
