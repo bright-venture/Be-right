@@ -18,7 +18,7 @@ import type { MediaKind, VisitFeeReason } from "../contracts/workflow";
 import type { AuditAction, AuditDetails } from "../contracts/audit";
 import type { DocumentsDeclared, Transport, WorkMode } from "../contracts/applications";
 import type { EmergencyStatus } from "../contracts/emergency";
-import type { PriceBreakdown, PricingSettings, Region } from "../contracts/pricing";
+import type { PriceBreakdown, PricingSettings } from "../contracts/pricing";
 
 // Every table enables Row Level Security with no policies. The app server talks to
 // Postgres directly (bypassing RLS), while Supabase's public REST API — reachable with
@@ -94,8 +94,6 @@ export const serviceRequests = pgTable(
     preferredDate: varchar("preferred_date", { length: 32 }).notNull(),
     timeSlot: varchar("time_slot", { length: 32 }).notNull(),
     area: varchar("area", { length: 255 }).notNull(),
-    /** One of REGIONS (contracts/pricing.ts); older requests and emergencies have none. */
-    region: varchar("region", { length: 32 }).$type<Region>(),
     address: text("address").notNull(),
     /** Map pin dropped by the customer (required for new requests). */
     lat: doublePrecision("lat"),

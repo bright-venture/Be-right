@@ -21,7 +21,6 @@ import { trpc } from "@/providers/trpc";
 import { uploadToSignedTarget } from "@/lib/upload";
 import LocationPicker, { type Pin } from "@/components/map/LocationPicker";
 import { isValidPin } from "@contracts/geo";
-import { isRegion, REGION_LABELS, REGIONS, type Region } from "@contracts/pricing";
 import { isValidPhone } from "@contracts/phone";
 import { isNetworkError, isRateLimited, refusalMessage } from "@/lib/errors";
 import {
@@ -101,7 +100,6 @@ export default function Book() {
     TIME_SLOTS.includes(draft?.slot as TimeSlot) ? (draft!.slot as TimeSlot) : "",
   );
   const [area, setArea] = useState(draft?.area ?? (params.get("area") ?? "").trim().slice(0, 255));
-  const [region, setRegion] = useState<Region | "">(isRegion(draft?.region) ? draft.region : "");
   const [address, setAddress] = useState(draft?.address ?? "");
   const [phone, setPhone] = useState(draft?.phone ?? "");
   const [notes, setNotes] = useState(draft?.notes ?? "");
@@ -140,7 +138,7 @@ export default function Book() {
   // A draft saved yesterday can carry yesterday's date.
   const dateInvalid = date !== "" && !isValidVisitDate(date, todayHere());
   const detailsReady =
-    !!date && !dateInvalid && !!slot && !!region && !!area.trim() && !!address.trim() && isValidPhone(contactPhone) && !!pin && isValidPin(pin.lat, pin.lng);
+    !!date && !dateInvalid && !!slot && !!area.trim() && !!address.trim() && isValidPhone(contactPhone) && !!pin && isValidPin(pin.lat, pin.lng);
 
   /* ---------- draft persistence ---------- */
   const filesRestored = useRef(false);
@@ -163,8 +161,8 @@ export default function Book() {
 
   useEffect(() => {
     if (doneId !== null || !category) return;
-    saveDraftFields({ step, category, answers, date, slot, area, region, address, phone, notes, pin });
-  }, [doneId, step, category, answers, date, slot, area, region, address, phone, notes, pin]);
+    saveDraftFields({ step, category, answers, date, slot, area, address, phone, notes, pin });
+  }, [doneId, step, category, answers, date, slot, area, address, phone, notes, pin]);
 
   useEffect(() => {
     if (filesRestored.current && doneId === null) void saveDraftFiles(media.map((m) => m.file));
@@ -236,7 +234,6 @@ export default function Book() {
         preferredDate: date,
         timeSlot: slot as TimeSlot, // the "Next" button requires a slot
         area,
-        region: region as Region, // the "Next" button requires a region
         address,
         lat: pin!.lat, // the "Next" button requires a pin
         lng: pin!.lng,
@@ -549,28 +546,6 @@ export default function Book() {
               </div>
 
               <div className="card-br p-5">
-                <p id="book-region" className="font-display text-base font-extrabold text-navy">
-                  {p(t.book.region)} <span className="text-flame-ink">*</span>
-                </p>
-                <div role="radiogroup" aria-labelledby="book-region" className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
-                  {REGIONS.map((r) => (
-                    <button
-                      key={r}
-                      type="button"
-                      role="radio"
-                      aria-checked={region === r}
-                      onClick={() => setRegion(r)}
-                      className={`min-h-11 rounded-2xl border-2 px-3 py-2 text-sm font-bold leading-tight transition-all ${
-                        region === r ? "border-navy bg-navy text-paper" : "border-navy/30 bg-white text-navy hover:border-navy"
-                      }`}
-                    >
-                      {p(REGION_LABELS[r])}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="card-br p-5">
                 <p className="font-display text-base font-extrabold text-navy">
                   {p(t.map.pinTitle)} <span className="text-flame-ink">*</span>
                 </p>
@@ -660,9 +635,7 @@ export default function Book() {
                     </div>
                     <div className="mt-2 flex justify-between gap-4">
                       <dt className="text-navy/70">{p(t.book.area)}</dt>
-                      <dd className="text-end font-bold text-navy">
-                        {[region && p(REGION_LABELS[region]), area].filter(Boolean).join(" · ")}
-                      </dd>
+                      <dd className="text-end font-bold text-navy">{area}</dd>
                     </div>
                     <div className="mt-2 flex justify-between gap-4">
                       <dt className="text-navy/70">{p(t.book.phone)}</dt>

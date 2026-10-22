@@ -14,8 +14,6 @@ export type DraftFields = {
   date: string;
   slot: string;
   area: string;
-  /** One of REGIONS (drafts saved before regions have none). */
-  region?: string;
   address: string;
   phone: string;
   notes: string;

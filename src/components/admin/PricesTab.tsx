@@ -5,7 +5,7 @@ import { trpc } from "@/providers/trpc";
 import { ServiceIcon } from "@/components/ServiceIcon";
 import { CATEGORY_MAP, CUSTOMER_SERVICES } from "@contracts/services";
 import { TRANSPORT, TRANSPORT_LABELS, type Transport } from "@contracts/applications";
-import { MAX_PRICE_USD, REGION_LABELS, REGIONS, type PricingSettings, type Region } from "@contracts/pricing";
+import { MAX_PRICE_USD, type PricingSettings } from "@contracts/pricing";
 import { VISIT_FEE_USD } from "@contracts/legal";
 
 const HEAD = "text-[11px] font-semibold uppercase tracking-wide text-navy/50";
@@ -15,7 +15,6 @@ const NUMBER =
 /** Every amount as typed (empty = not set). */
 type Form = {
   services: Record<string, string>;
-  regions: Record<Region, string>;
   perKm: Record<Transport, string>;
   maxKm: Record<Transport, string>;
   minimum: string;
@@ -28,7 +27,6 @@ const keyed = <K extends string>(keys: readonly K[], value: (k: K) => string) =>
 function toForm(s: PricingSettings): Form {
   return {
     services: keyed(CUSTOMER_SERVICES, (id) => text(s.services[id])),
-    regions: keyed(REGIONS, (r) => text(s.regions[r])),
     perKm: keyed(TRANSPORT, (m) => text(s.transport[m]?.perKm)),
     maxKm: keyed(TRANSPORT, (m) => text(s.transport[m]?.maxKm)),
     minimum: text(s.minimum),
@@ -46,18 +44,12 @@ function amount(v: string, max = MAX_PRICE_USD) {
 function toSettings(f: Form): PricingSettings | null {
   const bad = (n: number | null) => n !== null && Number.isNaN(n);
   const services: PricingSettings["services"] = {};
-  const regions: PricingSettings["regions"] = {};
   const transport: PricingSettings["transport"] = {};
   const all: (number | null)[] = [];
   for (const id of CUSTOMER_SERVICES) {
     const n = amount(f.services[id]);
     all.push(n);
     if (n !== null) services[id] = n;
-  }
-  for (const r of REGIONS) {
-    const n = amount(f.regions[r]);
-    all.push(n);
-    if (n !== null) regions[r] = n;
   }
   for (const m of TRANSPORT) {
     const perKm = amount(f.perKm[m]);
@@ -67,7 +59,7 @@ function toSettings(f: Form): PricingSettings | null {
   }
   const minimum = amount(f.minimum);
   all.push(minimum);
-  return all.some(bad) ? null : { services, regions, transport, minimum };
+  return all.some(bad) ? null : { services, transport, minimum };
 }
 
 function Card({ title, hint, children }: { title: string; hint: string; children: ReactNode }) {
@@ -84,7 +76,7 @@ function Card({ title, hint, children }: { title: string; hint: string; children
 
 /**
  * Admin → Prices: the fixed prices suggested prices are made of (contracts/pricing.ts):
- * a price per service, an extra per region, a rate per km per transport, and the lowest price.
+ * a price per service, a rate per km and a max distance per transport, and the lowest price.
  */
 export function PricesTab() {
   const current = trpc.pricing.get.useQuery();
@@ -153,21 +145,6 @@ function PricesForm({ initial }: { initial: PricingSettings }) {
         </Card>
 
         <div className="flex flex-col gap-5">
-          <Card title={p(t.prices.regions)} hint={p(t.prices.regionsHint)}>
-            <div className="grid grid-cols-[minmax(0,1fr)_8rem] gap-x-4 border-b border-navy/10 bg-navy/[0.03] px-4 py-2">
-              <span className={HEAD}>{p(t.prices.colRegion)}</span>
-              <span className={`${HEAD} text-end`}>{p(t.prices.extra)}</span>
-            </div>
-            <ul className="divide-y divide-navy/10">
-              {REGIONS.map((r) => (
-                <li key={r} className="grid grid-cols-[minmax(0,1fr)_8rem] items-center gap-x-4 px-4 py-1.5">
-                  <span className="text-sm font-semibold text-navy">{p(REGION_LABELS[r])}</span>
-                  {input(form.regions[r], (v) => set((f) => ({ ...f, regions: { ...f.regions, [r]: v } })), `${p(REGION_LABELS[r])}: ${p(t.prices.extra)}`)}
-                </li>
-              ))}
-            </ul>
-          </Card>
-
           <Card title={p(t.prices.travel)} hint={p(t.prices.travelHint)}>
             <div className="grid grid-cols-[minmax(0,1fr)_7rem_7rem] gap-x-3 border-b border-navy/10 bg-navy/[0.03] px-4 py-2">
               <span className={HEAD}>{p(t.prices.colTransport)}</span>

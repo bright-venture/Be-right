@@ -21,7 +21,6 @@ import {
 } from "@contracts/workflow";
 import { cancelPending } from "./queueMeta";
 import { PriceSuggestions } from "./PriceSuggestions";
-import { REGION_LABELS, type Region } from "@contracts/pricing";
 
 type Outputs = inferRouterOutputs<AppRouter>;
 type Technician = Outputs["tech"]["list"][number];
@@ -135,7 +134,7 @@ export function RequestDetail({
             </div>
             <p className={`${LABEL} mt-4`}>{p(t.dash4.visit)}</p>
             <p className="mt-1 text-navy/80">
-              {[r.region && p(REGION_LABELS[r.region]), r.area, r.address].filter(Boolean).join(" · ")}
+              {r.area} · {r.address}
             </p>
             <p className="mt-1 text-navy/80">
               {r.preferredDate} ·{" "}
@@ -347,7 +346,6 @@ function NextStep({
   const [note, setNote] = useState("");
   // The technician the price was worked out for is ready to assign once the customer approves.
   const [chosenTech, setChosenTech] = useState(String(r.technicianId ?? r.suggestedTechnicianId ?? ""));
-  const [region, setRegion] = useState<Region | "">(r.region ?? "");
   const [pricedFor, setPricedFor] = useState<number | null>(r.suggestedTechnicianId);
   const [changingQuote, setChangingQuote] = useState(false);
   const askedToCancel = cancelPending(r);
@@ -451,8 +449,6 @@ function NextStep({
         <PriceSuggestions
           requestId={r.id}
           category={r.category}
-          region={region}
-          onRegion={setRegion}
           chosenId={pricedFor}
           onPick={(x) => {
             setPricedFor(x.id);
@@ -472,7 +468,6 @@ function NextStep({
                 amount: amount.trim(),
                 note: quoteNote || undefined,
                 technicianId: pricedFor ?? undefined,
-                region: region || undefined,
               })
             }
             disabled={busy || !QUOTE_AMOUNT_PATTERN.test(amount.trim())}

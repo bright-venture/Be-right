@@ -10,10 +10,8 @@ import { distanceKm } from "@contracts/geo";
 import {
   EMPTY_PRICING,
   MAX_PRICE_USD,
-  REGIONS,
   suggestPrice,
   type PricingSettings,
-  type Region,
 } from "@contracts/pricing";
 import { findRequest } from "./lib/workflow";
 import { profilePhotoUrls } from "./lib/storage";
@@ -27,7 +25,6 @@ const km = z.number().finite().min(0).max(2000);
 
 const settingsInput = z.object({
   services: z.partialRecord(z.enum(CUSTOMER_SERVICES as [string, ...string[]]), amount),
-  regions: z.partialRecord(z.enum(REGIONS), amount),
   transport: z.partialRecord(z.enum(TRANSPORT), z.object({ perKm: amount.nullable(), maxKm: km.nullable() })),
   minimum: amount.nullable(),
 });
@@ -43,7 +40,7 @@ export async function loadPricing(db: Db = getDb()): Promise<PricingSettings> {
  */
 export async function priceTechnicians(
   db: Db,
-  job: { category: string; region: Region | null; lat: number | null; lng: number | null },
+  job: { category: string; lat: number | null; lng: number | null },
   settings: PricingSettings,
 ) {
   const techs = await db
@@ -107,17 +104,11 @@ export const pricingRouter = createRouter({
     return { ok: true };
   }),
 
-  /**
-   * Specialist: the technicians who could do this request, each with a suggested price.
-   * `region` overrides the request's (older requests have none).
-   */
-  suggest: specialistQuery
-    .input(z.object({ id: z.number().int(), region: z.enum(REGIONS).optional() }))
-    .query(async ({ input }) => {
-      const db = getDb();
-      const [row, settings] = await Promise.all([findRequest(db, input.id, "any"), loadPricing(db)]);
-      const region = input.region ?? row.region ?? null;
-      const technicians = await priceTechnicians(db, { category: row.category, region, lat: row.lat, lng: row.lng }, settings);
-      return { region, hasPin: row.lat != null && row.lng != null, technicians };
-    }),
+  /** Specialist: the technicians who could do this request, each with a suggested price. */
+  suggest: specialistQuery.input(z.object({ id: z.number().int() })).query(async ({ input }) => {
+    const db = getDb();
+    const [row, settings] = await Promise.all([findRequest(db, input.id, "any"), loadPricing(db)]);
+    const technicians = await priceTechnicians(db, row, settings);
+    return { hasPin: row.lat != null && row.lng != null, technicians };
+  }),
 });

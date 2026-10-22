@@ -8,7 +8,6 @@ import { useI18n } from "@/i18n";
 import { trpc } from "@/providers/trpc";
 import { CATEGORY_MAP } from "@contracts/services";
 import { TRANSPORT_LABELS } from "@contracts/applications";
-import { REGION_LABELS, REGIONS, type Region } from "@contracts/pricing";
 import { Avatar } from "./RequestDetail";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -18,27 +17,23 @@ const money = (n: number) => `$${Number.isInteger(n) ? n : n.toFixed(2)}`;
 
 /**
  * While a specialist prices a request: every technician with a suggested price (service +
- * region + travel, contracts/pricing.ts), their trade first, nearest first. Picking one fills
+ * travel, contracts/pricing.ts), their trade first, nearest first. Picking one fills
  * in the price; it can still be changed before sending.
  */
 export function PriceSuggestions({
   requestId,
   category,
-  region,
-  onRegion,
   chosenId,
   onPick,
 }: {
   requestId: number;
   category: string;
-  region: Region | "";
-  onRegion: (r: Region) => void;
   chosenId: number | null;
   onPick: (tech: Suggestion) => void;
 }) {
   const { t, p } = useI18n();
   const [showOthers, setShowOthers] = useState(false);
-  const suggest = trpc.pricing.suggest.useQuery({ id: requestId, region: region || undefined });
+  const suggest = trpc.pricing.suggest.useQuery({ id: requestId });
   const data = suggest.data;
   const techs = data?.technicians ?? [];
   const same = techs.filter((x) => x.sameTrade);
@@ -52,28 +47,9 @@ export function PriceSuggestions({
 
   return (
     <div className="mt-3 rounded-2xl border-2 border-navy/15 bg-white">
-      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-navy/10 px-4 py-3">
-        <div className="min-w-0 flex-1">
-          <p className="font-display text-sm font-extrabold text-navy">{p(t.prices.suggestTitle)}</p>
-          <p className="mt-0.5 text-xs text-navy/60">{p(t.prices.suggestHint)}</p>
-        </div>
-        <select
-          value={region || data?.region || ""}
-          onChange={(e) => onRegion(e.target.value as Region)}
-          aria-label={p(t.book.region)}
-          className={`h-9 rounded-lg border bg-white px-3 text-sm font-semibold text-navy focus:outline-none ${
-            region || data?.region ? "border-navy/15" : "border-flame"
-          }`}
-        >
-          <option value="" disabled>
-            {p(t.prices.chooseRegion)}
-          </option>
-          {REGIONS.map((r) => (
-            <option key={r} value={r}>
-              {p(REGION_LABELS[r])}
-            </option>
-          ))}
-        </select>
+      <div className="border-b border-navy/10 px-4 py-3">
+        <p className="font-display text-sm font-extrabold text-navy">{p(t.prices.suggestTitle)}</p>
+        <p className="mt-0.5 text-xs text-navy/60">{p(t.prices.suggestHint)}</p>
       </div>
 
       {suggest.isLoading ? (
@@ -154,9 +130,8 @@ function Row({
     price.roadKm != null ? p(t.prices.km).replace("{n}", String(price.roadKm)) : null,
     `${p(t.dash4.activeJobs)}: ${x.activeJobs}`,
   ].filter(Boolean);
-  const parts = price.service != null ? price.service + price.region + (price.travel ?? 0) : null;
-  // The gaps that matter here: a missing region shows on the region box above.
-  const gaps = price.gaps.filter((g) => g !== "region" && !hide.includes(g));
+  const parts = price.service != null ? price.service + (price.travel ?? 0) : null;
+  const gaps = price.gaps.filter((g) => !hide.includes(g));
 
   return (
     <li className={`grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 px-4 py-3 ${chosen ? "bg-bird/[0.06]" : ""}`}>
@@ -205,7 +180,6 @@ function Row({
           <>
             {p(t.prices.breakdown)
               .replace("{service}", money(price.service))
-              .replace("{region}", money(price.region))
               .replace("{travel}", price.travel != null ? money(price.travel) : "-")}
             {price.total != null && parts != null && price.total > Math.ceil(parts) && ` (${p(t.prices.raisedToMinimum)})`}
           </>

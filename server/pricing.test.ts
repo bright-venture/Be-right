@@ -1,5 +1,5 @@
 // Fixed prices: admins keep the table, specialists get a suggested price per technician
-// (service + region + travel), and the technician priced for is ready once the customer approves.
+// (service + travel by distance), and the technician priced for is ready once the customer approves.
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import { eq } from "drizzle-orm";
 import { auditLog, serviceRequests, technicianApplications, type User } from "@db/schema";
@@ -37,7 +37,6 @@ vi.mock("./lib/email", () => ({ sendEmail: async () => true }));
 
 const PRICES: PricingSettings = {
   services: { plumbing: 25, electrical: 30 },
-  regions: { mount_lebanon: 5 },
   transport: { car: { perKm: 0.5, maxKm: 50 }, motorcycle: { perKm: 0.3, maxKm: 10 } },
   minimum: 15,
 };
@@ -45,25 +44,25 @@ const PRICES: PricingSettings = {
 const JOUNIEH = { lat: 33.9808, lng: 35.6178 };
 
 describe("suggestPrice", () => {
-  it("adds service, region and travel by road, rounds up, and keeps the lowest price", () => {
-    const price = suggestPrice(PRICES, { category: "plumbing", region: "mount_lebanon" }, { transport: "car", straightKm: 12 });
-    expect(price).toMatchObject({ service: 25, region: 5, roadKm: 15.6, travel: 7.8, total: 38, tooFar: false, gaps: [] });
+  it("adds service and travel by road, rounds up, and keeps the lowest price", () => {
+    const price = suggestPrice(PRICES, { category: "plumbing" }, { transport: "car", straightKm: 12 });
+    expect(price).toMatchObject({ service: 25, roadKm: 15.6, travel: 7.8, total: 33, tooFar: false, gaps: [] });
 
-    const cheap = suggestPrice({ ...PRICES, services: { plumbing: 2 } }, { category: "plumbing", region: "beirut" }, { transport: "car", straightKm: 1 });
+    const cheap = suggestPrice({ ...PRICES, services: { plumbing: 2 } }, { category: "plumbing" }, { transport: "car", straightKm: 1 });
     expect(cheap.total).toBe(15);
     // never below the visit fee, even with a lower minimum
-    const floor = suggestPrice({ ...PRICES, services: { plumbing: 2 }, minimum: 1 }, { category: "plumbing", region: "beirut" }, { transport: "car", straightKm: 0 });
+    const floor = suggestPrice({ ...PRICES, services: { plumbing: 2 }, minimum: 1 }, { category: "plumbing" }, { transport: "car", straightKm: 0 });
     expect(floor.total).toBe(10);
   });
 
   it("says what is missing, and who is too far for their transport", () => {
-    expect(suggestPrice(EMPTY_PRICING, { category: "plumbing", region: null }, { transport: null, straightKm: null })).toMatchObject({
+    expect(suggestPrice(EMPTY_PRICING, { category: "plumbing" }, { transport: null, straightKm: null })).toMatchObject({
       total: null,
       travel: null,
-      gaps: ["service", "region", "start", "transport"],
+      gaps: ["service", "start", "transport"],
     });
-    const far = suggestPrice(PRICES, { category: "plumbing", region: "beirut" }, { transport: "motorcycle", straightKm: 20 });
-    expect(far).toMatchObject({ tooFar: true, region: 0, total: 25 + Math.ceil(0.3 * 26) });
+    const far = suggestPrice(PRICES, { category: "plumbing" }, { transport: "motorcycle", straightKm: 20 });
+    expect(far).toMatchObject({ tooFar: true, total: 25 + Math.ceil(0.3 * 26) });
   });
 });
 
@@ -98,7 +97,6 @@ describe("prices", () => {
     preferredDate: futureDate(),
     timeSlot: "morning" as const,
     area: "Achrafieh",
-    region: "beirut" as const,
     address: "Building 4, 2nd floor",
     phone: "+961 70 111 222",
     media: [],
@@ -116,7 +114,6 @@ describe("prices", () => {
     for (const bad of [
       { ...PRICES, services: { plumbing: -1 } },
       { ...PRICES, services: { hacking: 5 } },
-      { ...PRICES, regions: { mars: 5 } },
       { ...PRICES, transport: { rocket: { perKm: 1, maxKm: null } } },
     ]) {
       await expect(a.pricing.save(bad as PricingSettings)).rejects.toMatchObject({ code: "BAD_REQUEST" });
@@ -139,42 +136,38 @@ describe("prices", () => {
 
   it("suggest every technician for a request: same trade first, within reach, nearest", async () => {
     const { id } = await (await callerFor(customer)).requests.create(booking);
-    expect((await db.select().from(serviceRequests).where(eq(serviceRequests.id, id)))[0].region).toBe("beirut");
     const s = await callerFor(desk);
-    const { region, technicians } = await s.pricing.suggest({ id });
-    expect(region).toBe("beirut");
+    const { hasPin, technicians } = await s.pricing.suggest({ id });
+    expect(hasPin).toBe(true);
     expect(technicians.map((x) => x.id)).toEqual([near.id, noStart.id, far.id, painter.id]);
 
     const roadKm = Math.round(distanceKm(JOUNIEH, BEIRUT_PIN) * ROAD_FACTOR * 10) / 10;
-    expect(technicians[0]).toMatchObject({ sameTrade: true, transport: "car", price: { service: 25, region: 0, roadKm, tooFar: false } });
+    expect(technicians[0]).toMatchObject({ sameTrade: true, transport: "car", price: { service: 25, roadKm, tooFar: false } });
     expect(technicians[0].price.total).toBe(Math.max(15, Math.ceil(25 + Math.round(0.5 * roadKm * 100) / 100)));
     expect(technicians[1].price).toMatchObject({ gaps: ["start"], total: 25 });
     expect(technicians[2].price.tooFar).toBe(true);
     expect(technicians[3].sameTrade).toBe(false);
 
-    // another region for the same request
-    const moved = await s.pricing.suggest({ id, region: "mount_lebanon" });
-    expect(moved.technicians[0].price.region).toBe(5);
     await expect((await callerFor(near)).pricing.suggest({ id })).rejects.toMatchObject({ code: "FORBIDDEN" });
   });
 
   it("keep the technician priced for, ready to assign once the customer approves", async () => {
     const c = await callerFor(customer);
     const s = await callerFor(desk);
-    const { id } = await c.requests.create({ ...booking, region: undefined });
+    const { id } = await c.requests.create(booking);
     await s.specialist.startReview({ id });
-    const { technicians } = await s.pricing.suggest({ id, region: "mount_lebanon" });
+    const { technicians } = await s.pricing.suggest({ id });
     const total = technicians[0].price.total!;
-    await s.specialist.sendQuote({ id, amount: String(total), technicianId: near.id, region: "mount_lebanon" });
+    await s.specialist.sendQuote({ id, amount: String(total), technicianId: near.id });
 
     const [row] = await db.select().from(serviceRequests).where(eq(serviceRequests.id, id));
-    expect(row).toMatchObject({ region: "mount_lebanon", suggestedTechnicianId: near.id, technicianId: null, quoteAmount: String(total) });
-    expect(row.priceBreakdown).toMatchObject({ suggested: total, service: 25, region: 5 });
+    expect(row).toMatchObject({ suggestedTechnicianId: near.id, technicianId: null, quoteAmount: String(total) });
+    expect(row.priceBreakdown).toMatchObject({ suggested: total, service: 25 });
 
     // a price typed by hand forgets the technician
     await s.specialist.sendQuote({ id, amount: "60" });
     const [typed] = await db.select().from(serviceRequests).where(eq(serviceRequests.id, id));
-    expect(typed).toMatchObject({ suggestedTechnicianId: null, priceBreakdown: null, quoteAmount: "60", region: "mount_lebanon" });
+    expect(typed).toMatchObject({ suggestedTechnicianId: null, priceBreakdown: null, quoteAmount: "60" });
 
     await expect(s.specialist.sendQuote({ id, amount: "60", technicianId: customer.id })).rejects.toMatchObject({ code: "BAD_REQUEST" });
   });

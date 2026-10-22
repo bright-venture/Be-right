@@ -16,7 +16,6 @@ import { ratingFor, reviewOf } from "./queries/ratings";
 import { TRPCError } from "@trpc/server";
 import { notify } from "./notify";
 import { loadPricing, priceTechnicians } from "./pricing-router";
-import { REGIONS } from "@contracts/pricing";
 import { likeTerm, pageInput, PAGE_SIZE } from "./lib/paging";
 
 const byId = z.object({ id: z.number().int() });
@@ -190,23 +189,18 @@ export const specialistRouter = createRouter({
         note: z.string().max(2000).optional(),
         /** The technician picked from the suggestions: preselected once the customer approves. */
         technicianId: z.number().int().optional(),
-        /** The region the specialist priced with (older requests have none). */
-        region: z.enum(REGIONS).optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
       const db = getDb();
       const row = await findRequest(db, input.id, "any");
-      const region = input.region ?? row.region ?? null;
       let picked: { suggestedTechnicianId: number | null; priceBreakdown: NonNullable<typeof row.priceBreakdown> | null } = {
         suggestedTechnicianId: null,
         priceBreakdown: null,
       };
       if (input.technicianId) {
         const settings = await loadPricing(db);
-        const tech = (await priceTechnicians(db, { category: row.category, region, lat: row.lat, lng: row.lng }, settings)).find(
-          (x) => x.id === input.technicianId,
-        );
+        const tech = (await priceTechnicians(db, row, settings)).find((x) => x.id === input.technicianId);
         if (!tech) throw new TRPCError({ code: "BAD_REQUEST", message: "Not a technician" });
         picked = {
           suggestedTechnicianId: tech.id,
@@ -218,7 +212,7 @@ export const specialistRouter = createRouter({
         name: "sendQuote",
         actorId: ctx.user.id,
         scope: "any",
-        patch: { quoteAmount: input.amount, quoteNote: input.note ?? null, region, ...picked },
+        patch: { quoteAmount: input.amount, quoteNote: input.note ?? null, ...picked },
         note: `Quote: $${input.amount}${input.note ? `. ${input.note}` : ""}`,
       });
       await notify.quoteSent(input.id);
