@@ -158,6 +158,23 @@ export default function Requests() {
                   />
                 </button>
 
+                {/* Opens at once: the details fill in when they arrive (a second click closes it). */}
+                {open && !(detail.data && detail.data.request.id === r.id) && (
+                  <div className="flex flex-col items-center gap-3 border-t-2 border-navy/10 p-6">
+                    {detail.isError ? (
+                      <>
+                        <p role="alert" className="text-sm font-semibold text-destructive">
+                          {p(t.misc.error)}
+                        </p>
+                        <button type="button" onClick={() => void detail.refetch()} className="btn-pill-outline !min-h-10 !py-1.5 text-sm">
+                          {p(t.admin.retry)}
+                        </button>
+                      </>
+                    ) : (
+                      <Loader2 className="h-6 w-6 animate-spin text-navy" aria-label={p(t.misc.loading)} />
+                    )}
+                  </div>
+                )}
                 {open && detail.data && detail.data.request.id === r.id && (
                   <div className="border-t-2 border-navy/10 p-5 animate-rise-in">
                     {detail.data.request.guaranteeFor && (
