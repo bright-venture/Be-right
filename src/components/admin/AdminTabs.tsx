@@ -8,8 +8,10 @@ import {
   FileText,
   KeyRound,
   Loader2,
+  MapPin,
   Search,
   Star,
+  Tag,
   UserCheck,
   UserCog,
   UserMinus,
@@ -591,6 +593,8 @@ const AUDIT_ICON: Record<AuditAction, LucideIcon> = {
   technician_hired: UserCheck,
   technician_removed: UserMinus,
   staff_account_deleted: UserX,
+  prices_changed: Tag,
+  technician_base_set: MapPin,
   staff_access_refused: ShieldAlert,
 };
 

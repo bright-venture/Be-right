@@ -18,6 +18,7 @@ import type { MediaKind, VisitFeeReason } from "../contracts/workflow";
 import type { AuditAction, AuditDetails } from "../contracts/audit";
 import type { DocumentsDeclared, Transport, WorkMode } from "../contracts/applications";
 import type { EmergencyStatus } from "../contracts/emergency";
+import type { PriceBreakdown, PricingSettings, Region } from "../contracts/pricing";
 
 // Every table enables Row Level Security with no policies. The app server talks to
 // Postgres directly (bypassing RLS), while Supabase's public REST API — reachable with
@@ -62,6 +63,9 @@ export const users = pgTable("users", {
   termsVersion: varchar("terms_version", { length: 32 }),
   avatar: text("avatar"),
   role: userRole("role").default("customer").notNull(),
+  /** A technician's starting point (home or base), set by an admin: the distance in suggested prices. */
+  baseLat: doublePrecision("base_lat"),
+  baseLng: doublePrecision("base_lng"),
   /** The customer deleted their account: personal details were erased (see auth.deleteAccount). */
   deletedAt: timestamp("deleted_at", { withTimezone: true }),
   ...timestamps,
@@ -90,6 +94,8 @@ export const serviceRequests = pgTable(
     preferredDate: varchar("preferred_date", { length: 32 }).notNull(),
     timeSlot: varchar("time_slot", { length: 32 }).notNull(),
     area: varchar("area", { length: 255 }).notNull(),
+    /** One of REGIONS (contracts/pricing.ts); older requests and emergencies have none. */
+    region: varchar("region", { length: 32 }).$type<Region>(),
     address: text("address").notNull(),
     /** Map pin dropped by the customer (required for new requests). */
     lat: doublePrecision("lat"),
@@ -98,6 +104,10 @@ export const serviceRequests = pgTable(
     notes: text("notes"),
     quoteAmount: varchar("quote_amount", { length: 32 }),
     quoteNote: text("quote_note"),
+    /** The technician the price was worked out for: preselected once the customer approves. */
+    suggestedTechnicianId: integer("suggested_technician_id").references((): AnyPgColumn => users.id, { onDelete: "set null" }),
+    /** How the suggested price was made up when the price was sent (null: typed by hand). */
+    priceBreakdown: jsonb("price_breakdown").$type<PriceBreakdown & { suggested: number }>(),
     /** Specialist's job preparation, shown on the technician's job card. */
     prepDiagnosis: text("prep_diagnosis"),
     prepTools: text("prep_tools"),
@@ -343,3 +353,11 @@ export const partsShops = pgTable("parts_shops", {
 }).enableRLS();
 
 export type PartsShop = typeof partsShops.$inferSelect;
+
+/** The fixed prices (Admin → Prices): a single row, id 1. See contracts/pricing.ts. */
+export const pricingSettings = pgTable("pricing_settings", {
+  id: integer("id").primaryKey().default(1),
+  settings: jsonb("settings").$type<PricingSettings>().notNull(),
+  updatedBy: integer("updated_by").references(() => users.id, { onDelete: "set null" }),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+}).enableRLS();

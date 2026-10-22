@@ -8,6 +8,7 @@ import { EmergenciesTab, EMERGENCY_REFRESH_MS } from "@/components/dashboard/Eme
 import { TechniciansTab } from "@/components/dashboard/TechniciansTab";
 import { ActivityTab, CustomersTab, OverviewTab, TeamTab } from "@/components/admin/AdminTabs";
 import { PartsShopsTab } from "@/components/admin/PartsShopsTab";
+import { PricesTab } from "@/components/admin/PricesTab";
 import { useI18n } from "@/i18n";
 import { useAuth } from "@/hooks/useAuth";
 import { useTabParam } from "@/hooks/useTabParam";
@@ -17,7 +18,7 @@ import { StaffGate } from "@/components/admin/StaffGate";
 import { SectionMenu } from "@/components/admin/SectionMenu";
 import { trpc } from "@/providers/trpc";
 
-const TABS = ["overview", "requests", "emergencies", "customers", "applications", "technicians", "parts", "team", "activity"] as const;
+const TABS = ["overview", "requests", "emergencies", "customers", "applications", "technicians", "parts", "prices", "team", "activity"] as const;
 type Tab = (typeof TABS)[number];
 
 /**
@@ -106,7 +107,7 @@ export default function Admin() {
           <h1 className="font-display text-3xl font-black text-navy sm:text-4xl">{p(t.admin.title)}</h1>
           <p className="mt-1 text-sm text-navy/60">{p(t.admin.sub)}</p>
 
-          {/* Phones and tablets: the 9 sections don't fit in a row, so one clear menu. */}
+          {/* Phones and tablets: the 10 sections don't fit in a row, so one clear menu. */}
           <div className="mt-6 lg:hidden">
             <SectionMenu
               label={p(t.admin.sectionLabel)}
@@ -152,6 +153,7 @@ export default function Admin() {
           {tab === "technicians" && <TechniciansTab onGoToApplications={() => setTab("applications")} />}
           {tab === "team" && <TeamTab />}
           {tab === "parts" && <PartsShopsTab />}
+          {tab === "prices" && <PricesTab />}
           {tab === "activity" && <ActivityTab />}
         </main>
         <Footer />

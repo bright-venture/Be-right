@@ -1,5 +1,5 @@
 import { Fragment, useState } from "react";
-import { FileText, Loader2, Mail, MessageCircle, Phone, Search, Star, UserMinus } from "lucide-react";
+import { FileText, Loader2, Mail, MapPin, MessageCircle, Phone, Search, Star, UserMinus } from "lucide-react";
 import type { inferRouterOutputs } from "@trpc/server";
 import type { AppRouter } from "../../../server/router";
 import { ServiceIcon } from "@/components/ServiceIcon";
@@ -8,16 +8,25 @@ import { useConfirm } from "@/hooks/useConfirm";
 import { trpc } from "@/providers/trpc";
 import { telLink, whatsappLink } from "@/lib/contact";
 import { CATEGORY_MAP } from "@contracts/services";
-import { APPLICATION_DOCUMENTS, EXPERIENCE_LABELS, WORK_MODE_STAFF_LABELS, type ExperienceLevel } from "@contracts/applications";
+import {
+  APPLICATION_DOCUMENTS,
+  EXPERIENCE_LABELS,
+  TRANSPORT,
+  TRANSPORT_LABELS,
+  WORK_MODE_STAFF_LABELS,
+  type ExperienceLevel,
+  type Transport,
+} from "@contracts/applications";
+import LocationPicker, { type Pin } from "@/components/map/LocationPicker";
 import { Avatar } from "./RequestDetail";
 import { useAuth } from "@/hooks/useAuth";
 
 type Technician = inferRouterOutputs<AppRouter>["tech"]["list"][number];
 
-/** The table's columns on a computer: technician, area, experience, works, 3 figures, and the
- * buttons (fixed: room for all five, so the headings line up with every row). */
+/** The table's columns on a computer: technician, area, experience, works, transport, 3 figures,
+ * and the buttons (fixed: room for all six, so the headings line up with every row). */
 const COLUMNS =
-  "lg:grid-cols-[minmax(0,2.2fr)_minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1.1fr)_4.5rem_5.5rem_4.5rem_13rem]";
+  "lg:grid-cols-[minmax(0,2.2fr)_minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,1.1fr)_minmax(0,1.2fr)_4.5rem_5.5rem_4.5rem_15.5rem]";
 const ICON_BTN =
   "inline-flex h-9 w-9 items-center justify-center rounded-lg border border-navy/15 text-navy transition-colors hover:bg-navy/5 disabled:opacity-40";
 const HEAD = "text-[11px] font-semibold uppercase tracking-wide text-navy/50";
@@ -79,6 +88,7 @@ export function TechniciansTab({ onGoToApplications }: { onGoToApplications?: ()
           <span className={HEAD}>{p(t.dash4.techArea)}</span>
           <span className={HEAD}>{p(t.dash4.techExperience)}</span>
           <span className={HEAD}>{p(t.dash3.workMode)}</span>
+          <span className={HEAD}>{p(t.prices.colTransport)}</span>
           <span className={`${HEAD} text-end`}>{p(t.dash4.activeJobs)}</span>
           <span className={`${HEAD} text-end`}>{p(t.dash4.completedJobs)}</span>
           <span className={`${HEAD} text-end`}>{p(t.dash4.rating)}</span>
@@ -103,6 +113,7 @@ function TechnicianRow({ tech: x }: { tech: Technician }) {
   const [confirm, confirmDialog] = useConfirm();
   const utils = trpc.useUtils();
   const [showDocs, setShowDocs] = useState(false);
+  const [editingStart, setEditingStart] = useState(false);
   const { user } = useAuth();
   const isAdmin = user?.role === "admin";
   const remove = trpc.tech.remove.useMutation({
@@ -144,6 +155,15 @@ function TechnicianRow({ tech: x }: { tech: Technician }) {
         {cell(p(t.dash4.techArea), x.area ?? "-")}
         {cell(p(t.dash4.techExperience), x.experience ? p(EXPERIENCE_LABELS[x.experience as ExperienceLevel]) : "-")}
         {cell(p(t.dash3.workMode), works)}
+        <div className="flex min-w-0 justify-between gap-3 text-sm lg:block">
+          <span className="text-xs text-navy/55 lg:hidden">{p(t.prices.colTransport)}</span>
+          <span className="min-w-0 text-end lg:text-start">
+            <span className="block truncate font-semibold text-navy">{x.transport ? p(TRANSPORT_LABELS[x.transport]) : "-"}</span>
+            <span className={`block truncate text-xs ${x.base ? "text-navy/55" : "font-semibold text-flame-ink"}`}>
+              {p(x.base ? t.prices.startSet : t.prices.startMissing)}
+            </span>
+          </span>
+        </div>
         {cell(p(t.dash4.activeJobs), String(x.activeJobs), true)}
         {cell(p(t.dash4.completedJobs), String(x.completedJobs), true)}
         <div className="flex justify-between gap-3 text-sm lg:block lg:text-end">
@@ -181,6 +201,18 @@ function TechnicianRow({ tech: x }: { tech: Technician }) {
               <Mail className="h-4 w-4" />
             </a>
           )}
+          {isAdmin && (
+            <button
+              type="button"
+              onClick={() => setEditingStart((v) => !v)}
+              aria-expanded={editingStart}
+              className={`${ICON_BTN} ${editingStart ? "bg-navy text-white hover:bg-navy" : ""}`}
+              title={p(t.prices.start)}
+              aria-label={`${p(t.prices.start)} ${x.name ?? ""}`}
+            >
+              <MapPin className="h-4 w-4" />
+            </button>
+          )}
           {isAdmin && x.applicationId && (
             <button
               type="button"
@@ -217,6 +249,8 @@ function TechnicianRow({ tech: x }: { tech: Technician }) {
 
       {remove.error && <p className="px-4 pb-3 text-xs font-semibold text-red-700">{remove.error.message}</p>}
 
+      {editingStart && <StartPoint tech={x} onDone={() => setEditingStart(false)} />}
+
       {showDocs && (
         <div className="border-t border-navy/10 bg-navy/[0.02] px-4 py-3">
           {docs.isLoading ? (
@@ -252,5 +286,68 @@ function TechnicianRow({ tech: x }: { tech: Technician }) {
         </div>
       )}
     </li>
+  );
+}
+
+/** Admin: where the technician starts from and how they travel (the distance in suggested prices). */
+function StartPoint({ tech: x, onDone }: { tech: Technician; onDone: () => void }) {
+  const { t, p } = useI18n();
+  const utils = trpc.useUtils();
+  const [pin, setPin] = useState<Pin | null>(x.base);
+  const [transport, setTransport] = useState<Transport | "">(x.transport ?? "");
+  const save = trpc.tech.setBase.useMutation({
+    onSuccess: () => {
+      void utils.tech.list.invalidate();
+      void utils.pricing.suggest.invalidate();
+      onDone();
+    },
+  });
+
+  return (
+    <div className="border-t border-navy/10 bg-navy/[0.02] px-4 py-4">
+      <p className="font-display text-sm font-extrabold text-navy">{p(t.prices.startTitle).replace("{name}", x.name ?? x.email ?? "")}</p>
+      <p className="mt-0.5 text-xs text-navy/60">{p(t.prices.startHint)}</p>
+      <div className="mt-3 grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+        <LocationPicker value={pin} onChange={setPin} staff tapHint={p(t.prices.startTap)} />
+        <div className="flex flex-col gap-3">
+          <label className="block">
+            <span className="text-xs font-medium text-navy/65">{p(t.prices.colTransport)}</span>
+            <select
+              value={transport}
+              onChange={(e) => setTransport(e.target.value as Transport)}
+              className="mt-1.5 h-10 w-full rounded-lg border border-navy/15 bg-white px-3 text-sm font-semibold text-navy focus:border-navy/40 focus:outline-none"
+            >
+              <option value="" disabled>
+                {p(t.prices.colTransport)}
+              </option>
+              {TRANSPORT.map((m) => (
+                <option key={m} value={m}>
+                  {p(TRANSPORT_LABELS[m])}
+                </option>
+              ))}
+            </select>
+          </label>
+          <div className="mt-auto grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={onDone}
+              className="inline-flex h-10 items-center justify-center rounded-lg border border-navy/15 px-3 text-sm font-semibold text-navy hover:bg-navy/5"
+            >
+              {p(t.prices.cancel)}
+            </button>
+            <button
+              type="button"
+              disabled={!pin || !transport || save.isPending}
+              onClick={() => pin && transport && save.mutate({ technicianId: x.id, lat: pin.lat, lng: pin.lng, transport })}
+              className="inline-flex h-10 items-center justify-center gap-1.5 rounded-lg bg-navy px-3 text-sm font-semibold text-white hover:bg-navy/90 disabled:opacity-50"
+            >
+              {save.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+              {p(t.prices.saveStart)}
+            </button>
+          </div>
+          {save.error && <p className="text-xs font-semibold text-red-700">{save.error.message}</p>}
+        </div>
+      </div>
+    </div>
   );
 }

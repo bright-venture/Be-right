@@ -26,6 +26,7 @@ import {
 } from "@contracts/workflow";
 import { isOwnUploadKey, profilePhotoUrl } from "./lib/storage";
 import { isValidPin } from "@contracts/geo";
+import { REGIONS } from "@contracts/pricing";
 import { isValidPhone } from "@contracts/phone";
 import { applyTransition, findRequest, logEvent, type RequestScope } from "./lib/workflow";
 import { notify } from "./notify";
@@ -83,6 +84,8 @@ export const requestsRouter = createRouter({
         preferredDate: z.string().max(10),
         timeSlot: z.enum(TIME_SLOTS),
         area: z.string().trim().min(1).max(255),
+        // Required on the form; phone apps built before regions don't send one.
+        region: z.enum(REGIONS).optional(),
         address: z.string().trim().min(1).max(1000),
         phone: z.string().trim().max(64).refine(isValidPhone, "Invalid phone number"),
         notes: z.string().max(4000).optional(),
@@ -121,6 +124,7 @@ export const requestsRouter = createRouter({
             preferredDate: input.preferredDate,
             timeSlot: input.timeSlot,
             area: input.area,
+            region: input.region ?? null,
             address: input.address,
             lat: input.lat,
             lng: input.lng,

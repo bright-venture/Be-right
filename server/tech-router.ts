@@ -25,6 +25,8 @@ import { ratingsFor } from "./queries/ratings";
 import { notify } from "./notify";
 import { audit } from "./lib/audit";
 import { isPhotoType } from "@contracts/uploads";
+import { isValidPin } from "@contracts/geo";
+import { TRANSPORT } from "@contracts/applications";
 import { LIMITS, rateLimit } from "./lib/rateLimit";
 
 type Db = Parameters<typeof findRequest>[0];
@@ -52,7 +54,15 @@ export const techRouter = createRouter({
   list: specialistQuery.query(async () => {
     const db = getDb();
     const techs = await db
-      .select({ id: users.id, name: users.name, email: users.email, phone: users.phone, avatar: users.avatar })
+      .select({
+        id: users.id,
+        name: users.name,
+        email: users.email,
+        phone: users.phone,
+        avatar: users.avatar,
+        baseLat: users.baseLat,
+        baseLng: users.baseLng,
+      })
       .from(users)
       .where(eq(users.role, "technician"));
     if (!techs.length) return [];
@@ -68,6 +78,7 @@ export const techRouter = createRouter({
           availability: technicianApplications.availability,
           workMode: technicianApplications.workMode,
           companyName: technicianApplications.companyName,
+          transport: technicianApplications.transport,
         })
         .from(technicianApplications)
         .where(inArray(technicianApplications.hiredUserId, ids)),
@@ -102,6 +113,8 @@ export const techRouter = createRouter({
           availability: app?.availability ?? null,
           workMode: app?.workMode ?? null,
           companyName: app?.companyName ?? null,
+          transport: app?.transport ?? null,
+          base: x.baseLat != null && x.baseLng != null ? { lat: x.baseLat, lng: x.baseLng } : null,
           activeJobs: sum(ACTIVE_JOB_STATUSES),
           completedJobs: sum(["completed"]),
           rating: ratings.get(x.id) ?? { average: null, count: 0 },
@@ -169,6 +182,42 @@ export const techRouter = createRouter({
         return released;
       });
       return { ok: true, unassigned };
+    }),
+
+  /**
+   * Admin: where a technician starts from (home or base) and how they travel: the distance
+   * and the travel part of suggested prices.
+   */
+  setBase: adminQuery
+    .input(
+      z.object({
+        technicianId: z.number().int(),
+        lat: z.number().min(-90).max(90),
+        lng: z.number().min(-180).max(180),
+        transport: z.enum(TRANSPORT),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      if (!isValidPin(input.lat, input.lng)) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Place the pin on where they start from" });
+      }
+      await getDb().transaction(async (tx) => {
+        const [tech] = await tx
+          .update(users)
+          .set({ baseLat: input.lat, baseLng: input.lng })
+          .where(and(eq(users.id, input.technicianId), eq(users.role, "technician")))
+          .returning({ id: users.id });
+        if (!tech) throw new TRPCError({ code: "NOT_FOUND", message: "Technician not found" });
+        await tx
+          .update(technicianApplications)
+          .set({ transport: input.transport })
+          .where(eq(technicianApplications.hiredUserId, tech.id));
+        await audit(
+          { actorId: ctx.user.id, action: "technician_base_set", targetUserId: tech.id, details: { transport: input.transport } },
+          tx,
+        );
+      });
+      return { ok: true };
     }),
 
   /** Admin: assign a technician — only once the customer has approved the quote */

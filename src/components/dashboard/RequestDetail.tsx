@@ -20,6 +20,8 @@ import {
   type VisitFeeReason,
 } from "@contracts/workflow";
 import { cancelPending } from "./queueMeta";
+import { PriceSuggestions } from "./PriceSuggestions";
+import { REGION_LABELS, type Region } from "@contracts/pricing";
 
 type Outputs = inferRouterOutputs<AppRouter>;
 type Technician = Outputs["tech"]["list"][number];
@@ -133,7 +135,7 @@ export function RequestDetail({
             </div>
             <p className={`${LABEL} mt-4`}>{p(t.dash4.visit)}</p>
             <p className="mt-1 text-navy/80">
-              {r.area} · {r.address}
+              {[r.region && p(REGION_LABELS[r.region]), r.area, r.address].filter(Boolean).join(" · ")}
             </p>
             <p className="mt-1 text-navy/80">
               {r.preferredDate} ·{" "}
@@ -343,7 +345,10 @@ function NextStep({
   const [amount, setAmount] = useState("");
   const [quoteNote, setQuoteNote] = useState("");
   const [note, setNote] = useState("");
-  const [chosenTech, setChosenTech] = useState(r.technicianId ? String(r.technicianId) : "");
+  // The technician the price was worked out for is ready to assign once the customer approves.
+  const [chosenTech, setChosenTech] = useState(String(r.technicianId ?? r.suggestedTechnicianId ?? ""));
+  const [region, setRegion] = useState<Region | "">(r.region ?? "");
+  const [pricedFor, setPricedFor] = useState<number | null>(r.suggestedTechnicianId);
   const [changingQuote, setChangingQuote] = useState(false);
   const askedToCancel = cancelPending(r);
   // A customer's cancellation request opens the cancel form, ready to confirm.
@@ -419,6 +424,7 @@ function NextStep({
           onClick={() => {
             setAmount(r.quoteAmount ?? "");
             setQuoteNote(r.quoteNote ?? "");
+            setPricedFor(r.suggestedTechnicianId);
             setChangingQuote(true);
           }}
           className="mt-3 text-sm font-bold text-navy underline underline-offset-4"
@@ -442,11 +448,32 @@ function NextStep({
       )}
 
       {(status === "in_review" || changingQuote) && (
+        <PriceSuggestions
+          requestId={r.id}
+          region={region}
+          onRegion={setRegion}
+          chosenId={pricedFor}
+          onPick={(x) => {
+            setPricedFor(x.id);
+            if (x.price.total != null) setAmount(String(x.price.total));
+          }}
+        />
+      )}
+
+      {(status === "in_review" || changingQuote) && (
         <div className="mt-3 grid gap-2 sm:grid-cols-[160px_1fr_auto]">
           <input value={amount} onChange={(e) => setAmount(e.target.value)} inputMode="decimal" placeholder={`${p(t.dash.quoteAmount)}`} className={INPUT} aria-label={p(t.dash.quoteAmount)} />
           <input value={quoteNote} onChange={(e) => setQuoteNote(e.target.value)} placeholder={p(t.dash.quoteNote)} className={INPUT} aria-label={p(t.dash.quoteNote)} />
           <button
-            onClick={() => sendQuote.mutate({ id: r.id, amount: amount.trim(), note: quoteNote || undefined })}
+            onClick={() =>
+              sendQuote.mutate({
+                id: r.id,
+                amount: amount.trim(),
+                note: quoteNote || undefined,
+                technicianId: pricedFor ?? undefined,
+                region: region || undefined,
+              })
+            }
             disabled={busy || !QUOTE_AMOUNT_PATTERN.test(amount.trim())}
             className="btn-pill-primary !min-h-11 disabled:opacity-40"
           >
@@ -458,6 +485,14 @@ function NextStep({
 
       {ASSIGNABLE_STATUSES.includes(status) && status !== "in_progress" && (
         <div className="mt-3">
+          {r.suggestedTechnicianId && !r.technicianId && (
+            <p className="mb-2 text-xs font-semibold text-bird">
+              {p(t.prices.suggested).replace(
+                "{name}",
+                technicians.find((x) => x.id === r.suggestedTechnicianId)?.name ?? `#${r.suggestedTechnicianId}`,
+              )}
+            </p>
+          )}
           {technicians.length === 0 ? (
             <p className="text-xs text-navy/70">
               {p(t.dash2.noTechToAssign)}{" "}
