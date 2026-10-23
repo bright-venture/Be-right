@@ -55,6 +55,110 @@ function inviteRedirect(req: Request) {
     : undefined; // Supabase falls back to the project's Site URL
 }
 
+/** The note on a technician's record when an admin added them by hand (no application form). */
+export const ADDED_BY_ADMIN = "Added by an admin";
+
+/**
+ * Hire an application: the person joins the technicians, so the specialists can assign them
+ * jobs. An existing account becomes a technician right away; otherwise they're invited by email
+ * and their technician account is created now. Used by Accept and by Add a technician.
+ */
+async function hireApplication(ctx: { user: { id: number }; req: Request }, appId: number, emailOverride?: string) {
+  const db = getDb();
+  const app = await findApplication(appId);
+  if (app.status === "hired" && app.hiredUserId) {
+    throw new TRPCError({ code: "BAD_REQUEST", message: "This applicant is already a technician" });
+  }
+  const address = emailOverride ?? app.email?.toLowerCase();
+  if (!address) {
+    throw new TRPCError({ code: "BAD_REQUEST", message: "Add the applicant's email to hire them" });
+  }
+
+  const existing = await db.query.users.findFirst({ where: eq(users.email, address) });
+  if (existing?.role === "technician") {
+    throw new TRPCError({ code: "BAD_REQUEST", message: "This email already belongs to a technician" });
+  }
+  if (existing?.role === "specialist" || existing?.role === "admin") {
+    throw new TRPCError({ code: "BAD_REQUEST", message: "This email belongs to a Be Right staff member" });
+  }
+
+  /** The technician account, the application and the audit line: saved together or not at all. */
+  const hireAs = (invited: boolean, saveAccount: (tx: Tx) => Promise<number>) =>
+    db.transaction(async (tx) => {
+      const userId = await saveAccount(tx);
+      await tx
+        .update(technicianApplications)
+        .set({ status: "hired", hiredUserId: userId, email: address, approvedAt: new Date(), approvedBy: ctx.user.id })
+        .where(eq(technicianApplications.id, app.id));
+      await audit(
+        {
+          actorId: ctx.user.id,
+          action: "technician_hired",
+          targetUserId: userId,
+          applicationId: app.id,
+          details: { email: address, invited },
+        },
+        tx,
+      );
+    });
+
+  if (existing) {
+    await hireAs(false, async (tx) => {
+      await tx
+        .update(users)
+        .set({
+          role: "technician",
+          phone: existing.phone ?? app.phone,
+          name: existing.name ?? app.name,
+          avatar: app.photoKey,
+          ...(app.districts?.length && { districts: app.districts }),
+        })
+        .where(eq(users.id, existing.id));
+      return existing.id;
+    });
+    await notify.technicianJoined(app.id);
+    return { ok: true, invited: false, email: address };
+  } else {
+    const { data, error } = await getSupabaseAdmin().auth.admin.inviteUserByEmail(address, {
+      data: { full_name: app.name, phone: app.phone },
+      redirectTo: inviteRedirect(ctx.req),
+    });
+    if (error || !data.user) {
+      const already = error && /already|registered|exists/i.test(error.message);
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: already
+          ? "This email already has a login. Ask them to sign in once, then hire again."
+          : `Could not send the invitation: ${error?.message ?? "unknown error"}`,
+      });
+    }
+    const invitedId = data.user.id;
+    await saveInvitedAccount(invitedId, () =>
+      hireAs(true, async (tx) => {
+        const [created] = await tx
+          .insert(users)
+          .values({
+            authId: invitedId,
+            email: address,
+            name: app.name,
+            phone: app.phone,
+            role: "technician",
+            avatar: app.photoKey,
+            districts: app.districts ?? [],
+          })
+          .onConflictDoUpdate({
+            target: users.authId,
+            set: { role: "technician", avatar: app.photoKey, ...(app.districts?.length && { districts: app.districts }) },
+          })
+          .returning({ id: users.id });
+        return created.id;
+      }),
+    );
+    await notify.technicianJoined(app.id);
+    return { ok: true, invited: true, email: address };
+  }
+}
+
 export const joinRouter = createRouter({
   // Public — technicians apply without an account.
   submit: publicQuery
@@ -194,96 +298,45 @@ export const joinRouter = createRouter({
    */
   hire: adminQuery
     .input(z.object({ id: z.number().int().positive(), email: email.optional() }))
+    .mutation(({ ctx, input }) => hireApplication(ctx, input.id, input.email)),
+
+  /**
+   * Admin: add a technician by hand (someone the team already knows), without an application
+   * form: their record is written with what the admin entered, then hired like an accepted
+   * applicant (invitation email, or an existing account becomes a technician).
+   */
+  addTechnician: adminQuery
+    .input(
+      z.object({
+        name: z.string().trim().min(2).max(255),
+        phone: z.string().trim().max(64).refine(isValidPhone, "Invalid phone number"),
+        email,
+        trade: z.enum(TRADE_IDS),
+        districts: z.array(z.enum(DISTRICTS)).min(1, "Pick at least one district").max(DISTRICTS.length),
+        transport: z.enum(TRANSPORT),
+      }),
+    )
     .mutation(async ({ ctx, input }) => {
       const db = getDb();
-      const app = await findApplication(input.id);
-      if (app.status === "hired" && app.hiredUserId) {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "This applicant is already a technician" });
-      }
-      const address = input.email ?? app.email?.toLowerCase();
-      if (!address) {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "Add the applicant's email to hire them" });
-      }
-
-      const existing = await db.query.users.findFirst({ where: eq(users.email, address) });
-      if (existing?.role === "specialist" || existing?.role === "admin") {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "This email belongs to a Be Right staff member" });
-      }
-
-      /** The technician account, the application and the audit line: saved together or not at all. */
-      const hireAs = (invited: boolean, saveAccount: (tx: Tx) => Promise<number>) =>
-        db.transaction(async (tx) => {
-          const userId = await saveAccount(tx);
-          await tx
-            .update(technicianApplications)
-            .set({ status: "hired", hiredUserId: userId, email: address, approvedAt: new Date(), approvedBy: ctx.user.id })
-            .where(eq(technicianApplications.id, app.id));
-          await audit(
-            {
-              actorId: ctx.user.id,
-              action: "technician_hired",
-              targetUserId: userId,
-              applicationId: app.id,
-              details: { email: address, invited },
-            },
-            tx,
-          );
-        });
-
-      if (existing) {
-        await hireAs(false, async (tx) => {
-          await tx
-            .update(users)
-            .set({
-              role: "technician",
-              phone: existing.phone ?? app.phone,
-              name: existing.name ?? app.name,
-              avatar: app.photoKey,
-              ...(app.districts?.length && { districts: app.districts }),
-            })
-            .where(eq(users.id, existing.id));
-          return existing.id;
-        });
-        await notify.technicianJoined(app.id);
-        return { ok: true, invited: false, email: address };
-      } else {
-        const { data, error } = await getSupabaseAdmin().auth.admin.inviteUserByEmail(address, {
-          data: { full_name: app.name, phone: app.phone },
-          redirectTo: inviteRedirect(ctx.req),
-        });
-        if (error || !data.user) {
-          const already = error && /already|registered|exists/i.test(error.message);
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: already
-              ? "This email already has a login. Ask them to sign in once, then hire again."
-              : `Could not send the invitation: ${error?.message ?? "unknown error"}`,
-          });
-        }
-        const invitedId = data.user.id;
-        await saveInvitedAccount(invitedId, () =>
-          hireAs(true, async (tx) => {
-            const [created] = await tx
-              .insert(users)
-              .values({
-                authId: invitedId,
-                email: address,
-                name: app.name,
-                phone: app.phone,
-                role: "technician",
-                avatar: app.photoKey,
-                districts: app.districts ?? [],
-              })
-              .onConflictDoUpdate({
-                target: users.authId,
-                set: { role: "technician", avatar: app.photoKey, ...(app.districts?.length && { districts: app.districts }) },
-              })
-              .returning({ id: users.id });
-            return created.id;
-          }),
-        );
-        await notify.technicianJoined(app.id);
-        return { ok: true, invited: true, email: address };
+      const [record] = await db
+        .insert(technicianApplications)
+        .values({
+          name: input.name,
+          phone: input.phone,
+          email: input.email,
+          trade: input.trade,
+          districts: DISTRICTS.filter((d) => input.districts.includes(d)),
+          transport: input.transport,
+          hasTransport: input.transport !== "none",
+          notes: ADDED_BY_ADMIN,
+        })
+        .returning({ id: technicianApplications.id });
+      try {
+        return await hireApplication(ctx, record.id);
+      } catch (error) {
+        // Not hired (staff email, invitation refused): no half-made record is left behind.
+        await db.delete(technicianApplications).where(eq(technicianApplications.id, record.id));
+        throw error;
       }
     }),
 });

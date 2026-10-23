@@ -1,5 +1,5 @@
 import { Fragment, useState, type ReactNode } from "react";
-import { Car, ChevronDown, FileText, Loader2, Mail, Map, MessageCircle, Phone, Search, Star, UserMinus } from "lucide-react";
+import { Car, ChevronDown, FileText, Loader2, Mail, Map, MessageCircle, Phone, Search, Star, UserMinus, UserPlus } from "lucide-react";
 import type { inferRouterOutputs } from "@trpc/server";
 import type { AppRouter } from "../../../server/router";
 import { ServiceIcon } from "@/components/ServiceIcon";
@@ -17,6 +17,7 @@ import {
 } from "@contracts/applications";
 import { TransportEditor } from "./TransportEditor";
 import { DistrictsEditor } from "./DistrictsEditor";
+import { AddTechnician } from "./AddTechnician";
 import { DISTRICT_INFO } from "@contracts/districts";
 import { Avatar } from "./RequestDetail";
 import { useAuth } from "@/hooks/useAuth";
@@ -41,17 +42,39 @@ export function TechniciansTab({ onGoToApplications }: { onGoToApplications?: ()
   const { t, p } = useI18n();
   const list = trpc.tech.list.useQuery();
   const [search, setSearch] = useState("");
+  const [adding, setAdding] = useState(false);
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
   const techs = list.data ?? [];
+  // Admins: add a technician by hand, without an application.
+  const addButton = isAdmin && !adding && (
+    <button
+      type="button"
+      onClick={() => setAdding(true)}
+      className="inline-flex h-10 items-center gap-1.5 rounded-lg bg-navy px-3.5 text-sm font-semibold text-white hover:bg-navy/90"
+    >
+      <UserPlus className="h-4 w-4" /> {p(t.dash4.addTech)}
+    </button>
+  );
+  const addForm = adding && <AddTechnician onClose={() => setAdding(false)} />;
 
   if (list.isLoading) return <Loader2 className="mx-auto mt-10 h-6 w-6 animate-spin text-navy" />;
   if (techs.length === 0) {
     return (
-      <div className="card-br mt-8 p-10 text-center">
-        <p className="font-semibold text-navy/70">{p(t.dash4.noTechnicians)}</p>
-        {onGoToApplications && (
-          <button onClick={onGoToApplications} className="btn-pill-primary mt-5">
-            {p(t.dash4.goToApplications)}
-          </button>
+      <div className="mt-8">
+        {addForm}
+        {!adding && (
+          <div className="card-br p-10 text-center">
+            <p className="font-semibold text-navy/70">{p(t.dash4.noTechnicians)}</p>
+            <div className="mt-5 flex flex-wrap justify-center gap-2">
+              {onGoToApplications && (
+                <button onClick={onGoToApplications} className="btn-pill-primary">
+                  {p(t.dash4.goToApplications)}
+                </button>
+              )}
+              {addButton}
+            </div>
+          </div>
         )}
       </div>
     );
@@ -77,17 +100,21 @@ export function TechniciansTab({ onGoToApplications }: { onGoToApplications?: ()
     <div className="mt-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm font-semibold text-navy">{p(t.dash4.techCount).replace("{n}", String(techs.length))}</p>
-        <label className="relative w-full sm:w-72">
-          <Search className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-navy/40" />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder={p(t.dash4.techSearch)}
-            aria-label={p(t.dash4.techSearch)}
-            className="h-10 w-full rounded-lg border border-navy/15 bg-white ps-9 pe-3 text-sm text-navy placeholder:text-navy/40 focus:border-navy/40 focus:outline-none"
-          />
-        </label>
+        <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
+          {addButton}
+          <label className="relative w-full sm:w-72">
+            <Search className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-navy/40" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder={p(t.dash4.techSearch)}
+              aria-label={p(t.dash4.techSearch)}
+              className="h-10 w-full rounded-lg border border-navy/15 bg-white ps-9 pe-3 text-sm text-navy placeholder:text-navy/40 focus:border-navy/40 focus:outline-none"
+            />
+          </label>
+        </div>
       </div>
+      {addForm}
 
       <div className="mt-3 overflow-hidden rounded-2xl border border-navy/12 bg-white">
         {/* column headings, computers only */}

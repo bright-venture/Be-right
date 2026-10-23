@@ -495,3 +495,46 @@ describe("my profile", () => {
     expect(await (await callerFor(owner)).auth.profile()).toMatchObject({ technician: null, customer: null, photoUrl: null });
   });
 });
+
+describe("adding a technician by hand", () => {
+  const person = {
+    name: "Karim Aoun",
+    phone: "+961 71 555 666",
+    email: "karim.aoun@example.com",
+    trade: "electrical",
+    districts: ["metn", "beirut"] as ("metn" | "beirut")[],
+    transport: "motorcycle" as const,
+  };
+
+  it("creates their account (an invitation email) with their trade, districts and transport", async () => {
+    const before = state.invites.length;
+    const result = await (await callerFor(owner)).join.addTechnician(person);
+    expect(result).toMatchObject({ ok: true, invited: true, email: "karim.aoun@example.com" });
+    expect(state.invites.slice(before)).toEqual(["karim.aoun@example.com"]);
+
+    const listed = (await (await callerFor(desk)).tech.list()).find((x) => x.email === "karim.aoun@example.com");
+    expect(listed).toMatchObject({ name: "Karim Aoun", trade: "electrical", transport: "motorcycle", districts: ["beirut", "metn"] });
+    const record = (await (await callerFor(owner)).join.list()).find((a) => a.email === "karim.aoun@example.com");
+    expect(record).toMatchObject({ status: "hired", notes: "Added by an admin" });
+    // Once is enough.
+    await expect((await callerFor(owner)).join.addTechnician(person)).rejects.toMatchObject({ code: "BAD_REQUEST" });
+  });
+
+  it("turns an existing customer account into a technician, without an invitation", async () => {
+    const before = state.invites.length;
+    await makeUser("rana.existing@example.com", "Rana");
+    const result = await (await callerFor(owner)).join.addTechnician({ ...person, name: "Rana Haddad", email: "rana.existing@example.com" });
+    expect(result).toMatchObject({ ok: true, invited: false });
+    expect(state.invites.length).toBe(before);
+    expect((await (await callerFor(desk)).tech.list()).some((x) => x.email === "rana.existing@example.com")).toBe(true);
+  });
+
+  it("is for admins only, needs a district, and never turns staff into a technician", async () => {
+    await expect((await callerFor(desk)).join.addTechnician({ ...person, email: "x1@example.com" })).rejects.toMatchObject({ code: "FORBIDDEN" });
+    const o = await callerFor(owner);
+    await expect(o.join.addTechnician({ ...person, email: "x2@example.com", districts: [] })).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    await expect(o.join.addTechnician({ ...person, email: "desk@example.com" })).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    // The refused attempt leaves no record behind.
+    expect((await o.join.list()).some((a) => a.email === "desk@example.com")).toBe(false);
+  });
+});
