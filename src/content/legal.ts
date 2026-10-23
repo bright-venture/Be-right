@@ -101,8 +101,8 @@ export const TERMS: LegalDocument = {
           "يخضع الفنيون للتدقيق ويتعاقدون مع بي رايت، ويحكم عملهم اتفاق منفصل معنا. على الفنيين استخدام التطبيق بأمانة وتسجيل الوصول وسير العمل، والتقاط صور قبل كل مهمة وبعدها، ومشاركة موقعهم فقط أثناء تنفيذ المهمة.",
         ),
         t(
-          "A technician is responsible for mistakes and damage caused during their work, and must put them right.",
-          "الفني مسؤول عن الأخطاء والأضرار التي يتسبّب بها أثناء عمله، وعليه إصلاحها.",
+          "Damage a technician causes during their work is the technician's responsibility, not Be Right's: they must put it right. If they can't, Be Right solves it for you (see Liability).",
+          "الأضرار التي يتسبّب بها الفني أثناء عمله هي مسؤولية الفني وليست مسؤولية بي رايت، وعليه إصلاحها. وإن لم يستطع، تحلّ بي رايت المشكلة لك (راجع بند المسؤولية).",
         ),
       ],
     },
@@ -123,8 +123,8 @@ export const TERMS: LegalDocument = {
           `نحن مسؤولون عن تنفيذ العمل بعناية ومهارة معقولتين. وبالقدر الذي يسمح به ${COMPANY.governingLaw.ar}، لا نتحمّل مسؤولية الخسائر غير المباشرة، وتقتصر مسؤوليتنا عن أي مهمة على المبلغ المدفوع لها. ولا يحدّ أي من ذلك من حقوقك كمستهلك بموجب القانون الذي يسري عليك.`,
         ),
         t(
-          "Damage during a job: report it from your request page (Report a problem) or by contacting us. The technician who caused it repairs it first. If they don't, Be Right handles it: we arrange the repair or agree a fair settlement with you.",
-          "الأضرار أثناء المهمة: أبلغ عنها من صفحة طلبك (الإبلاغ عن مشكلة) أو بالتواصل معنا. يصلحها أولاً الفني الذي تسبّب بها، وإن لم يفعل تتولّى بي رايت الأمر: نرتّب الإصلاح أو نتّفق معك على تسوية عادلة.",
+          "Damage during a job: report it from your request page (Report a problem) or by contacting us. Damage caused by a technician is the technician's fault, not Be Right's, and the technician repairs it first. If they can't resolve it, Be Right solves it for you: we arrange the repair or agree a fair settlement with you.",
+          "الأضرار أثناء المهمة: أبلغ عنها من صفحة طلبك (الإبلاغ عن مشكلة) أو بالتواصل معنا. الضرر الذي يتسبّب به الفني هو خطأ الفني وليس خطأ بي رايت، ويصلحه الفني أولاً. وإن لم يستطع حلّه، تحلّ بي رايت المشكلة لك: نرتّب الإصلاح أو نتّفق معك على تسوية عادلة.",
         ),
       ],
     },
