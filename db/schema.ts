@@ -20,6 +20,7 @@ import type { DocumentsDeclared, Transport, WorkMode } from "../contracts/applic
 import type { EmergencyStatus } from "../contracts/emergency";
 import type { PriceBreakdown, PricingSettings } from "../contracts/pricing";
 import type { District } from "../contracts/districts";
+import type { ShopSchedule } from "../contracts/shops";
 
 // Every table enables Row Level Security with no policies. The app server talks to
 // Postgres directly (bypassing RLS), while Supabase's public REST API — reachable with
@@ -349,8 +350,10 @@ export const partsShops = pgTable("parts_shops", {
   lng: doublePrecision("lng").notNull(),
   /** The trades it supplies (service ids); empty = every trade. */
   trades: jsonb("trades").$type<string[]>().default([]).notNull(),
-  /** Opening hours as the shop gives them, e.g. "Mon–Sat 8:00–18:00". */
+  /** Older shops: opening hours as typed. Newer ones use `schedule`. */
   hours: varchar("hours", { length: 255 }),
+  /** Opening hours picked from lists (contracts/shops.ts); null when not given. */
+  schedule: jsonb("schedule").$type<ShopSchedule>(),
   /** For technicians: who to ask, what to show. */
   note: text("note"),
   /** Off: hidden from technicians (agreement paused or ended), kept on record. */

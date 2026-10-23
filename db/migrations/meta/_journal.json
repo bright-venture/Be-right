@@ -260,6 +260,13 @@
       "when": 1792747822014,
       "tag": "0036_emergency_answers",
       "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1792752695037,
+      "tag": "0037_shop_schedule",
+      "breakpoints": true
     }
   ]
 }

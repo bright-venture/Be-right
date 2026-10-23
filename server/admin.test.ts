@@ -442,7 +442,7 @@ describe("parts shops", () => {
     lat: 33.8966,
     lng: 35.4823,
     trades: ["plumbing"],
-    hours: "Mon-Sat 8:00-18:00",
+    schedule: { days: [5, 0, 1, 2, 3, 4], open: "08:00", close: "18:00" },
     note: "Ask for Karim",
     active: true,
   };
@@ -457,6 +457,8 @@ describe("parts shops", () => {
     expect(seen.map((s) => s.id)).toContain(id);
     expect(seen.map((s) => s.id)).not.toContain(hidden);
     expect(seen.find((s) => s.id === id)).toMatchObject({ name: shop.name, trades: ["plumbing"], note: "Ask for Karim" });
+    // Opening hours come back in order, picked rather than typed.
+    expect(seen.find((s) => s.id === id)?.schedule).toEqual({ days: [0, 1, 2, 3, 4, 5], open: "08:00", close: "18:00" });
 
     await o.shops.save({ ...shop, id, name: "Hamra Plumbing", trades: [] });
     expect((await (await callerFor(tech)).shops.list()).find((s) => s.id === id)).toMatchObject({ name: "Hamra Plumbing", trades: [] });
@@ -471,6 +473,9 @@ describe("parts shops", () => {
       { ...shop, lat: 0, lng: 0 },
       { ...shop, trades: ["hacking"] },
       { ...shop, name: " " },
+      { ...shop, schedule: { days: [], open: "08:00", close: "18:00" } },
+      { ...shop, schedule: { days: [0], open: "18:00", close: "08:00" } },
+      { ...shop, schedule: { days: [0], open: "8am", close: "6pm" } },
     ]) {
       await expect(o.shops.save(bad)).rejects.toMatchObject({ code: "BAD_REQUEST" });
     }

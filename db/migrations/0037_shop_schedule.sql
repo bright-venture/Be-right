@@ -1,0 +1,1 @@
+ALTER TABLE "parts_shops" ADD COLUMN "schedule" jsonb;

@@ -6,6 +6,7 @@ import { telLink } from "@/lib/contact";
 import { DirectionsLinks } from "@/components/map/DirectionsLinks";
 import { distanceKm } from "@contracts/geo";
 import { OTHER_SERVICE } from "@contracts/services";
+import { formatSchedule } from "@contracts/shops";
 
 const ShopsMap = lazy(() => import("@/components/map/ShopsMap"));
 
@@ -69,9 +70,9 @@ export function PartsShopsNearJob({
                       {s.km !== null && <span className="shrink-0 text-xs font-bold text-navy/70">{km(s.km)}</span>}
                     </div>
                     <p className="text-xs text-navy/70">{s.address}</p>
-                    {s.hours && (
+                    {(s.schedule || s.hours) && (
                       <p className="flex items-center gap-1 text-xs text-navy/70">
-                        <Clock className="h-3.5 w-3.5 shrink-0" /> {s.hours}
+                        <Clock className="h-3.5 w-3.5 shrink-0" /> {s.schedule ? formatSchedule(s.schedule, lang) : s.hours}
                       </p>
                     )}
                     {s.note && <p className="rounded-lg bg-navy/5 px-3 py-2 text-xs text-navy/80">{s.note}</p>}

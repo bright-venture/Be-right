@@ -7,6 +7,7 @@ import { partsShops } from "../db/schema";
 import { isValidPin } from "@contracts/geo";
 import { isValidPhone } from "@contracts/phone";
 import { SERVICES_IN_ORDER } from "@contracts/services";
+import { isValidSchedule } from "@contracts/shops";
 
 const shopInput = z.object({
   name: z.string().trim().min(2).max(255),
@@ -16,7 +17,15 @@ const shopInput = z.object({
   lng: z.number().min(-180).max(180),
   /** Empty = every trade. */
   trades: z.array(z.enum(SERVICES_IN_ORDER as [string, ...string[]])).max(SERVICES_IN_ORDER.length),
-  hours: z.string().trim().max(255).optional(),
+  /** Opening hours picked from lists; null or absent: not given (an older shop keeps its typed hours). */
+  schedule: z
+    .object({
+      days: z.array(z.number().int().min(0).max(6)).min(1).max(7),
+      open: z.string().max(5).optional(),
+      close: z.string().max(5).optional(),
+      allDay: z.boolean().optional(),
+    })
+    .nullish(),
   note: z.string().trim().max(1000).optional(),
   active: z.boolean(),
 });
@@ -39,6 +48,7 @@ export const shopsRouter = createRouter({
         lng: partsShops.lng,
         trades: partsShops.trades,
         hours: partsShops.hours,
+        schedule: partsShops.schedule,
         note: partsShops.note,
       })
       .from(partsShops)
@@ -52,6 +62,15 @@ export const shopsRouter = createRouter({
   /** Admin: add a shop, or change one (`id`). */
   save: adminQuery.input(shopInput.extend({ id: z.number().int().optional() })).mutation(async ({ input }) => {
     if (!isValidPin(input.lat, input.lng)) throw new TRPCError({ code: "BAD_REQUEST", message: "Place the pin on the shop" });
+    if (input.schedule && !isValidSchedule(input.schedule)) {
+      throw new TRPCError({ code: "BAD_REQUEST", message: "Pick the days, and a closing time after the opening time" });
+    }
+    const schedule = input.schedule
+      ? {
+          days: [...new Set(input.schedule.days)].sort((a, b) => a - b),
+          ...(input.schedule.allDay ? { allDay: true } : { open: input.schedule.open, close: input.schedule.close }),
+        }
+      : null;
     const values = {
       name: input.name,
       phone: input.phone,
@@ -59,7 +78,9 @@ export const shopsRouter = createRouter({
       lat: input.lat,
       lng: input.lng,
       trades: [...new Set(input.trades)],
-      hours: input.hours || null,
+      schedule,
+      // Hours picked from the lists replace an older shop's typed hours.
+      ...(schedule && { hours: null }),
       note: input.note || null,
       active: input.active,
     };
