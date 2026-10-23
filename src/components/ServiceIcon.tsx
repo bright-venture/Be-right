@@ -99,15 +99,6 @@ export function ServiceIcon({
           <path d="M8 23c1-1.5 2-1.5 3 0M21 23c1-1.5 2-1.5 3 0" />
         </svg>
       );
-    case "appliance":
-      return (
-        <svg {...common}>
-          <rect x="7" y="3" width="18" height="26" rx="3" />
-          <circle cx="16" cy="17" r="6" />
-          <circle cx="16" cy="17" r="2" />
-          <path d="M11 7h4M20 7h1" />
-        </svg>
-      );
     case "waterproofing":
       return (
         <svg {...common}>
@@ -145,17 +136,6 @@ export function ServiceIcon({
           <path d="M22 11l4.5 1-1 5-5.1-1.1" />
           <path d="M11 16.7 10 22H5M5 18v9" />
           <path d="M25 4.5a6 6 0 0 1 3.5 4.5" />
-        </svg>
-      );
-    case "pest":
-      return (
-        <svg {...common}>
-          {/* bug */}
-          <ellipse cx="16" cy="18.5" rx="6" ry="8" />
-          <circle cx="16" cy="7.5" r="3" />
-          <path d="M14 5 11 2M18 5l3-3" />
-          <path d="M16 10.5v16" />
-          <path d="M10 14H5M10 19H4M11 24l-4 3M22 14h5M22 19h6M21 24l4 3" />
         </svg>
       );
     case "other":

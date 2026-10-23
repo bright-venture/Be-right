@@ -512,40 +512,6 @@ export const CATEGORIES: ServiceCategory[] = [
     ],
   },
   {
-    id: "appliance",
-    name: { en: "Appliance repair", ar: "إصلاح أجهزة" },
-    blurb: {
-      en: "Washers, fridges, ovens and household appliances.",
-      ar: "الغسالات والثلاجات والأفران والأجهزة المنزلية.",
-    },
-    questions: [
-      {
-        id: "appliance",
-        kind: "choice",
-        label: { en: "Which appliance?", ar: "أي جهاز؟" },
-        options: [
-          { value: "washer", label: { en: "Washing machine", ar: "غسالة" } },
-          { value: "fridge", label: { en: "Fridge / freezer", ar: "ثلاجة / مجمّد" } },
-          { value: "oven", label: { en: "Oven / cooker", ar: "فرن / موقد" } },
-          { value: "dishwasher", label: { en: "Dishwasher", ar: "غسالة صحون" } },
-          { value: "other", label: { en: "Other", ar: "غير ذلك" } },
-        ],
-      },
-      {
-        id: "symptom",
-        kind: "choice",
-        label: { en: "What is it doing?", ar: "ما الذي يحدث؟" },
-        options: [
-          { value: "dead", label: { en: "No power at all", ar: "لا يعمل إطلاقاً" } },
-          { value: "not_working", label: { en: "Runs but not working right", ar: "يعمل لكن ليس بشكل صحيح" } },
-          { value: "leak", label: { en: "Leaking water", ar: "يسرّب الماء" } },
-          { value: "noise", label: { en: "Loud / strange noise", ar: "صوت عالٍ / غريب" } },
-          { value: "smell", label: { en: "Burning smell", ar: "رائحة احتراق" } },
-        ],
-      },
-    ],
-  },
-  {
     id: "waterproofing",
     name: { en: "Waterproofing", ar: "عزل مائي" },
     blurb: {
@@ -709,49 +675,6 @@ export const CATEGORIES: ServiceCategory[] = [
     ],
   },
   {
-    id: "pest",
-    name: { en: "Pest control", ar: "مكافحة آفات" },
-    blurb: {
-      en: "Cockroaches, ants, mice and rats, bed bugs and termites.",
-      ar: "الصراصير، والنمل، والفئران والجرذان، وبق الفراش، والنمل الأبيض.",
-    },
-    questions: [
-      {
-        id: "pest",
-        kind: "choice",
-        label: { en: "What is the problem?", ar: "ما المشكلة؟" },
-        options: [
-          { value: "cockroaches", label: { en: "Cockroaches", ar: "صراصير" } },
-          { value: "ants", label: { en: "Ants", ar: "نمل" } },
-          { value: "rodents", label: { en: "Mice or rats", ar: "فئران أو جرذان" } },
-          { value: "bedbugs", label: { en: "Bed bugs", ar: "بق الفراش" } },
-          { value: "termites", label: { en: "Termites", ar: "نمل أبيض" } },
-          { value: "other", label: { en: "Something else", ar: "شيء آخر" } },
-        ],
-      },
-      {
-        id: "place",
-        kind: "choice",
-        label: { en: "Where?", ar: "أين؟" },
-        options: [
-          { value: "home", label: { en: "Home", ar: "منزل" } },
-          { value: "restaurant", label: { en: "Restaurant or kitchen", ar: "مطعم أو مطبخ" } },
-          { value: "business", label: { en: "Office or shop", ar: "مكتب أو محل" } },
-          { value: "building", label: { en: "Whole building", ar: "المبنى بالكامل" } },
-        ],
-      },
-      {
-        id: "level",
-        kind: "choice",
-        label: { en: "How often do you see them?", ar: "كم مرة تراها؟" },
-        options: [
-          { value: "sometimes", label: { en: "Now and then", ar: "من حين لآخر" } },
-          { value: "daily", label: { en: "Every day", ar: "كل يوم" } },
-        ],
-      },
-    ],
-  },
-  {
     id: "other",
     name: { en: "Other", ar: "أخرى" },
     blurb: { en: "Not on the list? Describe what you need and we find the right person.", ar: "غير موجود في القائمة؟ صِف ما تحتاجه ونجد الشخص المناسب." },
@@ -786,12 +709,10 @@ export const CATEGORY_TINT: Record<string, { bg: string; ink: string }> = {
   valet: { bg: "#EAEDFB", ink: "#3F55C0" },
   security: { bg: "#E6ECF6", ink: "#0C2B5C" },
   landscaping: { bg: "#E9F4E4", ink: "#3F7A2E" },
-  appliance: { bg: "#F9EBEF", ink: "#B0405F" },
   waterproofing: { bg: "#E2EFF6", ink: "#1C6E93" },
   installation: { bg: "#FCEEE3", ink: "#B4521A" },
   locksmith: { bg: "#F6F0D9", ink: "#86680F" },
   cameras: { bg: "#E9EAF3", ink: "#3A4270" },
-  pest: { bg: "#EDF3E0", ink: "#55701F" },
   other: { bg: "#ECEFF4", ink: "#0C2B5C" },
 };
 
@@ -831,7 +752,6 @@ export const TRADE_SERVICES = [
   "plumbing",
   "electrical",
   "ac",
-  "appliance",
   "carpentry",
   "painting",
   "waterproofing",
@@ -841,13 +761,13 @@ export const TRADE_SERVICES = [
 ];
 
 /** Services for running a place, shown together under "Facility Services". */
-export const FACILITY_SERVICES = ["cleaning", "security", "valet", "porter", "pest", "landscaping"];
+export const FACILITY_SERVICES = ["cleaning", "security", "valet", "porter", "landscaping"];
 
 export const FACILITY_GROUP: { name: LocalText; blurb: LocalText } = {
   name: { en: "Facility Services", ar: "خدمات المرافق" },
   blurb: {
-    en: "Cleaning, guards, event staff, porters, pest control and landscaping for homes, buildings and businesses.",
-    ar: "التنظيف والحراسة وطاقم المناسبات والحمّالون ومكافحة الآفات وتنسيق الحدائق للمنازل والمباني والشركات.",
+    en: "Cleaning, guards, event staff, porters and landscaping for homes, buildings and businesses.",
+    ar: "التنظيف والحراسة وطاقم المناسبات والحمّالون وتنسيق الحدائق للمنازل والمباني والشركات.",
   },
 };
 

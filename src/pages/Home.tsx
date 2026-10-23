@@ -81,13 +81,13 @@ export default function Home() {
   const trades = TRADE_SERVICES.map((id) => CATEGORY_MAP[id]).filter(Boolean);
   const facility = FACILITY_SERVICES.map((id) => CATEGORY_MAP[id]).filter(Boolean);
 
-  const renderTile = (c: (typeof trades)[number], i: number) => {
+  const renderTile = (c: (typeof trades)[number], i: number, wide = false) => {
     const tint = CATEGORY_TINT[c.id] ?? { bg: "#ECEFF4", ink: "#0C2B5C" };
     return (
       <Link
         key={c.id}
         to={`/book?cat=${c.id}`}
-        className="service-tile group relative flex h-full min-h-[168px] flex-col items-center justify-center gap-2.5 rounded-[26px] border-[1.5px] border-navy/12 bg-white px-2 py-5 text-center shadow-[0_3px_0_rgb(12_43_92/0.1)] transition-all duration-200 hover:-translate-y-1.5 hover:border-navy hover:shadow-[0_7px_0_rgb(12_43_92/0.9)] focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-flame active:translate-y-0 active:shadow-[0_2px_0_rgb(12_43_92/0.9)]"
+        className={`service-tile group relative flex h-full min-h-[168px] ${wide ? "col-span-2 md:col-span-1" : ""} flex-col items-center justify-center gap-2.5 rounded-[26px] border-[1.5px] border-navy/12 bg-white px-2 py-5 text-center shadow-[0_3px_0_rgb(12_43_92/0.1)] transition-all duration-200 hover:-translate-y-1.5 hover:border-navy hover:shadow-[0_7px_0_rgb(12_43_92/0.9)] focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-flame active:translate-y-0 active:shadow-[0_2px_0_rgb(12_43_92/0.9)]`}
       >
         <span className="ghost-num absolute end-3 top-2 text-xl">
           {String(i + 1).padStart(2, "0")}
@@ -232,13 +232,13 @@ export default function Home() {
             <p className="max-w-sm text-[13px] leading-relaxed text-navy/70">{p(t.services.sub)}</p>
           </div>
 
-          {/* The ten trades: two full rows of five (five rows of two on phones). */}
-          <div className="mt-8 grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-5">
-            {trades.map((c, i) => renderTile(c, i))}
+          {/* The nine trades: three full rows of three (on phones two per row, the last one wide). */}
+          <div className="mt-8 grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3">
+            {trades.map((c, i) => renderTile(c, i, trades.length % 2 === 1 && i === trades.length - 1))}
           </div>
 
-          {/* Facility Services: the six services for running a place, as one group
-              (one row of six on computers, two of three on tablets, three of two on phones). */}
+          {/* Facility Services: the five services for running a place, as one group
+              (one row of five from tablets up; on phones two per row, the last one wide). */}
           <div className="mt-4 rounded-[30px] border-[1.5px] border-navy/12 bg-[#F1F5FB] p-3 sm:mt-5 sm:p-5">
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 px-1 pb-4 pt-1">
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-navy text-white">
@@ -249,8 +249,8 @@ export default function Home() {
                 <p className="text-[13px] leading-snug text-navy/70">{p(FACILITY_GROUP.blurb)}</p>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-6">
-              {facility.map((c, i) => renderTile(c, trades.length + i))}
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-5">
+              {facility.map((c, i) => renderTile(c, trades.length + i, facility.length % 2 === 1 && i === facility.length - 1))}
             </div>
           </div>
 

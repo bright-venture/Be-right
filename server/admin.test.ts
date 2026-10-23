@@ -367,7 +367,7 @@ describe("safety nets", () => {
       name: "Sami",
       phone: "+961 76 444 555",
       email: "sami@example.com",
-      trade: "pest",
+      trade: "landscaping",
       districts: ["beirut", "metn"],
       experience: "3-5",
       hasTools: true,

@@ -8,7 +8,7 @@ import { DocumentUpload } from "@/components/DocumentUpload";
 import { AgreeCheckbox } from "@/components/AgreeCheckbox";
 import { useI18n } from "@/i18n";
 import { trpc } from "@/providers/trpc";
-import { CATEGORY_MAP, SERVICES_IN_ORDER, type LocalText } from "@contracts/services";
+import { CATEGORY_MAP, FACILITY_GROUP, FACILITY_SERVICES, TRADE_SERVICES, type LocalText } from "@contracts/services";
 import { isValidPhone } from "@contracts/phone";
 import { DistrictPicker } from "@/components/DistrictPicker";
 import type { District } from "@contracts/districts";
@@ -248,13 +248,20 @@ export default function Join() {
                     {p(t.join.trade)}
                     <Req />
                   </p>
-                  {/* Every trade as an equal tile, icon above its name, in a fixed grid: 2 per row on
-                      phones, 4 from tablets up. Sixteen trades make full rows either way, and a long name
-                      can never widen its tile and push the others out of line. */}
-                  <div className="mt-3 grid auto-rows-fr grid-cols-2 gap-2 md:grid-cols-4">
-                    {SERVICES_IN_ORDER.map((id) => CATEGORY_MAP[id])
+                  {/* Every trade as an equal tile, icon above its name, in two groups like the booking
+                      page: the nine trades in rows of three, the five facility services in one row (on
+                      phones two per row, the last tile of an odd group wide). A long name can never
+                      widen its tile and push the others out of line. */}
+                  {[
+                    { ids: TRADE_SERVICES, cols: "md:grid-cols-3", title: null },
+                    { ids: FACILITY_SERVICES, cols: "md:grid-cols-5", title: FACILITY_GROUP.name },
+                  ].map((group) => (
+                  <div key={group.cols}>
+                  {group.title && <p className="mb-2 mt-4 text-sm font-bold text-navy/70">{p(group.title)}</p>}
+                  <div className={`grid auto-rows-fr grid-cols-2 gap-2 ${group.title ? "" : "mt-3"} ${group.cols}`}>
+                    {group.ids.map((id) => CATEGORY_MAP[id])
                       .filter(Boolean)
-                      .map((c) => (
+                      .map((c, i, all) => (
                         <button
                           key={c.id}
                           type="button"
@@ -262,7 +269,7 @@ export default function Join() {
                           onClick={() => setTrade(c.id)}
                           // The tile is the size the name is measured against (below).
                           style={{ containerType: "inline-size" }}
-                          className={`flex min-h-[84px] min-w-0 flex-col items-center justify-center gap-2 rounded-2xl border-2 px-1.5 py-3 text-center transition-colors ${
+                          className={`${all.length % 2 === 1 && i === all.length - 1 ? "col-span-2 md:col-span-1" : ""} flex min-h-[84px] min-w-0 flex-col items-center justify-center gap-2 rounded-2xl border-2 px-1.5 py-3 text-center transition-colors ${
                             trade === c.id
                               ? "border-navy bg-navy text-paper"
                               : "border-navy/20 bg-white text-navy hover:border-navy"
@@ -283,6 +290,8 @@ export default function Join() {
                         </button>
                       ))}
                   </div>
+                  </div>
+                  ))}
                 </div>
 
                 <div>

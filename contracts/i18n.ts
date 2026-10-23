@@ -144,8 +144,8 @@ export const t = {
     kicker: { en: "(Services)", ar: "(خدماتنا)" },
     title: { en: "One call. Every trade.", ar: "كل الخدمات في مكان واحد." },
     sub: {
-      en: "Sixteen services for homes, restaurants, offices, buildings and businesses. Each one launches only when qualified workers, tools and service hours are ready.",
-      ar: "١٦ خدمة للمنازل والمطاعم والمكاتب والمباني والشركات. لا نطلق أي خدمة إلا عندما يكون لدينا فريق مؤهل ومعدات جاهزة.",
+      en: "Fourteen services for homes, restaurants, offices, buildings and businesses. Each one launches only when qualified workers, tools and service hours are ready.",
+      ar: "١٤ خدمة للمنازل والمطاعم والمكاتب والمباني والشركات. لا نطلق أي خدمة إلا عندما يكون لدينا فريق مؤهل ومعدات جاهزة.",
     },
     bookThis: { en: "Book", ar: "احجز" },
   },
