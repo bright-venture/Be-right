@@ -1604,6 +1604,14 @@ export const t = {
     dispatchTitle: { en: "Priority dispatch", ar: "أولوية في الإرسال" },
     close: { en: "Close", ar: "إغلاق" },
     whereQ: { en: "Where are you?", ar: "أين أنت؟" },
+    safetyTitle: { en: "Stay safe now", ar: "حافظ على سلامتك الآن" },
+    whileYouWait: { en: "While you wait", ar: "أثناء الانتظار" },
+    questionsTitle: { en: "Quick questions", ar: "أسئلة سريعة" },
+    questionsHint: {
+      en: "They help the technician come prepared. Skip any you're not sure about.",
+      ar: "تساعد الفنّي على الحضور مستعداً. تخطَّ أي سؤال لست متأكداً منه.",
+    },
+    answersTitle: { en: "The customer answered", ar: "أجاب العميل" },
     whereHint: {
       en: "Share your location, send it, then call us: our team will already know where to go.",
       ar: "شارك موقعك وأرسله، ثم اتصل بنا: سيعرف فريقنا مسبقاً إلى أين يتوجّه.",

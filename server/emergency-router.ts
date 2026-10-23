@@ -4,7 +4,7 @@ import { TRPCError } from "@trpc/server";
 import { createRouter, publicQuery, specialistQuery } from "./middleware";
 import { getDb } from "./queries/connection";
 import { emergencyRequests, serviceRequests, users } from "../db/schema";
-import { EMERGENCY_PROBLEM_MAP } from "@contracts/emergency";
+import { cleanAnswers, EMERGENCY_PROBLEM_MAP } from "@contracts/emergency";
 import { isValidPin } from "@contracts/geo";
 import { VISIT_FEE_USD } from "@contracts/legal";
 import { isValidPhone } from "@contracts/phone";
@@ -27,10 +27,13 @@ export const emergencyRouter = createRouter({
         lat: z.number().min(-90).max(90),
         lng: z.number().min(-180).max(180),
         phone: z.string().trim().max(32).refine(isValidPhone, "Invalid phone number"),
+        /** Answers to the emergency's quick questions (optional: speed first). */
+        answers: z.record(z.string().max(32), z.string().max(32)).optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
       if (!EMERGENCY_PROBLEM_MAP[input.problem]) throw new TRPCError({ code: "BAD_REQUEST", message: "Unknown emergency" });
+      const answers = cleanAnswers(input.problem, input.answers);
       if (!isValidPin(input.lat, input.lng)) throw new TRPCError({ code: "BAD_REQUEST", message: "Place the pin on your address" });
       await rateLimit(`emergency:ip:${clientIp(ctx.req)}`, LIMITS.emergencyPerIp);
       const [created] = await getDb()
@@ -41,6 +44,7 @@ export const emergencyRouter = createRouter({
           lat: input.lat,
           lng: input.lng,
           phone: input.phone,
+          answers: Object.keys(answers).length ? answers : null,
         })
         .returning({ id: emergencyRequests.id });
       await notify.emergencyReported(created.id);

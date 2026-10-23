@@ -3,7 +3,7 @@
 // never undoes or blocks the change itself.
 import { and, count, eq, inArray } from "drizzle-orm";
 import { emergencyRequests, requestEvents, serviceRequests, technicianApplications, users } from "@db/schema";
-import { EMERGENCY_PROBLEM_MAP } from "@contracts/emergency";
+import { answerLines, EMERGENCY_PROBLEM_MAP } from "@contracts/emergency";
 import { directionsLinks } from "@contracts/geo";
 import { CATEGORY_MAP, type LocalText } from "@contracts/services";
 import { DISTRICT_INFO } from "@contracts/districts";
@@ -573,6 +573,15 @@ export const notify = {
           ),
           ...(sent.phone ? [both(`Phone: ${sent.phone}.`, `الهاتف: ${sent.phone}.`)] : []),
           ...(sent.address ? [both(`Address: ${sent.address}.`, `العنوان: ${sent.address}.`)] : []),
+          // What the customer answered; the urgent answers first, marked.
+          ...answerLines(sent.problem, sent.answers)
+            .sort((a, b) => Number(b.alert) - Number(a.alert))
+            .map((a) =>
+              both(
+                `${a.alert ? "(!) " : ""}${a.question.en} ${a.answer.en}.`,
+                `${a.alert ? "(!) " : ""}${a.question.ar} ${a.answer.ar}.`,
+              ),
+            ),
           both(`Map: ${map}`, `الخريطة: ${map}`),
         ],
         path: "/dashboard?tab=emergencies",

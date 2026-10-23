@@ -324,6 +324,8 @@ export const emergencyRequests = pgTable(
     /** Where to reach the customer. Older emergencies have address details instead. */
     phone: varchar("phone", { length: 32 }),
     address: text("address"),
+    /** The customer's answers to its quick questions (contracts/emergency.ts), by question id. */
+    answers: jsonb("answers").$type<Record<string, string>>(),
     status: varchar("status", { length: 16 }).$type<EmergencyStatus>().default("open").notNull(),
     requestId: integer("request_id").references(() => serviceRequests.id, { onDelete: "set null" }),
     handledBy: integer("handled_by").references(() => users.id, { onDelete: "set null" }),

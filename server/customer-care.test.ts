@@ -271,6 +271,27 @@ describe("emergency calls", () => {
     await rejected(s.emergency.create(call({ emergencyId: id })));
   });
 
+  it("carry the customer's quick answers to the specialist, the urgent ones flagged, nothing invented", async () => {
+    state.sent.length = 0;
+    const { id } = await (await callerFor()).emergency.report({
+      problem: "leak",
+      lat: 51.5,
+      lng: -0.12,
+      phone: "+44 20 7946 0200",
+      // a real answer, a wrong value, a question this emergency doesn't ask
+      answers: { nearPower: "yes", valve: "maybe", burning: "yes", where: "kitchen" },
+    });
+    const waiting = (await (await callerFor(admin)).emergency.waiting()).find((e) => e.id === id);
+    expect(waiting?.answers).toEqual({ nearPower: "yes", where: "kitchen" });
+    const email = state.sent.find((m) => m.to.includes(SPECIALIST_EMAIL));
+    expect(email?.text).toContain("(!) Is the water near sockets, appliances or the electrical panel? Yes.");
+    expect(email?.text).toContain("Where is the leak? Kitchen.");
+
+    // No answers at all is fine: speed comes first.
+    const { id: quick } = await (await callerFor()).emergency.report({ problem: "locked-out", lat: 51.5, lng: -0.12, phone: "+44 20 7946 0201" });
+    expect((await (await callerFor(admin)).emergency.waiting()).find((e) => e.id === quick)?.answers).toBeNull();
+  });
+
   it("can be sent by anyone, for a known emergency and a real place, and dismissed by staff", async () => {
     const visitor = await callerFor();
     const phone = "+44 20 7946 0100";

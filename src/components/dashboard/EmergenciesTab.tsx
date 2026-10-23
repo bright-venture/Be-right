@@ -12,7 +12,7 @@ import { isValidPhone } from "@contracts/phone";
 import { CATEGORIES, CATEGORY_MAP, type RequestStatus } from "@contracts/services";
 import { QUOTE_AMOUNT_PATTERN, todayHere } from "@contracts/workflow";
 import { useLiveQueue } from "./useLiveQueue";
-import { EMERGENCY_PROBLEM_MAP } from "@contracts/emergency";
+import { answerLines, EMERGENCY_PROBLEM_MAP } from "@contracts/emergency";
 import { DISTRICT_INFO, worksIn } from "@contracts/districts";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -386,6 +386,7 @@ function OpenEmergencies({ onOpen }: { onOpen: (prefill: Prefill) => void }) {
           {sentList.map((e) => {
             const info = EMERGENCY_PROBLEM_MAP[e.problem];
             const label = info ? p(info.label) : e.problem;
+            const answered = answerLines(e.problem, e.answers).sort((a, b) => Number(b.alert) - Number(a.alert));
             return (
               <li key={`sent-${e.id}`} className="relative overflow-hidden rounded-2xl border border-flame/40 bg-flame/[0.03] shadow-[0_1px_2px_rgb(12_43_92/0.06)]">
                 <span aria-hidden className="absolute inset-y-0 start-0 w-1 bg-flame" />
@@ -410,6 +411,16 @@ function OpenEmergencies({ onOpen }: { onOpen: (prefill: Prefill) => void }) {
                         <span className="line-clamp-1">{e.address || p(t.emergency.pinOnly)}</span>
                       </p>
                       <p className="text-xs text-navy/55">{timeAgo(e.createdAt, lang)}</p>
+                      {answered.length > 0 && (
+                        <ul className="mt-2 flex flex-col gap-0.5 text-xs" aria-label={p(t.emergency.answersTitle)}>
+                          {answered.map((a) => (
+                            <li key={a.id} className={a.alert ? "font-bold text-red-700" : "text-navy/75"}>
+                              {a.alert && "⚠ "}
+                              {p(a.question)} <span className="font-bold">{p(a.answer)}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center gap-2 lg:justify-end">
@@ -421,7 +432,8 @@ function OpenEmergencies({ onOpen }: { onOpen: (prefill: Prefill) => void }) {
                           label,
                           createdAt: e.createdAt,
                           category: info?.category ?? "",
-                          problem: label,
+                          // The answers go into the job's notes for the technician.
+                          problem: [label, ...answered.map((a) => `${p(a.question)} ${p(a.answer)}`)].join("\n"),
                           pin: { lat: e.lat, lng: e.lng },
                           phone: e.phone ?? "",
                           address: e.address ?? "",
