@@ -23,6 +23,7 @@ function hasWebGL() {
  */
 export function addBaseTiles(map: L.Map) {
   map.attributionControl?.setPrefix(false);
+  foldCredit(map);
   const plain = () => L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: OSM_CREDIT }).addTo(map);
   if (!hasWebGL()) {
     plain();
@@ -37,6 +38,41 @@ export function addBaseTiles(map: L.Map) {
     .catch(() => {
       if (!removed) plain();
     });
+}
+
+/** How long the credit stays open when a map appears, unless the person touches the map first. */
+const CREDIT_OPEN_MS = 5000;
+
+/**
+ * The credit can't go (OpenStreetMap's licence), but like most map apps it shows when the map
+ * opens, then folds into a small "i" after a few seconds or once the person uses the map
+ * (OSMF guidelines: visible for a while without anyone having to tap). Tapping "i" opens it.
+ */
+function foldCredit(map: L.Map) {
+  const box = map.attributionControl?.getContainer();
+  if (!box) return;
+  box.classList.add("map-credit");
+  const fold = () => box.classList.add("is-folded");
+  const timer = window.setTimeout(fold, CREDIT_OPEN_MS);
+  // Only the person's own touches count, not the map moving itself into place.
+  const used = (e: Event) => {
+    if (box.contains(e.target as Node)) return;
+    window.clearTimeout(timer);
+    fold();
+  };
+  const mapBox = map.getContainer();
+  mapBox.addEventListener("pointerdown", used);
+  mapBox.addEventListener("wheel", used, { passive: true });
+  box.addEventListener("click", (e) => {
+    if (!box.classList.contains("is-folded")) return;
+    e.preventDefault(); // the first tap opens it; links work once it's open
+    box.classList.remove("is-folded");
+  });
+  map.once("unload", () => {
+    window.clearTimeout(timer);
+    mapBox.removeEventListener("pointerdown", used);
+    mapBox.removeEventListener("wheel", used);
+  });
 }
 
 /** Brand-coloured pins drawn with HTML, so no marker image files are needed. */
