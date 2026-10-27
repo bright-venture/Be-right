@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "441414454565",
+    "project_id": "be-right-9847a",
+    "storage_bucket": "be-right-9847a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:441414454565:android:78afbf7b0ace725001decc",
+        "android_client_info": {
+          "package_name": "com.berightbright.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAd3XiNx6htEWkXh6W5noJn976GD6VUIP0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
