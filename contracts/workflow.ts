@@ -7,6 +7,22 @@ export const TIME_SLOTS = ["morning", "afternoon", "evening"] as const;
 export type TimeSlot = (typeof TIME_SLOTS)[number];
 
 /**
+ * Services booked by the hour: the customer picks from when to when (on the hour, between
+ * HOURS_OPEN and HOURS_CLOSE) instead of a time of day; the time of day follows the start.
+ */
+export const HOURLY_SERVICES: readonly string[] = ["cleaning", "porter"];
+export const HOURS_OPEN = 8;
+export const HOURS_CLOSE = 21;
+export const isHourlyService = (category: string) => HOURLY_SERVICES.includes(category);
+
+export function isValidHours(from: number, to: number) {
+  return Number.isInteger(from) && Number.isInteger(to) && from >= HOURS_OPEN && to <= HOURS_CLOSE && from < to;
+}
+
+/** The time of day a start hour falls in (Morning 8–12, Afternoon 12–5, Evening 5–9). */
+export const slotOfHour = (hour: number): TimeSlot => (hour < 12 ? "morning" : hour < 17 ? "afternoon" : "evening");
+
+/**
  * Allowed status changes and who may make them.
  *   specialist: admin dashboard · customer: request owner · technician: assigned technician
  */

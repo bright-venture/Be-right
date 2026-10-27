@@ -20,6 +20,7 @@ import {
   type VisitFeeReason,
 } from "@contracts/workflow";
 import { cancelPending } from "./queueMeta";
+import { visitTime } from "@contracts/visitTime";
 import { DISTRICT_INFO, worksIn } from "@contracts/districts";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -139,7 +140,7 @@ export function RequestDetail({
             </p>
             <p className="mt-1 text-navy/80">
               {r.preferredDate} ·{" "}
-              {p({ morning: t.book.slotMorning, afternoon: t.book.slotAfternoon, evening: t.book.slotEvening }[r.timeSlot as "morning"] ?? { en: r.timeSlot, ar: r.timeSlot })}
+              {p(visitTime(r))}
             </p>
           </section>
 

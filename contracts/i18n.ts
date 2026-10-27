@@ -384,6 +384,11 @@ export const t = {
     slotMorning: { en: "Morning (8–12)", ar: "صباحاً (٨–١٢)" },
     slotAfternoon: { en: "Afternoon (12–5)", ar: "بعد الظهر (١٢–٥)" },
     slotEvening: { en: "Evening (5–9)", ar: "مساءً (٥–٩)" },
+    // services booked by the hour (Cleaning, Porter)
+    hoursTitle: { en: "Which hours?", ar: "في أي ساعات؟" },
+    hoursFrom: { en: "From", ar: "من" },
+    hoursTo: { en: "To", ar: "إلى" },
+    hoursPick: { en: "Choose", ar: "اختر" },
     area: { en: "Area / city", ar: "المنطقة / المدينة" },
     areaPh: { en: "Your city or neighbourhood", ar: "مدينتك أو حيّك" },
     address: { en: "Address details", ar: "تفاصيل العنوان" },

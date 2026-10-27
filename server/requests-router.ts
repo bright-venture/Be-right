@@ -21,6 +21,9 @@ import {
   isValidVisitDate,
   TIME_SLOTS,
   earliestTodayAnywhere,
+  isHourlyService,
+  isValidHours,
+  slotOfHour,
   validateAnswers,
   VISIT_FEE_USD,
 } from "@contracts/workflow";
@@ -83,6 +86,8 @@ export const requestsRouter = createRouter({
           .refine((answers) => Object.keys(answers).length <= 40, "Too many answers"),
         preferredDate: z.string().max(10),
         timeSlot: z.enum(TIME_SLOTS),
+        /** Services booked by the hour (Cleaning, Porter): from when to when, e.g. 9 to 13. */
+        hours: z.object({ from: z.number().int(), to: z.number().int() }).optional(),
         area: z.string().trim().min(1).max(255),
         address: z.string().trim().min(1).max(1000),
         phone: z.string().trim().max(64).refine(isValidPhone, "Invalid phone number"),
@@ -108,6 +113,9 @@ export const requestsRouter = createRouter({
       if (!isValidPin(input.lat, input.lng)) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "Place the pin on your address" });
       }
+      if (input.hours && (!isHourlyService(input.category) || !isValidHours(input.hours.from, input.hours.to))) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Pick a start and an end between 8:00 and 21:00" });
+      }
       checkMedia(ctx.user.authId, input.media);
       await rateLimit(`request:user:${ctx.user.id}`, LIMITS.requestPerUser);
 
@@ -120,7 +128,10 @@ export const requestsRouter = createRouter({
             answers: JSON.stringify(input.answers),
             status: "submitted",
             preferredDate: input.preferredDate,
-            timeSlot: input.timeSlot,
+            // By the hour: the time of day follows the start (lists, filters and older screens use it).
+            timeSlot: input.hours ? slotOfHour(input.hours.from) : input.timeSlot,
+            startHour: input.hours?.from ?? null,
+            endHour: input.hours?.to ?? null,
             area: input.area,
             district: districtAt(input.lat, input.lng),
             address: input.address,

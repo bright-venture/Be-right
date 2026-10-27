@@ -8,7 +8,7 @@ import { directionsLinks } from "@contracts/geo";
 import { CATEGORY_MAP, workerOf, type LocalText } from "@contracts/services";
 import { DISTRICT_INFO } from "@contracts/districts";
 import { arabicDays, WORKMANSHIP_GUARANTEE_DAYS } from "@contracts/legal";
-import { t } from "@contracts/i18n";
+import { visitTime } from "@contracts/visitTime";
 import { getDb } from "./queries/connection";
 import { specialistOf } from "./lib/serviceSpecialists";
 import { env } from "./lib/env";
@@ -153,12 +153,7 @@ function describe(job: Job) {
       month: "long",
       timeZone: "UTC",
     }).format(new Date(`${r.preferredDate}T00:00:00Z`));
-  const slots: Record<string, LocalText> = {
-    morning: t.book.slotMorning,
-    afternoon: t.book.slotAfternoon,
-    evening: t.book.slotEvening,
-  };
-  const slot = local(slots[r.timeSlot], r.timeSlot);
+  const slot = visitTime(r);
   return {
     id: r.id,
     category: local(CATEGORY_MAP[r.category]?.name, r.category),

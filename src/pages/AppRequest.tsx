@@ -16,6 +16,7 @@ import { useRoleGate } from "@/hooks/useRoleGate";
 import { trpc } from "@/providers/trpc";
 import { formatDay, formatMoment, formatVisitDay } from "@/lib/time";
 import { COMPANY } from "@contracts/legal";
+import { visitTime } from "@contracts/visitTime";
 import {
   CATEGORY_MAP,
   CATEGORY_TINT,
@@ -123,11 +124,6 @@ export default function AppRequest() {
   const tint = CATEGORY_TINT[r.category] ?? { bg: "#ECEFF4", ink: "#0C2B5C" };
   const price = r.guaranteeFor && r.quoteAmount === "0" ? p(t.requests.free) : r.quoteAmount ? `$${r.quoteAmount}` : null;
   const step = STATUS_ORDER.indexOf(status);
-  const slot: Record<string, string> = {
-    morning: p(t.book.slotMorning),
-    afternoon: p(t.book.slotAfternoon),
-    evening: p(t.book.slotEvening),
-  };
   /** When the request reached a step (latest event for it). */
   const reachedAt = (s: RequestStatus) => events.find((e) => e.status === s)?.createdAt;
   const error = cancel.error ?? approve.error ?? requestCancel.error;
@@ -172,7 +168,7 @@ export default function AppRequest() {
             <div className="min-w-0">
               <p className="text-xs text-navy/60">{p(t.app.visit)}</p>
               <p className="text-sm font-bold text-navy">
-                {formatVisitDay(r.preferredDate, lang)} · {slot[r.timeSlot] ?? r.timeSlot}
+                {formatVisitDay(r.preferredDate, lang)} · {p(visitTime(r))}
               </p>
             </div>
           </div>

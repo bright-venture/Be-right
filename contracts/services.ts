@@ -335,16 +335,6 @@ export const CATEGORIES: ServiceCategory[] = [
         ],
       },
       {
-        id: "duration",
-        kind: "choice",
-        label: { en: "For how long?", ar: "لأي مدة؟" },
-        options: [
-          { value: "hours", label: { en: "A few hours", ar: "بضع ساعات" } },
-          { value: "day", label: { en: "Full day", ar: "يوم كامل" } },
-          { value: "days", label: { en: "Several days", ar: "عدة أيام" } },
-        ],
-      },
-      {
         id: "floors",
         kind: "choice",
         label: { en: "Stairs or elevator?", ar: "درج أم مصعد؟" },

@@ -13,6 +13,8 @@ export type DraftFields = {
   answers: Record<string, string>;
   date: string;
   slot: string;
+  /** Services booked by the hour: from when to when. */
+  hours?: { from: number | ""; to: number | "" };
   area: string;
   address: string;
   phone: string;

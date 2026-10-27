@@ -288,6 +288,13 @@
       "when": 1793092781760,
       "tag": "0040_push_devices",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1793105555024,
+      "tag": "0041_visit_hours",
+      "breakpoints": true
     }
   ]
 }

@@ -94,6 +94,9 @@ export const serviceRequests = pgTable(
     status: requestStatus("status").default("submitted").notNull(),
     preferredDate: varchar("preferred_date", { length: 32 }).notNull(),
     timeSlot: varchar("time_slot", { length: 32 }).notNull(),
+    /** Services booked by the hour (Cleaning, Porter): from when to when, e.g. 9 and 13. */
+    startHour: integer("start_hour"),
+    endHour: integer("end_hour"),
     area: varchar("area", { length: 255 }).notNull(),
     /** From the map pin (server/lib/districts.ts); null without a pin or outside Lebanon. */
     district: varchar("district", { length: 32 }).$type<District>(),

@@ -10,6 +10,7 @@ import { useI18n } from "@/i18n";
 import { useRoleGate } from "@/hooks/useRoleGate";
 import { trpc } from "@/providers/trpc";
 import { formatDay, formatVisitDay } from "@/lib/time";
+import { visitTime } from "@contracts/visitTime";
 import { CATEGORY_MAP, CATEGORY_TINT, STATUS_ORDER, type RequestStatus } from "@contracts/services";
 
 /** Requests that are finished one way or another: they go under "Past". */
@@ -34,11 +35,6 @@ export default function AppRequests() {
   const active = rows.filter((r) => !CLOSED.includes(r.status as RequestStatus));
   const past = rows.filter((r) => CLOSED.includes(r.status as RequestStatus));
   const shown = tab === "active" ? active : past;
-  const slot: Record<string, string> = {
-    morning: p(t.book.slotMorning),
-    afternoon: p(t.book.slotAfternoon),
-    evening: p(t.book.slotEvening),
-  };
 
   return (
     <div className="flex min-h-screen flex-col bg-paper">
@@ -123,7 +119,7 @@ export default function AppRequests() {
                         <span className="text-xs font-bold text-navy/50">#{r.id}</span>
                       </span>
                       <span className="mt-0.5 block text-xs text-navy/60">
-                        {p(t.requests.preferred)}: {formatVisitDay(r.preferredDate, lang)} · {slot[r.timeSlot] ?? r.timeSlot}
+                        {p(t.requests.preferred)}: {formatVisitDay(r.preferredDate, lang)} · {p(visitTime(r))}
                       </span>
                       <span className="block text-xs text-navy/60">
                         {p(t.requests.requestedOn)}: {formatDay(r.createdAt, lang)}

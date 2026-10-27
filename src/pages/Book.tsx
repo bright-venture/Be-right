@@ -40,13 +40,19 @@ import {
 } from "@contracts/services";
 import {
   answersFromLink,
+  HOURS_CLOSE,
+  HOURS_OPEN,
+  isHourlyService,
+  isValidHours,
   isValidVisitDate,
   MAX_BOOKING_FILES,
   MAX_BOOKING_VIDEOS,
+  slotOfHour,
   TIME_SLOTS,
   todayHere,
   type TimeSlot,
 } from "@contracts/workflow";
+import { hourText, hoursCount, hoursText } from "@contracts/visitTime";
 import { shrinkImage } from "@/lib/shrinkImage";
 import { MEDIA_ACCEPT } from "@contracts/uploads";
 
@@ -99,6 +105,9 @@ export default function Book() {
   const [slot, setSlot] = useState<TimeSlot | "">(
     TIME_SLOTS.includes(draft?.slot as TimeSlot) ? (draft!.slot as TimeSlot) : "",
   );
+  // Services booked by the hour (Cleaning, Porter): from when to when.
+  const [fromHour, setFromHour] = useState<number | "">(draft?.hours?.from ?? "");
+  const [toHour, setToHour] = useState<number | "">(draft?.hours?.to ?? "");
   const [area, setArea] = useState(draft?.area ?? (params.get("area") ?? "").trim().slice(0, 255));
   const [address, setAddress] = useState(draft?.address ?? "");
   const [phone, setPhone] = useState(draft?.phone ?? "");
@@ -137,8 +146,10 @@ export default function Book() {
   const phoneInvalid = contactPhone.trim() !== "" && !isValidPhone(contactPhone);
   // A draft saved yesterday can carry yesterday's date.
   const dateInvalid = date !== "" && !isValidVisitDate(date, todayHere());
+  const hourly = isHourlyService(category);
+  const hoursOk = fromHour !== "" && toHour !== "" && isValidHours(fromHour, toHour);
   const detailsReady =
-    !!date && !dateInvalid && !!slot && !!area.trim() && !!address.trim() && isValidPhone(contactPhone) && !!pin && isValidPin(pin.lat, pin.lng);
+    !!date && !dateInvalid && (hourly ? hoursOk : !!slot) && !!area.trim() && !!address.trim() && isValidPhone(contactPhone) && !!pin && isValidPin(pin.lat, pin.lng);
 
   /* ---------- draft persistence ---------- */
   const filesRestored = useRef(false);
@@ -161,8 +172,8 @@ export default function Book() {
 
   useEffect(() => {
     if (doneId !== null || !category) return;
-    saveDraftFields({ step, category, answers, date, slot, area, address, phone, notes, pin });
-  }, [doneId, step, category, answers, date, slot, area, address, phone, notes, pin]);
+    saveDraftFields({ step, category, answers, date, slot, hours: { from: fromHour, to: toHour }, area, address, phone, notes, pin });
+  }, [doneId, step, category, answers, date, slot, fromHour, toHour, area, address, phone, notes, pin]);
 
   useEffect(() => {
     if (filesRestored.current && doneId === null) void saveDraftFiles(media.map((m) => m.file));
@@ -232,7 +243,9 @@ export default function Book() {
         category,
         answers,
         preferredDate: date,
-        timeSlot: slot as TimeSlot, // the "Next" button requires a slot
+        // the "Next" button requires a slot, or valid hours for a service booked by the hour
+        timeSlot: hourly && hoursOk ? slotOfHour(fromHour as number) : (slot as TimeSlot),
+        hours: hourly && hoursOk ? { from: fromHour as number, to: toHour as number } : undefined,
         area,
         address,
         lat: pin!.lat, // the "Next" button requires a pin
@@ -525,6 +538,44 @@ export default function Book() {
                   className="mt-2 min-h-12 w-full rounded-2xl border-2 border-navy/30 bg-white px-4 font-semibold text-navy focus:border-flame focus:outline-none"
                 />
                 {dateInvalid && <p className="mt-1 text-sm font-semibold text-destructive">{p(t.book.datePast)}</p>}
+                {hourly ? (
+                  <div className="mt-4">
+                    <p className="font-display text-base font-extrabold text-navy">{p(t.book.hoursTitle)}</p>
+                    <div className="mt-2 grid grid-cols-2 gap-3">
+                      {(
+                        [
+                          [t.book.hoursFrom, fromHour, HOURS_OPEN, HOURS_CLOSE - 1],
+                          [t.book.hoursTo, toHour, fromHour === "" ? HOURS_OPEN + 1 : fromHour + 1, HOURS_CLOSE],
+                        ] as const
+                      ).map(([label, value, first, last], i) => (
+                        <label key={i} className="flex flex-col gap-1 text-sm font-bold text-navy">
+                          {p(label)}
+                          <select
+                            value={value}
+                            onChange={(e) => {
+                              const hour = e.target.value === "" ? "" : Number(e.target.value);
+                              if (i === 1) return setToHour(hour);
+                              setFromHour(hour);
+                              // an end before the new start no longer fits
+                              if (hour !== "" && toHour !== "" && toHour <= hour) setToHour("");
+                            }}
+                            className="min-h-12 w-full rounded-2xl border-2 border-navy/30 bg-white px-4 font-semibold text-navy focus:border-flame focus:outline-none"
+                          >
+                            <option value="">{p(t.book.hoursPick)}</option>
+                            {Array.from({ length: last - first + 1 }, (_, k) => first + k).map((h) => (
+                              <option key={h} value={h}>
+                                {p(hourText(h))}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                      ))}
+                    </div>
+                    {hoursOk && (
+                      <p className="mt-2 text-sm font-bold text-bird">{p(hoursCount((toHour as number) - (fromHour as number)))}</p>
+                    )}
+                  </div>
+                ) : (
                 <div className="mt-4 flex flex-wrap gap-2">
                   {[
                     { v: "morning" as const, l: t.book.slotMorning },
@@ -544,6 +595,7 @@ export default function Book() {
                     </button>
                   ))}
                 </div>
+                )}
               </div>
 
               <div className="card-br p-5">
@@ -626,11 +678,13 @@ export default function Book() {
                       <dt className="text-navy/70">{p(t.book.date)}</dt>
                       <dd className="font-bold text-navy">
                         {date} · {p(
-                          slot === "morning"
-                            ? t.book.slotMorning
-                            : slot === "afternoon"
-                              ? t.book.slotAfternoon
-                              : t.book.slotEvening,
+                          hourly && hoursOk
+                            ? hoursText(fromHour as number, toHour as number)
+                            : slot === "morning"
+                              ? t.book.slotMorning
+                              : slot === "afternoon"
+                                ? t.book.slotAfternoon
+                                : t.book.slotEvening,
                         )}
                       </dd>
                     </div>

@@ -14,6 +14,7 @@ import { telLink } from "@/lib/contact";
 import { isNativeApp } from "@/lib/native";
 import { CATEGORY_MAP, type RequestStatus } from "@contracts/services";
 import { VISIT_REPORTS } from "@contracts/workflow";
+import { visitTime } from "@contracts/visitTime";
 import { isTodo, jobStep, type Job } from "@/lib/techJob";
 
 /** The job's live location for its customer ("On my way"), from the page (src/pages/Tech.tsx). */
@@ -24,8 +25,7 @@ const LABEL = "font-display text-xs font-bold uppercase tracking-[0.2em] text-na
 function useJobText() {
   const { t, p, lang } = useI18n();
   const service = (job: Job) => (CATEGORY_MAP[job.category] ? p(CATEGORY_MAP[job.category].name) : job.category);
-  const slot = (job: Job) =>
-    p({ morning: t.book.slotMorning, afternoon: t.book.slotAfternoon, evening: t.book.slotEvening }[job.timeSlot as "morning"] ?? { en: job.timeSlot, ar: job.timeSlot });
+  const slot = (job: Job) => p(visitTime(job));
   const when = (job: Job) => `${formatVisitDay(job.preferredDate, lang)} · ${slot(job)}`;
   const next = (job: Job) => {
     const step = jobStep(job);
