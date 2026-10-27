@@ -7,7 +7,6 @@ interface ImportMetaEnv {
   /** Cloudflare Web Analytics token; analytics stay off without it. */
   readonly VITE_CF_ANALYTICS_TOKEN?: string;
   /** MapTiler key for map images; OpenStreetMap's free tiles are used without it. */
-  readonly VITE_MAPTILER_KEY?: string;
   /** Short commit id of this build (set in vite.config.ts), shown in crash reports. */
   readonly VITE_RELEASE?: string;
 }

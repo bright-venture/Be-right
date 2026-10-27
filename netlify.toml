@@ -15,13 +15,13 @@
 
 # Security headers for every page (the API sets its own in server/app.ts).
 # The Content-Security-Policy lists every outside origin the site loads from:
-# Supabase (sign-in, uploads, signed photo links), map tiles (OpenStreetMap, or MapTiler
-# when VITE_MAPTILER_KEY is set) and Cloudflare Web Analytics (when its token is set).
+# Supabase (sign-in, uploads, signed photo links), the map (OpenFreeMap, drawn in a worker;
+# OpenStreetMap images on phones without WebGL) and Cloudflare Web Analytics (when its token is set).
 # Changing Supabase project? Update its address below.
 [[headers]]
   for = "/*"
   [headers.values]
-    Content-Security-Policy = "default-src 'self'; script-src 'self' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://tile.openstreetmap.org https://api.maptiler.com https://vtdubtfezylkodxuodtt.supabase.co; media-src 'self' blob: https://vtdubtfezylkodxuodtt.supabase.co; font-src 'self'; connect-src 'self' https://vtdubtfezylkodxuodtt.supabase.co https://cloudflareinsights.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://tile.openstreetmap.org https://vtdubtfezylkodxuodtt.supabase.co; media-src 'self' blob: https://vtdubtfezylkodxuodtt.supabase.co; font-src 'self'; connect-src 'self' https://vtdubtfezylkodxuodtt.supabase.co https://cloudflareinsights.com https://tiles.openfreemap.org; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
     X-Frame-Options = "DENY"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"

@@ -1,23 +1,42 @@
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
-const MAPTILER_KEY = import.meta.env.VITE_MAPTILER_KEY;
+/** OpenFreeMap's "Bright" style: free, commercial use allowed, no key (openfreemap.org). */
+const STYLE_URL = "https://tiles.openfreemap.org/styles/bright";
 const OSM_CREDIT = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
 
+/** Drawing the style needs WebGL; the rare phone without it gets plain OpenStreetMap images. */
+function hasWebGL() {
+  try {
+    const canvas = document.createElement("canvas");
+    return !!(canvas.getContext("webgl2") ?? canvas.getContext("webgl"));
+  } catch {
+    return false;
+  }
+}
+
 /**
- * Map images. OpenStreetMap's own tile servers are free but meant for light use only;
- * with VITE_MAPTILER_KEY set, MapTiler serves them instead (free plan: 100,000 tiles a
- * month). Attribution is required by both.
+ * The map itself, drawn by MapLibre inside Leaflet (pins, zoom and taps stay Leaflet's),
+ * loaded with the first map so other pages don't carry it.
+ * The credit line keeps only what the map's licence requires (OpenFreeMap, OpenMapTiles,
+ * OpenStreetMap): no "Leaflet" and no flag.
  */
 export function addBaseTiles(map: L.Map) {
-  if (MAPTILER_KEY) {
-    L.tileLayer(`https://api.maptiler.com/maps/streets-v2/256/{z}/{x}/{y}.png?key=${encodeURIComponent(MAPTILER_KEY)}`, {
-      maxZoom: 19,
-      attribution: `<a href="https://www.maptiler.com/copyright/">&copy; MapTiler</a> ${OSM_CREDIT}`,
-    }).addTo(map);
+  map.attributionControl?.setPrefix(false);
+  const plain = () => L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: OSM_CREDIT }).addTo(map);
+  if (!hasWebGL()) {
+    plain();
     return;
   }
-  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: OSM_CREDIT }).addTo(map);
+  let removed = false;
+  map.once("unload", () => (removed = true));
+  import("./glLayer")
+    .then(({ addGlLayer }) => {
+      if (!removed) addGlLayer(map, STYLE_URL);
+    })
+    .catch(() => {
+      if (!removed) plain();
+    });
 }
 
 /** Brand-coloured pins drawn with HTML, so no marker image files are needed. */
