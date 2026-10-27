@@ -8,7 +8,6 @@ import { EmergenciesTab, EMERGENCY_REFRESH_MS } from "@/components/dashboard/Eme
 import { TechniciansTab } from "@/components/dashboard/TechniciansTab";
 import { ActivityTab, CustomersTab, OverviewTab, TeamTab } from "@/components/admin/AdminTabs";
 import { PartsShopsTab } from "@/components/admin/PartsShopsTab";
-import { PricesTab } from "@/components/admin/PricesTab";
 import { useI18n } from "@/i18n";
 import { useAuth } from "@/hooks/useAuth";
 import { useTabParam } from "@/hooks/useTabParam";
@@ -18,7 +17,7 @@ import { StaffGate } from "@/components/admin/StaffGate";
 import { SectionMenu } from "@/components/admin/SectionMenu";
 import { trpc } from "@/providers/trpc";
 
-const TABS = ["overview", "requests", "emergencies", "customers", "applications", "technicians", "parts", "prices", "team", "activity"] as const;
+const TABS = ["overview", "requests", "emergencies", "customers", "applications", "technicians", "parts", "team", "activity"] as const;
 type Tab = (typeof TABS)[number];
 
 /**
@@ -153,7 +152,6 @@ export default function Admin() {
           {tab === "technicians" && <TechniciansTab onGoToApplications={() => setTab("applications")} />}
           {tab === "team" && <TeamTab />}
           {tab === "parts" && <PartsShopsTab />}
-          {tab === "prices" && <PricesTab />}
           {tab === "activity" && <ActivityTab />}
         </main>
         <Footer />

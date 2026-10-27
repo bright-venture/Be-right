@@ -18,7 +18,6 @@ import type { MediaKind, VisitFeeReason } from "../contracts/workflow";
 import type { AuditAction, AuditDetails } from "../contracts/audit";
 import type { DocumentsDeclared, Transport, WorkMode } from "../contracts/applications";
 import type { EmergencyStatus } from "../contracts/emergency";
-import type { PriceBreakdown, PricingSettings } from "../contracts/pricing";
 import type { District } from "../contracts/districts";
 import type { ShopSchedule } from "../contracts/shops";
 
@@ -66,8 +65,6 @@ export const users = pgTable("users", {
   avatar: text("avatar"),
   role: userRole("role").default("customer").notNull(),
   /** A technician's starting point (home or base), set by an admin: the distance in suggested prices. */
-  baseLat: doublePrecision("base_lat"),
-  baseLng: doublePrecision("base_lng"),
   /** A technician's districts: they are only suggested and assigned for jobs there. */
   districts: jsonb("districts").$type<District[]>().default([]).notNull(),
   /** The customer deleted their account: personal details were erased (see auth.deleteAccount). */
@@ -108,10 +105,6 @@ export const serviceRequests = pgTable(
     notes: text("notes"),
     quoteAmount: varchar("quote_amount", { length: 32 }),
     quoteNote: text("quote_note"),
-    /** The technician the price was worked out for: preselected once the customer approves. */
-    suggestedTechnicianId: integer("suggested_technician_id").references((): AnyPgColumn => users.id, { onDelete: "set null" }),
-    /** How the suggested price was made up when the price was sent (null: typed by hand). */
-    priceBreakdown: jsonb("price_breakdown").$type<PriceBreakdown & { suggested: number }>(),
     /** Specialist's job preparation, shown on the technician's job card. */
     prepDiagnosis: text("prep_diagnosis"),
     prepTools: text("prep_tools"),
@@ -363,14 +356,6 @@ export const partsShops = pgTable("parts_shops", {
 }).enableRLS();
 
 export type PartsShop = typeof partsShops.$inferSelect;
-
-/** The fixed prices (Admin → Prices): a single row, id 1. See contracts/pricing.ts. */
-export const pricingSettings = pgTable("pricing_settings", {
-  id: integer("id").primaryKey().default(1),
-  settings: jsonb("settings").$type<PricingSettings>().notNull(),
-  updatedBy: integer("updated_by").references(() => users.id, { onDelete: "set null" }),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
-}).enableRLS();
 
 /**
  * Whether each technician is Available, and where they are while they are (see

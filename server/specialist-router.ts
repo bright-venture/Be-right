@@ -15,8 +15,6 @@ import { profilePhotoUrl } from "./lib/storage";
 import { ratingFor, reviewOf } from "./queries/ratings";
 import { TRPCError } from "@trpc/server";
 import { notify } from "./notify";
-import { loadPricing, priceTechnicians } from "./pricing-router";
-import { checkWorksIn, OUTSIDE_DISTRICTS_NOTE, requestDistrict } from "./lib/districts";
 import { likeTerm, pageInput, PAGE_SIZE } from "./lib/paging";
 
 const byId = z.object({ id: z.number().int() });
@@ -188,35 +186,16 @@ export const specialistRouter = createRouter({
         id: z.number().int(),
         amount: z.string().trim().regex(QUOTE_AMOUNT_PATTERN, "Enter the amount in USD, e.g. 45 or 45.50"),
         note: z.string().max(2000).optional(),
-        /** The technician picked from the suggestions: preselected once the customer approves. */
-        technicianId: z.number().int().optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const db = getDb();
-      const row = await findRequest(db, input.id, "any");
-      let exception = false;
-      let picked: { suggestedTechnicianId: number | null; priceBreakdown: NonNullable<typeof row.priceBreakdown> | null } = {
-        suggestedTechnicianId: null,
-        priceBreakdown: null,
-      };
-      if (input.technicianId) {
-        const settings = await loadPricing(db);
-        const tech = (await priceTechnicians(db, row, settings)).find((x) => x.id === input.technicianId);
-        if (!tech) throw new TRPCError({ code: "BAD_REQUEST", message: "Not a technician" });
-        exception = checkWorksIn(ctx.user.role, tech.districts, requestDistrict(row));
-        picked = {
-          suggestedTechnicianId: tech.id,
-          priceBreakdown: tech.price.total == null ? null : { ...tech.price, suggested: tech.price.total },
-        };
-      }
       await applyTransition({
         id: input.id,
         name: "sendQuote",
         actorId: ctx.user.id,
         scope: "any",
-        patch: { quoteAmount: input.amount, quoteNote: input.note ?? null, ...picked },
-        note: `Quote: ${input.amount}${input.note ? `. ${input.note}` : ""}${exception ? `. Priced for a technician ${OUTSIDE_DISTRICTS_NOTE}` : ""}`,
+        patch: { quoteAmount: input.amount, quoteNote: input.note ?? null },
+        note: `Quote: ${input.amount}${input.note ? `. ${input.note}` : ""}`,
       });
       await notify.quoteSent(input.id);
       return { ok: true };

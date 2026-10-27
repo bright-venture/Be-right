@@ -19,7 +19,6 @@ export function DistrictsEditor({
   const save = trpc.tech.setDistricts.useMutation({
     onSuccess: () => {
       void utils.tech.list.invalidate();
-      void utils.pricing.suggest.invalidate();
       onDone();
     },
   });

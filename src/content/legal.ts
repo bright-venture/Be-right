@@ -167,7 +167,7 @@ export const PRIVACY: LegalDocument = {
           "حالات الطوارئ: مع الأولوية في الإرسال، ترسل حالة الطوارئ التي تختارها وموقعك (الدبوس على الخريطة) ورقم هاتفك. وعند اتصالك بخط الطوارئ، يسجّل المختص اسمك وتفاصيل العنوان وما حدث، لإرسال فنّي. ويصبح ذلك مهمة مثل أي حجز.",
         ),
         t(
-          "Technician location: only while a job is active and only after the technician turns on location sharing; we keep the latest position for that job. Technicians also set a starting point (home or work base) in their account, and share their position while they choose to be Available (in the app, also with the screen locked, with a notification showing it); going offline stops it and deletes the position. Only our team sees these, to offer jobs nearby and work out the travel distance in job prices.",
+          "Technician location: only while a job is active and only after the technician turns on location sharing; we keep the latest position for that job. Technicians also share their position while they choose to be Available (in the app, also with the screen locked, with a notification showing it); going offline stops it and deletes the position. Only our team sees it, to offer jobs nearby.",
           "موقع الفني: فقط أثناء تنفيذ المهمة وبعد أن يفعّل الفني مشاركة الموقع؛ ونحتفظ بآخر موقع لتلك المهمة فقط. ويحدّد الفنيون أيضاً مكان انطلاق (المنزل أو مقرّ العمل) في حساباتهم، ويشاركون موقعهم طالما اختاروا أن يكونوا متاحين (في التطبيق حتى مع قفل الشاشة، مع إشعار يبيّن ذلك)؛ وقطع الاتصال يوقف المشاركة ويحذف الموقع. لا يرى ذلك إلا فريقنا، لعرض المهام القريبة واحتساب مسافة التنقّل في أسعار المهام.",
         ),
         t(

@@ -1,5 +1,5 @@
 // A technician's location from their phone: one GPS watcher shared by "Available" (positions
-// for the team, so jobs nearby are priced from where they are) and a job's live location
+// for the team, while they're working) and a job's live location
 // (positions for that job's customer). In the phone app it keeps going with the screen locked
 // (background location plugin, with a notification saying so); on the website, while the page
 // is open. Positions go straight to the API, outside React, so changing pages doesn't stop them.

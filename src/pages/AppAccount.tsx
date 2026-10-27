@@ -8,7 +8,6 @@ import {
   Loader2,
   LogOut,
   Mail,
-  MapPin,
   ShieldCheck,
   Trash2,
   UserRound,
@@ -23,11 +22,10 @@ import { useRoleGate } from "@/hooks/useRoleGate";
 import { canDispatch, ROLES } from "@contracts/roles";
 import { DeleteAccount, Details, EmailChange, PasswordChange } from "./Account";
 import { ProfileAvatar, RatingLine } from "@/components/account/ProfileCard";
-import { MyStartPoint } from "@/components/account/MyStartPoint";
 import { trpc } from "@/providers/trpc";
 
 /** Screens one level down (/account/details …): each one is the same form as the website's. */
-const SECTIONS = ["details", "start", "email", "password", "delete"] as const;
+const SECTIONS = ["details", "email", "password", "delete"] as const;
 type Section = (typeof SECTIONS)[number];
 
 const GROUP = "overflow-hidden rounded-3xl border border-navy/10 bg-white";
@@ -90,7 +88,7 @@ export default function AppAccount() {
 
   // One level down: the form for that setting, with the top bar's Back button.
   if (section) {
-    if (!SECTIONS.includes(section) || (section === "delete" && !canDelete) || (section === "start" && user.role !== "technician")) {
+    if (!SECTIONS.includes(section) || (section === "delete" && !canDelete)) {
       return <Navigate to="/account" replace />;
     }
     return (
@@ -99,7 +97,6 @@ export default function AppAccount() {
         {/* app style: the form buttons take the full width */}
         <main className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-4 px-4 pt-20 [&_button]:w-full [&_button]:justify-center">
           {section === "details" && <Details key={user.id} name={user.name ?? ""} phone={user.phone ?? ""} />}
-          {section === "start" && <MyStartPoint />}
           {section === "email" && <EmailChange current={user.email ?? ""} />}
           {section === "password" && <PasswordChange email={user.email ?? ""} />}
           {section === "delete" && <DeleteAccount staff={canDispatch(user.role)} />}
@@ -171,20 +168,6 @@ export default function AppAccount() {
           <h2 className={GROUP_TITLE}>{p(t.app.accountGroup)}</h2>
           <div className={GROUP}>
             <Row first to="/account/details" icon={UserRound} label={p(t.account.details)} value={user.name} />
-            {profile.data?.technician && (
-              <Row
-                to="/account/start"
-                icon={MapPin}
-                label={p(t.account.startTitle)}
-                value={
-                  profile.data.technician.base ? (
-                    p(t.account.startSet)
-                  ) : (
-                    <span className="font-bold text-flame-ink">{p(t.account.startNotSet)}</span>
-                  )
-                }
-              />
-            )}
             <Row to="/account/email" icon={Mail} label={p(t.account.email)} value={<span dir="ltr">{user.email}</span>} />
             <Row to="/account/password" icon={KeyRound} label={p(t.account.password)} />
           </div>

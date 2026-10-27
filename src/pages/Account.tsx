@@ -13,7 +13,6 @@ import { canDispatch, ROLES } from "@contracts/roles";
 import { siteOrigin } from "@/lib/native";
 import { useConfirm } from "@/hooks/useConfirm";
 import { ProfileCard } from "@/components/account/ProfileCard";
-import { MyStartPoint } from "@/components/account/MyStartPoint";
 
 const INPUT =
   "mt-2 min-h-12 w-full rounded-2xl border-2 border-navy/30 bg-white px-4 font-semibold text-navy placeholder:font-normal placeholder:text-navy/40 focus:border-flame focus:outline-none";
@@ -48,7 +47,6 @@ export default function Account() {
           </div>
           <div className="flex min-w-0 flex-col gap-6">
             <Details key={user.id} name={user.name ?? ""} phone={user.phone ?? ""} />
-            {user.role === "technician" && <MyStartPoint />}
             <EmailChange current={user.email ?? ""} />
             <PasswordChange email={user.email ?? ""} />
             {user.role === "customer" || canDispatch(user.role) ? (

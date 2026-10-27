@@ -1,5 +1,5 @@
 // Technicians only work in their districts: a request's district comes from its pin, and
-// specialists can't price, assign or send a technician outside theirs (an admin can, noted).
+// specialists can't assign or send a technician outside theirs (an admin can, noted).
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import { desc, eq } from "drizzle-orm";
 import { auditLog, requestEvents, serviceRequests, technicianApplications, users, type User } from "@db/schema";
@@ -97,22 +97,15 @@ describe("districts", () => {
   it("are saved on a request from its pin", async () => {
     const { id } = await (await callerFor(customer)).requests.create(booking);
     expect((await db.select().from(serviceRequests).where(eq(serviceRequests.id, id)))[0].district).toBe("metn");
-    const { district, technicians } = await (await callerFor(desk)).pricing.suggest({ id });
-    expect(district).toBe("metn");
-    expect(technicians.map((x) => [x.id, x.inArea])).toEqual([
-      [hassan.id, true],
-      [karim.id, false],
-    ]);
   });
 
-  it("stop a specialist from pricing or assigning outside them; an admin can, and it's noted", async () => {
+  it("stop a specialist from assigning outside them; an admin can, and it's noted", async () => {
     const c = await callerFor(customer);
     const s = await callerFor(desk);
     const a = await callerFor(admin);
     const { id } = await c.requests.create(booking);
     await s.specialist.startReview({ id });
-    await expect(s.specialist.sendQuote({ id, amount: "40", technicianId: karim.id })).rejects.toMatchObject({ code: "BAD_REQUEST" });
-    await s.specialist.sendQuote({ id, amount: "40", technicianId: hassan.id });
+    await s.specialist.sendQuote({ id, amount: "40" });
     await c.requests.approveQuote({ id, amount: "40" });
 
     await expect(s.tech.assign({ requestId: id, technicianId: karim.id })).rejects.toMatchObject({ code: "BAD_REQUEST" });

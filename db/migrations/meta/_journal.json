@@ -267,6 +267,13 @@
       "when": 1792752695037,
       "tag": "0037_shop_schedule",
       "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1793087961716,
+      "tag": "0038_no_prices",
+      "breakpoints": true
     }
   ]
 }

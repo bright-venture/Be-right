@@ -81,8 +81,6 @@ export const techRouter = createRouter({
         email: users.email,
         phone: users.phone,
         avatar: users.avatar,
-        baseLat: users.baseLat,
-        baseLng: users.baseLng,
         districts: users.districts,
       })
       .from(users)
@@ -137,7 +135,6 @@ export const techRouter = createRouter({
           workMode: app?.workMode ?? null,
           companyName: app?.companyName ?? null,
           transport: app?.transport ?? null,
-          base: x.baseLat != null && x.baseLng != null ? { lat: x.baseLat, lng: x.baseLng } : null,
           online: isOnline(presence.find((row) => row.technicianId === x.id)),
           districts: x.districts,
           activeJobs: sum(ACTIVE_JOB_STATUSES),
@@ -209,20 +206,6 @@ export const techRouter = createRouter({
       return { ok: true, unassigned };
     }),
 
-  /**
-   * Technician: where they start from (home or work base), set by themselves in My account.
-   * The team prices their jobs with the distance from here to the customer.
-   */
-  setMyBase: technicianQuery
-    .input(z.object({ lat: z.number().min(-90).max(90), lng: z.number().min(-180).max(180) }))
-    .mutation(async ({ ctx, input }) => {
-      if (!isValidPin(input.lat, input.lng)) {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "Place the pin on where you start from" });
-      }
-      await getDb().update(users).set({ baseLat: input.lat, baseLng: input.lng }).where(eq(users.id, ctx.user.id));
-      return { ok: true };
-    }),
-
   /** Technician: am I Available? (The app picks location back up when it opens.) */
   presence: technicianQuery.query(async ({ ctx }) => {
     const row = await getDb().query.technicianPresence.findFirst({ where: eq(technicianPresence.technicianId, ctx.user.id) });
@@ -283,7 +266,7 @@ export const techRouter = createRouter({
       return { ok: true };
     }),
 
-  /** Admin: how a technician travels (the rate per km in suggested prices). */
+  /** Admin: how a technician travels. */
   setTransport: adminQuery
     .input(z.object({ technicianId: z.number().int(), transport: z.enum(TRANSPORT) }))
     .mutation(async ({ ctx, input }) => {

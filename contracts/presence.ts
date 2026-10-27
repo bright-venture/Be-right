@@ -1,6 +1,6 @@
 // Technicians' availability, like a ride app's "Go online": while Available, the app sends
-// the technician's position (screen locked too, with a notification in the phone app), and
-// suggested prices count travel from where they are. Offline, no position is kept.
+// the technician's position (screen locked too, with a notification in the phone app), so the
+// team knows who is working now. Offline, no position is kept.
 
 /** Available but no position for this long (app closed, phone off): counted as offline. */
 export const ONLINE_TIMEOUT_MINUTES = 120;

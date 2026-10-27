@@ -138,7 +138,7 @@ export function AddTechnician({ onClose }: { onClose: () => void }) {
               )}
             </select>
           </Field>
-          <Field label={p(t.prices.colTransport)}>
+          <Field label={p(t.techInfo.transport)}>
             <select value={transport} onChange={(e) => setTransport(e.target.value as Transport)} className={INPUT}>
               <option value="" disabled>
                 {p(t.dash4.addTechChoose)}
@@ -171,7 +171,7 @@ export function AddTechnician({ onClose }: { onClose: () => void }) {
           onClick={onClose}
           className="inline-flex h-10 items-center rounded-lg border border-navy/15 px-4 text-sm font-semibold text-navy hover:bg-navy/5"
         >
-          {p(t.prices.cancel)}
+          {p(t.techInfo.cancel)}
         </button>
         <button
           type="submit"

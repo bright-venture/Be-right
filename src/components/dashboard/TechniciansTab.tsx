@@ -162,16 +162,12 @@ function TechnicianRow({ tech: x }: { tech: Technician }) {
   const works = x.workMode ? (x.workMode === "company" && x.companyName ? x.companyName : p(WORK_MODE_STAFF_LABELS[x.workMode])) : "-";
   const toggleTool = (next: NonNullable<typeof tool>) => setTool((now) => (now === next ? null : next));
   const facts: [string, ReactNode][] = [
-    [p(t.dash4.techAvailability), p(x.online ? t.prices.available : t.prices.offline)],
+    [p(t.dash4.techAvailability), p(x.online ? t.techInfo.available : t.techInfo.offline)],
     [p(t.join.phone), x.phone ? <span dir="ltr">{x.phone}</span> : "-"],
     [p(t.join.email), x.email ? <a href={`mailto:${x.email}`} className="underline underline-offset-2">{x.email}</a> : "-"],
     [p(t.dash4.techExperience), x.experience ? p(EXPERIENCE_LABELS[x.experience as ExperienceLevel]) : "-"],
     [p(t.dash3.workMode), works],
-    [p(t.prices.colTransport), x.transport ? p(TRANSPORT_LABELS[x.transport]) : "-"],
-    [
-      p(t.prices.start),
-      <span className={x.base ? "" : "font-semibold text-flame-ink"}>{p(x.base ? t.prices.startSet : t.prices.startMissing)}</span>,
-    ],
+    [p(t.techInfo.transport), x.transport ? p(TRANSPORT_LABELS[x.transport]) : "-"],
   ];
 
   return (
@@ -185,8 +181,8 @@ function TechnicianRow({ tech: x }: { tech: Technician }) {
             <span className="flex min-w-0 items-center gap-1.5 font-display text-sm font-extrabold text-navy">
               <span
                 className={`h-2 w-2 shrink-0 rounded-full ${x.online ? "bg-green-600" : "bg-navy/25"}`}
-                title={p(x.online ? t.prices.available : t.prices.offline)}
-                aria-label={p(x.online ? t.prices.available : t.prices.offline)}
+                title={p(x.online ? t.techInfo.available : t.techInfo.offline)}
+                aria-label={p(x.online ? t.techInfo.available : t.techInfo.offline)}
               />
               <span className="truncate">{x.name ?? "-"}</span>
             </span>
@@ -281,7 +277,7 @@ function TechnicianRow({ tech: x }: { tech: Technician }) {
                   aria-expanded={tool === "transport"}
                   className={`${ACTION} ${tool === "transport" ? "border-navy bg-navy text-white" : "border-navy/15 bg-white text-navy hover:bg-navy/5"}`}
                 >
-                  <Car className="h-4 w-4" /> {p(t.prices.colTransport)}
+                  <Car className="h-4 w-4" /> {p(t.techInfo.transport)}
                 </button>
                 {x.applicationId && (
                   <button

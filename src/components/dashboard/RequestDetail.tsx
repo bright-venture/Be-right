@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { Loader2, Mail, MessageCircle, Phone } from "lucide-react";
 import type { inferRouterOutputs } from "@trpc/server";
 import type { AppRouter } from "../../../server/router";
@@ -20,7 +20,6 @@ import {
   type VisitFeeReason,
 } from "@contracts/workflow";
 import { cancelPending } from "./queueMeta";
-import { PriceSuggestions } from "./PriceSuggestions";
 import { DISTRICT_INFO, worksIn } from "@contracts/districts";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -349,11 +348,7 @@ function NextStep({
   const [amount, setAmount] = useState("");
   const [quoteNote, setQuoteNote] = useState("");
   const [note, setNote] = useState("");
-  // The technician the price was worked out for is ready to assign once the customer approves.
-  const [chosenTech, setChosenTech] = useState(String(r.technicianId ?? r.suggestedTechnicianId ?? ""));
-  const [pricedFor, setPricedFor] = useState<number | null>(r.suggestedTechnicianId);
-  // The price each pick filled in, to clear it again when the pick is undone.
-  const suggestedFor = useRef<Record<number, string>>({});
+  const [chosenTech, setChosenTech] = useState(String(r.technicianId ?? ""));
   const [changingQuote, setChangingQuote] = useState(false);
   const askedToCancel = cancelPending(r);
   // A customer's cancellation request opens the cancel form, ready to confirm.
@@ -429,7 +424,6 @@ function NextStep({
           onClick={() => {
             setAmount(r.quoteAmount ?? "");
             setQuoteNote(r.quoteNote ?? "");
-            setPricedFor(r.suggestedTechnicianId);
             setChangingQuote(true);
           }}
           className="mt-3 text-sm font-bold text-navy underline underline-offset-4"
@@ -453,40 +447,11 @@ function NextStep({
       )}
 
       {(status === "in_review" || changingQuote) && (
-        <PriceSuggestions
-          requestId={r.id}
-          category={r.category}
-          chosenId={pricedFor}
-          onPick={(x) => {
-            if (!x) {
-              // Choice removed: the price it filled in goes too (a typed one stays).
-              const chosen = pricedFor;
-              setPricedFor(null);
-              if (chosen !== null && amount === suggestedFor.current[chosen]) setAmount("");
-              return;
-            }
-            setPricedFor(x.id);
-            if (x.price.total != null) {
-              suggestedFor.current[x.id] = String(x.price.total);
-              setAmount(String(x.price.total));
-            }
-          }}
-        />
-      )}
-
-      {(status === "in_review" || changingQuote) && (
-        <div className="mt-3 grid gap-2 sm:grid-cols-[160px_1fr_auto]">
+        <div className="mt-3 grid gap-2 sm:grid-cols-[200px_1fr_auto]">
           <input value={amount} onChange={(e) => setAmount(e.target.value)} inputMode="decimal" placeholder={`${p(t.dash.quoteAmount)}`} className={INPUT} aria-label={p(t.dash.quoteAmount)} />
           <input value={quoteNote} onChange={(e) => setQuoteNote(e.target.value)} placeholder={p(t.dash.quoteNote)} className={INPUT} aria-label={p(t.dash.quoteNote)} />
           <button
-            onClick={() =>
-              sendQuote.mutate({
-                id: r.id,
-                amount: amount.trim(),
-                note: quoteNote || undefined,
-                technicianId: pricedFor ?? undefined,
-              })
-            }
+            onClick={() => sendQuote.mutate({ id: r.id, amount: amount.trim(), note: quoteNote || undefined })}
             disabled={busy || !QUOTE_AMOUNT_PATTERN.test(amount.trim())}
             className="btn-pill-primary !min-h-11 disabled:opacity-40"
           >
@@ -498,14 +463,6 @@ function NextStep({
 
       {ASSIGNABLE_STATUSES.includes(status) && status !== "in_progress" && (
         <div className="mt-3">
-          {r.suggestedTechnicianId && !r.technicianId && (
-            <p className="mb-2 text-xs font-semibold text-bird">
-              {p(t.prices.suggested).replace(
-                "{name}",
-                technicians.find((x) => x.id === r.suggestedTechnicianId)?.name ?? `#${r.suggestedTechnicianId}`,
-              )}
-            </p>
-          )}
           {technicians.length === 0 ? (
             <p className="text-xs text-navy/70">
               {p(t.dash2.noTechToAssign)}{" "}
