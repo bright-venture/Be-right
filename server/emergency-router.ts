@@ -14,6 +14,17 @@ import { clientIp, LIMITS, rateLimit } from "./lib/rateLimit";
 import { logEvent } from "./lib/workflow";
 import { checkWorksIn, districtAt, OUTSIDE_DISTRICTS_NOTE } from "./lib/districts";
 import { notify } from "./notify";
+import { handles, servicesOf } from "./lib/serviceSpecialists";
+
+/** Which services a staff member handles, looked up once, before any transaction (null: all, an admin). */
+async function myServices(user: { id: number; role: string }) {
+  const mine = user.role === "admin" ? null : await servicesOf(user.id);
+  return (category: string | null) => mine === null || (category !== null && mine.includes(category));
+}
+
+/** The service an emergency is about (null for "Other emergency": the admins take those). */
+const serviceOf = (problem: string) => EMERGENCY_PROBLEM_MAP[problem]?.category ?? null;
+const NOT_YOURS = "This emergency is for another service's specialist";
 
 export const emergencyRouter = createRouter({
   /**
@@ -52,13 +63,16 @@ export const emergencyRouter = createRouter({
     }),
 
   /** Sent emergencies waiting for the call, newest first (who is calling comes with the call). */
-  waiting: specialistQuery.query(async () => {
-    const rows = await getDb()
+  waiting: specialistQuery.query(async ({ ctx }) => {
+    const all = await getDb()
       .select()
       .from(emergencyRequests)
       .where(eq(emergencyRequests.status, "open"))
       .orderBy(desc(emergencyRequests.createdAt))
       .limit(100);
+    // Each specialist sees the emergencies of their own services; admins see them all.
+    const mine = ctx.user.role === "admin" ? null : await servicesOf(ctx.user.id);
+    const rows = mine ? all.filter((row) => mine.includes(serviceOf(row.problem) ?? "")) : all;
     // Its district, to send only technicians who work there.
     return rows.map((row) => ({ ...row, district: districtAt(row.lat, row.lng) }));
   }),
@@ -70,6 +84,8 @@ export const emergencyRouter = createRouter({
 
   /** Not a real emergency, or handled without a technician: take it off the list. */
   dismiss: specialistQuery.input(z.object({ id: z.number().int() })).mutation(async ({ ctx, input }) => {
+    const sent = await getDb().query.emergencyRequests.findFirst({ where: eq(emergencyRequests.id, input.id) });
+    if (sent && !(await handles(ctx.user, serviceOf(sent.problem)))) throw new TRPCError({ code: "FORBIDDEN", message: NOT_YOURS });
     const [row] = await getDb()
       .update(emergencyRequests)
       .set({ status: "dismissed", handledBy: ctx.user.id, handledAt: new Date() })
@@ -106,6 +122,10 @@ export const emergencyRouter = createRouter({
     )
     .mutation(async ({ ctx, input }) => {
       if (!CATEGORY_MAP[input.category]) throw new TRPCError({ code: "BAD_REQUEST", message: "Unknown service" });
+      const mayHandle = await myServices(ctx.user);
+      if (!mayHandle(input.category)) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Only this service's specialist (or an admin) can send for it" });
+      }
       if (!isValidPin(input.lat, input.lng)) throw new TRPCError({ code: "BAD_REQUEST", message: "Place the pin on the address" });
       if (!isValidVisitDate(input.visitDate, earliestTodayAnywhere())) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid visit date" });
@@ -123,6 +143,7 @@ export const emergencyRouter = createRouter({
           const [sent] = await tx.select().from(emergencyRequests).where(eq(emergencyRequests.id, input.emergencyId)).for("update");
           if (!sent) throw new TRPCError({ code: "NOT_FOUND", message: "Emergency not found" });
           if (sent.status !== "open") throw new TRPCError({ code: "BAD_REQUEST", message: "This emergency was already handled" });
+          if (!mayHandle(serviceOf(sent.problem))) throw new TRPCError({ code: "FORBIDDEN", message: NOT_YOURS });
           // The job belongs to the sender's account only if they are a customer.
           const owner = sent.userId ? await tx.query.users.findFirst({ where: eq(users.id, sent.userId) }) : undefined;
           if (owner && owner.role === "customer" && !owner.deletedAt) customerId = owner.id;
@@ -198,6 +219,7 @@ export const emergencyRouter = createRouter({
     )
     .mutation(async ({ ctx, input }) => {
       const db = getDb();
+      const mayHandle = await myServices(ctx.user);
       const { phoneAdded } = await db.transaction(async (tx) => {
         const [job] = await tx
           .select()
@@ -210,7 +232,7 @@ export const emergencyRouter = createRouter({
             ),
           )
           .for("update");
-        if (!job) throw new TRPCError({ code: "NOT_FOUND", message: "No open emergency job" });
+        if (!job || !mayHandle(job.category)) throw new TRPCError({ code: "NOT_FOUND", message: "No open emergency job" });
         await tx
           .update(serviceRequests)
           .set({

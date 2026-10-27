@@ -1,7 +1,7 @@
 // Notification emails: who hears about what, in English and Arabic.
 // Called by the routers after a change has been saved. A failed email is logged and
 // never undoes or blocks the change itself.
-import { and, count, eq, inArray } from "drizzle-orm";
+import { and, count, eq } from "drizzle-orm";
 import { emergencyRequests, requestEvents, serviceRequests, technicianApplications, users } from "@db/schema";
 import { answerLines, EMERGENCY_PROBLEM_MAP } from "@contracts/emergency";
 import { directionsLinks } from "@contracts/geo";
@@ -10,6 +10,7 @@ import { DISTRICT_INFO } from "@contracts/districts";
 import { arabicDays, WORKMANSHIP_GUARANTEE_DAYS } from "@contracts/legal";
 import { t } from "@contracts/i18n";
 import { getDb } from "./queries/connection";
+import { specialistOf } from "./lib/serviceSpecialists";
 import { env } from "./lib/env";
 import { sendEmail } from "./lib/email";
 
@@ -95,11 +96,11 @@ async function emailsOf(role: "admin" | "specialist") {
   return rows.map((r) => r.email);
 }
 
-async function specialistEmails() {
-  const rows = await getDb()
-    .select({ email: users.email })
-    .from(users)
-    .where(inArray(users.role, ["specialist", "admin"]));
+/** Who hears about a service's requests: its specialist, or the admins when it has none (and for Other). */
+async function specialistEmails(category: string | null) {
+  const owner = await specialistOf(category);
+  if (owner) return [owner.email];
+  const rows = await getDb().select({ email: users.email }).from(users).where(eq(users.role, "admin"));
   return rows.map((r) => r.email);
 }
 
@@ -153,7 +154,7 @@ export const notify = {
     safely("requestSubmitted", async () => {
       const job = await loadJob(id);
       const d = describe(job);
-      await send(await specialistEmails(), {
+      await send(await specialistEmails(job.request.category), {
         subject: both(`New request #${d.id}: ${d.category.en}, ${d.area}`, `طلب جديد #${d.id}: ${d.category.ar}، ${d.area}`),
         title: both("A new request needs review", "يوجد طلب جديد بحاجة إلى مراجعة"),
         lines: [
@@ -205,7 +206,7 @@ export const notify = {
       const job = await loadJob(id);
       const d = describe(job);
       const amount = `$${job.request.quoteAmount}`;
-      await send(await specialistEmails(), {
+      await send(await specialistEmails(job.request.category), {
         subject: both(`Price approved for #${d.id}: assign ${d.worker.en.a}`, `تمت الموافقة على سعر الطلب #${d.id}: أسند المهمة إلى ${d.worker.ar.one}`),
         title: both("The customer approved the price", "وافق العميل على السعر"),
         lines: [
@@ -228,7 +229,7 @@ export const notify = {
         `The customer cancelled request #${d.id} (${d.category.en}, ${d.area}).`,
         `ألغى العميل الطلب #${d.id} (${d.category.ar}، ${d.area}).`,
       );
-      await send(await specialistEmails(), {
+      await send(await specialistEmails(job.request.category), {
         subject: both(`Request #${d.id} cancelled by the customer`, `ألغى العميل الطلب #${d.id}`),
         title: both("A request was cancelled", "تم إلغاء طلب"),
         lines: [line],
@@ -244,7 +245,7 @@ export const notify = {
       const job = await loadJob(id);
       const d = describe(job);
       const reason = job.request.cancelReason;
-      await send(await specialistEmails(), {
+      await send(await specialistEmails(job.request.category), {
         subject: both(`Customer asked to cancel #${d.id}`, `طلب العميل إلغاء #${d.id}`),
         title: both("A customer asked to cancel their visit", "طلب عميل إلغاء زيارته"),
         lines: [
@@ -401,7 +402,7 @@ export const notify = {
     safely("visitReported", async () => {
       const job = await loadJob(id);
       const d = describe(job);
-      await send(await specialistEmails(), {
+      await send(await specialistEmails(job.request.category), {
         subject: both(`Job #${d.id}: the ${d.worker.en.word} reported a visit without a repair`, `المهمة #${d.id}: أبلغ ${d.worker.ar.the} عن زيارة دون إصلاح`),
         title: both("A visit needs your decision", "زيارة بحاجة إلى قرارك"),
         lines: [
@@ -422,7 +423,7 @@ export const notify = {
       const job = await loadJob(id);
       const d = describe(job);
       const originalId = job.request.guaranteeFor;
-      await send(await specialistEmails(), {
+      await send(await specialistEmails(job.request.category), {
         subject: both(`Guarantee claim #${d.id} on job #${originalId}`, `مطالبة ضمان #${d.id} على المهمة #${originalId}`),
         title: both("A customer reported a problem after a job", "أبلغ عميل عن مشكلة بعد مهمة"),
         lines: [
@@ -566,7 +567,7 @@ export const notify = {
       if (!sent) return;
       const problem = local(EMERGENCY_PROBLEM_MAP[sent.problem]?.label, sent.problem);
       const map = directionsLinks(sent.lat, sent.lng).google;
-      await send(await specialistEmails(), {
+      await send(await specialistEmails(EMERGENCY_PROBLEM_MAP[sent.problem]?.category ?? null), {
         subject: both(`Emergency: ${problem.en}`, `طوارئ: ${problem.ar}`),
         title: both("An emergency is coming in", "حالة طوارئ واردة"),
         lines: [

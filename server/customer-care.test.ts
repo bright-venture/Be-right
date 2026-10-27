@@ -301,10 +301,15 @@ describe("emergency calls", () => {
     const { id } = await visitor.emergency.report({ problem: "other", lat: 51.5, lng: -0.12, phone });
     await rejected(visitor.emergency.waiting(), "UNAUTHORIZED");
     await rejected((await callerFor(customer)).emergency.dismiss({ id }), "FORBIDDEN");
-    const s = await callerFor(admin);
+    // "Other emergency" has no service: the admins handle it, not a service's specialist.
+    await rejected((await callerFor(admin)).emergency.dismiss({ id }), "FORBIDDEN");
+    const boss = await makeAdmin("boss@example.com");
+    const s = await callerFor(boss);
     await s.emergency.dismiss({ id });
     await rejected(s.emergency.dismiss({ id }), "NOT_FOUND");
     expect((await s.emergency.waiting()).map((e) => e.id)).not.toContain(id);
+    // later tests count the admins: this one only came for the Other emergency
+    await db.update(users).set({ role: "customer" }).where(eq(users.id, boss.id));
   });
 
   it("are erased with the sender's account", async () => {

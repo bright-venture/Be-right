@@ -63,12 +63,24 @@ export async function makeTechnician(email: string, name = email.split("@")[0]) 
 }
 
 /** A specialist account (in the app, an admin gives the role in Admin → Team). */
-export async function makeSpecialist(email = SPECIALIST_EMAIL, name = "Specialist") {
+/**
+ * A specialist account. By default they handle every service nobody has yet, so most tests
+ * can ignore who handles what; pass `services` to give them only some (or none: []).
+ */
+export async function makeSpecialist(email = SPECIALIST_EMAIL, name = "Specialist", services?: string[]) {
   const user = await makeUser(email, name);
   const { getDb } = await import("../queries/connection");
-  const { users } = await import("@db/schema");
+  const { serviceSpecialists, users } = await import("@db/schema");
+  const { SERVICES_IN_ORDER } = await import("@contracts/services");
   const { eq } = await import("drizzle-orm");
   const [updated] = await getDb().update(users).set({ role: "specialist" }).where(eq(users.id, user.id)).returning();
+  const mine = services ?? SERVICES_IN_ORDER;
+  if (mine.length) {
+    await getDb()
+      .insert(serviceSpecialists)
+      .values(mine.map((service) => ({ service, specialistId: user.id })))
+      .onConflictDoNothing();
+  }
   return updated;
 }
 

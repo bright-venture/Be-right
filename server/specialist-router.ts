@@ -16,6 +16,8 @@ import { ratingFor, reviewOf } from "./queries/ratings";
 import { TRPCError } from "@trpc/server";
 import { notify } from "./notify";
 import { likeTerm, pageInput, PAGE_SIZE } from "./lib/paging";
+import { servicesOf, staffScope } from "./lib/serviceSpecialists";
+import { scopeFilter } from "./lib/workflow";
 
 const byId = z.object({ id: z.number().int() });
 
@@ -30,13 +32,18 @@ const LIVE_QUEUE_LIMIT = 2000;
 
 export const specialistRouter = createRouter({
   /** Can this session use the staff dashboard? (Refused without a password and two-step login.) */
-  access: specialistQuery.query(() => ({ ok: true })),
+  /** Can they open the dashboard, and which services are theirs (null: an admin, all of them). */
+  access: specialistQuery.query(async ({ ctx }) => ({
+    ok: true,
+    services: ctx.user.role === "admin" ? null : await servicesOf(ctx.user.id),
+  })),
 
   /**
    * The live queue: every open request, plus those closed in the last ${RECENT_CLOSED_DAYS} days.
    * Older closed requests come from `history`, a page at a time.
    */
-  queue: specialistQuery.query(async () => {
+  queue: specialistQuery.query(async ({ ctx }) => {
+    const mine = scopeFilter(await staffScope(ctx.user));
     const rows = await getDb()
       .select({
         request: serviceRequests,
@@ -45,7 +52,7 @@ export const specialistRouter = createRouter({
       })
       .from(serviceRequests)
       .leftJoin(users, eq(serviceRequests.userId, users.id))
-      .where(or(notInArray(serviceRequests.status, [...CLOSED]), gt(serviceRequests.updatedAt, closedCutoff())))
+      .where(and(mine, or(notInArray(serviceRequests.status, [...CLOSED]), gt(serviceRequests.updatedAt, closedCutoff()))))
       .orderBy(desc(serviceRequests.createdAt))
       .limit(LIVE_QUEUE_LIMIT);
     const rank = (r: (typeof rows)[number]["request"]) => [
@@ -88,8 +95,9 @@ export const specialistRouter = createRouter({
         search: z.string().trim().max(100).nullish(),
       }),
     )
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
       const term = input.search?.replace(/^#/, "");
+      const mine = scopeFilter(await staffScope(ctx.user));
       const rows = await getDb()
         .select({
           request: serviceRequests,
@@ -100,6 +108,7 @@ export const specialistRouter = createRouter({
         .leftJoin(users, eq(serviceRequests.userId, users.id))
         .where(
           and(
+            mine,
             inArray(serviceRequests.status, input.status ? [input.status] : [...CLOSED]),
             lte(serviceRequests.updatedAt, closedCutoff()),
             input.cursor ? lt(serviceRequests.id, input.cursor) : undefined,
@@ -120,9 +129,9 @@ export const specialistRouter = createRouter({
       return { items, nextCursor: rows.length > PAGE_SIZE ? items[items.length - 1].request.id : null };
     }),
 
-  detail: specialistQuery.input(byId).query(async ({ input }) => {
+  detail: specialistQuery.input(byId).query(async ({ ctx, input }) => {
     const db = getDb();
-    const row = await findRequest(db, input.id, "any");
+    const row = await findRequest(db, input.id, await staffScope(ctx.user));
     const active = ACTIVE_JOB_STATUSES.includes(row.status);
     const [customer, media, events, loc, tech] = await Promise.all([
       row.userId ? db.query.users.findFirst({ where: eq(users.id, row.userId) }) : undefined,
@@ -175,7 +184,7 @@ export const specialistRouter = createRouter({
         id: input.id,
         name: "startReview",
         actorId: ctx.user.id,
-        scope: "any",
+        scope: await staffScope(ctx.user),
       });
       return { ok: true };
     }),
@@ -193,7 +202,7 @@ export const specialistRouter = createRouter({
         id: input.id,
         name: "sendQuote",
         actorId: ctx.user.id,
-        scope: "any",
+        scope: await staffScope(ctx.user),
         patch: { quoteAmount: input.amount, quoteNote: input.note ?? null },
         note: `Quote: ${input.amount}${input.note ? `. ${input.note}` : ""}`,
       });
@@ -207,7 +216,7 @@ export const specialistRouter = createRouter({
       id: input.id,
       name: "acceptGuarantee",
       actorId: ctx.user.id,
-      scope: "any",
+      scope: await staffScope(ctx.user),
       patch: { quoteAmount: "0", quoteNote: "Covered by the workmanship guarantee" },
       note: "Free return visit (guarantee)",
       guard: (row) => (row.guaranteeFor ? null : "Only guarantee visits can be free"),
@@ -224,7 +233,7 @@ export const specialistRouter = createRouter({
         id: input.id,
         name: "close",
         actorId: ctx.user.id,
-        scope: "any",
+        scope: await staffScope(ctx.user),
         note: input.reason,
       });
       await notify.closedByUs(input.id);
@@ -249,7 +258,7 @@ export const specialistRouter = createRouter({
         id: input.id,
         name: "closeWithVisitFee",
         actorId: ctx.user.id,
-        scope: "any",
+        scope: await staffScope(ctx.user),
         note: [`Visit fee (${VISIT_FEE_REASON_LABEL[input.reason]})`, input.note].filter(Boolean).join(". "),
         patch: { visitFeeReason: input.reason },
         guard: (row) =>
@@ -280,7 +289,7 @@ export const specialistRouter = createRouter({
         id: input.id,
         name,
         actorId: ctx.user.id,
-        scope: "any",
+        scope: await staffScope(ctx.user),
         note: input.note,
         guard: (row) =>
           name === "schedule" && !row.technicianId ? "Assign a professional before scheduling" : null,
@@ -303,7 +312,7 @@ export const specialistRouter = createRouter({
     )
     .mutation(async ({ ctx, input }) => {
       const db = getDb();
-      const row = await findRequest(db, input.id, "any");
+      const row = await findRequest(db, input.id, await staffScope(ctx.user));
       if (CLOSED.includes(row.status)) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "This request is closed" });
       }

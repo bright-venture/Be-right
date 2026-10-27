@@ -24,6 +24,7 @@ import { audit } from "./lib/audit";
 import { isAdminEmail } from "./queries/users";
 import { logEvent } from "./lib/workflow";
 import { notify } from "./notify";
+import { releaseServices } from "./lib/serviceSpecialists";
 
 /** Visits already on someone's calendar: the account can't disappear under them. */
 const BOOKED: readonly RequestStatus[] = ["scheduled", "in_progress"];
@@ -217,6 +218,7 @@ export const authRouter = createRouter({
         .set({ name: null, email: null, phone: null, avatar: null, deletedAt: new Date() })
         .where(eq(users.id, user.id));
       await audit({ actorId: user.id, action: "staff_account_deleted", targetUserId: user.id, details: { role: user.role } }, tx);
+      await releaseServices(tx, [user.id]);
     });
     try {
       await deleteAuthUser(user.authId);

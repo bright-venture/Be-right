@@ -3,9 +3,10 @@ import { Clock, Loader2, Search } from "lucide-react";
 import { ServiceIcon } from "@/components/ServiceIcon";
 import { useI18n } from "@/i18n";
 import { trpc } from "@/providers/trpc";
-import { CATEGORIES, CATEGORY_MAP, type RequestStatus } from "@contracts/services";
+import { CATEGORY_MAP, type RequestStatus } from "@contracts/services";
 import { RequestDetail } from "./RequestDetail";
 import { useLiveQueue } from "./useLiveQueue";
+import { useMyServices } from "@/hooks/useMyServices";
 import { cancelPending, inView, NEEDS_SPECIALIST, waitingFor, type QueueView } from "./queueMeta";
 
 const SELECT =
@@ -15,6 +16,8 @@ export function QueueTab({ onGoToApplications }: { onGoToApplications?: () => vo
   const { t, p } = useI18n();
   const queue = useLiveQueue();
   const technicians = trpc.tech.list.useQuery();
+  // A specialist filters among their own services; admins among all.
+  const { categories: myCategories } = useMyServices();
   const [view, setView] = useState<QueueView>("open");
   const [search, setSearch] = useState("");
   const [service, setService] = useState("");
@@ -114,7 +117,7 @@ export function QueueTab({ onGoToApplications }: { onGoToApplications?: () => vo
         </select>
         <select value={service} onChange={(e) => setService(e.target.value)} aria-label={p(t.book.stepCategory)} className={`${SELECT} col-span-2 min-w-0`}>
           <option value="">{p(t.dash4.anyService)}</option>
-          {CATEGORIES.map((c) => (
+          {myCategories.map((c) => (
             <option key={c.id} value={c.id}>
               {p(c.name)}
             </option>

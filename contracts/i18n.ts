@@ -859,6 +859,8 @@ export const t = {
       prices_changed: { en: "Changed the prices", ar: "غيّر الأسعار" },
       technician_base_set: { en: "Set {target}'s starting point and transport", ar: "حدّد نقطة انطلاق {target} ووسيلة نقله" },
       technician_transport_set: { en: "Changed how {target} travels", ar: "غيّر وسيلة تنقّل {target}" },
+      service_specialist_set: { en: "Gave {service} to {target}", ar: "أسند {service} إلى {target}" },
+      service_specialist_admins: { en: "Gave {service} back to the admins", ar: "أعاد {service} إلى الإدارة" },
       technician_districts_set: { en: "Changed the districts {target} works in", ar: "غيّر المناطق التي يعمل فيها {target}" },
       application_approved: { en: "Approved {applicant}'s application", ar: "وافق على طلب {applicant}" },
       meeting_booked: { en: "Booked a meeting with {applicant}: {date}", ar: "حجز مقابلة مع {applicant}: {date}" },
@@ -1517,6 +1519,31 @@ export const t = {
     save: { en: "Save districts", ar: "حفظ المناطق" },
     cancel: { en: "Cancel", ar: "إلغاء" },
     jobIn: { en: "District: {name}", ar: "المنطقة: {name}" },
+  },
+  /** Who handles each service (Admin → Team), and a specialist's own services (dashboard). */
+  serviceOwners: {
+    title: { en: "Who handles each service", ar: "من يتولّى كل خدمة" },
+    hint: {
+      en: "One specialist per service (one person can have several). Only they see its requests and emergencies and get its emails. Admins see everything.",
+      ar: "مختص واحد لكل خدمة (ويمكن لشخص واحد أن يتولّى عدة خدمات). هو وحده يرى طلباتها وحالاتها الطارئة ويتلقّى رسائلها. ترى الإدارة كل شيء.",
+    },
+    uncovered: {
+      en: "{n} services have no specialist yet: their requests go to the admins.",
+      ar: "{n} خدمات بلا مختص بعد: تذهب طلباتها إلى الإدارة.",
+    },
+    pick: { en: "Specialist for {service}", ar: "المختص في {service}" },
+    admins: { en: "Admins (no specialist)", ar: "الإدارة (بلا مختص)" },
+    other: {
+      en: "Other requests and \"Other emergency\" always go to the admins.",
+      ar: "طلبات «أخرى» و«حالة طارئة أخرى» تذهب دائماً إلى الإدارة.",
+    },
+    yours: { en: "Your services: {list}", ar: "خدماتك: {list}" },
+    noneShort: { en: "No service yet", ar: "لا خدمة بعد" },
+    theirs: { en: "Services: {list}", ar: "الخدمات: {list}" },
+    none: {
+      en: "You don't have a service yet, so your queue is empty. An admin gives you services in Admin → Team.",
+      ar: "ليست لديك خدمة بعد، لذا قائمتك فارغة. تمنحك الإدارة خدماتك من الإدارة ← الفريق.",
+    },
   },
   /** A technician's availability and transport (Technicians tab). */
   techInfo: {

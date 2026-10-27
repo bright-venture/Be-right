@@ -1,5 +1,6 @@
 import { Navigate, useNavigate } from "react-router";
 import { Loader2 } from "lucide-react";
+import { CATEGORY_MAP } from "@contracts/services";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { QueueTab } from "@/components/dashboard/QueueTab";
@@ -76,6 +77,20 @@ export default function Dashboard() {
         <Navbar />
         <main className="staff-ui mx-auto w-full max-w-7xl flex-1 px-4 pb-20 pt-24 sm:px-6">
           <h1 className="font-display text-3xl font-black text-navy sm:text-4xl">{p(t.dash.title)}</h1>
+          {/* a specialist's own services (admins see everything) */}
+          {access.data?.services &&
+            (access.data.services.length ? (
+              <p className="mt-2 text-sm font-semibold text-navy/70">
+                {p(t.serviceOwners.yours).replace(
+                  "{list}",
+                  access.data.services.map((s) => (CATEGORY_MAP[s] ? p(CATEGORY_MAP[s].name) : s)).join(" · "),
+                )}
+              </p>
+            ) : (
+              <p role="status" className="mt-3 rounded-2xl border-2 border-flame/40 bg-flame/5 px-4 py-3 text-sm font-semibold text-navy">
+                {p(t.serviceOwners.none)}
+              </p>
+            ))}
 
           <div role="tablist" className="mt-6 flex w-full flex-wrap gap-1 rounded-xl border border-navy/12 bg-white p-1 shadow-[0_1px_2px_rgb(12_43_92/0.06)]">
             {TABS.map((k) => (

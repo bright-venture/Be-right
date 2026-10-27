@@ -4,7 +4,9 @@ import { and, count, desc, eq, ilike, inArray, isNotNull, isNull, lt, or, sql } 
 import { alias } from "drizzle-orm/pg-core";
 import { adminQuery, createRouter } from "./middleware";
 import { getDb } from "./queries/connection";
-import { auditLog, requestEvents, reviews, serviceRequests, technicianApplications, users } from "../db/schema";
+import { auditLog, requestEvents, reviews, serviceRequests, serviceSpecialists, technicianApplications, users } from "../db/schema";
+import { allServiceSpecialists, releaseServices } from "./lib/serviceSpecialists";
+import { CATEGORY_MAP, OTHER_SERVICE } from "@contracts/services";
 import { audit } from "./lib/audit";
 import { saveInvitedAccount } from "./lib/invites";
 import { likeTerm, pageInput, PAGE_SIZE, toPage } from "./lib/paging";
@@ -178,9 +180,12 @@ export const adminRouter = createRouter({
       .from(users)
       .where(and(inArray(users.role, [...STAFF_ROLES]), isNull(users.deletedAt)))
       .orderBy(users.role, users.name);
+    const owned = await allServiceSpecialists();
     return Promise.all(
       rows.map(async ({ authId, ...r }) => ({
         ...r,
+        /** The services they handle (specialists only). */
+        services: owned.filter((o) => o.specialistId === r.id).map((o) => o.service),
         fromSettings: !!roleFromSettings(r.email),
         isYou: r.id === ctx.user.id,
         twoStep: await hasTwoStep(authId),
@@ -208,6 +213,8 @@ export const adminRouter = createRouter({
       }
       if (existing) {
         await db.update(users).set({ role: input.role }).where(eq(users.id, existing.id));
+        // A specialist made admin sees every request anyway: their services go back to the admins.
+        if (input.role !== "specialist") await releaseServices(db, [existing.id]);
         await audit({
           actorId: ctx.user.id,
           action: "staff_added",
@@ -297,6 +304,49 @@ export const adminRouter = createRouter({
             action: "staff_role_changed",
             targetUserId: target.id,
             details: { from: target.role, to: input.role },
+          },
+          tx,
+        );
+        if (input.role !== "specialist") await releaseServices(tx, [target.id]);
+      });
+      return { ok: true };
+    }),
+
+  /** Every service and who handles it (no specialist: the admins). */
+  serviceSpecialists: adminQuery.query(() => allServiceSpecialists()),
+
+  /**
+   * Give a service to a specialist (it leaves whoever had it), or back to the admins (null).
+   * Other is always the admins'.
+   */
+  setServiceSpecialist: adminQuery
+    .input(z.object({ service: z.string().max(64), specialistId: z.number().int().nullable() }))
+    .mutation(async ({ ctx, input }) => {
+      if (!CATEGORY_MAP[input.service] || input.service === OTHER_SERVICE) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Unknown service" });
+      }
+      const db = getDb();
+      if (input.specialistId !== null) {
+        const person = await db.query.users.findFirst({ where: eq(users.id, input.specialistId) });
+        if (!person || person.role !== "specialist" || person.deletedAt) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Only a specialist can handle a service" });
+        }
+      }
+      await db.transaction(async (tx) => {
+        if (input.specialistId === null) {
+          await tx.delete(serviceSpecialists).where(eq(serviceSpecialists.service, input.service));
+        } else {
+          await tx
+            .insert(serviceSpecialists)
+            .values({ service: input.service, specialistId: input.specialistId })
+            .onConflictDoUpdate({ target: serviceSpecialists.service, set: { specialistId: input.specialistId, updatedAt: new Date() } });
+        }
+        await audit(
+          {
+            actorId: ctx.user.id,
+            action: "service_specialist_set",
+            targetUserId: input.specialistId,
+            details: { service: input.service },
           },
           tx,
         );

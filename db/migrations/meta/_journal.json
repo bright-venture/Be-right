@@ -274,6 +274,13 @@
       "when": 1793087961716,
       "tag": "0038_no_prices",
       "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1793090682764,
+      "tag": "0039_service_specialists",
+      "breakpoints": true
     }
   ]
 }

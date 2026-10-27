@@ -32,6 +32,7 @@ import { TRANSPORT } from "@contracts/applications";
 import { isOnline } from "@contracts/presence";
 import { DISTRICTS } from "@contracts/districts";
 import { checkWorksIn, OUTSIDE_DISTRICTS_NOTE, requestDistrict } from "./lib/districts";
+import { staffScope } from "./lib/serviceSpecialists";
 import { LIMITS, rateLimit } from "./lib/rateLimit";
 
 type Db = Parameters<typeof findRequest>[0];
@@ -298,8 +299,9 @@ export const techRouter = createRouter({
       if (!tech || tech.role !== "technician") {
         throw new TRPCError({ code: "BAD_REQUEST", message: "Not a professional" });
       }
+      const scope = await staffScope(ctx.user);
       const previousTechnicianId = await db.transaction(async (tx) => {
-        const job = await findRequest(tx, input.requestId, "any", true);
+        const job = await findRequest(tx, input.requestId, scope, true);
         if (!ASSIGNABLE_STATUSES.includes(job.status)) {
           throw new TRPCError({
             code: "BAD_REQUEST",

@@ -9,12 +9,13 @@ import { telLink } from "@/lib/contact";
 import { timeAgo } from "@/lib/time";
 import { directionsLinks } from "@contracts/geo";
 import { isValidPhone } from "@contracts/phone";
-import { CATEGORIES, CATEGORY_MAP, type RequestStatus } from "@contracts/services";
+import { CATEGORY_MAP, type RequestStatus } from "@contracts/services";
 import { QUOTE_AMOUNT_PATTERN, todayHere } from "@contracts/workflow";
 import { useLiveQueue } from "./useLiveQueue";
 import { answerLines, EMERGENCY_PROBLEM_MAP } from "@contracts/emergency";
 import { DISTRICT_INFO, worksIn } from "@contracts/districts";
 import { useAuth } from "@/hooks/useAuth";
+import { useMyServices } from "@/hooks/useMyServices";
 
 /** How often the list checks for newly sent emergencies (the customer is calling). */
 export const EMERGENCY_REFRESH_MS = 15_000;
@@ -127,6 +128,8 @@ function EmergencyJobForm({
   const { t, p, lang } = useI18n();
   const utils = trpc.useUtils();
   const technicians = trpc.tech.list.useQuery();
+  // A specialist sends only for their own services; admins for any.
+  const { categories: myCategories } = useMyServices();
   const [category, setCategory] = useState(prefill?.category ?? "");
   const [problem, setProblem] = useState(prefill?.problem ?? "");
   const [name, setName] = useState("");
@@ -258,7 +261,7 @@ function EmergencyJobForm({
               <Field label={p(t.emergency.serviceLabel)}>
                 <select value={category} onChange={(e) => setCategory(e.target.value)} className={INPUT}>
                   <option value="">{p(t.emergency.chooseService)}</option>
-                  {CATEGORIES.map((c) => (
+                  {myCategories.map((c) => (
                     <option key={c.id} value={c.id}>
                       {p(c.name)}
                     </option>

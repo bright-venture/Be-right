@@ -1,4 +1,4 @@
-import { and, eq, type SQL } from "drizzle-orm";
+import { and, eq, inArray, sql, type SQL } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { requestEvents, serviceRequests, type ServiceRequest } from "@db/schema";
 import { canTransition, TRANSITIONS, type TransitionName } from "@contracts/workflow";
@@ -10,11 +10,13 @@ type Tx = Parameters<Parameters<Db["transaction"]>[0]>[0];
 type RequestPatch = Partial<typeof serviceRequests.$inferInsert>;
 
 /** Restricts a lookup to requests the caller may act on. */
-export type RequestScope = { customerId: number } | { technicianId: number } | "any";
+/** Whose requests: a customer's, a technician's, a specialist's services, or (admins) any. */
+export type RequestScope = { customerId: number } | { technicianId: number } | { categories: string[] } | "any";
 
-function scopeFilter(scope: RequestScope): SQL | undefined {
+export function scopeFilter(scope: RequestScope): SQL | undefined {
   if (scope === "any") return undefined;
   if ("customerId" in scope) return eq(serviceRequests.userId, scope.customerId);
+  if ("categories" in scope) return scope.categories.length ? inArray(serviceRequests.category, scope.categories) : sql`false`;
   return eq(serviceRequests.technicianId, scope.technicianId);
 }
 

@@ -330,6 +330,18 @@ export const emergencyRequests = pgTable(
 ).enableRLS();
 
 /**
+ * Who handles each service: one specialist per service (one person can have several). Only
+ * they get its requests, emergencies and emails; services without a row go to the admins.
+ */
+export const serviceSpecialists = pgTable("service_specialists", {
+  service: varchar("service", { length: 64 }).primaryKey(),
+  specialistId: integer("specialist_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+}).enableRLS();
+
+/**
  * Partner spare-parts shops (Admin → Parts shops). Be Right has a written agreement with
  * each: a technician picks up a part for free and Be Right pays the shop at the end of the
  * month, outside the app. The app only shows technicians where the shops are.

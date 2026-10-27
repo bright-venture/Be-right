@@ -155,7 +155,7 @@ describe("admin area", () => {
         await expect(c.tech.list()).rejects.toMatchObject({ code: "FORBIDDEN" });
       }
       // Password plus two-step: allowed.
-      await expect((await callerFor(user)).specialist.access()).resolves.toEqual({ ok: true });
+      await expect((await callerFor(user)).specialist.access()).resolves.toMatchObject({ ok: true });
     }
   });
 
