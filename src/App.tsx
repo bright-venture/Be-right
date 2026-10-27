@@ -4,6 +4,7 @@ import { Loader2 } from 'lucide-react'
 import Home from './pages/Home'
 import { isAppUi } from './lib/native'
 import { PresenceKeeper } from './components/tech/Availability'
+import { PushKeeper } from './components/PushNotifications'
 
 const Book = lazy(() => import('./pages/Book'))
 const Requests = lazy(() => import('./pages/Requests'))
@@ -44,6 +45,7 @@ export default function App() {
   return (
     <Suspense fallback={<PageFallback />}>
       <PresenceKeeper />
+      <PushKeeper />
       <Routes>
         <Route path="/" element={isAppUi ? <AppHome /> : <Home />} />
         {isAppUi && <Route path="/services" element={<AppServices />} />}

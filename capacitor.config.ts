@@ -19,6 +19,8 @@ const config: CapacitorConfig = {
     // Android: edge to edge with viewport-fit=cover; the page leaves room for the bars
     // (see src/lib/native.ts).
     SystemBars: { insetsHandling: "native", initialViewportFitValueHint: "cover" },
+    // Notifications also show while the app is open (src/lib/push.ts refreshes the screen).
+    PushNotifications: { presentationOptions: ["badge", "sound", "alert"] },
   },
 };
 

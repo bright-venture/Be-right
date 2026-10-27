@@ -1,4 +1,5 @@
 import { authRouter } from "./auth-router";
+import { pushRouter } from "./push-router";
 import { requestsRouter } from "./requests-router";
 import { specialistRouter } from "./specialist-router";
 import { techRouter } from "./tech-router";
@@ -22,6 +23,7 @@ export const appRouter = createRouter({
   admin: adminRouter,
   emergency: emergencyRouter,
   shops: shopsRouter,
+  push: pushRouter,
 });
 
 export type AppRouter = typeof appRouter;

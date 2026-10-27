@@ -23,6 +23,7 @@ import { canDispatch, ROLES } from "@contracts/roles";
 import { DeleteAccount, Details, EmailChange, PasswordChange } from "./Account";
 import { ProfileAvatar, RatingLine } from "@/components/account/ProfileCard";
 import { trpc } from "@/providers/trpc";
+import { PushSetting } from "@/components/PushNotifications";
 
 /** Screens one level down (/account/details …): each one is the same form as the website's. */
 const SECTIONS = ["details", "email", "password", "delete"] as const;
@@ -199,6 +200,9 @@ export default function AppAccount() {
             ))}
           </div>
         </section>
+
+        {/* notifications on this phone (the app, once Firebase is set up) */}
+        <PushSetting />
 
         {/* help and information */}
         <section>

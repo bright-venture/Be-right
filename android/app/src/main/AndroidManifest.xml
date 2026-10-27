@@ -46,6 +46,18 @@
             android:name="com.equimaps.capacitor_background_geolocation.BackgroundGeolocationService"
             android:exported="false"
             tools:replace="android:exported" />
+
+        <!-- Push notifications (Firebase): Be Right's icon and orange, and the "Updates" channel
+             unless a message says otherwise (emergencies use "urgent", see src/lib/push.ts). -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/ic_stat_notify" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_color"
+            android:resource="@color/notification_accent" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="updates" />
     </application>
 
     <!-- Permissions -->

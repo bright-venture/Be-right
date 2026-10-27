@@ -281,6 +281,13 @@
       "when": 1793090682764,
       "tag": "0039_service_specialists",
       "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1793092781760,
+      "tag": "0040_push_devices",
+      "breakpoints": true
     }
   ]
 }

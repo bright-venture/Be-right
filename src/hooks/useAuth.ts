@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { LOGIN_PATH } from "@/const";
 import { stopAllLocation } from "@/lib/presence";
+import { forgetPushDevice } from "@/lib/push";
 
 type UseAuthOptions = {
   redirectOnUnauthenticated?: boolean;
@@ -31,6 +32,8 @@ export function useAuth(options?: UseAuthOptions) {
     setSigningOut(true);
     try {
       await stopAllLocation();
+      // While still signed in: this phone stops getting their notifications.
+      await forgetPushDevice((token) => utils.client.push.unregister.mutate({ token }));
       const { supabase } = await import("@/lib/supabase");
       await supabase.auth.signOut();
       utils.auth.me.setData(undefined, null);

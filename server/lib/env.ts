@@ -20,6 +20,11 @@ export const env = {
   docsBucket: process.env.SUPABASE_DOCS_BUCKET || "technician-docs",
   /** Public address of the site, used in links inside emails. */
   siteUrl: (process.env.SITE_URL || "https://be-rightbright.com").replace(/\/+$/, ""),
+  /**
+   * Firebase service account key (the JSON file from Firebase → Project settings → Service
+   * accounts), for push notifications to the app; without it, push is skipped.
+   */
+  firebaseServiceAccount: process.env.FIREBASE_SERVICE_ACCOUNT || "",
   /** Resend API key for notification emails; without it, notifications are skipped. */
   resendApiKey: process.env.RESEND_API_KEY || "",
   emailFrom: process.env.EMAIL_FROM || "Be Right <noreply@be-rightbright.com>",

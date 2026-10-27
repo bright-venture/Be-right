@@ -1520,6 +1520,40 @@ export const t = {
     cancel: { en: "Cancel", ar: "إلغاء" },
     jobIn: { en: "District: {name}", ar: "المنطقة: {name}" },
   },
+  /** Notifications on the phone (the app): the invitation, and the switch in My account. */
+  push: {
+    promptCustomer: {
+      title: { en: "Know when your price is ready", ar: "اعرف متى يصبح سعرك جاهزاً" },
+      body: {
+        en: "Get a notification for your price, your visit, and when your professional is on the way.",
+        ar: "تصلك إشعارات بسعرك وموعد زيارتك وعندما يكون المهني في الطريق إليك.",
+      },
+    },
+    promptTech: {
+      title: { en: "Don't miss a job", ar: "لا تفوّت أي مهمة" },
+      body: {
+        en: "Get new jobs and emergencies straight away, even with the app closed.",
+        ar: "تصلك المهام الجديدة والحالات الطارئة فوراً، حتى والتطبيق مغلق.",
+      },
+    },
+    promptStaff: {
+      title: { en: "Don't miss an emergency", ar: "لا تفوّت أي حالة طارئة" },
+      body: {
+        en: "Get new requests and emergencies for your services straight away, even with the app closed.",
+        ar: "تصلك الطلبات الجديدة والحالات الطارئة لخدماتك فوراً، حتى والتطبيق مغلق.",
+      },
+    },
+    turnOn: { en: "Turn on", ar: "تفعيل" },
+    later: { en: "Not now", ar: "ليس الآن" },
+    setting: { en: "Notifications on this phone", ar: "الإشعارات على هذا الهاتف" },
+    onHint: { en: "On: you get updates about your jobs and requests.", ar: "مفعّلة: تصلك تحديثات مهامك وطلباتك." },
+    offHint: { en: "Off: you only get emails.", ar: "متوقفة: تصلك رسائل البريد الإلكتروني فقط." },
+    blocked: {
+      en: "Blocked in your phone's settings. Allow notifications for Be Right there.",
+      ar: "محظورة في إعدادات هاتفك. اسمح بإشعارات بي رايت من هناك.",
+    },
+    openSettings: { en: "Settings", ar: "الإعدادات" },
+  },
   /** Who handles each service (Admin → Team), and a specialist's own services (dashboard). */
   serviceOwners: {
     title: { en: "Who handles each service", ar: "من يتولّى كل خدمة" },

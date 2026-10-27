@@ -375,6 +375,7 @@ export const techRouter = createRouter({
         await logEvent(getDb(), job.id, "arrived", ctx.user.id, input.note);
         // There now: the customer stops seeing them on the map.
         await getDb().delete(technicianLocations).where(eq(technicianLocations.requestId, job.id));
+        await notify.arrived(job.id);
       } else {
         const required = PHOTO_REQUIRED[input.action];
         if ((await jobPhotoCount(getDb(), input.requestId, required.kind)) === 0) {
@@ -529,10 +530,13 @@ export const techRouter = createRouter({
         accuracy: input.accuracy != null ? String(Math.round(input.accuracy)) : null,
         updatedAt: new Date(),
       };
-      await db
+      const [saved] = await db
         .insert(technicianLocations)
         .values(values)
-        .onConflictDoUpdate({ target: technicianLocations.requestId, set: values });
+        .onConflictDoUpdate({ target: technicianLocations.requestId, set: values })
+        // xmax = 0: a new row, i.e. the first position for this job: they just set off.
+        .returning({ first: sql<boolean>`xmax = 0` });
+      if (saved?.first) await notify.onTheWay(job.id);
       return { ok: true };
     }),
 });

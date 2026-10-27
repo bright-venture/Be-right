@@ -5,6 +5,7 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { ServiceIcon } from "@/components/ServiceIcon";
 import { StatusBadge } from "@/components/requests/RequestParts";
+import { PushPrompt } from "@/components/PushNotifications";
 import { useI18n } from "@/i18n";
 import { useRoleGate } from "@/hooks/useRoleGate";
 import { trpc } from "@/providers/trpc";
@@ -44,6 +45,8 @@ export default function AppRequests() {
       <Navbar />
       <main className="mx-auto w-full max-w-lg flex-1 px-4 pt-20">
         <h1 className="pt-2 font-display text-[28px] font-black tracking-tight text-navy">{p(t.requests.title)}</h1>
+        {/* after their first booking: know when the price is ready */}
+        <PushPrompt show={active.length + past.length > 0} />
 
         {/* Active / Past */}
         <div role="tablist" className="mt-4 grid grid-cols-2 gap-1 rounded-2xl bg-navy/5 p-1">

@@ -8,6 +8,7 @@ import { useRoleGate } from "@/hooks/useRoleGate";
 import { getPresence, goOnline, startJobLocation, stopJobLocation, usePresence } from "@/lib/presence";
 import { useTrackingNotice } from "@/hooks/useTrackingNotice";
 import { Availability } from "@/components/tech/Availability";
+import { PushPrompt } from "@/components/PushNotifications";
 import { JobCard, JobView, type Sharing } from "@/components/tech/TechJob";
 import { isTodo, jobStep, type Job } from "@/lib/techJob";
 import { trpc } from "@/providers/trpc";
@@ -114,6 +115,7 @@ export default function Tech() {
           <>
             <h1 className="font-display text-3xl font-black text-navy sm:text-4xl">{p(t.tech.title)}</h1>
             <Availability />
+            <PushPrompt />
 
             <div role="tablist" className="mt-6 grid grid-cols-2 gap-1 rounded-xl border border-navy/12 bg-white p-1">
               {(

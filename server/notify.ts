@@ -13,6 +13,7 @@ import { getDb } from "./queries/connection";
 import { specialistOf } from "./lib/serviceSpecialists";
 import { env } from "./lib/env";
 import { sendEmail } from "./lib/email";
+import { sendPush } from "./lib/push";
 
 type Lang = "en" | "ar";
 type Text = Record<Lang, string>;
@@ -97,11 +98,33 @@ async function emailsOf(role: "admin" | "specialist") {
 }
 
 /** Who hears about a service's requests: its specialist, or the admins when it has none (and for Other). */
-async function specialistEmails(category: string | null) {
+async function staffFor(category: string | null): Promise<Person[]> {
   const owner = await specialistOf(category);
-  if (owner) return [owner.email];
-  const rows = await getDb().select({ email: users.email }).from(users).where(eq(users.role, "admin"));
-  return rows.map((r) => r.email);
+  if (owner) return [owner];
+  return getDb().select({ id: users.id, email: users.email }).from(users).where(eq(users.role, "admin"));
+}
+const specialistEmails = async (category: string | null) => (await staffFor(category)).map((p) => p?.email);
+
+type Person = { id: number; email: string | null } | null | undefined;
+
+/**
+ * The email, and a push to their phones with the same title and first line: a tap opens
+ * `path` in the app. Emergencies are `urgent` (a louder channel). Neither stops the other.
+ */
+async function tell(people: Person[], message: Message, push: { path: string; urgent?: boolean }) {
+  const [mail, phone] = await Promise.allSettled([
+    send(
+      people.map((p) => p?.email),
+      message,
+    ),
+    sendPush(
+      people.map((p) => p?.id),
+      { title: message.title, body: message.lines[0] ?? message.title, ...push },
+    ),
+  ]);
+  if (phone.status === "rejected") console.error("[notify] push failed", phone.reason);
+  if (mail.status === "rejected") throw mail.reason;
+  return mail.value;
 }
 
 async function loadJob(id: number) {
@@ -154,7 +177,7 @@ export const notify = {
     safely("requestSubmitted", async () => {
       const job = await loadJob(id);
       const d = describe(job);
-      await send(await specialistEmails(job.request.category), {
+      await tell(await staffFor(job.request.category), {
         subject: both(`New request #${d.id}: ${d.category.en}, ${d.area}`, `طلب جديد #${d.id}: ${d.category.ar}، ${d.area}`),
         title: both("A new request needs review", "يوجد طلب جديد بحاجة إلى مراجعة"),
         lines: [
@@ -165,7 +188,7 @@ export const notify = {
         ],
         path: "/dashboard",
         button: both("Open the dashboard", "فتح لوحة التحكم"),
-      });
+      }, { path: "/dashboard" });
     }),
 
   /** Specialist sent (or changed) the price: the customer approves it. */
@@ -179,7 +202,7 @@ export const notify = {
         .where(and(eq(requestEvents.requestId, id), eq(requestEvents.status, "quote_ready")));
       const revised = quotes > 1;
       const amount = `$${job.request.quoteAmount}`;
-      await send([job.customer?.email], {
+      await tell([job.customer], {
         subject: revised
           ? both(`Updated price for request #${d.id}`, `سعر محدّث للطلب #${d.id}`)
           : both(`Your price for request #${d.id} is ready`, `سعر طلبك #${d.id} جاهز`),
@@ -197,7 +220,7 @@ export const notify = {
         ],
         path: "/requests",
         button: both("See and approve", "مراجعة وموافقة"),
-      });
+      }, { path: `/requests/${d.id}` });
     }),
 
   /** Customer approved the price: specialists assign and schedule. */
@@ -236,7 +259,7 @@ export const notify = {
         path: "/dashboard",
         button: both("Open the dashboard", "فتح لوحة التحكم"),
       });
-      if (job.technician) await send([job.technician.email], jobCancelled(d.id));
+      if (job.technician) await tell([job.technician], jobCancelled(d.id), { path: "/tech" });
     }),
 
   /** Customer asked to cancel a scheduled visit: a specialist calls and confirms. */
@@ -270,7 +293,7 @@ export const notify = {
       const job = await loadJob(id);
       const d = describe(job);
       if (job.technician && previousTechnicianId !== job.technician.id) {
-        await send([job.technician.email], {
+        await tell([job.technician], {
           subject: both(`New job #${d.id}: ${d.category.en}, ${d.area}`, `مهمة جديدة #${d.id}: ${d.category.ar}، ${d.area}`),
           title: both("You have a new job", "لديك مهمة جديدة"),
           lines: [
@@ -282,11 +305,11 @@ export const notify = {
           ],
           path: "/tech",
           button: both("Open my jobs", "فتح مهامي"),
-        });
+        }, { path: `/tech?job=${d.id}` });
       }
       if (previousTechnicianId && previousTechnicianId !== job.technician?.id) {
         const previous = await getDb().query.users.findFirst({ where: eq(users.id, previousTechnicianId) });
-        await send([previous?.email], {
+        await tell([previous], {
           subject: both(`Job #${d.id} was reassigned`, `أُسندت المهمة #${d.id} إلى مهني آخر`),
           title: both("A job was given to another professional", "أُسندت مهمة إلى مهني آخر"),
           lines: [
@@ -297,7 +320,7 @@ export const notify = {
           ],
           path: "/tech",
           button: both("Open my jobs", "فتح مهامي"),
-        });
+        }, { path: "/tech" });
       }
     }),
 
@@ -307,7 +330,7 @@ export const notify = {
       const job = await loadJob(id);
       const d = describe(job);
       const techName = job.technician?.name;
-      await send([job.customer?.email], {
+      await tell([job.customer], {
         subject: both(`Your visit is booked: ${d.when.en}`, `زيارتك محجوزة: ${d.when.ar}`),
         title: both("Your visit is booked", "زيارتك محجوزة"),
         lines: [
@@ -320,7 +343,7 @@ export const notify = {
         ],
         path: "/requests",
         button: both("See my request", "عرض طلبي"),
-      });
+      }, { path: `/requests/${d.id}` });
       await send([job.technician?.email], {
         subject: both(`Job #${d.id} scheduled: ${d.when.en}`, `المهمة #${d.id} محدّدة: ${d.when.ar}`),
         title: both("Your job is scheduled", "مهمتك محدّدة"),
@@ -335,7 +358,7 @@ export const notify = {
     safely("completed", async () => {
       const job = await loadJob(id);
       const d = describe(job);
-      await send([job.customer?.email], {
+      await tell([job.customer], {
         subject: both(`Job #${d.id} is done`, `اكتملت المهمة #${d.id}`),
         title: both("Your job is done", "اكتمل العمل"),
         lines: [
@@ -347,7 +370,7 @@ export const notify = {
         ],
         path: "/requests",
         button: both("See my request", "عرض طلبي"),
-      });
+      }, { path: `/requests/${d.id}` });
     }),
 
   /** Our team cancelled the request. */
@@ -355,7 +378,7 @@ export const notify = {
     safely("closedByUs", async () => {
       const job = await loadJob(id);
       const d = describe(job);
-      await send([job.customer?.email], {
+      await tell([job.customer], {
         subject: both(`Request #${d.id} was cancelled`, `أُلغي الطلب #${d.id}`),
         title: both("Your request was cancelled", "أُلغي طلبك"),
         lines: [
@@ -366,8 +389,8 @@ export const notify = {
         ],
         path: "/requests",
         button: both("See my requests", "عرض طلباتي"),
-      });
-      if (job.technician) await send([job.technician.email], jobCancelled(d.id));
+      }, { path: `/requests/${d.id}` });
+      if (job.technician) await tell([job.technician], jobCancelled(d.id), { path: "/tech" });
     }),
 
   /** A specialist closed the job charging only the visit fee (no repair happened). */
@@ -381,7 +404,7 @@ export const notify = {
         no_access: both("nobody was there at the agreed time", "لم يكن أحد موجوداً في الموعد المتفق عليه"),
         late_cancel: both(`the visit was cancelled after the ${d.worker.en.word} set off`, `أُلغيت الزيارة بعد انطلاق ${d.worker.ar.the}`),
       }[job.request.visitFeeReason ?? "no_work"];
-      await send([job.customer?.email], {
+      await tell([job.customer], {
         subject: both(`Request #${d.id} closed with a ${fee} visit fee`, `أُغلق الطلب #${d.id} مع رسوم زيارة ${fee}`),
         title: both("Your request was closed", "أُغلق طلبك"),
         lines: [
@@ -393,8 +416,8 @@ export const notify = {
         ],
         path: "/requests",
         button: both("See my requests", "عرض طلباتي"),
-      });
-      if (job.technician) await send([job.technician.email], jobCancelled(d.id));
+      }, { path: `/requests/${d.id}` });
+      if (job.technician) await tell([job.technician], jobCancelled(d.id), { path: "/tech" });
     }),
 
   /** The technician reported a visit without a repair: a specialist decides about the visit fee. */
@@ -551,12 +574,36 @@ export const notify = {
       const d = describe(job);
       const who = [job.request.contactName, job.request.phone].filter(Boolean).join(", ");
       if (!who) return;
-      await send([job.technician?.email], {
+      await tell([job.technician], {
         subject: both(`Emergency job #${d.id}: customer's contact`, `مهمة طارئة #${d.id}: بيانات العميل`),
         title: both("The customer's contact", "بيانات التواصل مع العميل"),
         lines: [both(`Emergency job #${d.id} (${d.category.en}): ${who}.`, `المهمة الطارئة #${d.id} (${d.category.ar}): ${who}.`)],
         path: "/tech",
         button: both("Open my jobs", "فتح مهامي"),
+      }, { path: `/tech?job=${d.id}`, urgent: true });
+    }),
+
+  /** The professional set off (their first position for the job): the customer follows them. Phone only. */
+  onTheWay: (id: number) =>
+    safely("onTheWay", async () => {
+      const job = await loadJob(id);
+      const d = describe(job);
+      await sendPush([job.customer?.id], {
+        title: both(`Your ${d.worker.en.word} is on the way`, `${d.worker.ar.the} في الطريق إليك`),
+        body: both(`${d.category.en}: follow them on the map.`, `${d.category.ar}: تابعه على الخريطة.`),
+        path: `/requests/${d.id}`,
+      });
+    }),
+
+  /** The professional pressed Arrived. Phone only. */
+  arrived: (id: number) =>
+    safely("arrived", async () => {
+      const job = await loadJob(id);
+      const d = describe(job);
+      await sendPush([job.customer?.id], {
+        title: both(`Your ${d.worker.en.word} has arrived`, `وصل ${d.worker.ar.the}`),
+        body: both(`${d.category.en}, request #${d.id}.`, `${d.category.ar}، الطلب #${d.id}.`),
+        path: `/requests/${d.id}`,
       });
     }),
 
@@ -567,7 +614,7 @@ export const notify = {
       if (!sent) return;
       const problem = local(EMERGENCY_PROBLEM_MAP[sent.problem]?.label, sent.problem);
       const map = directionsLinks(sent.lat, sent.lng).google;
-      await send(await specialistEmails(EMERGENCY_PROBLEM_MAP[sent.problem]?.category ?? null), {
+      await tell(await staffFor(EMERGENCY_PROBLEM_MAP[sent.problem]?.category ?? null), {
         subject: both(`Emergency: ${problem.en}`, `طوارئ: ${problem.ar}`),
         title: both("An emergency is coming in", "حالة طوارئ واردة"),
         lines: [
@@ -590,7 +637,7 @@ export const notify = {
         ],
         path: "/dashboard?tab=emergencies",
         button: both("Open emergencies", "فتح حالات الطوارئ"),
-      });
+      }, { path: "/dashboard?tab=emergencies", urgent: true });
     }),
 
   /** A specialist sent a technician to an emergency: they go now; a signed-in customer is told. */
@@ -599,7 +646,7 @@ export const notify = {
       const job = await loadJob(id);
       const d = describe(job);
       const contact = job.request.contactName;
-      await send([job.technician?.email], {
+      await tell([job.technician], {
         subject: both(`Emergency job #${d.id}: ${d.category.en}, ${d.area}`, `مهمة طارئة #${d.id}: ${d.category.ar}، ${d.area}`),
         title: both("Emergency: please go now", "حالة طارئة: يُرجى التوجّه الآن"),
         lines: [
@@ -611,9 +658,9 @@ export const notify = {
         ],
         path: "/tech",
         button: both("Open my jobs", "فتح مهامي"),
-      });
+      }, { path: `/tech?job=${d.id}`, urgent: true });
       const techName = job.technician?.name;
-      await send([job.customer?.email], {
+      await tell([job.customer], {
         subject: both(`${cap(d.worker.en.a)} is on the way`, `${d.worker.ar.one} في الطريق إليك`),
         title: both("Help is on the way", "المساعدة في الطريق"),
         lines: [
@@ -626,7 +673,7 @@ export const notify = {
         ],
         path: "/requests",
         button: both("See my request", "عرض طلبي"),
-      });
+      }, { path: `/requests/${d.id}`, urgent: true });
     }),
 };
 

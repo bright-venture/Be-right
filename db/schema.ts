@@ -330,6 +330,28 @@ export const emergencyRequests = pgTable(
 ).enableRLS();
 
 /**
+ * Phones that get push notifications (the Be Right app): one row per phone, for whoever is
+ * signed in on it. Removed on sign-out, when turned off, or when Firebase says the app is gone.
+ */
+export const pushDevices = pgTable(
+  "push_devices",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    /** The phone's Firebase Cloud Messaging address. */
+    token: varchar("token", { length: 512 }).notNull().unique(),
+    platform: varchar("platform", { length: 16 }).$type<"android" | "ios">().notNull(),
+    /** The app's language on that phone: notifications are written in it. */
+    lang: varchar("lang", { length: 2 }).$type<"en" | "ar">().notNull().default("en"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    lastSeenAt: timestamp("last_seen_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [index("push_devices_user_idx").on(t.userId)],
+).enableRLS();
+
+/**
  * Who handles each service: one specialist per service (one person can have several). Only
  * they get its requests, emergencies and emails; services without a row go to the admins.
  */

@@ -12,6 +12,7 @@ import { useRoleGate } from "@/hooks/useRoleGate";
 import { useAuth } from "@/hooks/useAuth";
 import { useTabParam } from "@/hooks/useTabParam";
 import { StaffGate } from "@/components/admin/StaffGate";
+import { PushPrompt } from "@/components/PushNotifications";
 import { useLiveQueue } from "@/components/dashboard/useLiveQueue";
 import { trpc } from "@/providers/trpc";
 
@@ -91,6 +92,8 @@ export default function Dashboard() {
                 {p(t.serviceOwners.none)}
               </p>
             ))}
+
+          <PushPrompt />
 
           <div role="tablist" className="mt-6 flex w-full flex-wrap gap-1 rounded-xl border border-navy/12 bg-white p-1 shadow-[0_1px_2px_rgb(12_43_92/0.06)]">
             {TABS.map((k) => (

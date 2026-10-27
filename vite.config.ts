@@ -2,6 +2,7 @@ import devServer from "@hono/vite-dev-server";
 import path from "path";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
+import { existsSync } from "fs";
 
 const __dirname = import.meta.dirname;
 
@@ -25,6 +26,10 @@ export default defineConfig({
   define: {
     // Netlify sets COMMIT_REF while building: crash reports say which version broke.
     "import.meta.env.VITE_RELEASE": JSON.stringify((process.env.COMMIT_REF ?? "local").slice(0, 7)),
+    // Push notifications only in app builds made with Firebase's file (see src/lib/push.ts).
+    "import.meta.env.VITE_PUSH_READY": JSON.stringify(
+      existsSync(path.resolve(__dirname, "android/app/google-services.json")) ? "1" : "",
+    ),
   },
   build: {
     outDir: path.resolve(__dirname, "dist/public"),
