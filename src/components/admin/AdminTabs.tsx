@@ -27,7 +27,7 @@ import { useI18n } from "@/i18n";
 import { useConfirm } from "@/hooks/useConfirm";
 import { trpc } from "@/providers/trpc";
 import { formatMoment, meetingDate } from "@/lib/time";
-import { CATEGORY_MAP, STATUS_ORDER, type RequestStatus } from "@contracts/services";
+import { CATEGORY_MAP, forWorker, STATUS_ORDER, type RequestStatus } from "@contracts/services";
 import type { AuditAction } from "@contracts/audit";
 import { arabicDigits } from "@contracts/legal";
 
@@ -706,7 +706,7 @@ function RequestActivity() {
           </span>
           <div className="min-w-0">
             <p className="flex flex-wrap items-baseline gap-x-2 text-sm">
-              <span className="font-bold text-navy">{labels[e.status] ? p(labels[e.status]) : e.status}</span>
+              <span className="font-bold text-navy">{labels[e.status] ? p(forWorker(labels[e.status], e.category)) : e.status}</span>
               <span className="text-navy/60">
                 {p(t.admin.request).replace("{id}", String(e.requestId))}
                 {e.category && CATEGORY_MAP[e.category] ? ` · ${p(CATEGORY_MAP[e.category].name)}` : ""}

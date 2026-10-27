@@ -3,7 +3,7 @@ import JobMap from "@/components/map/JobMap";
 import { Stars } from "@/components/Stars";
 import { useI18n } from "@/i18n";
 import { isRecent } from "@/lib/time";
-import type { RequestStatus } from "@contracts/services";
+import { forWorker, type RequestStatus } from "@contracts/services";
 
 // Pieces shared by the website requests page (src/pages/Requests.tsx) and the app's
 // request screens (src/pages/AppRequests.tsx).
@@ -40,6 +40,7 @@ function initials(name: string | null) {
 }
 
 export function TechnicianCard({
+  category,
   name,
   photoUrl,
   rating,
@@ -47,6 +48,8 @@ export function TechnicianCard({
   location,
   arrived = false,
 }: {
+  /** The job's service: "Your plumber", "Your cleaner"... */
+  category: string;
   name: string | null;
   photoUrl: string | null;
   rating: { average: number | null; count: number };
@@ -80,7 +83,7 @@ export function TechnicianCard({
         )}
         <div>
           <p className="font-display text-xs font-bold uppercase tracking-[0.2em] text-navy/70">
-            {p(t.tracking.techOnWay)}
+            {p(forWorker(t.tracking.techOnWay, category))}
           </p>
           <p className="font-display text-base font-extrabold text-navy">{name ?? "Be Right"}</p>
           <span className="mt-0.5 flex items-center gap-1.5 text-xs font-bold text-navy/70">
@@ -100,7 +103,7 @@ export function TechnicianCard({
       </div>
       {arrived ? (
         <p className="mt-3 flex items-center gap-2 rounded-xl bg-green-700/10 px-3 py-2 text-sm font-bold text-green-800">
-          <MapPin className="h-4 w-4" /> {p(t.tracking.arrived)}
+          <MapPin className="h-4 w-4" /> {p(forWorker(t.tracking.arrived, category))}
         </p>
       ) : (home || live) && (
         <div className="mt-3">
@@ -123,7 +126,7 @@ export function TechnicianCard({
           )}
         </div>
       ) : (
-        <p className="mt-3 text-sm text-navy/70">{p(t.tracking.noLocationYet)}</p>
+        <p className="mt-3 text-sm text-navy/70">{p(forWorker(t.tracking.noLocationYet, category))}</p>
       )}
     </div>
   );

@@ -67,7 +67,7 @@ async function hireApplication(ctx: { user: { id: number }; req: Request }, appI
   const db = getDb();
   const app = await findApplication(appId);
   if (app.status === "hired" && app.hiredUserId) {
-    throw new TRPCError({ code: "BAD_REQUEST", message: "This applicant is already a technician" });
+    throw new TRPCError({ code: "BAD_REQUEST", message: "This applicant is already a professional" });
   }
   const address = emailOverride ?? app.email?.toLowerCase();
   if (!address) {
@@ -76,7 +76,7 @@ async function hireApplication(ctx: { user: { id: number }; req: Request }, appI
 
   const existing = await db.query.users.findFirst({ where: eq(users.email, address) });
   if (existing?.role === "technician") {
-    throw new TRPCError({ code: "BAD_REQUEST", message: "This email already belongs to a technician" });
+    throw new TRPCError({ code: "BAD_REQUEST", message: "This email already belongs to a professional" });
   }
   if (existing?.role === "specialist" || existing?.role === "admin") {
     throw new TRPCError({ code: "BAD_REQUEST", message: "This email belongs to a Be Right staff member" });
@@ -246,7 +246,7 @@ export const joinRouter = createRouter({
       if (app.status === "hired") {
         throw new TRPCError({
           code: "BAD_REQUEST",
-          message: "This technician is hired. To stop working with them, remove them in Technicians.",
+          message: "This professional is hired. To stop working with them, remove them in Professionals.",
         });
       }
       await db

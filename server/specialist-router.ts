@@ -283,7 +283,7 @@ export const specialistRouter = createRouter({
         scope: "any",
         note: input.note,
         guard: (row) =>
-          name === "schedule" && !row.technicianId ? "Assign a technician before scheduling" : null,
+          name === "schedule" && !row.technicianId ? "Assign a professional before scheduling" : null,
       });
       if (name === "schedule") await notify.scheduled(input.id);
       if (name === "complete") await notify.completed(input.id);

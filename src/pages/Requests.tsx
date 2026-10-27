@@ -18,6 +18,7 @@ import { useRoleGate } from "@/hooks/useRoleGate";
 import { trpc } from "@/providers/trpc";
 import {
   CATEGORY_MAP,
+  forWorker,
   STATUS_ORDER,
   type RequestStatus,
 } from "@contracts/services";
@@ -280,6 +281,7 @@ export default function Requests() {
                     {/* technician + live location */}
                     {detail.data.technician && (
                       <TechnicianCard
+                        category={detail.data.request.category}
                         name={detail.data.technician.name}
                         photoUrl={detail.data.technician.photoUrl}
                         rating={detail.data.technician.rating}
@@ -315,7 +317,7 @@ export default function Requests() {
                       </>
                     )}
                     <div className="mt-6 empty:hidden">
-                      <BeforeAfter media={detail.data.media} forCustomer />
+                      <BeforeAfter media={detail.data.media} forCustomer category={detail.data.request.category} />
                     </div>
 
                     {detail.data.request.status !== "quote_ready" &&
@@ -380,7 +382,7 @@ export default function Requests() {
                         </p>
                       ) : askingCancel === r.id ? (
                         <div className="mt-6 flex flex-col gap-2">
-                          <p className="text-sm text-navy/70">{p(t.requests.askCancelHint)}</p>
+                          <p className="text-sm text-navy/70">{p(forWorker(t.requests.askCancelHint, r.category))}</p>
                           <textarea
                             value={cancelReason}
                             onChange={(e) => setCancelReason(e.target.value)}

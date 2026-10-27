@@ -8,13 +8,23 @@ import { shrinkImage } from "@/lib/shrinkImage";
 import { isRateLimited } from "@/lib/errors";
 import { MAX_JOB_PHOTOS, type JobPhotoKind } from "@contracts/workflow";
 import { PHOTO_ACCEPT, isPhotoType } from "@contracts/uploads";
+import { forWorker } from "@contracts/services";
 
 type Media = { key: string; contentType: string | null; kind: string };
 
 const LABEL = "font-display text-xs font-bold uppercase tracking-[0.2em] text-navy/70";
 
 /** Read-only before/after photos of a job, for the customer and the specialist. Nothing until there are some. */
-export function BeforeAfter({ media, forCustomer = false }: { media: Media[]; forCustomer?: boolean }) {
+export function BeforeAfter({
+  media,
+  forCustomer = false,
+  category,
+}: {
+  media: Media[];
+  forCustomer?: boolean;
+  /** The job's service, to name who took the photos ("Photos your plumber took"). */
+  category?: string;
+}) {
   const { t, p } = useI18n();
   const sides = (["before", "after"] as const)
     .map((kind) => ({ kind, items: media.filter((m) => m.kind === kind) }))
@@ -23,7 +33,7 @@ export function BeforeAfter({ media, forCustomer = false }: { media: Media[]; fo
   return (
     <div>
       <p className={LABEL}>{p(t.jobPhotos.title)}</p>
-      {forCustomer && <p className="mt-1 text-xs text-navy/70">{p(t.jobPhotos.customerNote)}</p>}
+      {forCustomer && <p className="mt-1 text-xs text-navy/70">{p(forWorker(t.jobPhotos.customerNote, category))}</p>}
       <div className="mt-2 grid gap-4 sm:grid-cols-2">
         {sides.map(({ kind, items }) => (
           <div key={kind} className="min-w-0">

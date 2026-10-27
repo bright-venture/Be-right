@@ -168,7 +168,7 @@ export const techRouter = createRouter({
         if (active) {
           throw new TRPCError({
             code: "BAD_REQUEST",
-            message: `Reassign job #${active.id} before removing this technician`,
+            message: `Reassign job #${active.id} before removing this professional`,
           });
         }
         const tech = await tx.query.users.findFirst({ where: eq(users.id, input.technicianId) });
@@ -176,7 +176,7 @@ export const techRouter = createRouter({
         if (released.length) {
           await tx.update(serviceRequests).set({ technicianId: null }).where(inArray(serviceRequests.id, released));
           for (const id of released) {
-            await logEvent(tx, id, "unassigned", ctx.user.id, `Technician removed: ${tech?.name ?? tech?.email ?? input.technicianId}`);
+            await logEvent(tx, id, "unassigned", ctx.user.id, `Professional removed: ${tech?.name ?? tech?.email ?? input.technicianId}`);
           }
         }
         await tx
@@ -257,7 +257,7 @@ export const techRouter = createRouter({
           .set({ districts })
           .where(and(eq(users.id, input.technicianId), eq(users.role, "technician")))
           .returning({ id: users.id });
-        if (!tech) throw new TRPCError({ code: "NOT_FOUND", message: "Technician not found" });
+        if (!tech) throw new TRPCError({ code: "NOT_FOUND", message: "Professional not found" });
         await audit(
           { actorId: ctx.user.id, action: "technician_districts_set", targetUserId: tech.id, details: { districts: districts.join(", ") } },
           tx,
@@ -274,13 +274,13 @@ export const techRouter = createRouter({
         const tech = await tx.query.users.findFirst({
           where: and(eq(users.id, input.technicianId), eq(users.role, "technician")),
         });
-        if (!tech) throw new TRPCError({ code: "NOT_FOUND", message: "Technician not found" });
+        if (!tech) throw new TRPCError({ code: "NOT_FOUND", message: "Professional not found" });
         const changed = await tx
           .update(technicianApplications)
           .set({ transport: input.transport })
           .where(eq(technicianApplications.hiredUserId, tech.id))
           .returning({ id: technicianApplications.id });
-        if (!changed.length) throw new TRPCError({ code: "BAD_REQUEST", message: "This technician has no application to update" });
+        if (!changed.length) throw new TRPCError({ code: "BAD_REQUEST", message: "This professional has no application to update" });
         await audit(
           { actorId: ctx.user.id, action: "technician_transport_set", targetUserId: tech.id, details: { transport: input.transport } },
           tx,
@@ -296,14 +296,14 @@ export const techRouter = createRouter({
       const db = getDb();
       const tech = await db.query.users.findFirst({ where: eq(users.id, input.technicianId) });
       if (!tech || tech.role !== "technician") {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "Not a technician" });
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Not a professional" });
       }
       const previousTechnicianId = await db.transaction(async (tx) => {
         const job = await findRequest(tx, input.requestId, "any", true);
         if (!ASSIGNABLE_STATUSES.includes(job.status)) {
           throw new TRPCError({
             code: "BAD_REQUEST",
-            message: "A technician can be assigned once the customer approves the quote",
+            message: "A professional can be assigned once the customer approves the quote",
           });
         }
         const exception = checkWorksIn(ctx.user.role, tech.districts, requestDistrict(job));
@@ -320,7 +320,7 @@ export const techRouter = createRouter({
           job.id,
           "assigned",
           ctx.user.id,
-          `Technician: ${tech.name ?? tech.email ?? tech.id}${exception ? `, ${OUTSIDE_DISTRICTS_NOTE}` : ""}`,
+          `Professional: ${tech.name ?? tech.email ?? tech.id}${exception ? `, ${OUTSIDE_DISTRICTS_NOTE}` : ""}`,
         );
         return job.technicianId;
       });

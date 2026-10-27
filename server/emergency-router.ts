@@ -113,7 +113,7 @@ export const emergencyRouter = createRouter({
       const db = getDb();
       const tech = await db.query.users.findFirst({ where: eq(users.id, input.technicianId) });
       if (!tech || tech.role !== "technician" || tech.deletedAt) {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "Not a technician" });
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Not a professional" });
       }
       const district = districtAt(input.lat, input.lng);
       const exception = checkWorksIn(ctx.user.role, tech.districts, district);
@@ -166,7 +166,7 @@ export const emergencyRouter = createRouter({
           job.id,
           "assigned",
           ctx.user.id,
-          `Technician: ${tech.name ?? tech.email ?? tech.id}${exception ? `, ${OUTSIDE_DISTRICTS_NOTE}` : ""}`,
+          `Professional: ${tech.name ?? tech.email ?? tech.id}${exception ? `, ${OUTSIDE_DISTRICTS_NOTE}` : ""}`,
         );
         await logEvent(tx, job.id, "scheduled", ctx.user.id, "Emergency: sent now");
         if (input.emergencyId) {

@@ -110,7 +110,7 @@ describe("notification emails", () => {
 
   it("tells specialists when the customer approves", async () => {
     await (await callerFor(customer)).requests.approveQuote({ id, amount: "55" });
-    expect(emailTo(SPECIALIST_EMAIL).subject).toContain("assign a technician");
+    expect(emailTo(SPECIALIST_EMAIL).subject).toContain("assign a plumber");
   });
 
   it("tells technicians about new and reassigned jobs, and drops the old position", async () => {
@@ -144,7 +144,7 @@ describe("notification emails", () => {
     state.sent.length = 0;
 
     await s.specialist.setStatus({ id: other.id, status: "scheduled" });
-    expect(emailTo("rami@example.com").text).toContain("Your technician: Hassan.");
+    expect(emailTo("rami@example.com").text).toContain("Your plumber: Hassan.");
     expect(emailTo("hassan@example.com").subject).toContain("scheduled");
   });
 
@@ -213,7 +213,7 @@ describe("notification emails", () => {
     // Accepted: the specialists hear about their new technician (an existing account: no invitation).
     await makeUser("samir@example.com", "Samir");
     await (await callerFor(boss)).join.hire({ id });
-    expect(emailTo(SPECIALIST_EMAIL).subject).toContain("New technician on the team: Samir");
+    expect(emailTo(SPECIALIST_EMAIL).subject).toContain("New professional on the team: Samir");
   });
 
   it("never fails the action when an email can't be sent", async () => {

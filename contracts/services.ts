@@ -684,8 +684,8 @@ export const CATEGORIES: ServiceCategory[] = [
         kind: "text",
         label: { en: "What do you need?", ar: "ماذا تحتاج؟" },
         hint: {
-          en: "Describe the problem or the service in a few words. A specialist finds the right technician.",
-          ar: "صِف المشكلة أو الخدمة ببضع كلمات. يجد المختص الفنّي المناسب.",
+          en: "Describe the problem or the service in a few words. A specialist finds the right professional.",
+          ar: "صِف المشكلة أو الخدمة ببضع كلمات. يجد المختص المهني المناسب.",
         },
       },
     ],
@@ -732,8 +732,8 @@ export const GUARANTEE_POINTS: LocalText[] = [
     ar: "السعر الذي وافقت عليه هو ما تدفعه. لا يُنفَّذ أي عمل إضافي إلا بعد موافقتك.",
   },
   {
-    en: "Only technicians we've met in person and approved before their first job.",
-    ar: "فقط فنيون قابلناهم شخصياً واعتمدناهم قبل أول مهمة لهم.",
+    en: "Only professionals we've met in person and approved before their first job.",
+    ar: "فقط مهنيون قابلناهم شخصياً واعتمدناهم قبل أول مهمة لهم.",
   },
 ];
 
@@ -741,13 +741,57 @@ export const GUARANTEE_POINTS: LocalText[] = [
 
 // Where we work: anywhere, confirmed per request.
 export const COVERAGE_NOTE: LocalText = {
-  en: "We're growing city by city. Book with your address and a specialist confirms, before you approve anything, that an approved technician near you can come.",
-  ar: "نتوسّع مدينة بعد مدينة. احجز بعنوانك، ويؤكّد مختص قبل أن توافق على أي شيء أن فنّياً معتمداً قريباً منك يستطيع الحضور.",
+  en: "We're growing city by city. Book with your address and a specialist confirms, before you approve anything, that an approved professional near you can come.",
+  ar: "نتوسّع مدينة بعد مدينة. احجز بعنوانك، ويؤكّد مختص قبل أن توافق على أي شيء أن مهنياً معتمداً قريباً منك يستطيع الحضور.",
 };
 
 // ---------- trades and facility services ----------
 
 /** Repair and installation trades, in the order shown everywhere. */
+/**
+ * What the person doing each service is called: a cleaner or a guard is not a "technician".
+ * Where the service isn't known, they're a professional.
+ */
+export interface WorkerName {
+  en: { title: string; word: string; a: string };
+  ar: { one: string; the: string };
+}
+const worker = (title: string, word: string, a: string, one: string, the: string): WorkerName => ({
+  en: { title, word, a: `${a} ${word}` },
+  ar: { one, the },
+});
+export const PROFESSIONAL = worker("Professional", "professional", "a", "مهني", "المهني");
+export const WORKER_NAMES: Record<string, WorkerName> = {
+  plumbing: worker("Plumber", "plumber", "a", "سبّاك", "السبّاك"),
+  electrical: worker("Electrician", "electrician", "an", "كهربائي", "الكهربائي"),
+  ac: worker("AC technician", "AC technician", "an", "فنّي تكييف", "فنّي التكييف"),
+  carpentry: worker("Carpenter", "carpenter", "a", "نجّار", "النجّار"),
+  painting: worker("Painter", "painter", "a", "دهّان", "الدهّان"),
+  waterproofing: worker("Waterproofer", "waterproofer", "a", "فنّي عزل", "فنّي العزل"),
+  installation: worker("Installer", "installer", "an", "فنّي تركيب", "فنّي التركيب"),
+  locksmith: worker("Locksmith", "locksmith", "a", "فنّي أقفال", "فنّي الأقفال"),
+  cameras: worker("Camera installer", "camera installer", "a", "فنّي كاميرات", "فنّي الكاميرات"),
+  cleaning: worker("Cleaner", "cleaner", "a", "عامل تنظيف", "عامل التنظيف"),
+  security: worker("Guard", "guard", "a", "حارس", "الحارس"),
+  valet: worker("Valet", "valet", "a", "عامل صفّ سيارات", "عامل صفّ السيارات"),
+  porter: worker("Porter", "porter", "a", "عتّال", "العتّال"),
+  landscaping: worker("Gardener", "gardener", "a", "بستاني", "البستاني"),
+};
+export const workerOf = (category: string | null | undefined): WorkerName =>
+  (category && WORKER_NAMES[category]) || PROFESSIONAL;
+
+/**
+ * Fills a text's worker names for a service. English: {Worker} "Plumber", {worker} "plumber",
+ * {aWorker} "a plumber". Arabic: {worker} "سبّاك", {theWorker} "السبّاك".
+ */
+export function forWorker(text: LocalText, category: string | null | undefined): LocalText {
+  const w = workerOf(category);
+  return {
+    en: text.en.split("{Worker}").join(w.en.title).split("{aWorker}").join(w.en.a).split("{worker}").join(w.en.word),
+    ar: text.ar.split("{theWorker}").join(w.ar.the).split("{worker}").join(w.ar.one),
+  };
+}
+
 export const TRADE_SERVICES = [
   "plumbing",
   "electrical",

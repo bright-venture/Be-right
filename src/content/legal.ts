@@ -27,12 +27,12 @@ export const TERMS: LegalDocument = {
       title: t("1. What Be Right does", "١. ما تقدّمه بي رايت"),
       paragraphs: [
         t(
-          "Be Right is a managed home-maintenance service. You describe the problem through guided questions and photos; a Be Right specialist reviews it, prepares a quote and assigns a qualified, contracted technician who carries out the work.",
-          "بي رايت خدمة صيانة منزلية مُدارة. تصف المشكلة عبر أسئلة موجّهة وصور؛ يراجعها مختص من بي رايت، ويعدّ عرض سعر، ويعيّن فنياً مؤهلاً متعاقداً يتولّى تنفيذ العمل.",
+          "Be Right is a managed home-maintenance service. You describe the problem through guided questions and photos; a Be Right specialist reviews it, prepares a quote and assigns a qualified, contracted professional who carries out the work.",
+          "بي رايت خدمة صيانة منزلية مُدارة. تصف المشكلة عبر أسئلة موجّهة وصور؛ يراجعها مختص من بي رايت، ويعدّ عرض سعر، ويعيّن مهنياً مؤهلاً متعاقداً يتولّى تنفيذ العمل.",
         ),
         t(
-          "For urgent repairs, call our emergency line (the Emergency button shows the number); we send a technician as fast as we can but can't promise an arrival time. Be Right is not an emergency service: if there is fire, a gas smell, sparks or any immediate danger, leave the area and call your local emergency number before contacting us.",
-          "للإصلاحات العاجلة، اتصل بخط الطوارئ (يعرض زر «طوارئ» الرقم)؛ نرسل فنّياً بأسرع ما يمكن لكن لا يمكننا ضمان موعد الوصول. بي رايت ليست خدمة طوارئ: في حال وجود حريق أو رائحة غاز أو شرر أو أي خطر فوري، ابتعد عن المكان واتصل برقم الطوارئ المحلي قبل التواصل معنا.",
+          "For urgent repairs, call our emergency line (the Emergency button shows the number); we send a professional as fast as we can but can't promise an arrival time. Be Right is not an emergency service: if there is fire, a gas smell, sparks or any immediate danger, leave the area and call your local emergency number before contacting us.",
+          "للإصلاحات العاجلة، اتصل بخط الطوارئ (يعرض زر «طوارئ» الرقم)؛ نرسل مهنياً بأسرع ما يمكن لكن لا يمكننا ضمان موعد الوصول. بي رايت ليست خدمة طوارئ: في حال وجود حريق أو رائحة غاز أو شرر أو أي خطر فوري، ابتعد عن المكان واتصل برقم الطوارئ المحلي قبل التواصل معنا.",
         ),
       ],
     },
@@ -49,12 +49,12 @@ export const TERMS: LegalDocument = {
       title: t("3. Bookings, quotes and your approval", "٣. الحجوزات وعروض الأسعار وموافقتك"),
       paragraphs: [
         t(
-          "Submitting a request is free. A specialist reviews it, and before any technician is sent, we show you the price or estimate and the appointment. Nothing is dispatched or charged until you approve.",
-          "تقديم الطلب مجاني. يراجعه مختص، وقبل إرسال أي فني نعرض عليك السعر أو التقدير والموعد. لا يتم إرسال أحد ولا تُستوفى أي كلفة قبل موافقتك.",
+          "Submitting a request is free. A specialist reviews it, and before any professional is sent, we show you the price or estimate and the appointment. Nothing is dispatched or charged until you approve.",
+          "تقديم الطلب مجاني. يراجعه مختص، وقبل إرسال أي مهني نعرض عليك السعر أو التقدير والموعد. لا يتم إرسال أحد ولا تُستوفى أي كلفة قبل موافقتك.",
         ),
         t(
-          "If the technician finds that the job differs from what was described, extra work or parts need your approval first. The approved quote is the price you pay unless you approve a change.",
-          "إذا تبيّن للفني أن العمل يختلف عمّا وُصف، فأي عمل أو قطع إضافية تتطلب موافقتك المسبقة. العرض الذي وافقت عليه هو السعر الذي تدفعه ما لم توافق على تعديل.",
+          "If the professional finds that the job differs from what was described, extra work or parts need your approval first. The approved quote is the price you pay unless you approve a change.",
+          "إذا تبيّن للمهني أن العمل يختلف عمّا وُصف، فأي عمل أو قطع إضافية تتطلب موافقتك المسبقة. العرض الذي وافقت عليه هو السعر الذي تدفعه ما لم توافق على تعديل.",
         ),
         t(
           "Prices are in US dollars unless the quote says otherwise. You pay as shown in the approved quote, at the time and by the method it states.",
@@ -70,8 +70,8 @@ export const TERMS: LegalDocument = {
           "يمكنك الإلغاء مجاناً عبر التطبيق إلى أن يُحدَّد موعد الزيارة. بعد ذلك اطلب الإلغاء من المختص عبر صفحة الطلب.",
         ),
         t(
-          `A fixed visit fee of US$${FEE}, shown before you book, applies only if the technician comes and no repair goes ahead (no work is needed or you decide not to repair), if nobody is there to give access at the agreed time, or if you cancel after the technician has set off. Only a Be Right specialist can apply it, and you are told why. If the repair goes ahead, the visit fee is included in the approved price. Visits under the workmanship guarantee are always free.`,
-          `يُطبَّق رسم زيارة ثابت قدره ${FEE} دولار أميركي، يظهر لك قبل الحجز، فقط إذا حضر الفني ولم يتمّ أي تصليح (لا حاجة لعمل أو قرّرت عدم التصليح)، أو إذا لم يكن أحد موجوداً لتأمين الدخول في الموعد المتفق عليه، أو إذا ألغيت بعد انطلاق الفني. لا يطبّقه إلا مختص من بي رايت، ويُبلَّغ لك السبب. وإذا تمّ التصليح، يكون رسم الزيارة مشمولاً في السعر الموافق عليه. زيارات ضمانة جودة العمل مجانية دائماً.`,
+          `A fixed visit fee of US$${FEE}, shown before you book, applies only if the professional comes and no repair goes ahead (no work is needed or you decide not to repair), if nobody is there to give access at the agreed time, or if you cancel after the professional has set off. Only a Be Right specialist can apply it, and you are told why. If the repair goes ahead, the visit fee is included in the approved price. Visits under the workmanship guarantee are always free.`,
+          `يُطبَّق رسم زيارة ثابت قدره ${FEE} دولار أميركي، يظهر لك قبل الحجز، فقط إذا حضر المهني ولم يتمّ أي تصليح (لا حاجة لعمل أو قرّرت عدم التصليح)، أو إذا لم يكن أحد موجوداً لتأمين الدخول في الموعد المتفق عليه، أو إذا ألغيت بعد انطلاق المهني. لا يطبّقه إلا مختص من بي رايت، ويُبلَّغ لك السبب. وإذا تمّ التصليح، يكون رسم الزيارة مشمولاً في السعر الموافق عليه. زيارات ضمانة جودة العمل مجانية دائماً.`,
         ),
       ],
     },
@@ -79,8 +79,8 @@ export const TERMS: LegalDocument = {
       title: t("5. Your part", "٥. ما يقع على عاتقك"),
       paragraphs: [
         t(
-          "Give safe access at the agreed time and describe the problem honestly. Never take risks to provide photos: don't open electrical panels, climb, touch leaking electrical equipment or approach gas leaks. Treat technicians with respect; we may refuse service if their safety is at risk.",
-          "أمّن وصولاً آمناً في الموعد المتفق عليه وصف المشكلة بصدق. لا تعرّض نفسك للخطر لالتقاط الصور: لا تفتح لوحات الكهرباء ولا تتسلّق ولا تلمس معدات كهربائية يتسرّب منها الماء ولا تقترب من تسرّب الغاز. عامل الفنيين باحترام؛ ويحق لنا رفض الخدمة إذا تعرّضت سلامتهم للخطر.",
+          "Give safe access at the agreed time and describe the problem honestly. Never take risks to provide photos: don't open electrical panels, climb, touch leaking electrical equipment or approach gas leaks. Treat professionals with respect; we may refuse service if their safety is at risk.",
+          "أمّن وصولاً آمناً في الموعد المتفق عليه وصف المشكلة بصدق. لا تعرّض نفسك للخطر لالتقاط الصور: لا تفتح لوحات الكهرباء ولا تتسلّق ولا تلمس معدات كهربائية يتسرّب منها الماء ولا تقترب من تسرّب الغاز. عامل المهنيين باحترام؛ ويحق لنا رفض الخدمة إذا تعرّضت سلامتهم للخطر.",
         ),
       ],
     },
@@ -94,15 +94,15 @@ export const TERMS: LegalDocument = {
       ],
     },
     {
-      title: t("7. Technicians", "٧. الفنيون"),
+      title: t("7. Professionals", "٧. المهنيون"),
       paragraphs: [
         t(
-          "Technicians are vetted and contracted by Be Right. Their own engagement is governed by a separate agreement with us. Technicians must use the app honestly, record arrival and progress, take photos before and after each job, and only share their location while a job is active.",
-          "يخضع الفنيون للتدقيق ويتعاقدون مع بي رايت، ويحكم عملهم اتفاق منفصل معنا. على الفنيين استخدام التطبيق بأمانة وتسجيل الوصول وسير العمل، والتقاط صور قبل كل مهمة وبعدها، ومشاركة موقعهم فقط أثناء تنفيذ المهمة.",
+          "Professionals are vetted and contracted by Be Right. Their own engagement is governed by a separate agreement with us. Professionals must use the app honestly, record arrival and progress, take photos before and after each job, and only share their location while a job is active.",
+          "يخضع المهنيون للتدقيق ويتعاقدون مع بي رايت، ويحكم عملهم اتفاق منفصل معنا. على المهنيين استخدام التطبيق بأمانة وتسجيل الوصول وسير العمل، والتقاط صور قبل كل مهمة وبعدها، ومشاركة موقعهم فقط أثناء تنفيذ المهمة.",
         ),
         t(
-          "Damage a technician causes during their work is the technician's responsibility, not Be Right's: they must put it right. If they can't, Be Right solves it for you (see Liability).",
-          "الأضرار التي يتسبّب بها الفني أثناء عمله هي مسؤولية الفني وليست مسؤولية بي رايت، وعليه إصلاحها. وإن لم يستطع، تحلّ بي رايت المشكلة لك (راجع بند المسؤولية).",
+          "Damage a professional causes during their work is the professional's responsibility, not Be Right's: they must put it right. If they can't, Be Right solves it for you (see Liability).",
+          "الأضرار التي يتسبّب بها المهني أثناء عمله هي مسؤولية المهني وليست مسؤولية بي رايت، وعليه إصلاحها. وإن لم يستطع، تحلّ بي رايت المشكلة لك (راجع بند المسؤولية).",
         ),
       ],
     },
@@ -123,8 +123,8 @@ export const TERMS: LegalDocument = {
           `نحن مسؤولون عن تنفيذ العمل بعناية ومهارة معقولتين. وبالقدر الذي يسمح به ${COMPANY.governingLaw.ar}، لا نتحمّل مسؤولية الخسائر غير المباشرة، وتقتصر مسؤوليتنا عن أي مهمة على المبلغ المدفوع لها. ولا يحدّ أي من ذلك من حقوقك كمستهلك بموجب القانون الذي يسري عليك.`,
         ),
         t(
-          "Damage during a job: report it from your request page (Report a problem) or by contacting us. Damage caused by a technician is the technician's fault, not Be Right's, and the technician repairs it first. If they can't resolve it, Be Right solves it for you: we arrange the repair or agree a fair settlement with you.",
-          "الأضرار أثناء المهمة: أبلغ عنها من صفحة طلبك (الإبلاغ عن مشكلة) أو بالتواصل معنا. الضرر الذي يتسبّب به الفني هو خطأ الفني وليس خطأ بي رايت، ويصلحه الفني أولاً. وإن لم يستطع حلّه، تحلّ بي رايت المشكلة لك: نرتّب الإصلاح أو نتّفق معك على تسوية عادلة.",
+          "Damage during a job: report it from your request page (Report a problem) or by contacting us. Damage caused by a professional is the professional's fault, not Be Right's, and the professional repairs it first. If they can't resolve it, Be Right solves it for you: we arrange the repair or agree a fair settlement with you.",
+          "الأضرار أثناء المهمة: أبلغ عنها من صفحة طلبك (الإبلاغ عن مشكلة) أو بالتواصل معنا. الضرر الذي يتسبّب به المهني هو خطأ المهني وليس خطأ بي رايت، ويصلحه المهني أولاً. وإن لم يستطع حلّه، تحلّ بي رايت المشكلة لك: نرتّب الإصلاح أو نتّفق معك على تسوية عادلة.",
         ),
       ],
     },
@@ -159,20 +159,20 @@ export const PRIVACY: LegalDocument = {
           "الحساب: الاسم والبريد الإلكتروني ورقم الهاتف/واتساب وكلمة المرور (تُخزَّن بشكل مشفّر لدى مزوّد المصادقة فقط؛ ولا نطّلع عليها أبداً).",
         ),
         t(
-          "Bookings: the service, your answers to the guided questions, photos and videos you upload, photos the technician takes of the work area before and after the job, the visit address, map pin, preferred date and notes, the status history of each request, and any rating or comment you leave after a job.",
-          "الحجوزات: الخدمة المطلوبة وأجوبتك على الأسئلة الموجّهة والصور والفيديوهات التي ترفعها، وصور مكان العمل التي يلتقطها الفني قبل المهمة وبعدها، وعنوان الزيارة وموقعه على الخريطة والتاريخ المفضل والملاحظات، وسجل حالة كل طلب، وأي تقييم أو تعليق تتركه بعد إنجاز المهمة.",
+          "Bookings: the service, your answers to the guided questions, photos and videos you upload, photos the professional takes of the work area before and after the job, the visit address, map pin, preferred date and notes, the status history of each request, and any rating or comment you leave after a job.",
+          "الحجوزات: الخدمة المطلوبة وأجوبتك على الأسئلة الموجّهة والصور والفيديوهات التي ترفعها، وصور مكان العمل التي يلتقطها المهني قبل المهمة وبعدها، وعنوان الزيارة وموقعه على الخريطة والتاريخ المفضل والملاحظات، وسجل حالة كل طلب، وأي تقييم أو تعليق تتركه بعد إنجاز المهمة.",
         ),
         t(
-          "Emergencies: with priority dispatch you send the emergency you pick, your location (map pin) and your phone number. When you call our emergency line, the specialist records your name, address details and what's wrong, to send a technician. This becomes a job like any booking.",
-          "حالات الطوارئ: مع الأولوية في الإرسال، ترسل حالة الطوارئ التي تختارها وموقعك (الدبوس على الخريطة) ورقم هاتفك. وعند اتصالك بخط الطوارئ، يسجّل المختص اسمك وتفاصيل العنوان وما حدث، لإرسال فنّي. ويصبح ذلك مهمة مثل أي حجز.",
+          "Emergencies: with priority dispatch you send the emergency you pick, your location (map pin) and your phone number. When you call our emergency line, the specialist records your name, address details and what's wrong, to send a professional. This becomes a job like any booking.",
+          "حالات الطوارئ: مع الأولوية في الإرسال، ترسل حالة الطوارئ التي تختارها وموقعك (الدبوس على الخريطة) ورقم هاتفك. وعند اتصالك بخط الطوارئ، يسجّل المختص اسمك وتفاصيل العنوان وما حدث، لإرسال مهني. ويصبح ذلك مهمة مثل أي حجز.",
         ),
         t(
-          "Technician location: only while a job is active and only after the technician turns on location sharing; we keep the latest position for that job. Technicians also share their position while they choose to be Available (in the app, also with the screen locked, with a notification showing it); going offline stops it and deletes the position. Only our team sees it, to offer jobs nearby.",
-          "موقع الفني: فقط أثناء تنفيذ المهمة وبعد أن يفعّل الفني مشاركة الموقع؛ ونحتفظ بآخر موقع لتلك المهمة فقط. ويحدّد الفنيون أيضاً مكان انطلاق (المنزل أو مقرّ العمل) في حساباتهم، ويشاركون موقعهم طالما اختاروا أن يكونوا متاحين (في التطبيق حتى مع قفل الشاشة، مع إشعار يبيّن ذلك)؛ وقطع الاتصال يوقف المشاركة ويحذف الموقع. لا يرى ذلك إلا فريقنا، لعرض المهام القريبة واحتساب مسافة التنقّل في أسعار المهام.",
+          "Professional location: only while a job is active and only after the professional turns on location sharing; we keep the latest position for that job. Professionals also share their position while they choose to be Available (in the app, also with the screen locked, with a notification showing it); going offline stops it and deletes the position. Only our team sees it, to offer jobs nearby.",
+          "موقع المهني: فقط أثناء تنفيذ المهمة وبعد أن يفعّل المهني مشاركة الموقع؛ ونحتفظ بآخر موقع لتلك المهمة فقط. ويحدّد المهنيون أيضاً مكان انطلاق (المنزل أو مقرّ العمل) في حساباتهم، ويشاركون موقعهم طالما اختاروا أن يكونوا متاحين (في التطبيق حتى مع قفل الشاشة، مع إشعار يبيّن ذلك)؛ وقطع الاتصال يوقف المشاركة ويحذف الموقع. لا يرى ذلك إلا فريقنا، لعرض المهام القريبة واحتساب مسافة التنقّل في أسعار المهام.",
         ),
         t(
-          "Technician applicants: name, phone, email, trade, areas covered, years of experience, whether they have their own tools and work on their own or with a company (and its name), transport, a profile photo, and whether they have their ID, criminal record, proof of address and vehicle papers. They show these papers at the office; we don't collect copies online. Our team calls applicants and meets them in person before accepting them. Applications sent before this form changed may also include experience, availability and vetting papers (ID card or passport, criminal record, proof of address, vehicle registration).",
-          "المتقدّمون للعمل كفنيين: الاسم والهاتف والبريد الإلكتروني والمهنة والمناطق التي يغطيها وسنوات الخبرة، وما إذا كانت لديهم أدواتهم الخاصة وما إذا كانوا يعملون بمفردهم أو مع شركة (واسمها)، ووسيلة النقل وصورة شخصية، وما إذا كانت لديهم الهوية والسجل الجنائي وإثبات العنوان وأوراق المركبة. يُبرزون هذه المستندات في المكتب؛ ولا نجمع نسخاً منها عبر الإنترنت. يتصل فريقنا بالمتقدّمين ويلتقي بهم شخصياً قبل قبولهم. وقد تتضمّن الطلبات المرسلة قبل تغيير هذا النموذج أيضاً الخبرة وأوقات العمل ومستندات التدقيق (الهوية أو جواز السفر، والسجل الجنائي، وإثبات العنوان، وأوراق تسجيل المركبة).",
+          "Professional applicants: name, phone, email, trade, areas covered, years of experience, whether they have their own tools and work on their own or with a company (and its name), transport, a profile photo, and whether they have their ID, criminal record, proof of address and vehicle papers. They show these papers at the office; we don't collect copies online. Our team calls applicants and meets them in person before accepting them. Applications sent before this form changed may also include experience, availability and vetting papers (ID card or passport, criminal record, proof of address, vehicle registration).",
+          "المتقدّمون للعمل كمهنيين: الاسم والهاتف والبريد الإلكتروني والمهنة والمناطق التي يغطيها وسنوات الخبرة، وما إذا كانت لديهم أدواتهم الخاصة وما إذا كانوا يعملون بمفردهم أو مع شركة (واسمها)، ووسيلة النقل وصورة شخصية، وما إذا كانت لديهم الهوية والسجل الجنائي وإثبات العنوان وأوراق المركبة. يُبرزون هذه المستندات في المكتب؛ ولا نجمع نسخاً منها عبر الإنترنت. يتصل فريقنا بالمتقدّمين ويلتقي بهم شخصياً قبل قبولهم. وقد تتضمّن الطلبات المرسلة قبل تغيير هذا النموذج أيضاً الخبرة وأوقات العمل ومستندات التدقيق (الهوية أو جواز السفر، والسجل الجنائي، وإثبات العنوان، وأوراق تسجيل المركبة).",
         ),
         t(
           "On your device we store only what the site needs to work: your sign-in session, language choice and an unfinished booking draft. We don't use advertising or tracking cookies.",
@@ -184,8 +184,8 @@ export const PRIVACY: LegalDocument = {
       title: t("2. Why we use it", "٢. لماذا نستخدمها"),
       paragraphs: [
         t(
-          "To provide the service you ask for (review, quote, dispatch, follow-up and support); to keep customers and technicians safe (calling and meeting technicians in person before approving them); to communicate with you about your requests and account; and to meet legal and accounting obligations.",
-          "لتقديم الخدمة التي تطلبها (المراجعة والتسعير والإرسال والمتابعة والدعم)؛ وللحفاظ على سلامة العملاء والفنيين (الاتصال بالفنيين ومقابلتهم شخصياً قبل اعتمادهم)؛ وللتواصل معك بشأن طلباتك وحسابك؛ وللوفاء بالالتزامات القانونية والمحاسبية.",
+          "To provide the service you ask for (review, quote, dispatch, follow-up and support); to keep customers and professionals safe (calling and meeting professionals in person before approving them); to communicate with you about your requests and account; and to meet legal and accounting obligations.",
+          "لتقديم الخدمة التي تطلبها (المراجعة والتسعير والإرسال والمتابعة والدعم)؛ وللحفاظ على سلامة العملاء والمهنيين (الاتصال بالمهنيين ومقابلتهم شخصياً قبل اعتمادهم)؛ وللتواصل معك بشأن طلباتك وحسابك؛ وللوفاء بالالتزامات القانونية والمحاسبية.",
         ),
       ],
     },
@@ -193,8 +193,8 @@ export const PRIVACY: LegalDocument = {
       title: t("3. Who sees it", "٣. من يطّلع عليها"),
       paragraphs: [
         t(
-          "Be Right specialists see requests to do their job, and our admins see applications. The technician assigned to your job sees your name, phone, address, map pin, answers and photos. You see your technician's name, photo and, while the job is active, their live location, and their average rating. Your rating counts towards that average without your name; your comment is read only by our team. Applicants' details and any papers they sent are seen only by our hiring team and are never shown to customers; customers see a technician's photo once they work with us.",
-          "يطّلع مختصو بي رايت على الطلبات لأداء عملهم، ويطّلع مسؤولونا على طلبات التوظيف. يرى الفني المعيّن لمهمتك اسمك وهاتفك وعنوانك وموقعك على الخريطة وأجوبتك وصورك. وترى أنت اسم الفني وصورته، وموقعه المباشر أثناء تنفيذ المهمة، ومتوسط تقييمه. يُحتسب تقييمك في هذا المتوسط دون اسمك، ولا يقرأ تعليقك إلا فريقنا. أما بيانات المتقدّمين وأي مستندات أرسلوها فلا يطّلع عليها إلا فريق التوظيف ولا تُعرض على العملاء إطلاقاً؛ ويرى العملاء صورة الفني بعد أن يبدأ العمل معنا.",
+          "Be Right specialists see requests to do their job, and our admins see applications. The professional assigned to your job sees your name, phone, address, map pin, answers and photos. You see your professional's name, photo and, while the job is active, their live location, and their average rating. Your rating counts towards that average without your name; your comment is read only by our team. Applicants' details and any papers they sent are seen only by our hiring team and are never shown to customers; customers see a professional's photo once they work with us.",
+          "يطّلع مختصو بي رايت على الطلبات لأداء عملهم، ويطّلع مسؤولونا على طلبات التوظيف. يرى المهني المعيّن لمهمتك اسمك وهاتفك وعنوانك وموقعك على الخريطة وأجوبتك وصورك. وترى أنت اسم المهني وصورته، وموقعه المباشر أثناء تنفيذ المهمة، ومتوسط تقييمه. يُحتسب تقييمك في هذا المتوسط دون اسمك، ولا يقرأ تعليقك إلا فريقنا. أما بيانات المتقدّمين وأي مستندات أرسلوها فلا يطّلع عليها إلا فريق التوظيف ولا تُعرض على العملاء إطلاقاً؛ ويرى العملاء صورة المهني بعد أن يبدأ العمل معنا.",
         ),
         t(
           "We use trusted providers to run the service: Supabase (database, sign-in and file storage, hosted in the EU – Frankfurt), Netlify (website hosting), Resend (account and request-update emails, EU), Cloudflare (our domain, and visit statistics without cookies or personal profiles) and a map provider, OpenStreetMap or MapTiler (map images, which receive your IP address when a map loads). They process data only on our instructions. We never sell your data.",
@@ -210,8 +210,8 @@ export const PRIVACY: LegalDocument = {
       title: t("4. How long we keep it", "٤. مدة الاحتفاظ بها"),
       paragraphs: [
         t(
-          `Account and booking records: while your account is open and afterwards as long as needed for warranty, accounting and legal purposes. Sent emergencies: deleted after ${EMERGENCY_DAYS} days. Documents of rejected applicants: deleted within ${REJECT_DAYS} days. Documents of technicians who work with us: kept while they work with us and as required by law afterwards.`,
-          `سجلات الحساب والحجوزات: طوال فترة فتح حسابك، وبعدها للمدة اللازمة لأغراض الضمان والمحاسبة والقانون. حالات الطوارئ المرسلة: تُحذف بعد ${EMERGENCY_DAYS} يوماً. مستندات المتقدّمين المرفوضين: تُحذف خلال ${REJECT_DAYS} يوماً. مستندات الفنيين العاملين معنا: يُحتفظ بها طوال فترة عملهم معنا وبعدها وفق ما يفرضه القانون.`,
+          `Account and booking records: while your account is open and afterwards as long as needed for warranty, accounting and legal purposes. Sent emergencies: deleted after ${EMERGENCY_DAYS} days. Documents of rejected applicants: deleted within ${REJECT_DAYS} days. Documents of professionals who work with us: kept while they work with us and as required by law afterwards.`,
+          `سجلات الحساب والحجوزات: طوال فترة فتح حسابك، وبعدها للمدة اللازمة لأغراض الضمان والمحاسبة والقانون. حالات الطوارئ المرسلة: تُحذف بعد ${EMERGENCY_DAYS} يوماً. مستندات المتقدّمين المرفوضين: تُحذف خلال ${REJECT_DAYS} يوماً. مستندات المهنيين العاملين معنا: يُحتفظ بها طوال فترة عملهم معنا وبعدها وفق ما يفرضه القانون.`,
         ),
       ],
     },

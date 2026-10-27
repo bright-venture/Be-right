@@ -132,7 +132,7 @@ describe("specialist rules", () => {
     const id = await approvedRequest();
     const s = await callerFor(admin);
     await expect(s.specialist.setStatus({ id, status: "scheduled" })).rejects.toMatchObject({
-      message: "Assign a technician before scheduling",
+      message: "Assign a professional before scheduling",
     });
     await s.tech.assign({ requestId: id, technicianId: tech.id });
     await s.specialist.setStatus({ id, status: "scheduled" });
@@ -307,10 +307,10 @@ describe("technician accounts", () => {
     expect(unassigned).toEqual([waiting]);
     const { request, events } = await s.specialist.detail({ id: waiting });
     expect(request.technicianId).toBeNull();
-    expect(events[0]).toMatchObject({ status: "unassigned", note: "Technician removed: Leaving Tech" });
+    expect(events[0]).toMatchObject({ status: "unassigned", note: "Professional removed: Leaving Tech" });
     // It can't be scheduled until someone else is assigned.
     await expect(s.specialist.setStatus({ id: waiting, status: "scheduled" })).rejects.toMatchObject({
-      message: "Assign a technician before scheduling",
+      message: "Assign a professional before scheduling",
     });
   });
 });

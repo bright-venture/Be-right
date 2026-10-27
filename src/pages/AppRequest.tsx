@@ -19,6 +19,7 @@ import { COMPANY } from "@contracts/legal";
 import {
   CATEGORY_MAP,
   CATEGORY_TINT,
+  forWorker,
   STATUS_ORDER,
   type RequestStatus,
 } from "@contracts/services";
@@ -223,6 +224,7 @@ export default function AppRequest() {
         {technician && ACTIVE_JOB_STATUSES.includes(status) && (
           <section className="-mt-5">
             <TechnicianCard
+              category={r.category}
               name={technician.name}
               photoUrl={technician.photoUrl}
               rating={technician.rating}
@@ -238,7 +240,7 @@ export default function AppRequest() {
         {status === "completed" && (
           <section className="flex flex-col gap-3 [&>*]:!mt-0">
             <div className={`${CARD} empty:hidden`}>
-              <BeforeAfter media={media} forCustomer />
+              <BeforeAfter media={media} forCustomer category={r.category} />
             </div>
             <RateJob key={`rate-${r.id}`} requestId={r.id} rated={!!review} />
             <div className="flex flex-wrap gap-2">
@@ -323,7 +325,7 @@ export default function AppRequest() {
           )}
           {status !== "completed" && (
             <div className="empty:hidden">
-              <BeforeAfter media={media} forCustomer />
+              <BeforeAfter media={media} forCustomer category={r.category} />
             </div>
           )}
         </section>
@@ -367,7 +369,7 @@ export default function AppRequest() {
             </p>
           ) : askingCancel ? (
             <div className={`${CARD} flex flex-col gap-3`}>
-              <p className="text-sm text-navy/70">{p(t.requests.askCancelHint)}</p>
+              <p className="text-sm text-navy/70">{p(forWorker(t.requests.askCancelHint, r.category))}</p>
               <textarea
                 value={cancelReason}
                 onChange={(e) => setCancelReason(e.target.value)}

@@ -66,7 +66,7 @@ export function requestDistrict(row: { district?: string | null; lat: number | n
 export function checkWorksIn(role: Role, districts: readonly string[], district: string | null) {
   if (worksIn(districts, district)) return false;
   if (role !== "admin") {
-    throw new TRPCError({ code: "BAD_REQUEST", message: "This technician doesn't work in this district" });
+    throw new TRPCError({ code: "BAD_REQUEST", message: "This professional doesn't work in this district" });
   }
   return true;
 }

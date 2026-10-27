@@ -5,7 +5,7 @@ import { and, count, eq, inArray } from "drizzle-orm";
 import { emergencyRequests, requestEvents, serviceRequests, technicianApplications, users } from "@db/schema";
 import { answerLines, EMERGENCY_PROBLEM_MAP } from "@contracts/emergency";
 import { directionsLinks } from "@contracts/geo";
-import { CATEGORY_MAP, type LocalText } from "@contracts/services";
+import { CATEGORY_MAP, workerOf, type LocalText } from "@contracts/services";
 import { DISTRICT_INFO } from "@contracts/districts";
 import { arabicDays, WORKMANSHIP_GUARANTEE_DAYS } from "@contracts/legal";
 import { t } from "@contracts/i18n";
@@ -118,6 +118,7 @@ type Job = Awaited<ReturnType<typeof loadJob>>;
 
 const both = (en: string, ar: string): Text => ({ en, ar });
 const local = (text: LocalText | undefined, fallback: string): Text => text ?? { en: fallback, ar: fallback };
+const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 function describe(job: Job) {
   const r = job.request;
@@ -137,6 +138,8 @@ function describe(job: Job) {
   return {
     id: r.id,
     category: local(CATEGORY_MAP[r.category]?.name, r.category),
+    /** Who does it: "plumber", "cleaner"... ("professional" when the service isn't known). */
+    worker: workerOf(r.category),
     area: r.area,
     when: both(`${day("en")}, ${slot.en}`, `${day("ar")}، ${slot.ar}`),
   };
@@ -203,12 +206,12 @@ export const notify = {
       const d = describe(job);
       const amount = `$${job.request.quoteAmount}`;
       await send(await specialistEmails(), {
-        subject: both(`Price approved for #${d.id}: assign a technician`, `تمت الموافقة على سعر الطلب #${d.id}: أسند فنّياً`),
+        subject: both(`Price approved for #${d.id}: assign ${d.worker.en.a}`, `تمت الموافقة على سعر الطلب #${d.id}: أسند المهمة إلى ${d.worker.ar.one}`),
         title: both("The customer approved the price", "وافق العميل على السعر"),
         lines: [
           both(
-            `Request #${d.id} (${d.category.en}, ${d.area}) was approved at ${amount}. Assign a technician and schedule the visit for ${d.when.en}.`,
-            `تمت الموافقة على الطلب #${d.id} (${d.category.ar}، ${d.area}) بمبلغ ${amount}. أسند فنّياً وحدّد موعد الزيارة ليوم ${d.when.ar}.`,
+            `Request #${d.id} (${d.category.en}, ${d.area}) was approved at ${amount}. Assign ${d.worker.en.a} and schedule the visit for ${d.when.en}.`,
+            `تمت الموافقة على الطلب #${d.id} (${d.category.ar}، ${d.area}) بمبلغ ${amount}. أسند المهمة إلى ${d.worker.ar.one} وحدّد موعد الزيارة ليوم ${d.when.ar}.`,
           ),
         ],
         path: "/dashboard",
@@ -251,8 +254,8 @@ export const notify = {
           ),
           ...(reason ? [both(`Their reason: ${reason}`, `السبب: ${reason}`)] : []),
           both(
-            "Confirm with them and the technician, then cancel it on the dashboard.",
-            "تأكّد منه ومن الفنّي، ثم ألغِه من لوحة التحكم.",
+            `Confirm with them and the ${d.worker.en.word}, then cancel it on the dashboard.`,
+            `تأكّد منه ومن ${d.worker.ar.the}، ثم ألغِه من لوحة التحكم.`,
           ),
         ],
         path: "/dashboard",
@@ -283,8 +286,8 @@ export const notify = {
       if (previousTechnicianId && previousTechnicianId !== job.technician?.id) {
         const previous = await getDb().query.users.findFirst({ where: eq(users.id, previousTechnicianId) });
         await send([previous?.email], {
-          subject: both(`Job #${d.id} was reassigned`, `أُسندت المهمة #${d.id} إلى فنّي آخر`),
-          title: both("A job was given to another technician", "أُسندت مهمة إلى فنّي آخر"),
+          subject: both(`Job #${d.id} was reassigned`, `أُسندت المهمة #${d.id} إلى مهني آخر`),
+          title: both("A job was given to another professional", "أُسندت مهمة إلى مهني آخر"),
           lines: [
             both(
               `Job #${d.id} (${d.category.en}, ${d.area}) is no longer in your jobs. No need to go.`,
@@ -308,7 +311,7 @@ export const notify = {
         title: both("Your visit is booked", "زيارتك محجوزة"),
         lines: [
           both(`${d.category.en}, ${d.when.en}.`, `${d.category.ar}، ${d.when.ar}.`),
-          ...(techName ? [both(`Your technician: ${techName}.`, `الفنّي المكلّف: ${techName}.`)] : []),
+          ...(techName ? [both(`Your ${d.worker.en.word}: ${techName}.`, `${d.worker.ar.the} المكلّف: ${techName}.`)] : []),
           both(
             "When they're on the way, you can follow them on the map in your requests.",
             "عندما يكون في الطريق، يمكنك متابعته على الخريطة في صفحة طلباتك.",
@@ -375,7 +378,7 @@ export const notify = {
       const why = {
         no_work: both("no repair was done at the visit", "لم يتم إصلاح خلال الزيارة"),
         no_access: both("nobody was there at the agreed time", "لم يكن أحد موجوداً في الموعد المتفق عليه"),
-        late_cancel: both("the visit was cancelled after the technician set off", "أُلغيت الزيارة بعد انطلاق الفنّي"),
+        late_cancel: both(`the visit was cancelled after the ${d.worker.en.word} set off`, `أُلغيت الزيارة بعد انطلاق ${d.worker.ar.the}`),
       }[job.request.visitFeeReason ?? "no_work"];
       await send([job.customer?.email], {
         subject: both(`Request #${d.id} closed with a ${fee} visit fee`, `أُغلق الطلب #${d.id} مع رسوم زيارة ${fee}`),
@@ -399,10 +402,10 @@ export const notify = {
       const job = await loadJob(id);
       const d = describe(job);
       await send(await specialistEmails(), {
-        subject: both(`Job #${d.id}: the technician reported a visit without a repair`, `المهمة #${d.id}: أبلغ الفنّي عن زيارة دون إصلاح`),
+        subject: both(`Job #${d.id}: the ${d.worker.en.word} reported a visit without a repair`, `المهمة #${d.id}: أبلغ ${d.worker.ar.the} عن زيارة دون إصلاح`),
         title: both("A visit needs your decision", "زيارة بحاجة إلى قرارك"),
         lines: [
-          both(`${job.technician?.name ?? "The technician"}: ${note}`, `${job.technician?.name ?? "الفنّي"}: ${note}`),
+          both(`${job.technician?.name ?? d.worker.en.title}: ${note}`, `${job.technician?.name ?? d.worker.ar.the}: ${note}`),
           both(
             "Open the job to close it with the visit fee, or keep it going.",
             "افتح المهمة لإغلاقها مع رسوم الزيارة، أو لمتابعتها.",
@@ -448,8 +451,8 @@ export const notify = {
         title: both("Your return visit is free", "زيارتك القادمة مجانية"),
         lines: [
           both(
-            `This is covered by our ${WORKMANSHIP_GUARANTEE_DAYS}-day guarantee, so there's nothing to pay. We'll confirm the date and technician shortly.`,
-            `هذا مشمول بضمان الـ${arabicDays(WORKMANSHIP_GUARANTEE_DAYS)}، فلا شيء عليك دفعه. سنؤكّد لك الموعد والفنّي قريباً.`,
+            `This is covered by our ${WORKMANSHIP_GUARANTEE_DAYS}-day guarantee, so there's nothing to pay. We'll confirm the date and the ${d.worker.en.word} shortly.`,
+            `هذا مشمول بضمان الـ${arabicDays(WORKMANSHIP_GUARANTEE_DAYS)}، فلا شيء عليك دفعه. سنؤكّد لك الموعد و${d.worker.ar.the} قريباً.`,
           ),
         ],
         path: "/requests",
@@ -503,7 +506,7 @@ export const notify = {
           ? { en: app.area, ar: app.area }
           : null;
       await send(await emailsOf("admin"), {
-        subject: both(`New technician application: ${app.name}`, `طلب توظيف فني جديد: ${app.name}`),
+        subject: both(`New professional application: ${app.name}`, `طلب توظيف مهني جديد: ${app.name}`),
         title: both("Someone applied to work with us", "تقدّم شخص للعمل معنا"),
         lines: [
           both(
@@ -529,14 +532,14 @@ export const notify = {
       if (!app) return;
       const trade = local(CATEGORY_MAP[app.trade]?.name, app.trade);
       await send(await emailsOf("specialist"), {
-        subject: both(`New technician on the team: ${app.name}`, `فنّي جديد في الفريق: ${app.name}`),
-        title: both("A new technician joined", "انضمّ فنّي جديد"),
+        subject: both(`New professional on the team: ${app.name}`, `مهني جديد في الفريق: ${app.name}`),
+        title: both("A new professional joined", "انضمّ مهني جديد"),
         lines: [
           both(`${app.name}: ${trade.en}.`, `${app.name}: ${trade.ar}.`),
           both("An admin met them and accepted them. You can now assign them jobs.", "قابلته الإدارة وقبلته. يمكنك الآن إسناد المهام إليه."),
         ],
         path: "/dashboard?tab=technicians",
-        button: both("See the technicians", "عرض الفنيين"),
+        button: both("See the professionals", "عرض المهنيين"),
       });
     }),
 
@@ -610,11 +613,11 @@ export const notify = {
       });
       const techName = job.technician?.name;
       await send([job.customer?.email], {
-        subject: both("A technician is on the way", "فنّي في الطريق إليك"),
+        subject: both(`${cap(d.worker.en.a)} is on the way`, `${d.worker.ar.one} في الطريق إليك`),
         title: both("Help is on the way", "المساعدة في الطريق"),
         lines: [
-          both(`${d.category.en}: we're sending a technician now.`, `${d.category.ar}: نرسل إليك فنّياً الآن.`),
-          ...(techName ? [both(`Your technician: ${techName}.`, `الفنّي المكلّف: ${techName}.`)] : []),
+          both(`${d.category.en}: we're sending ${d.worker.en.a} now.`, `${d.category.ar}: يتوجّه إليك ${d.worker.ar.one} الآن.`),
+          ...(techName ? [both(`Your ${d.worker.en.word}: ${techName}.`, `${d.worker.ar.the} المكلّف: ${techName}.`)] : []),
           both(
             "When they're on the way, you can follow them on the map in your requests.",
             "عندما يكون في الطريق، يمكنك متابعته على الخريطة في صفحة طلباتك.",

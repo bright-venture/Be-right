@@ -203,7 +203,7 @@ export const adminRouter = createRouter({
       if (existing?.role === "technician") {
         throw new TRPCError({
           code: "BAD_REQUEST",
-          message: "This email belongs to a technician. Remove them from the technicians first.",
+          message: "This email belongs to a professional. Remove them from the professionals first.",
         });
       }
       if (existing) {

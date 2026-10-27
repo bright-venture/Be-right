@@ -111,8 +111,8 @@ export const EMERGENCY_PROBLEMS: EmergencyProblem[] = [
       {
         critical: true,
         text: {
-          en: "Don't pour drain chemicals in: they can splash back and burn you or the technician.",
-          ar: "لا تسكب مواد كيميائية لفتح المجاري: قد تتطاير وتحرقك أو تحرق الفنّي.",
+          en: "Don't pour drain chemicals in: they can splash back and burn you or the plumber.",
+          ar: "لا تسكب مواد كيميائية لفتح المجاري: قد تتطاير وتحرقك أو تحرق السبّاك.",
         },
       },
     ],
@@ -140,8 +140,8 @@ export const EMERGENCY_PROBLEMS: EmergencyProblem[] = [
       { text: { en: "Don't force the door or climb in through a window.", ar: "لا تحاول كسر الباب أو الدخول من النافذة." } },
       {
         text: {
-          en: "Have your ID ready: the technician may ask you to show that you live there.",
-          ar: "جهّز هويتك: قد يطلب الفنّي أن تُثبت أنك تسكن هنا.",
+          en: "Have your ID ready: the locksmith may ask you to show that you live there.",
+          ar: "جهّز هويتك: قد يطلب فنّي الأقفال أن تُثبت أنك تسكن هنا.",
         },
       },
     ],
@@ -333,8 +333,8 @@ export const EMERGENCY_PROBLEMS: EmergencyProblem[] = [
     safety: [
       {
         text: {
-          en: "Keep everyone away from the problem until the technician arrives.",
-          ar: "أبقِ الجميع بعيداً عن المشكلة حتى يصل الفنّي.",
+          en: "Keep everyone away from the problem until the professional arrives.",
+          ar: "أبقِ الجميع بعيداً عن المشكلة حتى يصل المهني.",
         },
       },
     ],

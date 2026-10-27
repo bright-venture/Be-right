@@ -60,7 +60,7 @@ export type VisitFeeReason = (typeof VISIT_FEE_REASONS)[number];
 export const VISIT_FEE_REASON_LABEL: Record<VisitFeeReason, string> = {
   no_work: "No repair done",
   no_access: "Nobody there at the agreed time",
-  late_cancel: "Cancelled after the technician set off",
+  late_cancel: "Cancelled after the professional set off",
 };
 export const VISIT_REPORTS = ["no_work", "no_access"] as const satisfies readonly VisitFeeReason[];
 

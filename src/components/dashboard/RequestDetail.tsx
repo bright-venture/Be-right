@@ -12,7 +12,7 @@ import { useI18n } from "@/i18n";
 import { useConfirm } from "@/hooks/useConfirm";
 import { trpc } from "@/providers/trpc";
 import { telLink, whatsappLink } from "@/lib/contact";
-import { CATEGORY_MAP, type RequestStatus } from "@contracts/services";
+import { CATEGORY_MAP, forWorker, type RequestStatus } from "@contracts/services";
 import {
   ASSIGNABLE_STATUSES,
   QUOTE_AMOUNT_PATTERN,
@@ -228,8 +228,11 @@ export function RequestDetail({
                   <span className="absolute -start-[23px] top-1 h-3 w-3 rounded-full border-2 border-paper bg-navy" />
                   <p className="text-sm font-bold text-navy">
                     {p(
-                      (t.events as Record<string, { en: string; ar: string }>)[e.status] ??
-                        t.status[e.status as RequestStatus] ?? { en: e.status, ar: e.status },
+                      forWorker(
+                        (t.events as Record<string, { en: string; ar: string }>)[e.status] ??
+                          t.status[e.status as RequestStatus] ?? { en: e.status, ar: e.status },
+                        d.request.category,
+                      ),
                     )}
                   </p>
                   {e.note && <p className="text-xs text-navy/80">{e.note}</p>}
@@ -383,7 +386,7 @@ function NextStep({
     submitted: t.dash4.stepReview,
     in_review: t.dash4.stepQuote,
     quote_ready: { en: t.dash4.stepWaitQuote.en.replace("{amount}", r.quoteAmount ?? ""), ar: t.dash4.stepWaitQuote.ar.replace("{amount}", r.quoteAmount ?? "") },
-    approved: t.dash4.stepAssign,
+    approved: forWorker(t.dash4.stepAssign, r.category),
     scheduled: t.dash4.stepScheduled,
     in_progress: t.dash4.stepInProgress,
     completed: t.dash4.stepClosed,
