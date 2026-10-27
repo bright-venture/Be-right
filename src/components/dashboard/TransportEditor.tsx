@@ -5,8 +5,7 @@ import { trpc } from "@/providers/trpc";
 import { TRANSPORT, TRANSPORT_LABELS, type Transport } from "@contracts/applications";
 
 /**
- * Admin: how a technician travels (the rate per km in suggested prices). Where they start
- * from, technicians set themselves in My account.
+ * Admin: how a professional gets to jobs (asked when they apply; shown to the team).
  */
 export function TransportEditor({
   tech: x,

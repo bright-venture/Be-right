@@ -19,6 +19,7 @@ import { requestMedia, serviceRequests } from "../db/schema";
 import { ACTIVE_JOB_STATUSES } from "@contracts/workflow";
 import { findRequest } from "./lib/workflow";
 import { canDispatch } from "@contracts/roles";
+import { servicesOf } from "./lib/serviceSpecialists";
 import { isMediaType, isPhotoType } from "@contracts/uploads";
 
 export const storageRouter = createRouter({
@@ -90,7 +91,8 @@ export const storageRouter = createRouter({
       return createDocumentUploadUrl(input.kind, input.fileName);
     }),
 
-  // Batch signed URLs — only for media on requests the caller owns, is assigned to, or specialist.
+  // Batch signed URLs — only for media on requests the caller owns or is assigned to, or staff
+  // who handle them (admins: all; a specialist: their services).
   urls: authedQuery
     .input(z.object({ keys: z.array(z.string()).max(16) }))
     .query(async ({ ctx, input }) => {
@@ -101,16 +103,19 @@ export const storageRouter = createRouter({
           key: requestMedia.key,
           ownerId: serviceRequests.userId,
           technicianId: serviceRequests.technicianId,
+          category: serviceRequests.category,
         })
         .from(requestMedia)
         .innerJoin(serviceRequests, eq(requestMedia.requestId, serviceRequests.id))
         .where(inArray(requestMedia.key, input.keys));
+      const staff = canDispatch(ctx.user.role) && !staffSessionProblem(ctx);
+      const mine = staff && ctx.user.role !== "admin" ? await servicesOf(ctx.user.id) : null;
       const allowed = rows
         .filter(
           (r) =>
             r.ownerId === ctx.user.id ||
             r.technicianId === ctx.user.id ||
-            (canDispatch(ctx.user.role) && !staffSessionProblem(ctx)),
+            (staff && (mine === null || mine.includes(r.category))),
         )
         .map((r) => r.key);
       return { urls: await createSignedUrls(allowed) };

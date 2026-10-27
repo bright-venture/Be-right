@@ -2,7 +2,7 @@
 // services without one (and Other) go to the admins, who see everything.
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { eq } from "drizzle-orm";
-import { auditLog, type User } from "@db/schema";
+import { auditLog, requestMedia, type User } from "@db/schema";
 import type { Email } from "./lib/email";
 import {
   BEIRUT_PIN,
@@ -81,6 +81,15 @@ describe("service specialists", () => {
     await expect(m.specialist.detail({ id: tidy.id })).rejects.toMatchObject({ code: "NOT_FOUND" });
     await expect(m.specialist.startReview({ id: tidy.id })).rejects.toMatchObject({ code: "NOT_FOUND" });
     await m.specialist.startReview({ id: leak.id });
+
+    // Photos too: another service's are not theirs to open.
+    await db.insert(requestMedia).values([
+      { requestId: leak.id, key: "requests/leak.jpg", fileName: "leak.jpg", size: 1, contentType: "image/jpeg" },
+      { requestId: tidy.id, key: "requests/tidy.jpg", fileName: "tidy.jpg", size: 1, contentType: "image/jpeg" },
+    ]);
+    const keys = ["requests/leak.jpg", "requests/tidy.jpg"];
+    expect(Object.keys((await m.storage.urls({ keys })).urls)).toEqual(["requests/leak.jpg"]);
+    expect(Object.keys((await (await callerFor(owner)).storage.urls({ keys })).urls).sort()).toEqual(keys);
 
     const all = (await (await callerFor(owner)).specialist.queue()).map((r) => r.request.id);
     expect(all).toEqual(expect.arrayContaining([leak.id, tidy.id]));
