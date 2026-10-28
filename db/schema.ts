@@ -9,6 +9,7 @@ import {
   timestamp,
   uuid,
   index,
+  primaryKey,
   boolean,
   doublePrecision,
   jsonb,
@@ -355,16 +356,22 @@ export const pushDevices = pgTable(
 ).enableRLS();
 
 /**
- * Who handles each service: one specialist per service (one person can have several). Only
- * they get its requests, emergencies and emails; services without a row go to the admins.
+ * Who handles each service: one or several specialists per service (and one person can have
+ * several services). Only they get its requests, emergencies and emails; services without
+ * anyone go to the admins.
  */
-export const serviceSpecialists = pgTable("service_specialists", {
-  service: varchar("service", { length: 64 }).primaryKey(),
-  specialistId: integer("specialist_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
-}).enableRLS();
+export const serviceSpecialists = pgTable(
+  "service_specialists",
+  {
+    service: varchar("service", { length: 64 }).notNull(),
+    specialistId: integer("specialist_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  // Several specialists can share a service; each pair once.
+  (t) => [primaryKey({ columns: [t.service, t.specialistId] })],
+).enableRLS();
 
 /**
  * Partner spare-parts shops (Admin → Parts shops). Be Right has a written agreement with

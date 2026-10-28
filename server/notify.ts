@@ -10,7 +10,7 @@ import { DISTRICT_INFO } from "@contracts/districts";
 import { arabicDays, WORKMANSHIP_GUARANTEE_DAYS } from "@contracts/legal";
 import { visitTime } from "@contracts/visitTime";
 import { getDb } from "./queries/connection";
-import { specialistOf } from "./lib/serviceSpecialists";
+import { specialistsOf } from "./lib/serviceSpecialists";
 import { env } from "./lib/env";
 import { sendEmail } from "./lib/email";
 import { sendPush } from "./lib/push";
@@ -97,10 +97,10 @@ async function emailsOf(role: "admin" | "specialist") {
   return rows.map((r) => r.email);
 }
 
-/** Who hears about a service's requests: its specialist, or the admins when it has none (and for Other). */
+/** Who hears about a service's requests: all its specialists, or the admins when it has none (and for Other). */
 async function staffFor(category: string | null): Promise<Person[]> {
-  const owner = await specialistOf(category);
-  if (owner) return [owner];
+  const owners = await specialistsOf(category);
+  if (owners.length) return owners;
   return getDb().select({ id: users.id, email: users.email }).from(users).where(eq(users.role, "admin"));
 }
 const specialistEmails = async (category: string | null) => (await staffFor(category)).map((p) => p?.email);

@@ -1,4 +1,4 @@
-// One specialist per service: they alone see and handle its requests, emergencies and emails;
+// Specialists per service (one or several): they alone see and handle its requests, emergencies and emails;
 // services without one (and Other) go to the admins, who see everything.
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { eq } from "drizzle-orm";
@@ -124,21 +124,36 @@ describe("service specialists", () => {
     await (await callerFor(owner)).emergency.dismiss({ id: other.id });
   });
 
-  it("are chosen by admins, one per service, and lose their services when they leave the role", async () => {
+  it("are chosen by admins, several on a service if needed, and lose their services when they leave the role", async () => {
     const a = await callerFor(owner);
-    await a.admin.setServiceSpecialist({ service: "cleaning", specialistId: plumbing.id });
-    const mine = (await a.admin.serviceSpecialists()).filter((x) => x.specialistId === plumbing.id).map((x) => x.service);
-    expect(mine.sort()).toEqual(["cleaning", "plumbing", "waterproofing"]);
-    expect((await (await callerFor(cleaning)).specialist.access()).services).toEqual([]);
-    await a.admin.setServiceSpecialist({ service: "cleaning", specialistId: null });
-    expect((await a.admin.serviceSpecialists()).some((x) => x.service === "cleaning")).toBe(false);
+    const n = await callerFor(cleaning);
+    // Nadine joins Maya on Plumbing (twice: nothing more): both see it and both hear about it.
+    await a.admin.setServiceSpecialist({ service: "plumbing", specialistId: cleaning.id, on: true });
+    await a.admin.setServiceSpecialist({ service: "plumbing", specialistId: cleaning.id, on: true });
+    const onPlumbing = (await a.admin.serviceSpecialists()).filter((x) => x.service === "plumbing").map((x) => x.specialistId);
+    expect(onPlumbing.sort()).toEqual([plumbing.id, cleaning.id].sort());
+    expect((await n.specialist.access()).services?.sort()).toEqual(["cleaning", "plumbing"]);
+    state.sent.length = 0;
+    const leak = await book("plumbing", { problem: "fixture" });
+    expect(recipients().sort()).toEqual(["maya@example.com", "nadine@example.com"]);
+    expect((await n.specialist.queue()).map((r) => r.request.id)).toContain(leak.id);
+
+    // Taken off again: Plumbing is Maya's alone.
+    await a.admin.setServiceSpecialist({ service: "plumbing", specialistId: cleaning.id, on: false });
+    expect((await n.specialist.queue()).map((r) => r.request.id)).not.toContain(leak.id);
+    await expect(n.specialist.detail({ id: leak.id })).rejects.toMatchObject({ code: "NOT_FOUND" });
+    // Two real changes in the activity log; the repeated click adds nothing.
     expect(await db.select().from(auditLog).where(eq(auditLog.action, "service_specialist_set"))).toHaveLength(2);
 
-    await expect(a.admin.setServiceSpecialist({ service: "other", specialistId: plumbing.id })).rejects.toMatchObject({ code: "BAD_REQUEST" });
-    await expect(a.admin.setServiceSpecialist({ service: "ac", specialistId: customer.id })).rejects.toMatchObject({ code: "BAD_REQUEST" });
-    await expect((await callerFor(plumbing)).admin.setServiceSpecialist({ service: "ac", specialistId: plumbing.id })).rejects.toMatchObject({
-      code: "FORBIDDEN",
+    await expect(a.admin.setServiceSpecialist({ service: "other", specialistId: plumbing.id, on: true })).rejects.toMatchObject({
+      code: "BAD_REQUEST",
     });
+    await expect(a.admin.setServiceSpecialist({ service: "ac", specialistId: customer.id, on: true })).rejects.toMatchObject({
+      code: "BAD_REQUEST",
+    });
+    await expect(
+      (await callerFor(plumbing)).admin.setServiceSpecialist({ service: "ac", specialistId: plumbing.id, on: true }),
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
 
     // Made an admin: they see everything anyway, and their services go back to the admins.
     await a.admin.setStaffRole({ userId: plumbing.id, role: "admin" });

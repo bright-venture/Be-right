@@ -663,9 +663,11 @@ function StaffActivity() {
                     : t.admin.audit.meeting_booked
                   : e.action === "technician_hired"
                     ? t.admin.audit.technician_approved
-                    : e.action === "service_specialist_set" && !e.targetName && !e.targetEmail
-                      ? t.admin.audit.service_specialist_admins
-                      : t.admin.audit[e.action];
+                    : e.action === "service_specialist_set" && d.on === false
+                      ? t.admin.audit.service_specialist_removed
+                      : e.action === "service_specialist_set" && !e.targetName && !e.targetEmail
+                        ? t.admin.audit.service_specialist_admins
+                        : t.admin.audit[e.action];
         const sentence = p(text)
           .replace("{target}", target)
           .replace("{applicant}", applicant)

@@ -64,7 +64,7 @@ export async function makeTechnician(email: string, name = email.split("@")[0]) 
 
 /** A specialist account (in the app, an admin gives the role in Admin → Team). */
 /**
- * A specialist account. By default they handle every service nobody has yet, so most tests
+ * A specialist account. By default they handle every service (shared with any other), so most tests
  * can ignore who handles what; pass `services` to give them only some (or none: []).
  */
 export async function makeSpecialist(email = SPECIALIST_EMAIL, name = "Specialist", services?: string[]) {

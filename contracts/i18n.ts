@@ -866,6 +866,7 @@ export const t = {
       technician_transport_set: { en: "Changed how {target} travels", ar: "غيّر وسيلة تنقّل {target}" },
       service_specialist_set: { en: "Gave {service} to {target}", ar: "أسند {service} إلى {target}" },
       service_specialist_admins: { en: "Gave {service} back to the admins", ar: "أعاد {service} إلى الإدارة" },
+      service_specialist_removed: { en: "Took {service} from {target}", ar: "سحب {service} من {target}" },
       technician_districts_set: { en: "Changed the districts {target} works in", ar: "غيّر المناطق التي يعمل فيها {target}" },
       application_approved: { en: "Approved {applicant}'s application", ar: "وافق على طلب {applicant}" },
       meeting_booked: { en: "Booked a meeting with {applicant}: {date}", ar: "حجز مقابلة مع {applicant}: {date}" },
@@ -1563,8 +1564,8 @@ export const t = {
   serviceOwners: {
     title: { en: "Who handles each service", ar: "من يتولّى كل خدمة" },
     hint: {
-      en: "One specialist per service (one person can have several). Only they see its requests and emergencies and get its emails. Admins see everything.",
-      ar: "مختص واحد لكل خدمة (ويمكن لشخص واحد أن يتولّى عدة خدمات). هو وحده يرى طلباتها وحالاتها الطارئة ويتلقّى رسائلها. ترى الإدارة كل شيء.",
+      en: "Tap the specialists who handle each service: one or several, and one person can have several services. Only they see its requests and emergencies and get its emails and notifications. Admins see everything.",
+      ar: "اضغط على المختصين الذين يتولّون كل خدمة: واحد أو أكثر، ويمكن لشخص واحد أن يتولّى عدة خدمات. هم وحدهم يرون طلباتها وحالاتها الطارئة ويتلقّون رسائلها وإشعاراتها. ترى الإدارة كل شيء.",
     },
     uncovered: {
       en: "{n} services have no specialist yet: their requests go to the admins.",
@@ -1572,6 +1573,10 @@ export const t = {
     },
     pick: { en: "Specialist for {service}", ar: "المختص في {service}" },
     admins: { en: "Admins (no specialist)", ar: "الإدارة (بلا مختص)" },
+    noSpecialists: {
+      en: "No specialists in the team yet: add one above, then give them services here.",
+      ar: "لا يوجد مختصون في الفريق بعد: أضف مختصاً في الأعلى، ثم امنحه خدماته هنا.",
+    },
     other: {
       en: "Other requests and \"Other emergency\" always go to the admins.",
       ar: "طلبات «أخرى» و«حالة طارئة أخرى» تذهب دائماً إلى الإدارة.",

@@ -1,5 +1,6 @@
-// Each service has one specialist, who alone handles its requests and emergencies; one person
-// can have several services. Admins see everything, and handle services nobody has (and Other).
+// Each service has its specialists (one or several), who alone handle its requests and
+// emergencies; one person can have several services. Admins see everything, and handle
+// services nobody has (and Other).
 import { and, eq, inArray, isNull } from "drizzle-orm";
 import { serviceSpecialists, users } from "../../db/schema";
 import { getDb } from "../queries/connection";
@@ -28,18 +29,17 @@ export async function handles(user: Staff, category: string | null): Promise<boo
   return category !== null && (await servicesOf(user.id)).includes(category);
 }
 
-/** The specialist in charge of a service, if it has one who is still on the team. */
-export async function specialistOf(category: string | null) {
-  if (!category) return null;
-  const [row] = await getDb()
+/** The specialists in charge of a service who are still on the team (none: the admins handle it). */
+export async function specialistsOf(category: string | null) {
+  if (!category) return [];
+  return getDb()
     .select({ id: users.id, email: users.email })
     .from(serviceSpecialists)
     .innerJoin(users, eq(users.id, serviceSpecialists.specialistId))
     .where(and(eq(serviceSpecialists.service, category), eq(users.role, "specialist"), isNull(users.deletedAt)));
-  return row ?? null;
 }
 
-/** Every service and its specialist (services without one aren't listed: admins handle them). */
+/** Every service and its specialists (services without any aren't listed: admins handle them). */
 export async function allServiceSpecialists() {
   return getDb()
     .select({ service: serviceSpecialists.service, specialistId: serviceSpecialists.specialistId })

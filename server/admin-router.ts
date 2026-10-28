@@ -316,40 +316,41 @@ export const adminRouter = createRouter({
   serviceSpecialists: adminQuery.query(() => allServiceSpecialists()),
 
   /**
-   * Give a service to a specialist (it leaves whoever had it), or back to the admins (null).
-   * Other is always the admins'.
+   * Add a specialist to a service, or take them off it (`on: false`). A service can have
+   * several; with none, the admins handle it. Other is always the admins'.
    */
   setServiceSpecialist: adminQuery
-    .input(z.object({ service: z.string().max(64), specialistId: z.number().int().nullable() }))
+    .input(z.object({ service: z.string().max(64), specialistId: z.number().int(), on: z.boolean() }))
     .mutation(async ({ ctx, input }) => {
       if (!CATEGORY_MAP[input.service] || input.service === OTHER_SERVICE) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "Unknown service" });
       }
       const db = getDb();
-      if (input.specialistId !== null) {
-        const person = await db.query.users.findFirst({ where: eq(users.id, input.specialistId) });
-        if (!person || person.role !== "specialist" || person.deletedAt) {
-          throw new TRPCError({ code: "BAD_REQUEST", message: "Only a specialist can handle a service" });
-        }
+      const person = await db.query.users.findFirst({ where: eq(users.id, input.specialistId) });
+      if (input.on && (!person || person.role !== "specialist" || person.deletedAt)) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Only a specialist can handle a service" });
       }
       await db.transaction(async (tx) => {
-        if (input.specialistId === null) {
-          await tx.delete(serviceSpecialists).where(eq(serviceSpecialists.service, input.service));
-        } else {
-          await tx
-            .insert(serviceSpecialists)
-            .values({ service: input.service, specialistId: input.specialistId })
-            .onConflictDoUpdate({ target: serviceSpecialists.service, set: { specialistId: input.specialistId, updatedAt: new Date() } });
+        const pair = and(eq(serviceSpecialists.service, input.service), eq(serviceSpecialists.specialistId, input.specialistId));
+        const changed = input.on
+          ? await tx
+              .insert(serviceSpecialists)
+              .values({ service: input.service, specialistId: input.specialistId })
+              .onConflictDoNothing()
+              .returning({ service: serviceSpecialists.service })
+          : await tx.delete(serviceSpecialists).where(pair).returning({ service: serviceSpecialists.service });
+        // Only real changes go in the activity log (a double click adds nothing).
+        if (changed.length) {
+          await audit(
+            {
+              actorId: ctx.user.id,
+              action: "service_specialist_set",
+              targetUserId: input.specialistId,
+              details: { service: input.service, on: input.on },
+            },
+            tx,
+          );
         }
-        await audit(
-          {
-            actorId: ctx.user.id,
-            action: "service_specialist_set",
-            targetUserId: input.specialistId,
-            details: { service: input.service },
-          },
-          tx,
-        );
       });
       return { ok: true };
     }),
