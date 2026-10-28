@@ -157,7 +157,7 @@ export function EmergencyJobForm({
                   <input value={name} onChange={(e) => setName(e.target.value)} maxLength={255} autoComplete="off" className={INPUT} />
                 </Field>
                 <Field label={p(t.emergency.fieldPhone)}>
-                  <input value={phone} onChange={(e) => setPhone(e.target.value)} type="tel" dir="ltr" maxLength={32} autoComplete="off" placeholder={p(t.book.phonePh)} className={INPUT} />
+                  <input value={phone} onChange={(e) => setPhone(e.target.value)} type="tel" dir="ltr" maxLength={32} autoComplete="off" className={INPUT} />
                 </Field>
               </div>
             </Part>

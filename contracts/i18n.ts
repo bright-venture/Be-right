@@ -394,7 +394,6 @@ export const t = {
     address: { en: "Address details", ar: "تفاصيل العنوان" },
     addressPh: { en: "Building, floor, landmarks…", ar: "المبنى، الطابق، وأقرب معلم معروف…" },
     phone: { en: "Phone / WhatsApp", ar: "هاتف / واتساب" },
-    phonePh: { en: "+1 202 555 0123", ar: "+1 202 555 0123" },
     notes: { en: "Anything else? (optional)", ar: "هل هناك شيء آخر؟ (اختياري)" },
     notesPh: { en: "Parking, gate code, pets…", ar: "موقف السيارات، رمز البوابة، حيوانات أليفة…" },
     reviewTitle: { en: "Check your request", ar: "راجع طلبك" },

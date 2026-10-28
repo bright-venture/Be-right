@@ -96,7 +96,7 @@ export function StepWhenWhere({ form }: { form: BookingForm }) {
         {[
           { l: t.book.area, v: area, set: setArea, ph: p(t.book.areaPh) },
           { l: t.book.address, v: address, set: setAddress, ph: p(t.book.addressPh) },
-          { l: t.book.phone, v: contactPhone, set: setPhone, ph: p(t.book.phonePh), tel: true },
+          { l: t.book.phone, v: contactPhone, set: setPhone, ph: undefined, tel: true },
         ].map((f, i) => (
           <div key={i}>
             <label className="font-display text-base font-extrabold text-navy">

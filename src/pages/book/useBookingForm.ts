@@ -118,9 +118,10 @@ export function useBookingForm() {
   const [agreedNow, setAgreedNow] = useState(false);
 
 
-  // The account's phone (given at sign-up) fills in until the customer types their own.
-  const contactPhone = phone || user?.phone || "";
-  // Only complain once something is typed (or carried over from the account).
+  // The number to call for this visit, typed by the customer: never filled in from the account
+  // (they may be booking for someone else's home or their office).
+  const contactPhone = phone;
+  // Only complain once something is typed.
   const phoneInvalid = contactPhone.trim() !== "" && !isValidPhone(contactPhone);
   // A draft saved yesterday can carry yesterday's date.
   const dateInvalid = date !== "" && !isValidVisitDate(date, todayHere());

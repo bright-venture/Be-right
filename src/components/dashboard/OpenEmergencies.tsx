@@ -253,7 +253,7 @@ function EmergencyJobRow({ job: r, technician }: { job: Job; technician: string 
             <input value={name} onChange={(e) => setName(e.target.value)} maxLength={255} className={INPUT} />
           </Field>
           <Field label={p(t.emergency.fieldPhone)}>
-            <input value={phone} onChange={(e) => setPhone(e.target.value)} type="tel" dir="ltr" maxLength={32} placeholder={p(t.book.phonePh)} className={INPUT} />
+            <input value={phone} onChange={(e) => setPhone(e.target.value)} type="tel" dir="ltr" maxLength={32} className={INPUT} />
           </Field>
           <Field label={p(t.emergency.priceLabel)}>
             <input value={amount} onChange={(e) => setAmount(e.target.value)} inputMode="decimal" dir="ltr" placeholder="45" className={INPUT} />
