@@ -14,6 +14,7 @@ import { specialistsOf } from "./lib/serviceSpecialists";
 import { env } from "./lib/env";
 import { sendEmail } from "./lib/email";
 import { sendPush } from "./lib/push";
+import { afterResponse } from "./lib/afterResponse";
 
 type Lang = "en" | "ar";
 type Text = Record<Lang, string>;
@@ -79,14 +80,16 @@ async function send(to: (string | null | undefined)[], message: Message) {
   return recipients.length ? (await sendEmail({ to: recipients, ...render(message) })) === true : false;
 }
 
-/** Runs a notification without ever failing the caller (undefined if it failed). */
-async function safely<T>(name: string, fn: () => Promise<T>): Promise<T | undefined> {
-  try {
-    return await fn();
-  } catch (error) {
-    console.error(`[notify] ${name} failed`, error);
-    return undefined;
-  }
+/** Runs a notification without ever failing or slowing the caller (a failure is logged). */
+async function safely(name: string, fn: () => Promise<unknown>): Promise<void> {
+  // Sent once the answer is on its way (lib/afterResponse.ts): saving never waits for Resend or Firebase.
+  await afterResponse(async () => {
+    try {
+      await fn();
+    } catch (error) {
+      console.error(`[notify] ${name} failed`, error);
+    }
+  });
 }
 
 /* ---------- data ---------- */
