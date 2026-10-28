@@ -5,15 +5,7 @@ import { BEIRUT_PIN, addJobPhoto, callerFor, createTestDb, futureDate, makeAdmin
 
 const state = vi.hoisted(() => ({ db: undefined as unknown }));
 vi.mock("./queries/connection", () => ({ getDb: () => state.db }));
-vi.mock("./lib/env", () => ({
-  env: {
-    isProduction: false,
-    databaseUrl: "",
-    supabaseUrl: "",
-    supabaseServiceRoleKey: "",
-    storageBucket: "test",
-  },
-}));
+vi.mock("./lib/env", async () => ({ env: (await import("./test/env")).testEnv() }));
 vi.mock("./lib/storage", async (importOriginal) =>
   (await import("./test/harness")).storageStub(importOriginal),
 );

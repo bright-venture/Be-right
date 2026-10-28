@@ -52,29 +52,34 @@ const timestamps = {
     .$onUpdate(() => new Date()),
 };
 
-export const users = pgTable("users", {
-  id: serial("id").primaryKey(),
-  /** Supabase auth.users.id */
-  authId: uuid("auth_id").notNull().unique(),
-  name: varchar("name", { length: 255 }),
-  email: varchar("email", { length: 320 }),
-  /** Given at sign-up; pre-fills bookings. */
-  phone: varchar("phone", { length: 64 }),
-  /** When this account accepted the Terms and Privacy Policy, and which version. */
-  termsAcceptedAt: timestamp("terms_accepted_at", { withTimezone: true }),
-  termsVersion: varchar("terms_version", { length: 32 }),
-  avatar: text("avatar"),
-  role: userRole("role").default("customer").notNull(),
-  /** A technician's starting point (home or base), set by an admin: the distance in suggested prices. */
-  /** A technician's districts: they are only suggested and assigned for jobs there. */
-  districts: jsonb("districts").$type<District[]>().default([]).notNull(),
-  /** The customer deleted their account: personal details were erased (see auth.deleteAccount). */
-  deletedAt: timestamp("deleted_at", { withTimezone: true }),
-  ...timestamps,
-  lastSignInAt: timestamp("last_sign_in_at", { withTimezone: true })
-    .defaultNow()
-    .notNull(),
-}).enableRLS();
+export const users = pgTable(
+  "users",
+  {
+    id: serial("id").primaryKey(),
+    /** Supabase auth.users.id */
+    authId: uuid("auth_id").notNull().unique(),
+    name: varchar("name", { length: 255 }),
+    email: varchar("email", { length: 320 }),
+    /** Given at sign-up; pre-fills bookings. */
+    phone: varchar("phone", { length: 64 }),
+    /** When this account accepted the Terms and Privacy Policy, and which version. */
+    termsAcceptedAt: timestamp("terms_accepted_at", { withTimezone: true }),
+    termsVersion: varchar("terms_version", { length: 32 }),
+    avatar: text("avatar"),
+    role: userRole("role").default("customer").notNull(),
+    /** A technician's starting point (home or base), set by an admin: the distance in suggested prices. */
+    /** A technician's districts: they are only suggested and assigned for jobs there. */
+    districts: jsonb("districts").$type<District[]>().default([]).notNull(),
+    /** The customer deleted their account: personal details were erased (see auth.deleteAccount). */
+    deletedAt: timestamp("deleted_at", { withTimezone: true }),
+    ...timestamps,
+    lastSignInAt: timestamp("last_sign_in_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  // The professionals, the specialists, the admins: found by role among all the customers.
+  (t) => [index("users_role_idx").on(t.role)],
+).enableRLS();
 
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
@@ -133,6 +138,8 @@ export const serviceRequests = pgTable(
     index("service_requests_created_idx").on(t.createdAt),
     // The dashboard asks every 30 seconds whether anything changed (latest update).
     index("service_requests_updated_idx").on(t.updatedAt),
+    // A specialist's queue: their services' requests, by status.
+    index("service_requests_category_status_idx").on(t.category, t.status),
   ],
 ).enableRLS();
 

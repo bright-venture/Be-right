@@ -3,7 +3,7 @@ import { and, desc, eq, gt, ilike, inArray, lt, lte, max, notInArray, or, sql } 
 import { createRouter, specialistQuery } from "./middleware";
 import { getDb } from "./queries/connection";
 import { requestEvents, requestMedia, serviceRequests, technicianLocations, users } from "../db/schema";
-import { ACTIVE_JOB_STATUSES } from "@contracts/workflow";
+import { ACTIVE_JOB_STATUSES, CLOSED_STATUSES } from "@contracts/workflow";
 import type { RequestStatus } from "@contracts/services";
 import {
   QUOTE_AMOUNT_PATTERN,
@@ -22,7 +22,7 @@ import { scopeFilter } from "./lib/workflow";
 const byId = z.object({ id: z.number().int() });
 
 // Queue order: open cases first, then oldest first.
-const CLOSED: readonly RequestStatus[] = ["completed", "cancelled"];
+const CLOSED: readonly RequestStatus[] = CLOSED_STATUSES;
 
 /** Closed requests stay in the live queue this long; older ones load on demand (`history`). */
 const RECENT_CLOSED_DAYS = 30;
@@ -90,7 +90,7 @@ export const specialistRouter = createRouter({
   history: specialistQuery
     .input(
       pageInput.extend({
-        status: z.enum(["completed", "cancelled"]).nullish(),
+        status: z.enum(CLOSED_STATUSES).nullish(),
         category: z.string().max(64).nullish(),
         search: z.string().trim().max(100).nullish(),
       }),

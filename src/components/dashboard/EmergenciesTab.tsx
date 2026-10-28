@@ -10,7 +10,7 @@ import { timeAgo } from "@/lib/time";
 import { directionsLinks } from "@contracts/geo";
 import { isValidPhone } from "@contracts/phone";
 import { CATEGORY_MAP, type RequestStatus } from "@contracts/services";
-import { QUOTE_AMOUNT_PATTERN, todayHere } from "@contracts/workflow";
+import { CLOSED_STATUSES, QUOTE_AMOUNT_PATTERN, todayHere } from "@contracts/workflow";
 import { useLiveQueue } from "./useLiveQueue";
 import { answerLines, EMERGENCY_PROBLEM_MAP } from "@contracts/emergency";
 import { DISTRICT_INFO, worksIn } from "@contracts/districts";
@@ -36,7 +36,7 @@ const INPUT =
   "mt-1.5 h-10 w-full rounded-lg border border-navy/15 bg-white px-3 text-sm text-navy placeholder:text-navy/35 transition-colors focus:border-navy/40 focus:outline-none focus:ring-2 focus:ring-flame/20";
 const LABEL = "text-xs font-medium text-navy/65";
 const SECTION_TITLE = "font-display text-base font-extrabold text-navy";
-const CLOSED: readonly RequestStatus[] = ["completed", "cancelled"];
+const CLOSED: readonly RequestStatus[] = CLOSED_STATUSES;
 
 /** Now, as the visit's time of day. */
 function slotNow(hour = new Date().getHours()) {

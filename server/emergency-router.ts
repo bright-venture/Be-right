@@ -9,7 +9,7 @@ import { isValidPin } from "@contracts/geo";
 import { VISIT_FEE_USD } from "@contracts/legal";
 import { isValidPhone } from "@contracts/phone";
 import { CATEGORY_MAP } from "@contracts/services";
-import { earliestTodayAnywhere, isValidVisitDate, QUOTE_AMOUNT_PATTERN, TIME_SLOTS } from "@contracts/workflow";
+import { CLOSED_STATUSES, earliestTodayAnywhere, isValidVisitDate, QUOTE_AMOUNT_PATTERN, TIME_SLOTS } from "@contracts/workflow";
 import { clientIp, LIMITS, rateLimit } from "./lib/rateLimit";
 import { logEvent } from "./lib/workflow";
 import { checkWorksIn, districtAt, OUTSIDE_DISTRICTS_NOTE } from "./lib/districts";
@@ -228,7 +228,7 @@ export const emergencyRouter = createRouter({
             and(
               eq(serviceRequests.id, input.requestId),
               eq(serviceRequests.emergency, true),
-              notInArray(serviceRequests.status, ["completed", "cancelled"]),
+              notInArray(serviceRequests.status, [...CLOSED_STATUSES]),
             ),
           )
           .for("update");

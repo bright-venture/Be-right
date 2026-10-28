@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { and, desc, eq, inArray, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, lt, notInArray, sql } from "drizzle-orm";
 import { adminQuery, createRouter, technicianQuery, specialistQuery } from "./middleware";
 import { getDb } from "./queries/connection";
 import {
@@ -15,7 +15,9 @@ import {
 import {
   ACTIVE_JOB_STATUSES,
   ASSIGNABLE_STATUSES,
+  CLOSED_STATUSES,
   JOB_PHOTO_KINDS,
+  RECENT_DONE_JOBS,
   MAX_JOB_PHOTOS,
   VISIT_FEE_REASON_LABEL,
   VISIT_REPORTS,
@@ -34,8 +36,29 @@ import { DISTRICTS } from "@contracts/districts";
 import { checkWorksIn, OUTSIDE_DISTRICTS_NOTE, requestDistrict } from "./lib/districts";
 import { staffScope } from "./lib/serviceSpecialists";
 import { LIMITS, rateLimit } from "./lib/rateLimit";
+import { pageInput, toPage, PAGE_SIZE } from "./lib/paging";
 
 type Db = Parameters<typeof findRequest>[0];
+
+/** Jobs as the technician's screens show them: with their photos, and whether they arrived. */
+async function withJobDetails(db: Db, jobs: (typeof serviceRequests.$inferSelect)[]) {
+  const ids = jobs.map((j) => j.id);
+  const [media, arrivals] = ids.length
+    ? await Promise.all([
+        db.select().from(requestMedia).where(inArray(requestMedia.requestId, ids)),
+        db
+          .select({ requestId: requestEvents.requestId })
+          .from(requestEvents)
+          .where(and(inArray(requestEvents.requestId, ids), eq(requestEvents.status, "arrived"))),
+      ])
+    : [[], []];
+  return jobs.map((job) => ({
+    ...job,
+    media: media.filter((m) => m.requestId === job.id),
+    /** Pressed Arrived: no more "on my way" for this job. */
+    arrived: arrivals.some((a) => a.requestId === job.id),
+  }));
+}
 
 async function jobPhotoCount(db: Db, requestId: number, kind: JobPhotoKind) {
   const [row] = await db
@@ -330,30 +353,46 @@ export const techRouter = createRouter({
       return { ok: true };
     }),
 
-  /** Technician: my assigned jobs, with the photos the customer uploaded */
+  /**
+   * Technician: my jobs, with the photos: every open one, and the latest done ones
+   * (RECENT_DONE_JOBS). Older done jobs come from myPastJobs, a page at a time.
+   */
   myJobs: technicianQuery.query(async ({ ctx }) => {
     const db = getDb();
-    const jobs = await db
+    const mine = eq(serviceRequests.technicianId, ctx.user.id);
+    const [open, done] = await Promise.all([
+      db
+        .select()
+        .from(serviceRequests)
+        .where(and(mine, notInArray(serviceRequests.status, [...CLOSED_STATUSES])))
+        .orderBy(desc(serviceRequests.createdAt)),
+      db
+        .select()
+        .from(serviceRequests)
+        .where(and(mine, inArray(serviceRequests.status, [...CLOSED_STATUSES])))
+        .orderBy(desc(serviceRequests.id))
+        .limit(RECENT_DONE_JOBS),
+    ]);
+    return withJobDetails(db, [...open, ...done]);
+  }),
+
+  /** Technician: done jobs older than the given one, newest first (the Done tab's "Show older jobs"). */
+  myPastJobs: technicianQuery.input(pageInput).query(async ({ ctx, input }) => {
+    const db = getDb();
+    const rows = await db
       .select()
       .from(serviceRequests)
-      .where(eq(serviceRequests.technicianId, ctx.user.id))
-      .orderBy(desc(serviceRequests.createdAt));
-    const ids = jobs.map((j) => j.id);
-    const [media, arrivals] = jobs.length
-      ? await Promise.all([
-          db.select().from(requestMedia).where(inArray(requestMedia.requestId, ids)),
-          db
-            .select({ requestId: requestEvents.requestId })
-            .from(requestEvents)
-            .where(and(inArray(requestEvents.requestId, ids), eq(requestEvents.status, "arrived"))),
-        ])
-      : [[], []];
-    return jobs.map((job) => ({
-      ...job,
-      media: media.filter((m) => m.requestId === job.id),
-      /** Pressed Arrived: no more "on my way" for this job. */
-      arrived: arrivals.some((a) => a.requestId === job.id),
-    }));
+      .where(
+        and(
+          eq(serviceRequests.technicianId, ctx.user.id),
+          inArray(serviceRequests.status, [...CLOSED_STATUSES]),
+          input.cursor ? lt(serviceRequests.id, input.cursor) : undefined,
+        ),
+      )
+      .orderBy(desc(serviceRequests.id))
+      .limit(PAGE_SIZE + 1);
+    const page = toPage(rows);
+    return { items: await withJobDetails(db, page.items), nextCursor: page.nextCursor };
   }),
 
   /** Technician: field events — arrived / start work / complete */

@@ -3,16 +3,8 @@
 import { randomUUID } from "node:crypto";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 
-vi.mock("./lib/env", () => ({
-  env: {
-    isProduction: true,
-    databaseUrl: "",
-    supabaseUrl: "", // makes signed-in requests fail to load the account
-    supabaseServiceRoleKey: "",
-    storageBucket: "test",
-    docsBucket: "test-docs",
-  },
-}));
+// Production mode; supabaseUrl stays empty, which makes signed-in requests fail to load the account.
+vi.mock("./lib/env", async () => ({ env: (await import("./test/env")).testEnv({ isProduction: true }) }));
 // Every database call crashes with a message that must never reach visitors.
 vi.mock("./queries/connection", () => ({
   getDb: () => {

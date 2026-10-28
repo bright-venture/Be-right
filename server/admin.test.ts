@@ -25,17 +25,7 @@ const state = vi.hoisted(() => ({
 }));
 
 vi.mock("./queries/connection", () => ({ getDb: () => state.db }));
-vi.mock("./lib/env", () => ({
-  env: {
-    isProduction: false,
-    databaseUrl: "",
-    supabaseUrl: "",
-    supabaseServiceRoleKey: "",
-    storageBucket: "test",
-    siteUrl: "https://be-rightbright.com",
-    adminEmails: ["owner@example.com"],
-  },
-}));
+vi.mock("./lib/env", async () => ({ env: (await import("./test/env")).testEnv({ adminEmails: ["owner@example.com"] }) }));
 vi.mock("./lib/email", () => ({
   sendEmail: async (email: { to: string[]; subject: string; text: string }) => {
     state.emails.push(email);

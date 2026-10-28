@@ -538,6 +538,7 @@ export const t = {
     tabDone: { en: "Done", ar: "منتهية" },
     emptyTodo: { en: "No jobs to do right now. Stay Available to get jobs near you.", ar: "لا مهام حالياً. ابقَ متاحاً لتصلك مهام قريبة منك." },
     emptyDone: { en: "No finished jobs yet.", ar: "لا مهام منتهية بعد." },
+    showOlder: { en: "Show older jobs", ar: "عرض المهام الأقدم" },
     allJobs: { en: "All jobs", ar: "كل المهام" },
     next: { en: "Next: {step}", ar: "التالي: {step}" },
     steps: {

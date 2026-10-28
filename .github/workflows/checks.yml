@@ -1,0 +1,31 @@
+# Every push and pull request: types, lint and the tests (an in-memory Postgres, no secrets
+# needed). Netlify deploys on its own; a red check here means "don't trust that deploy".
+name: Checks
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          # Same as Netlify (netlify.toml)
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Types
+        run: npm run check
+      - name: Lint
+        run: npm run lint
+      - name: Tests
+        run: npm test

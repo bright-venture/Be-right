@@ -20,6 +20,7 @@ import {
   MAX_PROBLEM_FILES,
   isValidVisitDate,
   TIME_SLOTS,
+  CLOSED_STATUSES,
   earliestTodayAnywhere,
   isHourlyService,
   isValidHours,
@@ -60,7 +61,7 @@ async function guaranteeStatus(db: Db, requestId: number) {
   const [claim] = await db
     .select({ id: serviceRequests.id })
     .from(serviceRequests)
-    .where(and(eq(serviceRequests.guaranteeFor, requestId), notInArray(serviceRequests.status, ["completed", "cancelled"])))
+    .where(and(eq(serviceRequests.guaranteeFor, requestId), notInArray(serviceRequests.status, [...CLOSED_STATUSES])))
     .limit(1);
   return { endsAt: done ? guaranteeEndsAt(done.at) : null, openClaimId: claim?.id ?? null };
 }

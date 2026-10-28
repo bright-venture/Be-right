@@ -1,16 +1,7 @@
 // The phone app (Capacitor) calls the live API from its own origins; other websites can't.
 import { beforeAll, describe, expect, it, vi } from "vitest";
 
-vi.mock("./lib/env", () => ({
-  env: {
-    isProduction: true,
-    databaseUrl: "",
-    supabaseUrl: "",
-    supabaseServiceRoleKey: "",
-    storageBucket: "test",
-    docsBucket: "test-docs",
-  },
-}));
+vi.mock("./lib/env", async () => ({ env: (await import("./test/env")).testEnv({ isProduction: true }) }));
 
 let app: typeof import("./app").default;
 

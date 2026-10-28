@@ -16,17 +16,7 @@ import {
 
 const state = vi.hoisted(() => ({ db: undefined as unknown }));
 vi.mock("./queries/connection", () => ({ getDb: () => state.db }));
-vi.mock("./lib/env", () => ({
-  env: {
-    isProduction: false,
-    databaseUrl: "",
-    supabaseUrl: "",
-    supabaseServiceRoleKey: "",
-    storageBucket: "test",
-    docsBucket: "test-docs",
-    siteUrl: "https://be-rightbright.com",
-  },
-}));
+vi.mock("./lib/env", async () => ({ env: (await import("./test/env")).testEnv() }));
 vi.mock("./lib/storage", async (importOriginal) =>
   (await import("./test/harness")).storageStub(importOriginal),
 );

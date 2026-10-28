@@ -11,10 +11,11 @@ import { useRoleGate } from "@/hooks/useRoleGate";
 import { trpc } from "@/providers/trpc";
 import { formatDay, formatVisitDay } from "@/lib/time";
 import { visitTime } from "@contracts/visitTime";
+import { CLOSED_STATUSES } from "@contracts/workflow";
 import { CATEGORY_MAP, CATEGORY_TINT, STATUS_ORDER, type RequestStatus } from "@contracts/services";
 
 /** Requests that are finished one way or another: they go under "Past". */
-const CLOSED: readonly RequestStatus[] = ["completed", "cancelled"];
+const CLOSED: readonly RequestStatus[] = CLOSED_STATUSES;
 
 /** The phone app's requests list: active and past requests as cards; each opens its own screen. */
 export default function AppRequests() {

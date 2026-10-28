@@ -1,9 +1,9 @@
 import type { RequestStatus } from "@contracts/services";
-import { todayHere } from "@contracts/workflow";
+import { CLOSED_STATUSES, todayHere } from "@contracts/workflow";
 
 /** Statuses where the next move is the specialist's. */
 export const NEEDS_SPECIALIST: readonly RequestStatus[] = ["submitted", "in_review", "approved"];
-const OPEN_EXCLUDED: readonly RequestStatus[] = ["completed", "cancelled"];
+const OPEN_EXCLUDED: readonly RequestStatus[] = CLOSED_STATUSES;
 
 export type QueueView =
   | "open"

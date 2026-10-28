@@ -302,6 +302,13 @@
       "when": 1793168811546,
       "tag": "0042_shared_services",
       "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "7",
+      "when": 1793170435253,
+      "tag": "0043_role_and_queue_indexes",
+      "breakpoints": true
     }
   ]
 }

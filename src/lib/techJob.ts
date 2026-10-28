@@ -1,5 +1,6 @@
 import type { inferRouterOutputs } from "@trpc/server";
 import type { AppRouter } from "../../server/router";
+import { isClosed } from "@contracts/workflow";
 
 export type Job = inferRouterOutputs<AppRouter>["tech"]["myJobs"][number];
 
@@ -16,4 +17,4 @@ export function jobStep(job: Job): 1 | 2 | 3 | 4 | "wait" | "cancelled" {
 }
 
 /** Still to do (the "To do" tab); completed and cancelled jobs are "Done". */
-export const isTodo = (job: Job) => job.status !== "completed" && job.status !== "cancelled";
+export const isTodo = (job: Job) => !isClosed(job.status);

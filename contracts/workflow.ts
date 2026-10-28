@@ -89,6 +89,13 @@ export const CANCEL_REQUESTABLE_STATUSES: readonly RequestStatus[] = ["scheduled
 /** Statuses in which a technician may be (re)assigned: only after the customer approved. */
 export const ASSIGNABLE_STATUSES: readonly RequestStatus[] = ["approved", "scheduled", "in_progress"];
 
+/** Statuses in which a request is over: nothing more to do, nothing more to change. */
+export const CLOSED_STATUSES = ["completed", "cancelled"] as const satisfies readonly RequestStatus[];
+export const isClosed = (status: string) => (CLOSED_STATUSES as readonly string[]).includes(status);
+
+/** Done jobs that come with My jobs; older ones load a page at a time ("Show older jobs"). */
+export const RECENT_DONE_JOBS = 20;
+
 /** Statuses in which the job is live for the technician (location sharing, field actions). */
 export const ACTIVE_JOB_STATUSES: readonly RequestStatus[] = ["scheduled", "in_progress"];
 

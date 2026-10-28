@@ -12,7 +12,7 @@ import { PushPrompt } from "@/components/PushNotifications";
 import { JobCard, JobView, type Sharing } from "@/components/tech/TechJob";
 import { isTodo, jobStep, type Job } from "@/lib/techJob";
 import { trpc } from "@/providers/trpc";
-import { ACTIVE_JOB_STATUSES } from "@contracts/workflow";
+import { ACTIVE_JOB_STATUSES, RECENT_DONE_JOBS } from "@contracts/workflow";
 import type { RequestStatus } from "@contracts/services";
 
 /**
@@ -77,6 +77,18 @@ export default function Tech() {
   );
   const sharing = useLocationSharing(activeJobIds);
   const [tab, setTab] = useState<"todo" | "done">("todo");
+  // Older done jobs, only once asked for: they continue after the oldest one My jobs brought.
+  const [showOlder, setShowOlder] = useState(false);
+  const recentDone = (jobs.data ?? []).filter((j) => !isTodo(j));
+  const oldestDone = recentDone.length ? Math.min(...recentDone.map((j) => j.id)) : 0;
+  const past = trpc.tech.myPastJobs.useInfiniteQuery(
+    {},
+    {
+      enabled: !!isTech && showOlder && oldestDone > 0,
+      initialCursor: oldestDone,
+      getNextPageParam: (last) => last.nextCursor ?? undefined,
+    },
+  );
 
   if (authLoading || !isTech) {
     return (
@@ -86,9 +98,12 @@ export default function Tech() {
     );
   }
 
-  const rows = jobs.data ?? [];
+  const olderJobs = showOlder ? (past.data?.pages.flatMap((page) => page.items) ?? []) : [];
+  const rows = [...(jobs.data ?? []), ...olderJobs.filter((o) => !jobs.data?.some((j) => j.id === o.id))];
   const todo = order(rows.filter(isTodo), true);
   const done = order(rows.filter((j) => !isTodo(j)), false);
+  // More done jobs than came with My jobs: there may be older ones to show.
+  const mayHaveOlder = recentDone.length >= RECENT_DONE_JOBS && (!showOlder || past.isFetching || !!past.hasNextPage);
   const openId = Number(params.get("job"));
   const open = rows.find((j) => j.id === openId);
   const openJob = (id: number) => {
@@ -121,7 +136,7 @@ export default function Tech() {
               {(
                 [
                   ["todo", t.tech.tabTodo, todo.length],
-                  ["done", t.tech.tabDone, done.length],
+                  ["done", t.tech.tabDone, mayHaveOlder ? `${done.length}+` : done.length],
                 ] as const
               ).map(([id, label, n]) => (
                 <button
@@ -155,6 +170,17 @@ export default function Tech() {
                 </div>
               ) : (
                 shown.map((j) => <JobCard key={j.id} job={j} sharing={sharing.sharingFor === j.id} onOpen={() => openJob(j.id)} />)
+              )}
+              {tab === "done" && mayHaveOlder && (
+                <button
+                  type="button"
+                  disabled={past.isFetching}
+                  onClick={() => (showOlder ? void past.fetchNextPage() : setShowOlder(true))}
+                  className="btn-pill-outline mx-auto mt-2 disabled:opacity-60"
+                >
+                  {past.isFetching && <Loader2 className="h-4 w-4 animate-spin" />}
+                  {p(t.tech.showOlder)}
+                </button>
               )}
             </div>
           </>
