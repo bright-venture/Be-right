@@ -6,6 +6,7 @@ import { eq, inArray } from "drizzle-orm";
 import { pushDevices } from "../../db/schema";
 import { getDb } from "../queries/connection";
 import { env } from "./env";
+import { log } from "./log";
 
 type Lang = "en" | "ar";
 
@@ -23,7 +24,7 @@ type ServiceAccount = { project_id: string; client_email: string; private_key: s
 let warnedOff = false;
 function account(): ServiceAccount | null {
   if (!env.firebaseServiceAccount) {
-    if (!warnedOff) console.warn("[push] FIREBASE_SERVICE_ACCOUNT not set: push notifications are off");
+    if (!warnedOff) log.warn("[push] FIREBASE_SERVICE_ACCOUNT not set: push notifications are off");
     warnedOff = true;
     return null;
   }
@@ -31,7 +32,7 @@ function account(): ServiceAccount | null {
     const parsed = JSON.parse(env.firebaseServiceAccount) as ServiceAccount;
     return parsed.project_id && parsed.client_email && parsed.private_key ? parsed : null;
   } catch {
-    console.error("[push] FIREBASE_SERVICE_ACCOUNT is not valid JSON");
+    log.error("[push] FIREBASE_SERVICE_ACCOUNT is not valid JSON");
     return null;
   }
 }
@@ -116,9 +117,9 @@ export async function sendPush(userIds: (number | null | undefined)[], message: 
           await db.delete(pushDevices).where(eq(pushDevices.id, device.id));
           return;
         }
-        console.error(`[push] Firebase refused (${res.status})`, body.slice(0, 300));
+        log.error(`[push] Firebase refused (${res.status})`, body.slice(0, 300));
       } catch (error) {
-        console.error("[push] sending failed", error);
+        log.error("[push] sending failed", error);
       }
     }),
   );

@@ -3,6 +3,7 @@
 // done (context.waitUntil); the Node server simply keeps going. Outside a request scope (tests,
 // scripts, the dev server) it runs right away and is waited for, exactly as before.
 import { AsyncLocalStorage } from "node:async_hooks";
+import { log } from "./log";
 
 type Scope = { waitUntil: (work: Promise<unknown>) => void };
 const scope = new AsyncLocalStorage<Scope>();
@@ -14,7 +15,7 @@ export function withAfterResponse<T>(waitUntil: Scope["waitUntil"], handle: () =
 
 /** Runs `task` once the answer is on its way when possible, or now otherwise. Never throws. */
 export async function afterResponse(task: () => Promise<unknown>): Promise<void> {
-  const run = () => task().catch((error) => console.error("[after-response] failed", error));
+  const run = () => task().catch((error) => log.error("[after-response] failed", error));
   const current = scope.getStore();
   if (!current) {
     await run();

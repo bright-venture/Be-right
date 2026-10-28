@@ -25,6 +25,7 @@ import { isAdminEmail } from "./queries/users";
 import { logEvent } from "./lib/workflow";
 import { notify } from "./notify";
 import { releaseServices } from "./lib/serviceSpecialists";
+import { log } from "./lib/log";
 
 /** Visits already on someone's calendar: the account can't disappear under them. */
 const BOOKED: readonly RequestStatus[] = ["scheduled", "in_progress"];
@@ -175,12 +176,12 @@ export const authRouter = createRouter({
     try {
       if (mediaKeys.length) await deleteFiles("media", mediaKeys);
     } catch (error) {
-      console.error("[deleteAccount] photos not deleted", error);
+      log.error("[deleteAccount] photos not deleted", error);
     }
     try {
       await deleteAuthUser(user.authId);
     } catch (error) {
-      console.error("[deleteAccount] sign-in not deleted", user.authId, error);
+      log.error("[deleteAccount] sign-in not deleted", user.authId, error);
     }
     return { ok: true };
   }),
@@ -223,7 +224,7 @@ export const authRouter = createRouter({
     try {
       await deleteAuthUser(user.authId);
     } catch (error) {
-      console.error("[deleteStaffAccount] sign-in not deleted", user.authId, error);
+      log.error("[deleteStaffAccount] sign-in not deleted", user.authId, error);
     }
     return { ok: true };
   }),

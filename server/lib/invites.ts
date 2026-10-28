@@ -1,4 +1,5 @@
 import { getSupabaseAdmin } from "./supabase";
+import { log } from "./log";
 
 /**
  * An invitation was sent but the account couldn't be saved here: delete the invited login,
@@ -7,7 +8,7 @@ import { getSupabaseAdmin } from "./supabase";
  */
 export async function withdrawInvitation(authId: string) {
   const { error } = await getSupabaseAdmin().auth.admin.deleteUser(authId);
-  if (error) console.error("[invite] could not withdraw the invitation", authId, error);
+  if (error) log.error("[invite] could not withdraw the invitation", authId, error);
 }
 
 /** Saves the invited account; if that fails, withdraws the invitation and reports it. */

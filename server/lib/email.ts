@@ -1,4 +1,5 @@
 import { env } from "./env";
+import { log } from "./log";
 
 export type Email = { to: string[]; subject: string; html: string; text: string };
 
@@ -12,7 +13,7 @@ export async function sendEmail(email: Email): Promise<boolean> {
   if (!email.to.length) return false;
   if (!env.resendApiKey) {
     if (!warnedDisabled && process.env.NODE_ENV !== "test") {
-      console.info("[email] RESEND_API_KEY is not set: notification emails are skipped.");
+      log.info("[email] RESEND_API_KEY is not set: notification emails are skipped.");
     }
     warnedDisabled = true;
     return false;

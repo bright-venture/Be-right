@@ -2,6 +2,7 @@ import { and, eq, gt } from "drizzle-orm";
 import type { AuditAction, AuditDetails } from "@contracts/audit";
 import { auditLog } from "../../db/schema";
 import { getDb } from "../queries/connection";
+import { log } from "./log";
 
 type Db = ReturnType<typeof getDb>;
 /** The database, or a transaction on it (so the entry is saved only if the action is). */
@@ -49,7 +50,7 @@ export async function auditDocumentsViewed(actorId: number, applicationId: numbe
  * and in the server logs. Never fails the request: it's refused either way.
  */
 export async function auditStaffRefusal(actorId: number, reason: "password" | "role", path: string) {
-  console.warn("[staff-access-refused]", JSON.stringify({ userId: actorId, reason, path }));
+  log.warn("[staff-access-refused]", JSON.stringify({ userId: actorId, reason, path }));
   try {
     const db = getDb();
     const recent = await db.query.auditLog.findFirst({
@@ -64,6 +65,6 @@ export async function auditStaffRefusal(actorId: number, reason: "password" | "r
     if (recent?.details?.reason === reason) return;
     await audit({ actorId, action: "staff_access_refused", details: { reason, path } }, db);
   } catch (error) {
-    console.error("[audit] staff refusal not recorded", error);
+    log.error("[audit] staff refusal not recorded", error);
   }
 }

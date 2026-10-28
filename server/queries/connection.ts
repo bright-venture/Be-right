@@ -3,6 +3,7 @@ import postgres from "postgres";
 import { env } from "../lib/env";
 import * as schema from "@db/schema";
 import * as relations from "@db/relations";
+import { log } from "../lib/log";
 
 const fullSchema = { ...schema, ...relations };
 
@@ -43,7 +44,7 @@ function keepServingOnLostQueryErrors() {
   holder[flag] = true;
   process.on("unhandledRejection", (reason) => {
     if (reason instanceof Error && reason.name === "PostgresError") {
-      console.error("[db] a query failed with no request waiting for it", reason);
+      log.error("[db] a query failed with no request waiting for it", reason);
       return;
     }
     throw reason;

@@ -5,6 +5,7 @@ import { isSafeStorageKey, PHOTO_TYPES } from "@contracts/uploads";
 import { env } from "./env";
 import { getSupabaseAdmin } from "./supabase";
 import { getDb } from "../queries/connection";
+import { log } from "./log";
 
 export const MAX_UPLOAD_BYTES = 20 * 1024 * 1024; // 20 MB per customer photo/video
 const SIGNED_URL_TTL_SECONDS = 60 * 30;
@@ -170,7 +171,7 @@ export async function profilePhotoUrls(avatarKeys: (string | null | undefined)[]
   try {
     return await withTimeout(signedUrls("docs", keys, SIGNED_URL_TTL_SECONDS), PHOTO_LINKS_TIMEOUT_MS);
   } catch (error) {
-    console.error("[storage] profile photo links skipped", error);
+    log.error("[storage] profile photo links skipped", error);
     return {} as Record<string, string>;
   }
 }

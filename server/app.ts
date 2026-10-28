@@ -7,10 +7,19 @@ import { TRPCError } from "@trpc/server";
 import { clientIp, LIMITS, rateLimit } from "./lib/rateLimit";
 import { appRouter } from "./router";
 import { createContext } from "./context";
+import { log, withRequestId } from "./lib/log";
 
 // The HTTP API, shared by every entry point: the Vite dev server, the standalone
 // Node server (boot.ts) and the Vercel function (vercel.ts).
 const app = new Hono();
+
+// Every request gets an id: on each of its log lines (lib/log.ts) and back as X-Request-Id.
+app.use((c, next) =>
+  withRequestId(async (id) => {
+    await next();
+    c.res.headers.set("X-Request-Id", id);
+  }),
+);
 
 // Media goes straight to Supabase Storage, so API bodies stay small.
 app.use(bodyLimit({ maxSize: 1024 * 1024 }));
@@ -47,7 +56,7 @@ app.post("/api/client-error", bodyLimit({ maxSize: 8 * 1024 }), async (c) => {
   const report = (await c.req.json().catch(() => null)) as Record<string, unknown> | null;
   const clip = (v: unknown, max: number) => (typeof v === "string" ? v.slice(0, max) : undefined);
   if (report && typeof report.message === "string") {
-    console.error(
+    log.error(
       "[client-error]",
       JSON.stringify({
         message: clip(report.message, 500),
@@ -68,7 +77,7 @@ app.use("/api/trpc/*", async (c) => {
     createContext,
     onError: ({ path, error }) => {
       if (error.code === "INTERNAL_SERVER_ERROR") {
-        console.error(`[trpc] ${path ?? "<unknown>"}`, error);
+        log.error(`[trpc] ${path ?? "<unknown>"}`, error);
       }
     },
   });

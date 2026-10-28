@@ -1,6 +1,7 @@
 import type { FetchCreateContextFnOptions } from "@trpc/server/adapters/fetch";
 import type { User } from "@db/schema";
 import { authenticateSession } from "./lib/auth";
+import { log } from "./lib/log";
 
 export type TrpcContext = {
   req: Request;
@@ -26,7 +27,7 @@ export async function createContext(
   } catch (error) {
     // Authentication is optional here; protected procedures reject missing users.
     // Invalid tokens resolve to undefined, so reaching here means a real failure.
-    console.warn("[auth] Failed to authenticate request", error);
+    log.warn("[auth] Failed to authenticate request", error);
     ctx.accountLoadFailed = true;
   }
   return ctx;

@@ -5,6 +5,7 @@ import type { TrpcContext } from "./context";
 import { STAFF_PASSWORD_REQUIRED, STAFF_TWO_STEP_REQUIRED, type Role } from "@contracts/roles";
 import { auditStaffRefusal } from "./lib/audit";
 import { alertServerError } from "./lib/alerts";
+import { log } from "./lib/log";
 
 /**
  * Stack traces only on a developer's machine. Opt-in rather than "not production":
@@ -32,7 +33,7 @@ export const createRouter = t.router;
 const watchErrors = t.middleware(async ({ path, next }) => {
   const result = await next();
   if (!result.ok && result.error.code === "INTERNAL_SERVER_ERROR") {
-    await alertServerError(path).catch((error) => console.error("[alerts] failed", error));
+    await alertServerError(path).catch((error) => log.error("[alerts] failed", error));
   }
   return result;
 });
