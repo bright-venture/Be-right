@@ -312,15 +312,15 @@ export const CATEGORIES: ServiceCategory[] = [
         ],
       },
       {
-        id: "bedrooms",
+        id: "rooms",
         kind: "choice",
-        label: { en: "How many bedrooms?", ar: "كم غرفة نوم؟" },
+        label: { en: "How many rooms?", ar: "كم غرفة؟" },
         when: { id: "place", equals: "home" },
         options: [
-          { value: "1", label: { en: "Studio or 1", ar: "استوديو أو غرفة واحدة" } },
-          { value: "2", label: { en: "2", ar: "غرفتان" } },
-          { value: "3", label: { en: "3", ar: "٣ غرف" } },
-          { value: "4plus", label: { en: "4 or more", ar: "٤ غرف أو أكثر" } },
+          { value: "1", label: { en: "1", ar: "١" } },
+          { value: "2", label: { en: "2", ar: "٢" } },
+          { value: "3", label: { en: "3", ar: "٣" } },
+          { value: "4plus", label: { en: "4+", ar: "٤+" } },
         ],
       },
       {
@@ -333,19 +333,6 @@ export const CATEGORIES: ServiceCategory[] = [
           { value: "100to250", label: { en: "100 to 250 m²", ar: "من ١٠٠ إلى ٢٥٠ م²" } },
           { value: "250to500", label: { en: "250 to 500 m²", ar: "من ٢٥٠ إلى ٥٠٠ م²" } },
           { value: "over500", label: { en: "Over 500 m²", ar: "أكثر من ٥٠٠ م²" } },
-        ],
-      },
-      {
-        id: "frequency",
-        kind: "choice",
-        label: { en: "How often?", ar: "كم مرة؟" },
-        // moving out or after works happens once
-        when: { id: "kind", equals: ["regular", "deep"] },
-        options: [
-          { value: "once", label: { en: "One time", ar: "مرة واحدة" } },
-          { value: "weekly", label: { en: "Every week", ar: "كل أسبوع" } },
-          { value: "biweekly", label: { en: "Every 2 weeks", ar: "كل أسبوعين" } },
-          { value: "monthly", label: { en: "Every month", ar: "كل شهر" } },
         ],
       },
     ],

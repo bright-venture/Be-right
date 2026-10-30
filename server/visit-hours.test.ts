@@ -31,7 +31,7 @@ describe("visit hours", () => {
     media: [],
     ...BEIRUT_PIN,
   };
-  const cleaning = { ...visit, category: "cleaning", answers: { place: "home", kind: "regular", bedrooms: "2", frequency: "once" } };
+  const cleaning = { ...visit, category: "cleaning", answers: { place: "home", kind: "regular", rooms: "2" } };
   const saved = async (id: number) => (await db.select().from(serviceRequests).where(eq(serviceRequests.id, id)))[0];
 
   it("are saved for Cleaning and Porter, with the time of day following the start", async () => {
