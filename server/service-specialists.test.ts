@@ -61,7 +61,7 @@ describe("service specialists", () => {
 
   it("see and handle only their own services; admins see everything", async () => {
     const leak = await book("plumbing", { problem: "fixture" });
-    const tidy = await book("cleaning", { place: "home", kind: "regular", bedrooms: "1", frequency: "once", supplies: "we_bring" });
+    const tidy = await book("cleaning", { place: "home", kind: "regular", bedrooms: "1", frequency: "once" });
     const m = await callerFor(plumbing);
     expect(await m.specialist.access()).toMatchObject({ services: ["plumbing", "waterproofing"] });
     const queue = (await m.specialist.queue()).map((r) => r.request.id);

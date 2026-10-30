@@ -8,9 +8,9 @@ const asked = (answers: Record<string, string>) =>
 
 describe("cleaning questions", () => {
   it("ask bedrooms for a home, the floor area for an office, shop or building", () => {
-    expect(asked({ place: "home", kind: "regular" })).toEqual(["place", "kind", "bedrooms", "frequency", "supplies"]);
+    expect(asked({ place: "home", kind: "regular" })).toEqual(["place", "kind", "bedrooms", "frequency"]);
     for (const place of ["office", "shop", "building"]) {
-      expect(asked({ place, kind: "regular" })).toEqual(["place", "kind", "space", "frequency", "supplies"]);
+      expect(asked({ place, kind: "regular" })).toEqual(["place", "kind", "space", "frequency"]);
     }
   });
 
@@ -21,12 +21,12 @@ describe("cleaning questions", () => {
   });
 
   it("accept a complete booking and refuse answers to questions not asked", () => {
-    expect(validateAnswers("cleaning", { place: "home", kind: "moving", bedrooms: "3", supplies: "we_bring" })).toBeNull();
-    expect(validateAnswers("cleaning", { place: "shop", kind: "regular", space: "upto100", frequency: "weekly", supplies: "customer" })).toBeNull();
+    expect(validateAnswers("cleaning", { place: "home", kind: "moving", bedrooms: "3" })).toBeNull();
+    expect(validateAnswers("cleaning", { place: "shop", kind: "regular", space: "upto100", frequency: "weekly" })).toBeNull();
     // bedrooms for an office, how often for a move, a missing size
-    expect(validateAnswers("cleaning", { place: "office", kind: "regular", bedrooms: "2", frequency: "once", supplies: "customer" })).not.toBeNull();
-    expect(validateAnswers("cleaning", { place: "home", kind: "moving", bedrooms: "2", frequency: "weekly", supplies: "customer" })).not.toBeNull();
-    expect(validateAnswers("cleaning", { place: "home", kind: "regular", frequency: "once", supplies: "customer" })).not.toBeNull();
+    expect(validateAnswers("cleaning", { place: "office", kind: "regular", bedrooms: "2", frequency: "once" })).not.toBeNull();
+    expect(validateAnswers("cleaning", { place: "home", kind: "moving", bedrooms: "2", frequency: "weekly" })).not.toBeNull();
+    expect(validateAnswers("cleaning", { place: "home", kind: "regular", frequency: "once" })).not.toBeNull();
   });
 
   it("drop follow-ups that don't apply when coming from a link", () => {

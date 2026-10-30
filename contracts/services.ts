@@ -348,15 +348,6 @@ export const CATEGORIES: ServiceCategory[] = [
           { value: "monthly", label: { en: "Every month", ar: "كل شهر" } },
         ],
       },
-      {
-        id: "supplies",
-        kind: "choice",
-        label: { en: "Cleaning products and equipment", ar: "مواد ومعدات التنظيف" },
-        options: [
-          { value: "we_bring", label: { en: "Be Right brings them", ar: "تحضرها بي رايت" } },
-          { value: "customer", label: { en: "I have them", ar: "لديّ ما يلزم" } },
-        ],
-      },
     ],
   },
   {
