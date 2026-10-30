@@ -341,8 +341,8 @@ export const CATEGORIES: ServiceCategory[] = [
     id: "porter",
     name: { en: "Porter", ar: "حمل ونقل" },
     blurb: {
-      en: "Carrying, moving assistance and building support.",
-      ar: "الحمل، والمساعدة في النقل، ودعم المباني.",
+      en: "Moving homes and offices, heavy items, and porters on shift in buildings.",
+      ar: "نقل المنازل والمكاتب، والأغراض الثقيلة، وعمّال على مناوبة في المباني.",
     },
     questions: [
       {
@@ -350,19 +350,23 @@ export const CATEGORIES: ServiceCategory[] = [
         kind: "choice",
         label: { en: "What do you need?", ar: "ماذا تحتاج؟" },
         options: [
-          { value: "carrying", label: { en: "Carrying heavy items", ar: "حمل أغراض ثقيلة" } },
-          { value: "moving", label: { en: "Moving assistance", ar: "المساعدة في النقل" } },
-          { value: "building", label: { en: "Building support shift", ar: "مناوبة دعم للمبنى" } },
+          { value: "home_move", label: { en: "Moving a home", ar: "نقل منزل" } },
+          { value: "office_move", label: { en: "Moving an office", ar: "نقل مكتب" } },
+          { value: "heavy", label: { en: "Heavy items", ar: "أغراض ثقيلة" } },
+          { value: "building", label: { en: "Building shift", ar: "مناوبة في مبنى" } },
         ],
       },
       {
         id: "floors",
         kind: "choice",
         label: { en: "Stairs or elevator?", ar: "درج أم مصعد؟" },
+        // a porter on shift in a building doesn't carry anything up or down
+        when: { id: "help", equals: ["home_move", "office_move", "heavy"] },
         options: [
-          { value: "elevator", label: { en: "Elevator available", ar: "يوجد مصعد" } },
-          { value: "stairs_low", label: { en: "Stairs, up to 2 floors", ar: "درج، حتى طابقين" } },
-          { value: "stairs_high", label: { en: "Stairs, 3+ floors", ar: "درج، ٣ طوابق أو أكثر" } },
+          { value: "elevator", label: { en: "Elevator", ar: "مصعد" } },
+          { value: "stairs_1_2", label: { en: "Stairs, 1–2 floors", ar: "درج، ١–٢ طابق" } },
+          { value: "stairs_3_4", label: { en: "Stairs, 3–4 floors", ar: "درج، ٣–٤ طوابق" } },
+          { value: "stairs_5plus", label: { en: "Stairs, 5+ floors", ar: "درج، ٥+ طوابق" } },
         ],
       },
     ],

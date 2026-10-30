@@ -28,3 +28,16 @@ describe("cleaning questions", () => {
     expect(answers).toEqual({ place: "office", kind: "moving" });
   });
 });
+
+describe("porter questions", () => {
+  const porter = (answers: Record<string, string>) =>
+    CATEGORY_MAP.porter.questions.filter((q) => isAsked(q, answers)).map((q) => q.id);
+
+  it("ask about stairs for a move or heavy items, not for a building shift", () => {
+    for (const help of ["home_move", "office_move", "heavy"]) expect(porter({ help })).toEqual(["help", "floors"]);
+    expect(porter({ help: "building" })).toEqual(["help"]);
+    expect(validateAnswers("porter", { help: "building" })).toBeNull();
+    expect(validateAnswers("porter", { help: "building", floors: "elevator" })).not.toBeNull();
+    expect(validateAnswers("porter", { help: "heavy", floors: "stairs_5plus" })).toBeNull();
+  });
+});

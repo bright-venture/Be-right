@@ -38,7 +38,7 @@ describe("visit hours", () => {
     const c = await callerFor(customer);
     const { id } = await c.requests.create({ ...cleaning, hours: { from: 14, to: 18 } });
     expect(await saved(id)).toMatchObject({ startHour: 14, endHour: 18, timeSlot: "afternoon" });
-    const porter = await c.requests.create({ ...visit, category: "porter", answers: { help: "moving", floors: "elevator" }, hours: { from: 8, to: 21 } });
+    const porter = await c.requests.create({ ...visit, category: "porter", answers: { help: "home_move", floors: "elevator" }, hours: { from: 8, to: 21 } });
     expect(await saved(porter.id)).toMatchObject({ startHour: 8, endHour: 21, timeSlot: "morning" });
   });
 
@@ -57,7 +57,7 @@ describe("visit hours", () => {
     ).rejects.toMatchObject({ code: "BAD_REQUEST" });
     // Porter no longer asks "For how long?": the hours say it.
     await expect(
-      c.requests.create({ ...visit, category: "porter", answers: { help: "moving", duration: "day", floors: "elevator" }, hours: { from: 9, to: 11 } }),
+      c.requests.create({ ...visit, category: "porter", answers: { help: "home_move", duration: "day", floors: "elevator" }, hours: { from: 9, to: 11 } }),
     ).rejects.toMatchObject({ code: "BAD_REQUEST" });
   });
 
