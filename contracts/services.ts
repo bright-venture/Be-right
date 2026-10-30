@@ -42,8 +42,15 @@ export interface Question {
   label: LocalText;
   hint?: LocalText;
   options?: QuestionOption[];
-  /** show this question only when answers[when.id] === when.equals */
-  when?: { id: string; equals: string };
+  /** show this question only when answers[when.id] is `equals` (or one of them, for a list) */
+  when?: { id: string; equals: string | readonly string[] };
+}
+
+/** Is this question asked, given the answers so far? (Follow-up questions depend on an earlier one.) */
+export function isAsked(q: Question, answers: Record<string, string>) {
+  if (!q.when) return true;
+  const answer = answers[q.when.id];
+  return typeof q.when.equals === "string" ? answer === q.when.equals : q.when.equals.includes(answer);
 }
 
 export interface ServiceCategory {
@@ -278,40 +285,76 @@ export const CATEGORIES: ServiceCategory[] = [
     id: "cleaning",
     name: { en: "Cleaning", ar: "تنظيف" },
     blurb: {
-      en: "Home, office, deep and post-construction cleaning.",
-      ar: "تنظيف المنازل والمكاتب، والتنظيف العميق، والتنظيف بعد البناء.",
+      en: "Homes, offices, shops and buildings: regular, deep, moving and after-works cleaning.",
+      ar: "المنازل والمكاتب والمتاجر والمباني: تنظيف عادي وعميق وعند الانتقال وبعد الأعمال.",
     },
     questions: [
       {
-        id: "type",
+        id: "place",
         kind: "choice",
-        label: { en: "What kind of cleaning?", ar: "ما نوع التنظيف؟" },
+        label: { en: "Where is the cleaning?", ar: "أين التنظيف؟" },
         options: [
-          { value: "home", label: { en: "Home cleaning", ar: "تنظيف منزل" } },
-          { value: "office", label: { en: "Office cleaning", ar: "تنظيف مكتب" } },
-          { value: "deep", label: { en: "Deep cleaning", ar: "تنظيف عميق" } },
-          { value: "post_construction", label: { en: "Post-construction", ar: "بعد البناء" } },
+          { value: "home", label: { en: "Home", ar: "منزل" } },
+          { value: "office", label: { en: "Office", ar: "مكتب" } },
+          { value: "shop", label: { en: "Shop or restaurant", ar: "متجر أو مطعم" } },
+          { value: "building", label: { en: "Building common areas", ar: "الأقسام المشتركة في مبنى" } },
         ],
       },
       {
-        id: "size",
+        id: "kind",
         kind: "choice",
-        label: { en: "How big is the place?", ar: "ما مساحة المكان؟" },
+        label: { en: "What kind of cleaning?", ar: "ما نوع التنظيف؟" },
         options: [
-          { value: "studio", label: { en: "Studio / 1 bedroom", ar: "استوديو / غرفة نوم واحدة" } },
-          { value: "2br", label: { en: "2 bedrooms", ar: "غرفتا نوم" } },
-          { value: "3br", label: { en: "3 bedrooms", ar: "٣ غرف نوم" } },
-          { value: "large", label: { en: "Larger / office", ar: "أكبر / مكتب" } },
+          { value: "regular", label: { en: "Regular cleaning", ar: "تنظيف عادي" } },
+          { value: "deep", label: { en: "Deep cleaning", ar: "تنظيف عميق" } },
+          { value: "moving", label: { en: "Moving in or out", ar: "عند الانتقال أو الإخلاء" } },
+          { value: "after_works", label: { en: "After renovation", ar: "بعد الترميم" } },
+        ],
+      },
+      {
+        id: "bedrooms",
+        kind: "choice",
+        label: { en: "How many bedrooms?", ar: "كم غرفة نوم؟" },
+        when: { id: "place", equals: "home" },
+        options: [
+          { value: "1", label: { en: "Studio or 1", ar: "استوديو أو غرفة واحدة" } },
+          { value: "2", label: { en: "2", ar: "غرفتان" } },
+          { value: "3", label: { en: "3", ar: "٣ غرف" } },
+          { value: "4plus", label: { en: "4 or more", ar: "٤ غرف أو أكثر" } },
+        ],
+      },
+      {
+        id: "space",
+        kind: "choice",
+        label: { en: "How big is the space?", ar: "ما مساحة المكان؟" },
+        when: { id: "place", equals: ["office", "shop", "building"] },
+        options: [
+          { value: "upto100", label: { en: "Up to 100 m²", ar: "حتى ١٠٠ م²" } },
+          { value: "100to250", label: { en: "100 to 250 m²", ar: "من ١٠٠ إلى ٢٥٠ م²" } },
+          { value: "250to500", label: { en: "250 to 500 m²", ar: "من ٢٥٠ إلى ٥٠٠ م²" } },
+          { value: "over500", label: { en: "Over 500 m²", ar: "أكثر من ٥٠٠ م²" } },
         ],
       },
       {
         id: "frequency",
         kind: "choice",
-        label: { en: "One-time or recurring?", ar: "مرة واحدة أم بشكل دوري؟" },
+        label: { en: "How often?", ar: "كم مرة؟" },
+        // moving out or after works happens once
+        when: { id: "kind", equals: ["regular", "deep"] },
         options: [
-          { value: "once", label: { en: "One-time", ar: "مرة واحدة" } },
-          { value: "weekly", label: { en: "Weekly", ar: "أسبوعي" } },
-          { value: "monthly", label: { en: "Monthly", ar: "شهري" } },
+          { value: "once", label: { en: "One time", ar: "مرة واحدة" } },
+          { value: "weekly", label: { en: "Every week", ar: "كل أسبوع" } },
+          { value: "biweekly", label: { en: "Every 2 weeks", ar: "كل أسبوعين" } },
+          { value: "monthly", label: { en: "Every month", ar: "كل شهر" } },
+        ],
+      },
+      {
+        id: "supplies",
+        kind: "choice",
+        label: { en: "Cleaning products and equipment", ar: "مواد ومعدات التنظيف" },
+        options: [
+          { value: "we_bring", label: { en: "Be Right brings them", ar: "تحضرها بي رايت" } },
+          { value: "customer", label: { en: "I have them", ar: "لديّ ما يلزم" } },
         ],
       },
     ],

@@ -1,6 +1,6 @@
 // Single source of truth for how a repair request moves through its life cycle,
 // and for validating what a customer submits. Shared by the API and the UI.
-import { CATEGORY_MAP, type RequestStatus } from "./services";
+import { CATEGORY_MAP, isAsked, type RequestStatus } from "./services";
 import { WORKMANSHIP_GUARANTEE_DAYS } from "./legal";
 
 export const TIME_SLOTS = ["morning", "afternoon", "evening"] as const;
@@ -125,7 +125,7 @@ export const QUOTE_AMOUNT_PATTERN = /^\d{1,6}(\.\d{1,2})?$/;
 export function validateAnswers(categoryId: string, answers: Record<string, string>): string | null {
   const cat = CATEGORY_MAP[categoryId];
   if (!cat) return "Unknown category";
-  const visible = cat.questions.filter((q) => !q.when || answers[q.when.id] === q.when.equals);
+  const visible = cat.questions.filter((q) => isAsked(q, answers));
   const visibleIds = new Set(visible.map((q) => q.id));
   for (const key of Object.keys(answers)) {
     if (!visibleIds.has(key)) return `Unexpected answer: ${key}`;
@@ -165,7 +165,7 @@ export function answersFromLink(categoryId: string, raw: string | null): Record<
   }
   // A follow-up question only counts when the answer it depends on was given.
   for (const q of cat.questions) {
-    if (q.when && answers[q.when.id] !== q.when.equals) delete answers[q.id];
+    if (!isAsked(q, answers)) delete answers[q.id];
   }
   return answers;
 }

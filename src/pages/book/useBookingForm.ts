@@ -17,7 +17,7 @@ import {
   saveDraftFields,
   saveDraftFiles,
 } from "@/lib/bookingDraft";
-import { CATEGORY_MAP } from "@contracts/services";
+import { CATEGORY_MAP, isAsked } from "@contracts/services";
 import {
   answersFromLink,
   isHourlyService,
@@ -105,7 +105,7 @@ export function useBookingForm() {
   const questions = useMemo(
     () =>
       (cat?.questions ?? []).filter(
-        (q) => !q.when || answers[q.when.id] === q.when.equals,
+        (q) => isAsked(q, answers),
       ),
     [cat, answers],
   );
