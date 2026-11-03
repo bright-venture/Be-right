@@ -34,8 +34,9 @@ export function StepQuestions({ form, cat }: { form: BookingForm; cat: ServiceCa
                 className="w-full rounded-2xl border-2 border-navy/30 bg-white px-4 py-3 font-semibold text-navy focus:border-flame focus:outline-none"
               />
             )}
-            <div className="flex flex-wrap gap-2">
-              {q.options?.map((o) => {
+            {/* Rows of 2 (of 4 on wider screens when they fill evenly); an odd last option takes the whole row. */}
+            <div className={`grid grid-cols-2 gap-2 ${(q.options?.length ?? 0) % 4 === 0 ? "sm:grid-cols-4" : ""}`}>
+              {q.options?.map((o, i, all) => {
                 const active = answers[q.id] === o.value;
                 return (
                   <button
@@ -43,7 +44,9 @@ export function StepQuestions({ form, cat }: { form: BookingForm; cat: ServiceCa
                     onClick={() =>
                       setAnswers((a) => ({ ...a, [q.id]: o.value }))
                     }
-                    className={`min-h-11 rounded-full border-2 px-5 py-2 text-sm font-bold transition-all active:scale-[0.97] ${
+                    className={`min-h-11 rounded-2xl border-2 px-3 py-2 text-center text-sm font-bold leading-tight transition-all active:scale-[0.97] ${
+                      all.length % 2 === 1 && i === all.length - 1 ? "col-span-2" : ""
+                    } ${
                       active
                         ? "border-navy bg-navy text-paper"
                         : "border-navy/30 bg-white text-navy hover:border-navy"
