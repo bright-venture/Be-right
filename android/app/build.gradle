@@ -16,8 +16,24 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    // Release builds are signed with the key described in android/keystore.properties
+    // (not in git). Without that file, release builds come out unsigned.
+    def keystoreFile = rootProject.file('keystore.properties')
+    if (keystoreFile.exists()) {
+        def keystore = new Properties()
+        keystoreFile.withInputStream { keystore.load(it) }
+        signingConfigs {
+            release {
+                storeFile rootProject.file(keystore.storeFile)
+                storePassword keystore.storePassword
+                keyAlias keystore.keyAlias
+                keyPassword keystore.keyPassword
+            }
+        }
+    }
     buildTypes {
         release {
+            if (keystoreFile.exists()) signingConfig signingConfigs.release
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
