@@ -1,7 +1,6 @@
 // Shared domain model: service categories and their guided question trees.
 // Used by both the booking flow (frontend) and request creation (backend).
 
-import { arabicDigits, WORKMANSHIP_GUARANTEE_DAYS as GUARANTEE_DAYS } from "./legal";
 
 export type Lang = "en" | "ar";
 
@@ -729,7 +728,7 @@ export const CATEGORY_TINT: Record<string, { bg: string; ink: string }> = {
   other: { bg: "#ECEFF4", ink: "#0C2B5C" },
 };
 
-// ---------- the Be Right Guarantee ----------
+// ---------- our promise ----------
 
 export const GUARANTEE_POINTS: LocalText[] = [
   {
@@ -737,8 +736,8 @@ export const GUARANTEE_POINTS: LocalText[] = [
     ar: "يُوثَّق كل عمل بصور قبل وبعد، ويراجع مختص النتيجة.",
   },
   {
-    en: `If something isn't right within ${GUARANTEE_DAYS} days, report it from your requests page and the revisit is free.`,
-    ar: `إذا لم يكن شيء ما على ما يرام خلال ${arabicDigits(GUARANTEE_DAYS)} أيام، أبلغ عنه من صفحة طلباتك وتكون زيارة المتابعة مجانية.`,
+    en: "If something isn't right after a job, report it from your request. If the professional doesn't fix it, the Be Right team handles it.",
+    ar: "إذا لم يكن شيء ما على ما يرام بعد العمل، أبلغ عنه من طلبك. وإذا لم يُصلحه المهني، يتولّاه فريق بي رايت.",
   },
   {
     en: "The price you approved is the price you pay. Extra work only happens after your approval.",

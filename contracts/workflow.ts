@@ -1,7 +1,6 @@
 // Single source of truth for how a repair request moves through its life cycle,
 // and for validating what a customer submits. Shared by the API and the UI.
 import { CATEGORY_MAP, isAsked, type RequestStatus } from "./services";
-import { WORKMANSHIP_GUARANTEE_DAYS } from "./legal";
 
 export const TIME_SLOTS = ["morning", "afternoon", "evening"] as const;
 export type TimeSlot = (typeof TIME_SLOTS)[number];
@@ -30,7 +29,7 @@ export const TRANSITIONS = {
   startReview: { from: ["submitted"], to: "in_review", by: "specialist" },
   // Sending again while the customer hasn't answered replaces the quote.
   sendQuote: { from: ["in_review", "quote_ready"], to: "quote_ready", by: "specialist" },
-  // Guarantee visits skip the price: the specialist confirms the return visit is free.
+  // Return visits for a reported problem can skip the price: the specialist makes them free.
   acceptGuarantee: { from: ["in_review"], to: "approved", by: "specialist" },
   approveQuote: { from: ["quote_ready"], to: "approved", by: "customer" },
   schedule: { from: ["approved"], to: "scheduled", by: "specialist" },
@@ -55,11 +54,6 @@ export type TransitionName = keyof typeof TRANSITIONS;
 
 export function canTransition(name: TransitionName, status: RequestStatus) {
   return (TRANSITIONS[name].from as readonly RequestStatus[]).includes(status);
-}
-
-/** Until when a job completed at `completedAt` can be reported under the workmanship guarantee. */
-export function guaranteeEndsAt(completedAt: Date) {
-  return new Date(completedAt.getTime() + WORKMANSHIP_GUARANTEE_DAYS * 86_400_000);
 }
 
 /**

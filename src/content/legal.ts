@@ -5,8 +5,6 @@ import {
   COMPANY,
   REJECTED_APPLICATION_RETENTION_DAYS as REJECT_DAYS,
   VISIT_FEE_USD as FEE,
-  WORKMANSHIP_GUARANTEE_DAYS as GUARANTEE_DAYS,
-  arabicDays,
 } from "@contracts/legal";
 import { EMERGENCY_RETENTION_DAYS as EMERGENCY_DAYS } from "@contracts/emergency";
 import type { LocalText } from "@contracts/services";
@@ -85,11 +83,11 @@ export const TERMS: LegalDocument = {
       ],
     },
     {
-      title: t("6. Our workmanship promise", "٦. ضمان جودة العمل"),
+      title: t("6. Our workmanship promise", "٦. وعدنا بجودة العمل"),
       paragraphs: [
         t(
-          `If completed work isn't right, report it in the app within ${GUARANTEE_DAYS} days and we will come back to fix the same problem at no extra labour cost. This doesn't cover new faults, misuse, work done by others afterwards, or manufacturer defects in parts (which follow the supplier's warranty).`,
-          `إذا لم يكن العمل المنجز على ما يرام، أبلغنا عبر التطبيق خلال ${arabicDays(GUARANTEE_DAYS)} وسنعود لإصلاح المشكلة نفسها دون كلفة يد عاملة إضافية. لا يشمل ذلك الأعطال الجديدة أو سوء الاستخدام أو أعمالاً قام بها غيرنا لاحقاً أو عيوب تصنيع القطع (التي تخضع لكفالة المورّد).`,
+          "If completed work isn't right, report it in the app (Report a problem) or contact us. A specialist reviews it and arranges a return visit, and if the professional doesn't fix the problem, the Be Right team handles it. The specialist tells you whether the return visit is free or sends you a price to approve first. New faults, misuse, work done by others afterwards, and manufacturer defects in parts (which follow the supplier's warranty) are handled as a new job.",
+          "إذا لم يكن العمل المنجز على ما يرام، أبلغنا عبر التطبيق (الإبلاغ عن مشكلة) أو تواصل معنا. يراجع المختص البلاغ ويرتّب زيارة متابعة، وإذا لم يُصلح المهني المشكلة، يتولّاها فريق بي رايت. ويخبرك المختص إن كانت زيارة المتابعة مجانية أو يرسل لك سعراً لتوافق عليه أولاً. الأعطال الجديدة وسوء الاستخدام والأعمال التي قام بها غيرنا لاحقاً وعيوب تصنيع القطع (التي تخضع لكفالة المورّد) تُعامَل كمهمة جديدة.",
         ),
       ],
     },
@@ -197,8 +195,8 @@ export const PRIVACY: LegalDocument = {
           "يطّلع مختصو بي رايت على الطلبات لأداء عملهم، ويطّلع مسؤولونا على طلبات التوظيف. يرى المهني المعيّن لمهمتك اسمك وهاتفك وعنوانك وموقعك على الخريطة وأجوبتك وصورك. وترى أنت اسم المهني وصورته، وموقعه المباشر أثناء تنفيذ المهمة، ومتوسط تقييمه. يُحتسب تقييمك في هذا المتوسط دون اسمك، ولا يقرأ تعليقك إلا فريقنا. أما بيانات المتقدّمين وأي مستندات أرسلوها فلا يطّلع عليها إلا فريق التوظيف ولا تُعرض على العملاء إطلاقاً؛ ويرى العملاء صورة المهني بعد أن يبدأ العمل معنا.",
         ),
         t(
-          "We use trusted providers to run the service: Supabase (database, sign-in and file storage, hosted in the EU – Frankfurt), Netlify (website hosting), Resend (account and request-update emails, EU), Cloudflare (our domain, and visit statistics without cookies or personal profiles) and a map provider, OpenFreeMap (with OpenStreetMap on devices that can't show it), which receives your IP address when a map loads. They process data only on our instructions. We never sell your data.",
-          "نستعين بمزوّدين موثوقين لتشغيل الخدمة: Supabase (قاعدة البيانات وتسجيل الدخول وتخزين الملفات، مستضافة في الاتحاد الأوروبي – فرانكفورت)، وNetlify (استضافة الموقع)، وResend (رسائل الحساب وتحديثات الطلبات، الاتحاد الأوروبي)، وCloudflare (نطاق الموقع، وإحصاءات الزيارات بدون ملفات تعريف ارتباط أو ملفات شخصية)، ومزوّد خرائط هو OpenFreeMap (أو OpenStreetMap على الأجهزة التي لا تعرضه)، ويتلقى عنوان IP الخاص بك عند تحميل الخريطة. يعالج هؤلاء البيانات بناءً على تعليماتنا فقط. ولا نبيع بياناتك أبداً.",
+          "We use trusted providers to run the service: Supabase (database, sign-in and file storage, hosted in the EU – Frankfurt), Netlify (website hosting), Resend (account and request-update emails, EU), Cloudflare (our domain, and visit statistics without cookies or personal profiles), Google Firebase (notifications in the phone app, which receives a device ID to deliver them) and a map provider, OpenFreeMap (with OpenStreetMap on devices that can't show it), which receives your IP address when a map loads. They process data only on our instructions. We never sell your data.",
+          "نستعين بمزوّدين موثوقين لتشغيل الخدمة: Supabase (قاعدة البيانات وتسجيل الدخول وتخزين الملفات، مستضافة في الاتحاد الأوروبي – فرانكفورت)، وNetlify (استضافة الموقع)، وResend (رسائل الحساب وتحديثات الطلبات، الاتحاد الأوروبي)، وCloudflare (نطاق الموقع، وإحصاءات الزيارات بدون ملفات تعريف ارتباط أو ملفات شخصية)، وGoogle Firebase (إشعارات تطبيق الهاتف، ويتلقّى معرّفاً للجهاز لإيصالها)، ومزوّد خرائط هو OpenFreeMap (أو OpenStreetMap على الأجهزة التي لا تعرضه)، ويتلقى عنوان IP الخاص بك عند تحميل الخريطة. يعالج هؤلاء البيانات بناءً على تعليماتنا فقط. ولا نبيع بياناتك أبداً.",
         ),
         t(
           "Because some providers are in other countries, your data may be transferred abroad; we choose providers with appropriate security and contractual safeguards.",

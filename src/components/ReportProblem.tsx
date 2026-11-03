@@ -13,9 +13,9 @@ const FIELD =
   "mt-2 w-full rounded-2xl border-2 border-navy/30 bg-white px-4 font-semibold text-navy placeholder:font-normal placeholder:text-navy/40 focus:border-flame focus:outline-none";
 
 /**
- * "Something not right? Report a problem" on a completed job, for a few days after it (the
- * guarantee window): a button that sits in a row of actions, and the form opening on the
- * next line (it takes the full width of a wrapping row). A report opens a linked return visit.
+ * "Something not right? Report a problem" on a completed job, any time after it: a button that
+ * sits in a row of actions, and the form opening on the next line (it takes the full width of a
+ * wrapping row). A report opens a linked return visit.
  */
 export function ReportProblem({
   requestId,
@@ -24,7 +24,7 @@ export function ReportProblem({
   buttonClassName = "",
 }: {
   requestId: number;
-  guarantee: { endsAt: Date | null; openClaimId: number | null };
+  guarantee: { openClaimId: number | null };
   onReported: (claimId: number) => void;
   buttonClassName?: string;
 }) {
@@ -48,10 +48,6 @@ export function ReportProblem({
   if (guarantee.openClaimId) {
     return <Box>{p(t.requests.claimOpen).replace("{id}", String(guarantee.openClaimId))}</Box>;
   }
-  const endsAt = guarantee.endsAt ? new Date(guarantee.endsAt) : null;
-  // eslint-disable-next-line react-hooks/purity -- compared once per render; a stale minute doesn't matter
-  if (!endsAt || endsAt.getTime() < Date.now()) return null;
-
   const descriptionOk = description.trim().length >= 10;
   const dateOk = !!date && isValidVisitDate(date, todayHere());
   const slots: Record<TimeSlot, { en: string; ar: string }> = {

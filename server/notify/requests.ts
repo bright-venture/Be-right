@@ -1,8 +1,7 @@
-// Notifications about a request, from booking to the guarantee.
+// Notifications about a request, from booking to a reported problem.
 
 import { and, count, eq } from "drizzle-orm";
 import { requestEvents, users } from "@db/schema";
-import { arabicDays, WORKMANSHIP_GUARANTEE_DAYS } from "@contracts/legal";
 import { getDb } from "../queries/connection";
 import { sendPush } from "../lib/push";
 import { type Message, both, send } from "./email";
@@ -18,7 +17,7 @@ function jobCancelled(id: number): Message {
   };
 }
 
-/** A request's life: booked, priced, approved, assigned, visited, closed, guarantee. */
+/** A request's life: booked, priced, approved, assigned, visited, closed, problem reported. */
 export const requestNotifications = {
   /** Customer booked: specialists review it. */
   requestSubmitted: (id: number) =>
@@ -201,7 +200,7 @@ export const requestNotifications = {
       });
     }),
 
-  /** Job done: the customer is told how to report a problem under the guarantee. */
+  /** Job done: the customer is told how to report a problem. */
   completed: (id: number) =>
     safely("completed", async () => {
       const job = await loadJob(id);
@@ -212,8 +211,8 @@ export const requestNotifications = {
         lines: [
           both(`Your ${d.category.en} job is complete. Thank you for choosing Be Right.`, `اكتمل عمل ${d.category.ar}. شكراً لاختيارك بي رايت.`),
           both(
-            `If anything isn't right within ${WORKMANSHIP_GUARANTEE_DAYS} days, reply to this email and we'll come back to make it right.`,
-            `إذا لم يكن شيء ما على ما يرام خلال ${arabicDays(WORKMANSHIP_GUARANTEE_DAYS)}، ردّ على هذا البريد وسنعود لإصلاحه.`,
+            "If anything isn't right, open your request and tap “Report a problem”, or reply to this email. If the professional doesn't fix it, the Be Right team handles it.",
+            "إذا لم يكن شيء ما على ما يرام، افتح طلبك واضغط «الإبلاغ عن مشكلة»، أو ردّ على هذا البريد. وإذا لم يُصلحه المهني، يتولّاه فريق بي رايت.",
           ),
         ],
         path: "/requests",
@@ -288,14 +287,14 @@ export const requestNotifications = {
       });
     }),
 
-  /** Customer reported a problem with a completed job (workmanship guarantee). */
+  /** Customer reported a problem with a completed job. */
   guaranteeReported: (id: number) =>
     safely("guaranteeReported", async () => {
       const job = await loadJob(id);
       const d = describe(job);
       const originalId = job.request.guaranteeFor;
       await send(await specialistEmails(job.request.category), {
-        subject: both(`Guarantee claim #${d.id} on job #${originalId}`, `مطالبة ضمان #${d.id} على المهمة #${originalId}`),
+        subject: both(`Problem reported #${d.id} on job #${originalId}`, `بلاغ عن مشكلة #${d.id} على المهمة #${originalId}`),
         title: both("A customer reported a problem after a job", "أبلغ عميل عن مشكلة بعد مهمة"),
         lines: [
           both(
@@ -304,8 +303,8 @@ export const requestNotifications = {
           ),
           ...(job.request.notes ? [both(`"${job.request.notes}"`, `«${job.request.notes}»`)] : []),
           both(
-            `Review it, then confirm a free return visit or send a price if it isn't covered. Preferred day: ${d.when.en}.`,
-            `راجعها، ثم أكّد زيارة مجانية أو أرسل سعراً إذا لم تكن مشمولة. اليوم المفضّل: ${d.when.ar}.`,
+            `Review it, then confirm a free return visit or send a price. Preferred day: ${d.when.en}.`,
+            `راجعها، ثم أكّد زيارة مجانية أو أرسل سعراً. اليوم المفضّل: ${d.when.ar}.`,
           ),
         ],
         path: "/dashboard",
@@ -313,7 +312,7 @@ export const requestNotifications = {
       });
     }),
 
-  /** The guarantee claim is covered: the customer is told the return visit is free. */
+  /** The specialist made the return visit free: the customer is told there's nothing to pay. */
   guaranteeAccepted: (id: number) =>
     safely("guaranteeAccepted", async () => {
       const job = await loadJob(id);
@@ -323,8 +322,8 @@ export const requestNotifications = {
         title: both("Your return visit is free", "زيارتك القادمة مجانية"),
         lines: [
           both(
-            `This is covered by our ${WORKMANSHIP_GUARANTEE_DAYS}-day guarantee, so there's nothing to pay. We'll confirm the date and the ${d.worker.en.word} shortly.`,
-            `هذا مشمول بضمان الـ${arabicDays(WORKMANSHIP_GUARANTEE_DAYS)}، فلا شيء عليك دفعه. سنؤكّد لك الموعد و${d.worker.ar.the} قريباً.`,
+            `Our specialist confirmed this return visit is free, so there's nothing to pay. We'll confirm the date and the ${d.worker.en.word} shortly.`,
+            `أكّد المختص أن زيارة المتابعة هذه مجانية، فلا شيء عليك دفعه. سنؤكّد لك الموعد و${d.worker.ar.the} قريباً.`,
           ),
         ],
         path: "/requests",

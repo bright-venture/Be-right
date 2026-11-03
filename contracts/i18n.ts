@@ -1,6 +1,6 @@
 // Bilingual UI strings (English / Arabic).
 import type { Lang, RequestStatus, LocalText } from "./services";
-import { arabicDays, arabicDigits, VISIT_FEE_USD as FEE, WORKMANSHIP_GUARANTEE_DAYS as DAYS } from "./legal";
+import { arabicDigits, VISIT_FEE_USD as FEE } from "./legal";
 import { MAX_DOCUMENT_MB as MB } from "./applications";
 
 export const t = {
@@ -15,7 +15,7 @@ export const t = {
     how: { en: "How it works", ar: "كيف نعمل" },
     why: { en: "Why Be Right", ar: "لماذا بي رايت" },
     trust: { en: "Our promise", ar: "وعدنا" },
-    guarantee: { en: "Guarantee", ar: "الضمان" },
+    guarantee: { en: "Our promise", ar: "وعدنا" },
     coverage: { en: "Coverage", ar: "مناطق التغطية" },
     join: { en: "For professionals", ar: "للمهنيين" },
     book: { en: "Book a service", ar: "احجز خدمة" },
@@ -122,22 +122,22 @@ export const t = {
     ctaSecondary: { en: "How it works", ar: "كيف نعمل" },
     promise: { en: "Fast. Simple. Sorted.", ar: "بسرعة وببساطة، وتُحلّ." },
     sub: {
-      en: "For homes, restaurants, offices, buildings and businesses. Book online in a few simple steps. A specialist reviews your request, you approve the price before dispatch, and if it's not right, we come back and make it right.",
-      ar: "للمنازل والمطاعم والمكاتب والمباني والشركات. احجز عبر الإنترنت بخطوات بسيطة. يراجع مختص طلبك، وتوافق على السعر قبل إرسال المهني إليك، وإذا لم يكن العمل صحيحاً، نعود ونصلحه.",
+      en: "For homes, restaurants, offices, buildings and businesses. Book online in a few simple steps. A specialist reviews your request, you approve the price before dispatch, and if the professional doesn't fix the problem, our team handles it.",
+      ar: "للمنازل والمطاعم والمكاتب والمباني والشركات. احجز عبر الإنترنت بخطوات بسيطة. يراجع مختص طلبك، وتوافق على السعر قبل إرسال المهني إليك، وإذا لم يُصلح المهني المشكلة، يتولّاها فريقنا.",
     },
     cta: { en: "Book a service", ar: "احجز خدمة" },
     chip1: { en: "Free to book", ar: "الحجز مجاني" },
     chip2: { en: "Book online", ar: "احجز عبر الإنترنت" },
     chip3: { en: "You approve the price first", ar: "توافق على السعر أولاً" },
-    chip4: { en: "Free revisit if it's not right", ar: "زيارة مجانية إذا لم يكن العمل صحيحاً" },
+    chip4: { en: "Not fixed? Our team takes over", ar: "لم تُحلّ المشكلة؟ يتولّاها فريقنا" },
     stat1: { en: "guided questions, no technical words needed", ar: "أسئلة موجّهة، دون مصطلحات تقنية" },
     stat2: { en: "specialist review before every dispatch", ar: "يراجع مختص الطلب قبل إرسال المهني إليك" },
     stat3: { en: "price approved by you before we roll", ar: "السعر بموافقتك قبل أن نتحرّك" },
   },
   marquee: {
     text: {
-      en: "Glad to help you · Fast · Fair price · Safe · Guaranteed · Fixed right the first time · ",
-      ar: "يسعدنا مساعدتك · سرعة · سعر عادل · أمان · ضمان · صحيح من المرة الأولى · ",
+      en: "Glad to help you · Fast · Fair price · Safe · Reliable · Fixed right the first time · ",
+      ar: "يسعدنا مساعدتك · سرعة · سعر عادل · أمان · موثوقية · صحيح من المرة الأولى · ",
     },
   },
   services: {
@@ -190,8 +190,8 @@ export const t = {
         ar: "يسجّل المهني وصوله وتقدّم العمل. أي تكلفة إضافية تحتاج إلى موافقتك قبل أي عمل إضافي.",
       },
       {
-        en: "Completion photos are uploaded, we check the result, and your request stays open for feedback or a free revisit.",
-        ar: "يرفع المهني صور العمل بعد الانتهاء، ونراجع النتيجة، ويبقى طلبك مفتوحاً لأي ملاحظة أو زيارة مجانية.",
+        en: "Completion photos are uploaded, we check the result, and if something isn't right, you report it from your request.",
+        ar: "يرفع المهني صور العمل بعد الانتهاء، ونراجع النتيجة، وإذا لم يكن شيء ما على ما يرام، تبلّغ عنه من طلبك.",
       },
     ] as LocalText[],
   },
@@ -223,12 +223,12 @@ export const t = {
     ] as { title: LocalText; body: LocalText }[],
   },
   pricing: {
-    kicker: { en: "(Pricing & our guarantee)", ar: "(الأسعار والضمان)" },
-    title: { en: "Clear pricing. Real guarantee.", ar: "أسعار واضحة. ضمان حقيقي." },
+    kicker: { en: "(Pricing & our promise)", ar: "(الأسعار ووعدنا)" },
+    title: { en: "Clear pricing. A real promise.", ar: "أسعار واضحة. وعد حقيقي." },
     feeTitle: { en: "Visit & inspection", ar: "الزيارة والكشف" },
     feeBody: {
-      en: `Booking a request is free. If the professional comes and no repair goes ahead, a fixed $${FEE} visit fee applies. If you go ahead, it's already included in your price. Guarantee visits are always free.`,
-      ar: `تقديم الطلب مجاني. إذا حضر المهني ولم يتم الإصلاح، تُطبَّق رسوم زيارة ثابتة قدرها $${FEE}. وإذا أكملت الإصلاح، تكون الرسوم مشمولة في السعر. زيارات الضمان مجانية دائماً.`,
+      en: `Booking a request is free. If the professional comes and no repair goes ahead, a fixed $${FEE} visit fee applies. If you go ahead, it's already included in your price.`,
+      ar: `تقديم الطلب مجاني. إذا حضر المهني ولم يتم الإصلاح، تُطبَّق رسوم زيارة ثابتة قدرها $${FEE}. وإذا أكملت الإصلاح، تكون الرسوم مشمولة في السعر.`,
     },
     partsTitle: { en: "Labour & parts", ar: "العمل والقطع" },
     partsBody: {
@@ -240,14 +240,14 @@ export const t = {
       en: "You approve the quote before dispatch, and any additional charges before extra work. Nothing moves without your approval.",
       ar: "توافق على العرض قبل إرسال المهني إليك، وعلى أي رسوم إضافية قبل أي عمل إضافي. لا شيء يتم دون موافقتك.",
     },
-    guaranteeTitle: { en: `The ${DAYS}-day guarantee`, ar: `ضمان ${arabicDays(DAYS)}` },
+    guaranteeTitle: { en: "Not fixed? We handle it", ar: "لم تُحلّ؟ نتولّاها نحن" },
     guaranteeBody: {
-      en: `If the same issue comes back within ${DAYS} days of a completed job, report it from your requests page and the revisit is free.`,
-      ar: `إذا عادت المشكلة نفسها خلال ${arabicDays(DAYS)} من إنجاز العمل، أبلغ عنها من صفحة طلباتك وتكون الزيارة مجانية.`,
+      en: "Report a problem from your request any time after the job. If the professional doesn't fix it, the Be Right team handles it.",
+      ar: "أبلغ عن مشكلة من طلبك في أي وقت بعد إنجاز العمل. وإذا لم يُصلحها المهني، يتولّاها فريق بي رايت.",
     },
     guaranteeExclusions: {
-      en: "Covers workmanship on the reported issue. New or unrelated problems, misuse, or third-party alterations aren't covered.",
-      ar: "يغطي جودة العمل في المشكلة المُبلَّغ عنها. المشاكل الجديدة أو غير المرتبطة، أو سوء الاستخدام، أو تعديلات طرف ثالث غير مشمولة.",
+      en: "A specialist reviews each report and shows you any cost before the visit. New or unrelated problems, misuse, or third-party alterations are handled as a new job.",
+      ar: "يراجع المختص كل بلاغ ويعرض عليك أي كلفة قبل الزيارة. المشاكل الجديدة أو غير المرتبطة، أو سوء الاستخدام، أو تعديلات طرف ثالث، تُعامَل كمهمة جديدة.",
     },
   },
   faq: {
@@ -271,8 +271,8 @@ export const t = {
       {
         q: { en: "When is the visit fee charged on its own?", ar: "متى تُحتسب رسوم الزيارة وحدها؟" },
         a: {
-          en: `Only when the professional comes and no repair goes ahead: no work was needed or you decided not to repair, nobody was there at the agreed time, or you cancelled after the professional set off. Then you pay the fixed $${FEE} and nothing else. Guarantee visits are always free.`,
-          ar: `فقط إذا حضر المهني ولم يتم الإصلاح: لم يكن هناك عمل لازم أو قررت عدم الإصلاح، أو لم يكن أحد موجوداً في الموعد المتفق عليه، أو ألغيت بعد انطلاق المهني. عندها تدفع رسوم الزيارة الثابتة $${FEE} فقط. زيارات الضمان مجانية دائماً.`,
+          en: `Only when the professional comes and no repair goes ahead: no work was needed or you decided not to repair, nobody was there at the agreed time, or you cancelled after the professional set off. Then you pay the fixed $${FEE} and nothing else.`,
+          ar: `فقط إذا حضر المهني ولم يتم الإصلاح: لم يكن هناك عمل لازم أو قررت عدم الإصلاح، أو لم يكن أحد موجوداً في الموعد المتفق عليه، أو ألغيت بعد انطلاق المهني. عندها تدفع رسوم الزيارة الثابتة $${FEE} فقط.`,
         },
       },
       {
@@ -283,10 +283,10 @@ export const t = {
         },
       },
       {
-        q: { en: "How do I request a free revisit?", ar: "كيف أطلب زيارة مجانية؟" },
+        q: { en: "What if the problem isn't fixed?", ar: "ماذا لو لم تُحلّ المشكلة؟" },
         a: {
-          en: `Open your completed request within ${DAYS} days, tap “Report a problem”, tell us what's wrong and pick a day for the visit. If it's covered, the revisit is free.`,
-          ar: `افتح طلبك المكتمل خلال ${arabicDays(DAYS)}، واضغط «الإبلاغ عن مشكلة»، وأخبرنا بالمشكلة واختر يوم الزيارة. إذا كانت مشمولة، تكون الزيارة مجانية.`,
+          en: "Open your completed request, tap “Report a problem”, tell us what's wrong and pick a day for the visit. A specialist reviews it, and if the professional doesn't fix it, the Be Right team handles it. Any cost is shown to you first, for your approval.",
+          ar: "افتح طلبك المكتمل، واضغط «الإبلاغ عن مشكلة»، وأخبرنا بالمشكلة واختر يوم الزيارة. يراجعها المختص، وإذا لم يُصلحها المهني، يتولّاها فريق بي رايت. وأي كلفة تُعرض عليك أولاً لتوافق عليها.",
         },
       },
     ] as { q: { en: string; ar: string }; a: { en: string; ar: string } }[],
@@ -303,8 +303,8 @@ export const t = {
     kicker: { en: "(Our promise)", ar: "(وعدنا)" },
     title: { en: "Our promise. Every job.", ar: "وعدنا. في كل مهمة." },
     sub: {
-      en: "Speed, fair pricing, safety and a guarantee: this is what Be Right means.",
-      ar: "السرعة والسعر العادل والأمان والضمان: هذا معنى بي رايت.",
+      en: "Speed, fair pricing, safety and follow-through: this is what Be Right means.",
+      ar: "السرعة والسعر العادل والأمان والمتابعة حتى الحل: هذا معنى بي رايت.",
     },
     items: [
       {
@@ -329,10 +329,10 @@ export const t = {
         },
       },
       {
-        title: { en: "Guaranteed", ar: "ضمان" },
+        title: { en: "Followed through", ar: "متابعة حتى الحل" },
         body: {
-          en: "Every job is logged, photographed and reviewed. If it's not right, we come back and make it right. It's in the name.",
-          ar: "كل مهمة مسجّلة ومصوّرة ومُراجَعة. إذا لم يكن العمل صحيحاً، نعود ونصلحه. هذا معنى اسمنا.",
+          en: "Every job is logged, photographed and reviewed. If the professional doesn't fix the problem, our team handles it. It's in the name.",
+          ar: "كل مهمة مسجّلة ومصوّرة ومُراجَعة. إذا لم يُصلح المهني المشكلة، يتولّاها فريقنا. هذا معنى اسمنا.",
         },
       },
     ] as { title: { en: string; ar: string }; body: { en: string; ar: string } }[],
@@ -480,9 +480,9 @@ export const t = {
       ar: "شكراً. فتحنا الطلب رقم #{id} وسيتواصل معك المختص.",
     },
     claimOpen: { en: "You reported a problem. Follow it in request #{id}.", ar: "أبلغت عن مشكلة. تابعها في الطلب رقم #{id}." },
-    guaranteeBadge: { en: "Guarantee visit", ar: "زيارة ضمان" },
+    guaranteeBadge: { en: "Return visit", ar: "زيارة متابعة" },
     guaranteeFor: { en: "Return visit for job #{id}", ar: "زيارة متابعة للمهمة رقم #{id}" },
-    free: { en: "Free (guarantee)", ar: "مجاناً (ضمان)" },
+    free: { en: "Free (return visit)", ar: "مجاناً (زيارة متابعة)" },
     askCancel: { en: "Need to cancel the visit?", ar: "هل تريد إلغاء الزيارة؟" },
     askCancelHint: {
       en: "The {worker} is already booked, so our specialist will confirm the cancellation with you.",
@@ -662,8 +662,8 @@ export const t = {
     whyCheckedSub: { en: "Met in person before they join", ar: "نقابلهم شخصياً قبل انضمامهم" },
     whyPrice: { en: "You approve the price", ar: "أنت توافق على السعر" },
     whyPriceSub: { en: "Nothing starts before you say yes", ar: "لا يبدأ شيء قبل موافقتك" },
-    whyGuarantee: { en: "{days}-day guarantee", ar: "ضمان {days} أيام" },
-    whyGuaranteeSub: { en: "Not right? The revisit is free", ar: "إذا لم يكن العمل صحيحاً، فالزيارة التالية مجانية" },
+    whyGuarantee: { en: "We handle it", ar: "نتولّى الأمر" },
+    whyGuaranteeSub: { en: "If the professional doesn't fix it", ar: "إذا لم يُصلحها المهني" },
     joinTitle: { en: "Are you a professional?", ar: "هل أنت مهني؟" },
     joinSub: { en: "Steady local work matched to your trade.", ar: "عمل منتظم في منطقتك يناسب مهنتك." },
     joinCta: { en: "Apply", ar: "قدّم" },
@@ -1114,11 +1114,11 @@ export const t = {
     stepClosed: { en: "This request is closed.", ar: "هذا الطلب مغلق." },
     // changing a quote, cancelling
     stepGuarantee: {
-      en: "Guarantee claim on job #{id}: review it, then confirm a free return visit, or send a price if it isn't covered.",
-      ar: "مطالبة ضمان على المهمة رقم #{id}: راجعها، ثم أكّد زيارة متابعة مجانية، أو أرسل سعراً إذا لم تكن مشمولة.",
+      en: "Problem reported on job #{id}: review it, then confirm a free return visit, or send a price.",
+      ar: "بلاغ عن مشكلة في المهمة رقم #{id}: راجعه، ثم أكّد زيارة متابعة مجانية، أو أرسل سعراً.",
     },
     acceptGuarantee: { en: "Confirm free return visit", ar: "تأكيد زيارة متابعة مجانية" },
-    notCovered: { en: "Not covered? Send a price instead:", ar: "غير مشمولة؟ أرسل سعراً بدلاً من ذلك:" },
+    notCovered: { en: "Not free? Send a price instead:", ar: "ليست مجانية؟ أرسل سعراً بدلاً من ذلك:" },
     originalTech: { en: "Did the original job: {name}", ar: "نفّذ المهمة الأصلية: {name}" },
     changeQuote: { en: "Change the quote", ar: "تغيير العرض" },
     rating: { en: "Rating", ar: "التقييم" },
@@ -1371,10 +1371,10 @@ export const t = {
   },
   rebook: { en: "Book again", ar: "احجز مرة أخرى" },
   guaranteePage: {
-    title: { en: "The Be Right Guarantee", ar: "ضمان بي رايت" },
+    title: { en: "Our promise", ar: "وعدنا" },
     sub: {
-      en: "If it's not right, we come back and make it right. It's in the name. Here's exactly what that means.",
-      ar: "إن لم يكن العمل صحيحاً، نعود ونصلحه. هذا معنى اسمنا، وإليك ما يعنيه ذلك بالضبط.",
+      en: "If the professional doesn't fix the problem, the Be Right team handles it. It's in the name. Here's exactly what that means.",
+      ar: "إذا لم يُصلح المهني المشكلة، يتولّاها فريق بي رايت. هذا معنى اسمنا، وإليك ما يعنيه ذلك بالضبط.",
     },
     cta: { en: "Book with confidence", ar: "احجز بثقة" },
   },
@@ -1404,10 +1404,10 @@ export const t = {
       ar: "متاجر كبرى ومراكز تسوّق وأسواق حرة تعمل معنا بالفعل.",
     },
     clientsCta: { en: "View clients", ar: "عرض عملائنا" },
-    guaranteeTitle: { en: "Be Right guarantee", ar: "ضمان بي رايت" },
+    guaranteeTitle: { en: "Our promise", ar: "وعدنا" },
     guaranteeBody: {
-      en: "Not right? We come back and make it right, and the revisit is free.",
-      ar: "ليس صحيحاً؟ نعود ونصلحه، والزيارة مجانية.",
+      en: "Not fixed? The Be Right team handles it.",
+      ar: "لم تُحلّ المشكلة؟ يتولّاها فريق بي رايت.",
     },
     guaranteeCta: { en: "Learn more", ar: "اعرف المزيد" },
   },

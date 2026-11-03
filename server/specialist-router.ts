@@ -217,8 +217,8 @@ export const specialistRouter = createRouter({
       name: "acceptGuarantee",
       actorId: ctx.user.id,
       scope: await staffScope(ctx.user),
-      patch: { quoteAmount: "0", quoteNote: "Covered by the workmanship guarantee" },
-      note: "Free return visit (guarantee)",
+      patch: { quoteAmount: "0", quoteNote: "Free return visit" },
+      note: "Free return visit",
       guard: (row) => (row.guaranteeFor ? null : "Only guarantee visits can be free"),
     });
     await notify.guaranteeAccepted(input.id);

@@ -14,7 +14,6 @@ import { CATEGORY_MAP } from "@contracts/services";
 import {
   ACTIVE_JOB_STATUSES,
   CANCEL_REQUESTABLE_STATUSES,
-  guaranteeEndsAt,
   MAX_BOOKING_FILES,
   MAX_BOOKING_VIDEOS,
   MAX_PROBLEM_FILES,
@@ -36,7 +35,6 @@ import { applyTransition, findRequest, logEvent, type RequestScope } from "./lib
 import { notify } from "./notify";
 import { ratingFor, reviewOf } from "./queries/ratings";
 import { LIMITS, rateLimit } from "./lib/rateLimit";
-import { WORKMANSHIP_GUARANTEE_DAYS } from "@contracts/legal";
 import { isMediaType } from "@contracts/uploads";
 
 const mediaItem = z.object({
@@ -50,20 +48,14 @@ const byId = z.object({ id: z.number().int() });
 
 type Db = Parameters<typeof findRequest>[0];
 
-/** For a completed job: until when it's covered, and any guarantee claim still open on it. */
+/** For a completed job: any reported problem still open on it (a job can be reported any time). */
 async function guaranteeStatus(db: Db, requestId: number) {
-  const [done] = await db
-    .select({ at: requestEvents.createdAt })
-    .from(requestEvents)
-    .where(and(eq(requestEvents.requestId, requestId), eq(requestEvents.status, "completed")))
-    .orderBy(desc(requestEvents.createdAt))
-    .limit(1);
   const [claim] = await db
     .select({ id: serviceRequests.id })
     .from(serviceRequests)
     .where(and(eq(serviceRequests.guaranteeFor, requestId), notInArray(serviceRequests.status, [...CLOSED_STATUSES])))
     .limit(1);
-  return { endsAt: done ? guaranteeEndsAt(done.at) : null, openClaimId: claim?.id ?? null };
+  return { openClaimId: claim?.id ?? null };
 }
 
 /** Uploaded files must be the customer's own, with at most a couple of (unshrinkable) videos. */
@@ -242,13 +234,7 @@ export const requestsRouter = createRouter({
         if (original.status !== "completed") {
           throw new TRPCError({ code: "BAD_REQUEST", message: "Only completed jobs can be reported" });
         }
-        const { endsAt, openClaimId } = await guaranteeStatus(tx, original.id);
-        if (!endsAt || endsAt < new Date()) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: `The ${WORKMANSHIP_GUARANTEE_DAYS}-day guarantee for this job has ended`,
-          });
-        }
+        const { openClaimId } = await guaranteeStatus(tx, original.id);
         if (openClaimId) {
           throw new TRPCError({ code: "BAD_REQUEST", message: `You already reported this. Follow request #${openClaimId}` });
         }

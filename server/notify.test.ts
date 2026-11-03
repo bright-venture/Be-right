@@ -3,7 +3,6 @@ import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { eq } from "drizzle-orm";
 import { technicianLocations, type User } from "@db/schema";
 import type { Email } from "./lib/email";
-import { WORKMANSHIP_GUARANTEE_DAYS as DAYS } from "@contracts/legal";
 import {
   SPECIALIST_EMAIL,
   BEIRUT_PIN,
@@ -138,14 +137,14 @@ describe("notification emails", () => {
     expect(emailTo("hassan@example.com").subject).toContain("scheduled");
   });
 
-  it("tells the customer the job is done, with the guarantee", async () => {
+  it("tells the customer the job is done, and how to report a problem", async () => {
     const h = await callerFor(hassan);
     await addJobPhoto(h, id, "before");
     await h.tech.fieldEvent({ requestId: id, action: "start" });
     expect(state.sent).toHaveLength(0);
     await addJobPhoto(h, id, "after");
     await h.tech.fieldEvent({ requestId: id, action: "complete" });
-    expect(emailTo("rami@example.com").text).toContain(`within ${DAYS} days`);
+    expect(emailTo("rami@example.com").text).toContain("Report a problem");
   });
 
   it("handles cancellations from both sides", async () => {

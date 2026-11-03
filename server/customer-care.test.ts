@@ -1,9 +1,8 @@
-// The workmanship guarantee ("report a problem") and customers managing their account.
+// Reporting a problem after a job, and customers managing their account.
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { and, eq } from "drizzle-orm";
 import { auditLog, requestEvents, requestMedia, serviceRequests, users, type User } from "@db/schema";
 import type { Email } from "./lib/email";
-import { WORKMANSHIP_GUARANTEE_DAYS as DAYS } from "@contracts/legal";
 import {
   SPECIALIST_EMAIL,
   BEIRUT_PIN,
@@ -91,8 +90,8 @@ const problem = (id: number) => ({
   media: [],
 });
 
-describe("report a problem (workmanship guarantee)", () => {
-  it("only for completed jobs, and shows until when they're covered", async () => {
+describe("report a problem", () => {
+  it("only for completed jobs", async () => {
     const c = await callerFor(customer);
     const notDone = await job(customer, "scheduled");
     await rejected(c.requests.reportProblem(problem(notDone)));
@@ -100,10 +99,7 @@ describe("report a problem (workmanship guarantee)", () => {
 
     const done = await job(customer, "completed");
     const { guarantee } = await c.requests.get({ id: done });
-    expect(guarantee?.openClaimId).toBeNull();
-    const days = (guarantee!.endsAt!.getTime() - Date.now()) / 86_400_000;
-    expect(days).toBeGreaterThan(DAYS - 0.1);
-    expect(days).toBeLessThanOrEqual(DAYS);
+    expect(guarantee).toEqual({ openClaimId: null });
   });
 
   it("opens a linked visit at the same address, once at a time", async () => {
@@ -122,7 +118,7 @@ describe("report a problem (workmanship guarantee)", () => {
       notes: "The leak under the sink is back since yesterday.",
       category: "plumbing",
     });
-    expect(state.sent.find((m) => m.to.includes(SPECIALIST_EMAIL))?.subject).toContain(`Guarantee claim #${claim} on job #${done}`);
+    expect(state.sent.find((m) => m.to.includes(SPECIALIST_EMAIL))?.subject).toContain(`Problem reported #${claim} on job #${done}`);
 
     // While that claim is open, the job can't be reported again.
     await expect(c.requests.reportProblem(problem(done))).rejects.toMatchObject({
@@ -131,15 +127,14 @@ describe("report a problem (workmanship guarantee)", () => {
     expect((await c.requests.get({ id: done })).guarantee?.openClaimId).toBe(claim);
   });
 
-  it("ends after the guarantee period", async () => {
+  it("has no time limit", async () => {
     const done = await job(customer, "completed");
     await db
       .update(requestEvents)
-      .set({ createdAt: new Date(Date.now() - (DAYS + 1) * 86_400_000) })
+      .set({ createdAt: new Date(Date.now() - 365 * 86_400_000) })
       .where(and(eq(requestEvents.requestId, done), eq(requestEvents.status, "completed")));
-    await expect((await callerFor(customer)).requests.reportProblem(problem(done))).rejects.toMatchObject({
-      message: `The ${DAYS}-day guarantee for this job has ended`,
-    });
+    const { id } = await (await callerFor(customer)).requests.reportProblem(problem(done));
+    expect(id).toBeGreaterThan(done);
   });
 
   it("lets the specialist confirm a free return visit, then works like any job", async () => {

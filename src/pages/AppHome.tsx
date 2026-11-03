@@ -26,7 +26,6 @@ import {
 } from "@contracts/services";
 import { EmergencyDialog } from "@/components/EmergencyDialog";
 import { EMERGENCY_PROBLEMS } from "@contracts/emergency";
-import { WORKMANSHIP_GUARANTEE_DAYS, arabicDigits } from "@contracts/legal";
 import { HOME_BY_ROLE, type Role } from "@contracts/roles";
 
 const SECTION = "font-display text-lg font-extrabold tracking-tight text-navy";
@@ -40,7 +39,7 @@ function greeting(hour: number) {
 
 /** The phone app's home: services first, an emergency shortcut, and the request under way. */
 export default function AppHome() {
-  const { t, p, lang } = useI18n();
+  const { t, p } = useI18n();
   const { user } = useAuth();
   const isCustomer = user?.role === "customer";
   const mine = trpc.requests.mine.useQuery(undefined, { enabled: isCustomer });
@@ -53,7 +52,6 @@ export default function AppHome() {
 
   const firstName = user?.name?.trim().split(/\s+/)[0];
   const hello = p(t.app[greeting(new Date().getHours())]);
-  const days = lang === "ar" ? arabicDigits(WORKMANSHIP_GUARANTEE_DAYS) : String(WORKMANSHIP_GUARANTEE_DAYS);
 
   return (
     <div className="flex min-h-screen flex-col bg-paper">
@@ -197,7 +195,7 @@ export default function AppHome() {
               { icon: BadgeCheck, title: p(t.app.whyPrice), sub: p(t.app.whyPriceSub), to: "/guarantee" },
               {
                 icon: RotateCcw,
-                title: p(t.app.whyGuarantee).replace("{days}", days),
+                title: p(t.app.whyGuarantee),
                 sub: p(t.app.whyGuaranteeSub),
                 to: "/guarantee",
               },
