@@ -38,6 +38,7 @@ describe("porter questions", () => {
     expect(porter({ help: "building" })).toEqual(["help"]);
     expect(validateAnswers("porter", { help: "building" })).toBeNull();
     expect(validateAnswers("porter", { help: "building", floors: "elevator" })).not.toBeNull();
-    expect(validateAnswers("porter", { help: "heavy", floors: "stairs_5plus" })).toBeNull();
+    expect(validateAnswers("porter", { help: "heavy", floors: "stairs" })).toBeNull();
+    expect(validateAnswers("porter", { help: "heavy", floors: "stairs_5plus" })).not.toBeNull();
   });
 });

@@ -364,9 +364,7 @@ export const CATEGORIES: ServiceCategory[] = [
         when: { id: "help", equals: ["home_move", "office_move", "heavy"] },
         options: [
           { value: "elevator", label: { en: "Elevator", ar: "مصعد" } },
-          { value: "stairs_1_2", label: { en: "Stairs, 1–2 floors", ar: "درج، ١–٢ طابق" } },
-          { value: "stairs_3_4", label: { en: "Stairs, 3–4 floors", ar: "درج، ٣–٤ طوابق" } },
-          { value: "stairs_5plus", label: { en: "Stairs, 5+ floors", ar: "درج، ٥+ طوابق" } },
+          { value: "stairs", label: { en: "Stairs", ar: "درج" } },
         ],
       },
     ],
