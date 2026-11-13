@@ -254,6 +254,92 @@ export const EMERGENCY_PROBLEMS: EmergencyProblem[] = [
     ],
   },
   {
+    id: "burning",
+    label: { en: "Burning smell or sparks", ar: "رائحة احتراق أو شرر" },
+    category: "electrical",
+    safety: [
+      { critical: true, text: { en: "Don't touch the affected equipment.", ar: "لا تلمس الجهاز أو المعدّات المتأثرة." } },
+      {
+        critical: true,
+        text: {
+          en: "Switch off the electricity only if the breaker is safe to reach, away from the affected area.",
+          ar: "اقطع الكهرباء فقط إذا كان الوصول إلى القاطع آمناً، بعيداً عن المكان المتأثر.",
+        },
+      },
+      {
+        text: {
+          en: "Keep everyone away from it until the electrician arrives.",
+          ar: "أبقِ الجميع بعيداً عنه حتى يصل الكهربائي.",
+        },
+      },
+    ],
+    questions: [
+      { id: "smoke", label: { en: "Is there smoke or fire?", ar: "هل يوجد دخان أو حريق؟" }, options: [YES, NO], alert: ["yes"] },
+      {
+        id: "switchedOff",
+        label: { en: "Could you switch off the electricity?", ar: "هل استطعت قطع الكهرباء؟" },
+        options: [YES, NO, { value: "not_safe", label: { en: "Not safe to reach", ar: "الوصول غير آمن" } }],
+        alert: ["no", "not_safe"],
+      },
+      {
+        id: "where",
+        label: { en: "Where is it coming from?", ar: "من أين يأتي؟" },
+        options: [
+          { value: "socket", label: { en: "Socket or switch", ar: "مقبس أو مفتاح" } },
+          { value: "panel", label: { en: "Electrical panel", ar: "لوحة الكهرباء" } },
+          { value: "appliance", label: { en: "An appliance", ar: "جهاز كهربائي" } },
+          { value: "unknown", label: { en: "Not sure", ar: "غير متأكد" } },
+        ],
+      },
+    ],
+  },
+  {
+    id: "live-water",
+    label: { en: "Electricity in water", ar: "كهرباء في المياه" },
+    category: "electrical",
+    safety: [
+      {
+        critical: true,
+        text: {
+          en: "Don't touch the water, the taps or anything connected to them.",
+          ar: "لا تلمس المياه أو الصنابير أو أي شيء متصل بها.",
+        },
+      },
+      {
+        critical: true,
+        text: {
+          en: "Switch off the electricity at the main breaker only if you can reach it without touching water or wet surfaces.",
+          ar: "اقطع الكهرباء من القاطع الرئيسي فقط إذا استطعت الوصول إليه دون لمس المياه أو الأسطح المبلّلة.",
+        },
+      },
+      {
+        text: {
+          en: "Keep everyone away from the water. Our electrician isolates the electricity safely, then checks the water heater and circulation pump.",
+          ar: "أبقِ الجميع بعيداً عن المياه. يعزل الكهربائي الكهرباء بأمان، ثم يفحص سخّان المياه ومضخة الدوران.",
+        },
+      },
+    ],
+    questions: [
+      { id: "shock", label: { en: "Has anyone felt a shock or tingling?", ar: "هل شعر أحد بصعقة أو وخز؟" }, options: [YES, NO], alert: ["yes"] },
+      {
+        id: "switchedOff",
+        label: { en: "Could you switch off the electricity?", ar: "هل استطعت قطع الكهرباء؟" },
+        options: [YES, NO, { value: "not_safe", label: { en: "Not safe to reach", ar: "الوصول غير آمن" } }],
+        alert: ["no", "not_safe"],
+      },
+      {
+        id: "where",
+        label: { en: "Where?", ar: "أين؟" },
+        options: [
+          { value: "bathroom", label: { en: "Bathroom", ar: "الحمّام" } },
+          { value: "kitchen", label: { en: "Kitchen", ar: "المطبخ" } },
+          { value: "heater", label: { en: "Water heater", ar: "سخّان المياه" } },
+          { value: "other", label: { en: "Somewhere else", ar: "مكان آخر" } },
+        ],
+      },
+    ],
+  },
+  {
     id: "damaged-roof",
     label: { en: "Damaged roof", ar: "سقف متضرّر" },
     category: "waterproofing",

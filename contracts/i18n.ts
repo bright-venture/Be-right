@@ -369,6 +369,11 @@ export const t = {
     pickCategory: { en: "What do you need help with?", ar: "بماذا تحتاج إلى مساعدة؟" },
     next: { en: "Next", ar: "التالي" },
     back: { en: "Back", ar: "رجوع" },
+    urgent: {
+      en: "This is an emergency: don't wait for a booking. Send it to our team and a professional comes as a priority.",
+      ar: "هذه حالة طارئة: لا تنتظر الحجز. أرسلها إلى فريقنا ويأتي مهني على وجه السرعة.",
+    },
+    urgentButton: { en: "Get urgent help", ar: "اطلب مساعدة عاجلة" },
     photosTitle: {
       en: "Add photos or a short video",
       ar: "أضف صوراً أو فيديو قصيراً",

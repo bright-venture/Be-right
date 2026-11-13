@@ -33,6 +33,10 @@ export interface LocalText {
 export interface QuestionOption {
   value: string;
   label: LocalText;
+  /** What to do now, shown as soon as this answer is picked. */
+  safety?: LocalText[];
+  /** This answer makes it an emergency: the form offers priority dispatch for it (an emergency's id). */
+  emergency?: string;
 }
 
 export interface Question {
@@ -52,12 +56,24 @@ export function isAsked(q: Question, answers: Record<string, string>) {
   return typeof q.when.equals === "string" ? answer === q.when.equals : q.when.equals.includes(answer);
 }
 
+/** Only the answers to questions still asked (changing an answer can hide a follow-up already answered). */
+export function askedAnswers(questions: Question[], answers: Record<string, string>) {
+  const kept: Record<string, string> = {};
+  for (const q of questions) {
+    if (answers[q.id] && isAsked(q, kept)) kept[q.id] = answers[q.id];
+  }
+  return kept;
+}
+
 export interface ServiceCategory {
   id: string;
   name: LocalText;
   blurb: LocalText;
   questions: Question[];
 }
+
+/** Electrical problems inside the home (not the solar system, which has its own question). */
+const ELECTRICAL_IN_HOME = ["no_power", "partial", "lights", "led", "socket", "switch", "generator", "burning", "live_water"];
 
 export const CATEGORIES: ServiceCategory[] = [
   {
@@ -133,8 +149,8 @@ export const CATEGORIES: ServiceCategory[] = [
     id: "electrical",
     name: { en: "Electrical", ar: "كهرباء" },
     blurb: {
-      en: "Power faults, lights, sockets, switches and generators.",
-      ar: "أعطال الكهرباء، والإنارة، والمقابس، والمفاتيح، والمولّدات.",
+      en: "Power faults, lights, sockets, switches, generators and solar systems.",
+      ar: "أعطال الكهرباء، والإنارة، والمقابس، والمفاتيح، والمولّدات، وأنظمة الطاقة الشمسية.",
     },
     questions: [
       {
@@ -145,31 +161,103 @@ export const CATEGORIES: ServiceCategory[] = [
           { value: "no_power", label: { en: "No power at all", ar: "لا توجد كهرباء إطلاقاً" } },
           { value: "partial", label: { en: "Power in some rooms", ar: "كهرباء في بعض الغرف فقط" } },
           { value: "lights", label: { en: "Lights issue", ar: "مشكلة في الإنارة" } },
-          { value: "socket", label: { en: "Socket / switch", ar: "مقبس / مفتاح كهربائي" } },
+          { value: "led", label: { en: "LED lighting problem", ar: "مشكلة في إنارة LED" } },
+          { value: "socket", label: { en: "Socket problem", ar: "مشكلة في المقبس" } },
+          { value: "switch", label: { en: "Faulty switch", ar: "مفتاح كهربائي معطّل" } },
           { value: "generator", label: { en: "Generator issue", ar: "مشكلة في المولّد" } },
-          { value: "burning", label: { en: "Burning smell or sparks", ar: "رائحة احتراق أو شرر" } },
+          { value: "solar", label: { en: "Solar system problem", ar: "مشكلة في نظام الطاقة الشمسية" } },
+          {
+            value: "burning",
+            label: { en: "Burning smell or sparks", ar: "رائحة احتراق أو شرر" },
+            emergency: "burning",
+            safety: [
+              { en: "Don't touch the affected equipment.", ar: "لا تلمس الجهاز أو المعدّات المتأثرة." },
+              {
+                en: "Switch off the electricity only if the breaker is safe to reach, away from the affected area.",
+                ar: "اقطع الكهرباء فقط إذا كان الوصول إلى القاطع آمناً، بعيداً عن المكان المتأثر.",
+              },
+              { en: "Smoke or fire? Leave the area and call the emergency services.", ar: "دخان أو حريق؟ غادر المكان واتصل بخدمات الطوارئ." },
+            ],
+          },
+          {
+            value: "live_water",
+            label: { en: "Electricity in water (shock risk)", ar: "كهرباء في المياه (خطر صعق)" },
+            emergency: "live-water",
+            safety: [
+              { en: "Treat it as an emergency.", ar: "اعتبرها حالة طارئة." },
+              { en: "Don't touch the water, the taps or anything connected to them.", ar: "لا تلمس المياه أو الصنابير أو أي شيء متصل بها." },
+              {
+                en: "A professional comes urgently to isolate the electricity safely and check the water heater and circulation pump.",
+                ar: "يأتي مهني بشكل عاجل لعزل الكهرباء بأمان وفحص سخّان المياه ومضخة الدوران.",
+              },
+            ],
+          },
+        ],
+      },
+      {
+        id: "supply",
+        kind: "choice",
+        label: { en: "Is the electricity from EDL or a generator?", ar: "هل الكهرباء من كهرباء لبنان أم من مولّد؟" },
+        options: [
+          { value: "edl", label: { en: "EDL", ar: "كهرباء لبنان" } },
+          { value: "generator", label: { en: "Generator", ar: "مولّد" } },
+          { value: "both", label: { en: "Both", ar: "الاثنان" } },
+          { value: "unknown", label: { en: "Not sure", ar: "غير متأكد" } },
         ],
       },
       {
         id: "scope",
         kind: "choice",
         label: { en: "How much of the home is affected?", ar: "ما الجزء المتأثر من المنزل؟" },
+        when: { id: "problem", equals: ELECTRICAL_IN_HOME },
         options: [
           { value: "single", label: { en: "One spot / room", ar: "نقطة واحدة / غرفة واحدة" } },
           { value: "whole", label: { en: "Whole home", ar: "المنزل بالكامل" } },
         ],
       },
       {
-        id: "exposed",
+        id: "switchOff",
         kind: "choice",
-        label: { en: "Any exposed or damaged wiring?", ar: "هل توجد أسلاك مكشوفة أو تالفة؟" },
+        label: { en: "Can you safely switch off the electricity to the affected room?", ar: "هل يمكنك قطع الكهرباء عن الغرفة المتأثرة بأمان؟" },
         hint: {
-          en: "Do not touch or open anything. Just tell us what you see.",
-          ar: "لا تلمس أو تفتح أي شيء. فقط أخبرنا بما تراه.",
+          en: "Only at the breaker, if you can reach it away from the problem and without touching water.",
+          ar: "فقط من القاطع، إذا استطعت الوصول إليه بعيداً عن المشكلة ودون لمس المياه.",
         },
+        when: { id: "problem", equals: ELECTRICAL_IN_HOME },
         options: [
           { value: "yes", label: { en: "Yes", ar: "نعم" } },
           { value: "no", label: { en: "No", ar: "لا" } },
+          { value: "unknown", label: { en: "Not sure", ar: "غير متأكد" } },
+        ],
+      },
+      {
+        id: "isolated",
+        kind: "choice",
+        label: { en: "Can the problem be controlled or safely isolated?", ar: "هل يمكن السيطرة على المشكلة أو عزلها بأمان؟" },
+        // lights and LED problems don't put anyone at risk
+        when: { id: "problem", equals: ["no_power", "partial", "socket", "switch", "generator", "burning", "live_water"] },
+        options: [
+          { value: "yes", label: { en: "Yes", ar: "نعم" } },
+          {
+            value: "no",
+            label: { en: "No", ar: "لا" },
+            emergency: "no-power",
+            safety: [{ en: "Then treat it as an emergency.", ar: "إذاً اعتبرها حالة طارئة." }],
+          },
+        ],
+      },
+      {
+        id: "inverter",
+        kind: "choice",
+        label: { en: "Is the inverter on or off?", ar: "هل الإنفرتر يعمل أم مطفأ؟" },
+        hint: {
+          en: "In the next step, add a clear photo of the inverter and its display, only if it's safe to reach.",
+          ar: "في الخطوة التالية، أضف صورة واضحة للإنفرتر وشاشته، فقط إذا كان الوصول إليه آمناً.",
+        },
+        when: { id: "problem", equals: "solar" },
+        options: [
+          { value: "on", label: { en: "On", ar: "يعمل" } },
+          { value: "off", label: { en: "Off", ar: "مطفأ" } },
           { value: "unknown", label: { en: "Not sure", ar: "غير متأكد" } },
         ],
       },

@@ -89,7 +89,7 @@ describe("service specialists", () => {
     await book("plumbing", { problem: "fixture" });
     expect(recipients()).toEqual(["maya@example.com"]);
     state.sent.length = 0;
-    await book("electrical", { problem: "socket", scope: "single", exposed: "no" });
+    await book("electrical", { problem: "socket", supply: "edl", scope: "single", switchOff: "yes", isolated: "yes" });
     expect(recipients()).toEqual(["owner@example.com"]);
   });
 

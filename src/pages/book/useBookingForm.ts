@@ -17,7 +17,7 @@ import {
   saveDraftFields,
   saveDraftFiles,
 } from "@/lib/bookingDraft";
-import { CATEGORY_MAP, isAsked } from "@contracts/services";
+import { askedAnswers, CATEGORY_MAP, isAsked } from "@contracts/services";
 import {
   answersFromLink,
   isHourlyService,
@@ -220,7 +220,8 @@ export function useBookingForm() {
       setUploadProgress(null);
       const res = await createMutation.mutateAsync({
         category,
-        answers,
+        // a draft saved before the questions changed can hold answers no longer asked
+        answers: askedAnswers(cat?.questions ?? [], answers),
         preferredDate: date,
         // the "Next" button requires a slot, or valid hours for a service booked by the hour
         timeSlot: hourly && hoursOk ? slotOfHour(fromHour as number) : (slot as TimeSlot),
